@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../order.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../orderdialog.dart';
 
 class BookPage extends StatefulWidget {
   const BookPage({super.key});
@@ -23,7 +24,7 @@ class _BookPageState extends State<BookPage> {
   // ✅ API CALL
   Future<void> fetchBookProducts() async {
     final response = await http.get(
-      Uri.parse("http://10.0.2.2:8000/api/productbook"), // 👈 your API
+      Uri.parse("http://10.0.2.2:8000/api/productbook"), // API
     );
 
     if (response.statusCode == 200) {
@@ -114,7 +115,8 @@ class _BookPageState extends State<BookPage> {
       elevation: 2,
       child: InkWell(
         onTap: () {
-          goToOrderPage(context);
+          
+           OrderDialog.show(context, item);
         },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

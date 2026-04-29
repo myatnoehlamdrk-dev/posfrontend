@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../order.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../orderdialog.dart';
 
 class GiftPage extends StatefulWidget {
   const GiftPage({super.key});
@@ -103,7 +104,7 @@ class _GiftPageState extends State<GiftPage> {
   Widget _buildGiftCard(BuildContext context, Map<String, dynamic> item) {
     return GestureDetector(
       onTap: () {
-        goToOrderPage(context);
+        OrderDialog.show(context, item);
       },
       child: Container(
         decoration: BoxDecoration(

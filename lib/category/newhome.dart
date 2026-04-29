@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../order.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../orderdialog.dart';
 
 class NewHomePage extends StatefulWidget {
   const NewHomePage({super.key});
@@ -137,7 +138,7 @@ class _NewHomePageState extends State<NewHomePage> {
 
                 ElevatedButton(
                   onPressed: () {
-                    goToOrderPage(context);
+                    OrderDialog.show(context, product);
                   },
                   child: const Text("Order"),
                 )

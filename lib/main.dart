@@ -8,8 +8,9 @@ import 'product.dart';
 import 'admin.dart';
 import 'register.dart';
 import 'login.dart';
+import 'orderdialog.dart';
 
-void main() => runApp(const MaterialApp( debugShowCheckedModeBanner: false,home: AdminPage()));
+void main() => runApp(const MaterialApp( debugShowCheckedModeBanner: false,home: POSHome()));
 
 class POSHome extends StatefulWidget {
   const POSHome({super.key});

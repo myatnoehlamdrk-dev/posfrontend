@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../order.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../orderdialog.dart';
 
 class FashionPage extends StatefulWidget {
   const FashionPage({super.key});
@@ -118,7 +119,7 @@ class _FashionPageState extends State<FashionPage> {
       elevation: 2,
       child: InkWell(
         onTap: () {
-          goToOrderPage(context);
+          OrderDialog.show(context, item);
         },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

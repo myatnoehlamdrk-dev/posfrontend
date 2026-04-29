@@ -3,7 +3,7 @@ import 'main.dart';
 import 'package:flutter/material.dart'; 
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
+import 'orderdialog.dart';
 import 'order.dart';
 class InventoryPage extends StatefulWidget {
   const InventoryPage({super.key});
@@ -60,7 +60,13 @@ void initState() {
   IconButton(
     icon: const Icon(Icons.search),
     onPressed: () {
-      
+      Map<String, dynamic> product = {
+  "id": 1,
+  "name": "Test Product",
+  "price": 100,
+  "stock_quantity": 5,
+};
+      OrderDialog.show(context, product);
         },
       ),
     ],
@@ -80,14 +86,9 @@ void initState() {
             final product = products[index];
 
             return GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => OrderPage(),
-                  ),
-                );
-              },
+              onTap: () {OrderDialog.show(context, product);},
+                
+              
               child: Card(
   elevation: 4,
   shape: RoundedRectangleBorder(

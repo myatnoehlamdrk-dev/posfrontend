@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class AdminInventoryPage extends StatefulWidget {
   const AdminInventoryPage({super.key});
@@ -8,70 +10,81 @@ class AdminInventoryPage extends StatefulWidget {
 }
 
 class _AdminInventoryPageState extends State<AdminInventoryPage> {
+  final String baseUrl = "http://10.0.2.2:8000/api";
 
-  // 🔹 Product List
-  List<Map<String, dynamic>> products = [
-    {
-      "name": "Coffee",
-      "sku": "CF001",
-      "price": 2.5,
-      "qty": 50,
-      "category": "Drinks",
-      "reason": "Initial stock"
+  List<Map<String, dynamic>> logs = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchLogs();
+  }
+
+  // =========================
+  // ✅ FETCH
+  // =========================
+  Future<void> fetchLogs() async {
+    final res = await http.get(Uri.parse("$baseUrl/inventory-log"));
+
+    if (res.statusCode == 200) {
+      final data = jsonDecode(res.body);
+
+      setState(() {
+        logs = List<Map<String, dynamic>>.from(data.map((l) => {
+              "id": l["id"],
+              "product_id": l["product_id"],
+              "user_id": l["user_id"],
+              "qty": l["change_amount"],
+              "reason": l["reason"],
+            }));
+
+        isLoading = false;
+      });
     }
-  ];
+  }
 
-  // 🔹 Categories
-  List<String> categories = ["Drinks", "Food"];
-
-  // ➕ ADD PRODUCT
-  void _addProduct() {
-    final nameCtrl = TextEditingController();
-    final skuCtrl = TextEditingController();
-    final priceCtrl = TextEditingController();
+  // =========================
+  // ➕ ADD
+  // =========================
+  void _addLog() {
+    final productCtrl = TextEditingController();
+    final userCtrl = TextEditingController();
     final qtyCtrl = TextEditingController();
     final reasonCtrl = TextEditingController();
-
-    String selectedCategory = categories.first;
 
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Add Product"),
-        content: SingleChildScrollView(
-          child: Column(
-            children: [
-              TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: "ID")),
-              TextField(controller: skuCtrl, decoration: const InputDecoration(labelText: "product_id")),
-              TextField(controller: priceCtrl, decoration: const InputDecoration(labelText: "Price")),
-              TextField(controller: qtyCtrl, decoration: const InputDecoration(labelText: "user_id")),
-              
-              DropdownButtonFormField<String>(
-                value: selectedCategory,
-                items: categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                onChanged: (val) => selectedCategory = val!,
-                decoration: const InputDecoration(labelText: "Category"),
-              ),
-
-              TextField(controller: reasonCtrl, decoration: const InputDecoration(labelText: "Reason")),
-            ],
-          ),
+        title: const Text("Add Inventory Log"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: productCtrl, decoration: const InputDecoration(labelText: "Product ID")),
+            TextField(controller: userCtrl, decoration: const InputDecoration(labelText: "User ID")),
+            TextField(controller: qtyCtrl, decoration: const InputDecoration(labelText: "Change Amount")),
+            TextField(controller: reasonCtrl, decoration: const InputDecoration(labelText: "Reason")),
+          ],
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
           TextButton(
-            onPressed: () {
-              setState(() {
-                products.add({
-                  "name": nameCtrl.text,
-                  "sku": skuCtrl.text,
-                  "price": double.tryParse(priceCtrl.text) ?? 0,
-                  "qty": int.tryParse(qtyCtrl.text) ?? 0,
-                  "category": selectedCategory,
+            onPressed: () async {
+              final res = await http.post(
+                Uri.parse("$baseUrl/inventorylog"),
+                headers: {"Content-Type": "application/json"},
+                body: jsonEncode({
+                  "product_id": int.tryParse(productCtrl.text) ?? 1,
+                  "user_id": int.tryParse(userCtrl.text) ?? 1,
+                  "change_amount": int.tryParse(qtyCtrl.text) ?? 0,
                   "reason": reasonCtrl.text,
-                });
-              });
-              Navigator.pop(context);
+                }),
+              );
+
+              if (res.statusCode == 201) {
+                fetchLogs();
+                Navigator.pop(context);
+              }
             },
             child: const Text("Add"),
           ),
@@ -80,54 +93,46 @@ class _AdminInventoryPageState extends State<AdminInventoryPage> {
     );
   }
 
-  // ✏️ EDIT PRODUCT
-  void _editProduct(int index) {
-    final product = products[index];
+  // =========================
+  // ✏️ UPDATE
+  // =========================
+  void _editLog(int index) {
+    final log = logs[index];
 
-    final nameCtrl = TextEditingController(text: product["name"]);
-    final skuCtrl = TextEditingController(text: product["sku"]);
-    final priceCtrl = TextEditingController(text: product["price"].toString());
-    final qtyCtrl = TextEditingController(text: product["qty"].toString());
-    final reasonCtrl = TextEditingController(text: product["reason"]);
-
-    String selectedCategory = product["category"];
+    final qtyCtrl = TextEditingController(text: log["qty"].toString());
+    final reasonCtrl = TextEditingController(text: log["reason"]);
 
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Edit Product"),
-        content: SingleChildScrollView(
-          child: Column(
-            children: [
-              TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: "Name")),
-              TextField(controller: skuCtrl, decoration: const InputDecoration(labelText: "SKU")),
-              TextField(controller: priceCtrl, decoration: const InputDecoration(labelText: "Price")),
-              TextField(controller: qtyCtrl, decoration: const InputDecoration(labelText: "Quantity")),
-
-              DropdownButtonFormField<String>(
-                value: selectedCategory,
-                items: categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                onChanged: (val) => selectedCategory = val!,
-                decoration: const InputDecoration(labelText: "Category"),
-              ),
-
-              TextField(controller: reasonCtrl, decoration: const InputDecoration(labelText: "Reason")),
-            ],
-          ),
+        title: const Text("Edit Inventory Log"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text("Product ID: ${log["product_id"]}"),
+            TextField(controller: qtyCtrl, decoration: const InputDecoration(labelText: "Change Amount")),
+            TextField(controller: reasonCtrl, decoration: const InputDecoration(labelText: "Reason")),
+          ],
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
           TextButton(
-            onPressed: () {
-              setState(() {
-                product["name"] = nameCtrl.text;
-                product["sku"] = skuCtrl.text;
-                product["price"] = double.tryParse(priceCtrl.text) ?? 0;
-                product["qty"] = int.tryParse(qtyCtrl.text) ?? 0;
-                product["category"] = selectedCategory;
-                product["reason"] = reasonCtrl.text;
-              });
-              Navigator.pop(context);
+            onPressed: () async {
+              final res = await http.put(
+                Uri.parse("$baseUrl/inventory-log/${log["id"]}"),
+                headers: {"Content-Type": "application/json"},
+                body: jsonEncode({
+                  "product_id": log["product_id"],
+                  "user_id": log["user_id"],
+                  "change_amount": int.tryParse(qtyCtrl.text) ?? 0,
+                  "reason": reasonCtrl.text,
+                }),
+              );
+
+              if (res.statusCode == 200) {
+                fetchLogs();
+                Navigator.pop(context);
+              }
             },
             child: const Text("Save"),
           ),
@@ -136,18 +141,29 @@ class _AdminInventoryPageState extends State<AdminInventoryPage> {
     );
   }
 
+  // =========================
   // 🗑 DELETE
-  void _deleteProduct(int index) {
+  // =========================
+  void _deleteLog(int index) {
+    final log = logs[index];
+
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Delete Product"),
+        title: const Text("Delete Log"),
         content: const Text("Are you sure?"),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
           TextButton(
-            onPressed: () {
-              setState(() => products.removeAt(index));
+            onPressed: () async {
+              final res = await http.delete(
+                Uri.parse("$baseUrl/inventory-log/${log["id"]}"),
+              );
+
+              if (res.statusCode == 200) {
+                fetchLogs();
+              }
+
               Navigator.pop(context);
             },
             child: const Text("Delete", style: TextStyle(color: Colors.red)),
@@ -157,110 +173,52 @@ class _AdminInventoryPageState extends State<AdminInventoryPage> {
     );
   }
 
-  // ➕ ADD CATEGORY
-  void _addCategory() {
-    final ctrl = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Add Category"),
-        content: TextField(
-          controller: ctrl,
-          decoration: const InputDecoration(labelText: "Category Name"),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
-          TextButton(
-            onPressed: () {
-              setState(() => categories.add(ctrl.text));
-              Navigator.pop(context);
-            },
-            child: const Text("Add"),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // 🔁 CHANGE STOCK ONLY
-  void _changeStock(int index) {
-    final ctrl = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Change Stock"),
-        content: TextField(
-          controller: ctrl,
-          decoration: const InputDecoration(labelText: "New Quantity"),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
-          TextButton(
-            onPressed: () {
-              setState(() {
-                products[index]["qty"] = int.tryParse(ctrl.text) ?? 0;
-              });
-              Navigator.pop(context);
-            },
-            child: const Text("Update"),
-          ),
-        ],
-      ),
-    );
-  }
-
+  // =========================
+  // UI
+  // =========================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Admin Inventory"),
+        title: const Text("Inventory Logs"),
         actions: [
-          IconButton(icon: const Icon(Icons.add), onPressed: _addProduct),
-          IconButton(icon: const Icon(Icons.category), onPressed: _addCategory),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: fetchLogs),
+          IconButton(icon: const Icon(Icons.add), onPressed: _addLog),
         ],
       ),
 
-      body: ListView.builder(
-        itemCount: products.length,
-        itemBuilder: (context, index) {
-          final p = products[index];
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : logs.isEmpty
+              ? const Center(child: Text("No logs found"))
+              : ListView.builder(
+                  itemCount: logs.length,
+                  itemBuilder: (context, index) {
+                    final l = logs[index];
 
-          return Card(
-            margin: const EdgeInsets.all(10),
-            child: ListTile(
-              title: Text(p["name"]),
-              subtitle: Text(
-                  "${p["category"]} • SKU: ${p["sku"]}\nPrice: \$${p["price"]} • Stock: ${p["qty"]}"),
-
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-
-                  // 🔁 STOCK
-                  IconButton(
-                    icon: const Icon(Icons.swap_horiz),
-                    onPressed: () => _changeStock(index),
-                  ),
-
-                  // ✏️ EDIT
-                  IconButton(
-                    icon: const Icon(Icons.edit),
-                    onPressed: () => _editProduct(index),
-                  ),
-
-                  // 🗑 DELETE
-                  IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => _deleteProduct(index),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
+                    return Card(
+                      margin: const EdgeInsets.all(10),
+                      child: ListTile(
+                        title: Text("Product: ${l["product_id"]}"),
+                        subtitle: Text(
+                            "Qty: ${l["qty"]} • User: ${l["user_id"]}\nReason: ${l["reason"]}"),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit),
+                              onPressed: () => _editLog(index),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              onPressed: () => _deleteLog(index),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
     );
   }
 }
