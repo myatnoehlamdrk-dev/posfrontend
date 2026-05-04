@@ -152,7 +152,7 @@ void _editOrder(int index) {
 
             DropdownButtonFormField<String>(
               initialValue: paymentMethod,
-              items: ["Cash", "KBZPay", "WavePay"]
+              items: ["cash", "KBZPay", "WavePay"]
                   .map((e) => DropdownMenuItem(
                         value: e,
                         child: Text(e),
@@ -196,7 +196,7 @@ void _editOrder(int index) {
             print("UPDATE BODY: ${res.body}");
 
             if (res.statusCode == 200) {
-              // ✅ update UI AFTER success
+              //  update UI AFTER success
               setState(() {
                 orders[index]["customer"] = customerCtrl.text;
                 orders[index]["invoice"] = invoiceCtrl.text;
@@ -224,7 +224,7 @@ void _editOrder(int index) {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: fetchOrders, // 🔄 reload
+            onPressed: fetchOrders, // reload
           )
         ],
       ),

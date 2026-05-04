@@ -10,7 +10,7 @@ import 'register.dart';
 import 'login.dart';
 import 'orderdialog.dart';
 
-void main() => runApp(const MaterialApp( debugShowCheckedModeBanner: false,home: POSHome()));
+void main() => runApp(const MaterialApp( debugShowCheckedModeBanner: false,home: AdminPage()));
 
 class POSHome extends StatefulWidget {
   const POSHome({super.key});
@@ -34,7 +34,7 @@ class _POSHomeState extends State<POSHome> {
       });
     }
   }
-
+  final TextEditingController searchController = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -59,19 +59,32 @@ class _POSHomeState extends State<POSHome> {
     ),
     ),
         title: Container(
-          height: 40,
-          decoration: BoxDecoration(
-            color: Colors.grey[200],
-            borderRadius: BorderRadius.circular(8),
+        height: 40,
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(8),
           ),
-          child: const TextField(
-            decoration: InputDecoration(
-              hintText: 'Search products...',
+          child: TextField(
+          controller: searchController,
+            decoration: const InputDecoration(
+             hintText: 'Search',
               prefixIcon: Icon(Icons.search),
               border: InputBorder.none,
-            ),
-          ),
+                ),
+
+                // 🔥 When user presses search/enter
+              onSubmitted: (value) {
+              if (value.trim().isEmpty) return;
+              Navigator.push(
+               context,
+              MaterialPageRoute(
+                builder: (_) => InventoryPage(searchQuery:searchController.text),
+                
         ),
+      );
+    },
+  ),
+),
         actions: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -100,9 +113,9 @@ class _POSHomeState extends State<POSHome> {
         ],
       ),
 
-      // 👇 YOUR BODY (fixed scrolling issue)
+      
       body: Column(
-        children: [
+        children: [Text(""),
           SizedBox(
             height: 200,
             child: ListView.builder(
@@ -115,7 +128,7 @@ class _POSHomeState extends State<POSHome> {
                   decoration: BoxDecoration(color: const Color.fromARGB(255, 224, 224, 224),
                     borderRadius: BorderRadius.circular(15),
                     image: const DecorationImage(
-                      image: AssetImage('assets/promo_banner.png'),
+                      image: AssetImage('assets/product1.jpg'),
                       fit: BoxFit.cover,
                     ),
                   ),

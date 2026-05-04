@@ -101,7 +101,7 @@ class OrderDialog {
     );
   }
 
-  // ✅ ONLY send fields that backend expects
+  // ONLY send fields that backend expects
   static Future<void> _createOrder(
     double total,
     String invoice,
@@ -111,8 +111,8 @@ class OrderDialog {
       Uri.parse("http://10.0.2.2:8000/api/order"),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
-        "user_id": 1,          // 🔥 MUST exist in DB
-        "c_id": 1,             // 🔥 MUST exist in DB
+        "user_id": 1,          
+        "c_id": 1,             
         "invoice_no": invoice,
         "total_amount": total,
         "payment": payment,

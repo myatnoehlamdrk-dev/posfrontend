@@ -6,7 +6,9 @@ import 'dart:convert';
 import 'orderdialog.dart';
 import 'order.dart';
 class InventoryPage extends StatefulWidget {
-  const InventoryPage({super.key});
+  // const InventoryPage({super.key});
+  final String? searchQuery; // nullable
+  const InventoryPage({super.key, this.searchQuery});
 
   @override
   State<InventoryPage> createState() => _InventoryPageState();
@@ -15,6 +17,20 @@ class InventoryPage extends StatefulWidget {
 class _InventoryPageState extends State<InventoryPage> {
   int _currentIndex = 1;
   final String baseUrl = "http://10.0.2.2:8000/api";
+  List<Map<String, dynamic>> filteredProducts = [];
+
+  void applySearch(String query) {
+  final input = query.toLowerCase();
+
+  final results = products.where((product) {
+    final name = product['name'].toString().toLowerCase();
+    return name.contains(input);
+  }).toList();
+
+  setState(() {
+    filteredProducts = results;
+  });
+  }
 
   void _onFooterTap(int index) {
     if (index == 2) {
@@ -32,18 +48,24 @@ class _InventoryPageState extends State<InventoryPage> {
     }
   }
 
-  // 🔹 Dummy product list
+  
    List<Map<String, dynamic>> products = [];  
-   Future<void> fetchProducts() async {
+Future<void> fetchProducts() async {
   final res = await http.get(Uri.parse("$baseUrl/product"));
 
-  print("STATUS: ${res.statusCode}");
-  print("BODY: ${res.body}");
-
   if (res.statusCode == 200) {
-    setState(() {
-      products = List<Map<String, dynamic>>.from(jsonDecode(res.body));
-    });
+    final data = List<Map<String, dynamic>>.from(jsonDecode(res.body));
+
+    products = data;
+
+    if (widget.searchQuery != null &&
+        widget.searchQuery!.trim().isNotEmpty) {
+      applySearch(widget.searchQuery!);
+    } else {
+      filteredProducts = products;
+    }
+
+    setState(() {});
   }
 }
   @override
@@ -57,25 +79,50 @@ void initState() {
     return Scaffold(
       appBar: AppBar(title: const Text("Products"),
       actions: [
-  IconButton(
-    icon: const Icon(Icons.search),
-    onPressed: () {
-      Map<String, dynamic> product = {
-  "id": 1,
-  "name": "Test Product",
-  "price": 100,
-  "stock_quantity": 5,
-};
-      OrderDialog.show(context, product);
-        },
+IconButton(
+  icon: const Icon(Icons.search),
+  onPressed: () {
+    final controller = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Search"),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            hintText: "Enter product name",
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () {
+              final value = controller.text.trim();
+
+              if (value.isEmpty) return;
+
+              Navigator.pop(context);
+
+              applySearch(value); // 🔥 APPLY SEARCH HERE
+            },
+            child: const Text("Search"),
+          ),
+        ],
       ),
+    );
+  },
+),
     ],
       ),
 
       body: Padding(
         padding: const EdgeInsets.all(10),
         child: GridView.builder(
-          itemCount: products.length,
+          itemCount: filteredProducts.length,
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2, // 🔹 change to 3 for tablet
             crossAxisSpacing: 10,
@@ -83,7 +130,7 @@ void initState() {
             childAspectRatio: 1,
           ),
           itemBuilder: (context, index) {
-            final product = products[index];
+            final product = filteredProducts[index];
 
             return GestureDetector(
               onTap: () {OrderDialog.show(context, product);},

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'footer.dart';
+import 'main.dart';
+import 'product.dart';
 
 class OrderPage extends StatefulWidget {
   const OrderPage({super.key});
@@ -9,8 +12,25 @@ class OrderPage extends StatefulWidget {
   State<OrderPage> createState() => _OrderPageState();
 }
 
+
 class _OrderPageState extends State<OrderPage> {
   final String baseUrl = "http://10.0.2.2:8000/api";
+      int _currentIndex=2;
+    void _onFooterTap(int index) {
+    if (index == 1) {
+      Navigator.push(context,
+          MaterialPageRoute(builder: (context) => const InventoryPage()));
+    } else if (index == 0) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const POSHome()),
+      );
+    } else {
+      setState(() {
+        _currentIndex = index;
+      });
+    }
+  }
 
   // 🔹 Controllers
   final TextEditingController userController = TextEditingController();
@@ -30,7 +50,7 @@ class _OrderPageState extends State<OrderPage> {
     fetchOrders();
   }
 
-  // ✅ Create Order
+  //  Create Order
   Future<void> createOrder() async {
     if (userController.text.isEmpty ||
         customerController.text.isEmpty ||
@@ -138,7 +158,7 @@ class _OrderPageState extends State<OrderPage> {
                   ),
                   const SizedBox(height: 10),
 
-                  // ✅ DROPDOWN FIXED
+                  //DROPDOWN FIXED
                   DropdownButtonFormField<String>(
   value: paymentMethod,
   items: ["Cash", "KBZPay", "WavePay"]
@@ -206,6 +226,10 @@ class _OrderPageState extends State<OrderPage> {
                   ),
           ),
         ],
+      ),
+            bottomNavigationBar: PosFooter(
+        currentIndex: _currentIndex,
+        onTap: _onFooterTap,
       ),
     );
   }

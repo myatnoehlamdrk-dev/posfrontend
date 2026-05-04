@@ -19,9 +19,9 @@ class ImageCarouselWidget extends StatelessWidget {
               color: Colors.blueGrey[100],
               borderRadius: BorderRadius.circular(16),
               image: const DecorationImage(
-                image: NetworkImage('https://via.placeholder.com/400x200'), // Replace with your image
+                image: AssetImage('assets/product2.jpg'), // Your local path
                 fit: BoxFit.cover,
-              ),
+                  ),
             ),
           );
         },
