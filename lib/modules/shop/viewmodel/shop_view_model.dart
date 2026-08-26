@@ -11,6 +11,9 @@ class ShopViewModel extends BaseViewModel {
   String? _logoData;
   String? get logoData => _logoData;
 
+  String? _logoUrl;
+  String? get logoUrl => _logoUrl;
+
   String _name = '';
   String get name => _name;
 
@@ -151,6 +154,7 @@ class ShopViewModel extends BaseViewModel {
       final shop = await _repository.getShop();
       if (shop != null) {
         _logoData = shop.logoData;
+        _logoUrl = shop.logoUrl;
         _name = shop.name;
         _type = shop.type;
         _physicalAddress = shop.physicalAddress;

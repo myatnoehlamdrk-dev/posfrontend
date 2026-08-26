@@ -39,6 +39,8 @@ dependencies:
   shared_preferences: ^2.3.0
   # Pick shop image/file from device (optional, nullable).
   image_picker: ^1.1.0
+  # HTTP client for backend API calls.
+  dio: ^5.7.0
 
 dev_dependencies:
   flutter_test:

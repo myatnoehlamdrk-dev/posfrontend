@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:posfrontend/modules/auth/view/register_screen.dart';
+import 'package:posfrontend/modules/register/view/register_screen.dart';
 import 'package:posfrontend/modules/shop/model/shop_types.dart';
 import 'package:posfrontend/modules/shop/repository/shop_local_repository_impl.dart';
 import 'package:posfrontend/modules/shop/viewmodel/shop_view_model.dart';
@@ -307,7 +307,9 @@ class _ShopScreenState extends State<ShopScreen> {
 
   Widget _buildImageUpload() {
     final logoData = _viewModel.logoData;
-    final hasImage = logoData != null && logoData.isNotEmpty;
+    final logoUrl = _viewModel.logoUrl;
+    final hasImage = (logoData != null && logoData.isNotEmpty) ||
+        (logoUrl != null && logoUrl.isNotEmpty);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -332,12 +334,19 @@ class _ShopScreenState extends State<ShopScreen> {
                   dashSpace: 6,
                 ),
                 child: hasImage
-                    ? Image.memory(
-                        base64Decode(logoData),
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        height: double.infinity,
-                      )
+                    ? (logoUrl != null && logoUrl.isNotEmpty
+                        ? Image.network(
+                            logoUrl,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: double.infinity,
+                          )
+                        : Image.memory(
+                            base64Decode(logoData!),
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: double.infinity,
+                          ))
                     : Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
