@@ -28,13 +28,17 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
-  http: ^0.13.6
   flutter:
     sdk: flutter
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+
+  # Local persistence for shop data (saved before register).
+  shared_preferences: ^2.3.0
+  # Pick shop image/file from device (optional, nullable).
+  image_picker: ^1.1.0
 
 dev_dependencies:
   flutter_test:
@@ -53,11 +57,6 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
   uses-material-design: true
-  assets:
-    - assets/loco.png
-    - assets/product1.jpg
-    - assets/product2.jpg
-  
 
   # To add assets to your application, add an assets section, like this:
   # assets:
