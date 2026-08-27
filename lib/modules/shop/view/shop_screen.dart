@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:posfrontend/modules/register/view/register_screen.dart';
+import 'package:posfrontend/modules/shop/model/shop.dart';
 import 'package:posfrontend/modules/shop/model/shop_types.dart';
+import 'package:posfrontend/modules/shop/repository/shop_api_repository_impl.dart';
 import 'package:posfrontend/modules/shop/repository/shop_local_repository_impl.dart';
 import 'package:posfrontend/modules/shop/viewmodel/shop_view_model.dart';
 
@@ -33,7 +35,10 @@ class _ShopScreenState extends State<ShopScreen> {
   @override
   void initState() {
     super.initState();
-    _viewModel = ShopViewModel(repository: ShopLocalRepositoryImpl());
+    _viewModel = ShopViewModel(
+      repository: ShopLocalRepositoryImpl(),
+      apiRepository: ShopApiRepositoryImpl(),
+    );
     _viewModel.loadSavedShop().then((_) {
       _shopNameController.text = _viewModel.name;
       _addressController.text = _viewModel.physicalAddress;
@@ -166,109 +171,116 @@ class _ShopScreenState extends State<ShopScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildImageUpload(),
-                          const SizedBox(height: 20),
-                          _requiredLabel('Shop Name'),
-                          TextFormField(
-                            controller: _shopNameController,
-                            decoration: _inputDecoration(
-                              icon: Icons.store_outlined,
-                              hint: 'Enter shop name',
-                              errorText: errors['name'],
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          _requiredLabel('Type'),
-                          DropdownButtonFormField<String>(
-                            value: _viewModel.type,
-                            decoration: _inputDecoration(
-                              icon: Icons.category_outlined,
-                              hint: 'Select type',
-                              errorText: errors['type'],
-                            ).copyWith(
-                              suffixIcon: const Icon(
-                                Icons.arrow_drop_down,
-                                color: primary,
+                          _buildModeToggle(),
+                          const SizedBox(height: 16),
+                          if (_viewModel.mode == 'existing') ...[
+                            _buildExistingShopPicker(),
+                            const SizedBox(height: 32),
+                            _buildActionButton(),
+                          ] else ...[
+                            _buildImageUpload(),
+                            const SizedBox(height: 20),
+                            _requiredLabel('Shop Name'),
+                            TextFormField(
+                              controller: _shopNameController,
+                              decoration: _inputDecoration(
+                                icon: Icons.store_outlined,
+                                hint: 'Enter shop name',
+                                errorText: errors['name'],
                               ),
                             ),
-                            items: ShopTypes.values
-                                .map(
-                                  (type) => DropdownMenuItem(
-                                    value: type,
-                                    child: Text(type),
-                                  ),
-                                )
-                                .toList(),
-                            onChanged: (value) => _viewModel.setType(value),
-                          ),
-                          _helperText(
-                            'Allowed types: Shop, Services Center, Store, and Restaurants',
-                          ),
-                          const SizedBox(height: 20),
-                          _requiredLabel('Physical Address'),
-                          TextFormField(
-                            controller: _addressController,
-                            maxLines: 3,
-                            decoration: _inputDecoration(
-                              icon: Icons.location_on_outlined,
-                              hint: 'Enter physical address',
-                              errorText: errors['physicalAddress'],
-                            ),
-                          ),
-                          const SizedBox(height: 28),
-                          const Text(
-                            'Owner Information',
-                            style: TextStyle(
-                              color: primary,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          _requiredLabel("Owner's Name"),
-                          TextFormField(
-                            controller: _ownerNameController,
-                            decoration: _inputDecoration(
-                              icon: Icons.person_outline,
-                              hint: "Enter owner's name",
-                              errorText: errors['ownerName'],
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          _requiredLabel("Owner's Email"),
-                          TextFormField(
-                            controller: _ownerEmailController,
-                            keyboardType: TextInputType.emailAddress,
-                            decoration: _inputDecoration(
-                              icon: Icons.email_outlined,
-                              hint: "Enter owner's email",
-                              errorText: errors['ownerEmail'],
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          _requiredLabel("Owner's Phone"),
-                          TextFormField(
-                            controller: _ownerPhoneController,
-                            keyboardType: TextInputType.phone,
-                            decoration: _inputDecoration(
-                              icon: Icons.phone_outlined,
-                              hint: "Enter owner's phone number",
-                              errorText: errors['ownerPhone'],
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-                          _buildSubmitButton(),
-                          if (_viewModel.errorMessage != null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 12),
-                              child: Text(
-                                _viewModel.errorMessage!,
-                                style: const TextStyle(
-                                  color: Colors.red,
-                                  fontSize: 13,
+                            const SizedBox(height: 20),
+                            _requiredLabel('Type'),
+                            DropdownButtonFormField<String>(
+                              initialValue: _viewModel.type,
+                              decoration: _inputDecoration(
+                                icon: Icons.category_outlined,
+                                hint: 'Select type',
+                                errorText: errors['type'],
+                              ).copyWith(
+                                suffixIcon: const Icon(
+                                  Icons.arrow_drop_down,
+                                  color: primary,
                                 ),
                               ),
+                              items: ShopTypes.values
+                                  .map(
+                                    (type) => DropdownMenuItem(
+                                      value: type,
+                                      child: Text(type),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (value) => _viewModel.setType(value),
                             ),
+                            _helperText(
+                              'Allowed types: Shop, Services Center, Store, and Restaurants',
+                            ),
+                            const SizedBox(height: 20),
+                            _requiredLabel('Physical Address'),
+                            TextFormField(
+                              controller: _addressController,
+                              maxLines: 3,
+                              decoration: _inputDecoration(
+                                icon: Icons.location_on_outlined,
+                                hint: 'Enter physical address',
+                                errorText: errors['physicalAddress'],
+                              ),
+                            ),
+                            const SizedBox(height: 28),
+                            const Text(
+                              'Owner Information',
+                              style: TextStyle(
+                                color: primary,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            _requiredLabel("Owner's Name"),
+                            TextFormField(
+                              controller: _ownerNameController,
+                              decoration: _inputDecoration(
+                                icon: Icons.person_outline,
+                                hint: "Enter owner's name",
+                                errorText: errors['ownerName'],
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            _requiredLabel("Owner's Email"),
+                            TextFormField(
+                              controller: _ownerEmailController,
+                              keyboardType: TextInputType.emailAddress,
+                              decoration: _inputDecoration(
+                                icon: Icons.email_outlined,
+                                hint: "Enter owner's email",
+                                errorText: errors['ownerEmail'],
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            _requiredLabel("Owner's Phone"),
+                            TextFormField(
+                              controller: _ownerPhoneController,
+                              keyboardType: TextInputType.phone,
+                              decoration: _inputDecoration(
+                                icon: Icons.phone_outlined,
+                                hint: "Enter owner's phone number",
+                                errorText: errors['ownerPhone'],
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+                            _buildActionButton(),
+                          ],
+                          if (_viewModel.errorMessage != null)
+                            Padding(
+                                padding: const EdgeInsets.only(top: 12),
+                                child: Text(
+                                  _viewModel.errorMessage!,
+                                  style: const TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 13,
+                                  ),
+                                )),
                           const SizedBox(height: 12),
                         ],
                       ),
@@ -292,15 +304,29 @@ class _ShopScreenState extends State<ShopScreen> {
           bottom: BorderSide(color: borderColor, width: 1),
         ),
       ),
-      child: const Center(
-        child: Text(
-          'Create Shop',
-          style: TextStyle(
-            color: labelColor,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+      child: Row(
+        children: [
+          if (Navigator.canPop(context))
+            IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(Icons.arrow_back, color: primary),
+            )
+          else
+            const SizedBox(width: 48),
+          const Expanded(
+            child: Center(
+              child: Text(
+                'Create Shop',
+                style: TextStyle(
+                  color: labelColor,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
           ),
-        ),
+          const SizedBox(width: 48),
+        ],
       ),
     );
   }
@@ -381,8 +407,23 @@ class _ShopScreenState extends State<ShopScreen> {
     );
   }
 
-  Widget _buildSubmitButton() {
-    final loading = _viewModel.isLoading;
+  Widget _buildActionButton() {
+    final isExisting = _viewModel.mode == 'existing';
+    final loading = _viewModel.isLoading || _viewModel.isLoadingShops;
+    return _gradientButton(
+      label: isExisting ? 'Continue' : 'Create Shop',
+      icon: isExisting ? Icons.arrow_forward : Icons.save_outlined,
+      loading: loading,
+      onTap: isExisting ? _onUseExistingShop : _onCreateShop,
+    );
+  }
+
+  Widget _gradientButton({
+    required String label,
+    required IconData icon,
+    required bool loading,
+    required VoidCallback? onTap,
+  }) {
     return Container(
       width: double.infinity,
       height: 52,
@@ -403,7 +444,7 @@ class _ShopScreenState extends State<ShopScreen> {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: loading ? null : _onCreateShop,
+        onTap: loading ? null : onTap,
         child: Center(
           child: loading
               ? const SizedBox(
@@ -414,14 +455,14 @@ class _ShopScreenState extends State<ShopScreen> {
                     strokeWidth: 2.5,
                   ),
                 )
-              : const Row(
+              : Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.save_outlined, color: Colors.white, size: 20),
-                    SizedBox(width: 8),
+                    Icon(icon, color: Colors.white, size: 20),
+                    const SizedBox(width: 8),
                     Text(
-                      'Create Shop',
-                      style: TextStyle(
+                      label,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -432,6 +473,84 @@ class _ShopScreenState extends State<ShopScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildModeToggle() {
+    return SegmentedButton<String>(
+      segments: const [
+        ButtonSegment(
+          value: 'create',
+          label: Text('Create new shop'),
+        ),
+        ButtonSegment(
+          value: 'existing',
+          label: Text('Use existing shop'),
+        ),
+      ],
+      selected: {_viewModel.mode},
+      onSelectionChanged: (selected) => _viewModel.setMode(selected.first),
+      style: const ButtonStyle(
+        visualDensity: VisualDensity.comfortable,
+      ),
+    );
+  }
+
+  Widget _buildExistingShopPicker() {
+    if (_viewModel.isLoadingShops) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 24),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+    if (_viewModel.shops.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: Text(
+          'No shops found in the database.',
+          style: TextStyle(color: hintColor, fontSize: 14),
+        ),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _requiredLabel('Select Shop'),
+        DropdownButtonFormField<Shop>(
+          initialValue: _viewModel.selectedShop,
+          decoration: _inputDecoration(
+            icon: Icons.store_outlined,
+            hint: 'Choose your shop',
+          ),
+          items: _viewModel.shops
+              .map(
+                (shop) => DropdownMenuItem(
+                  value: shop,
+                  child: Text(shop.name),
+                ),
+              )
+              .toList(),
+          onChanged: (shop) {
+            if (shop != null) _viewModel.selectExistingShop(shop);
+          },
+        ),
+      ],
+    );
+  }
+
+  Future<void> _onUseExistingShop() async {
+    if (_viewModel.selectedShop == null) {
+      _viewModel.setError('Please select a shop to continue.');
+      return;
+    }
+    await _viewModel.saveSelectedShop();
+    if (mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const RegisterScreen()),
+      );
+    }
   }
 }
 

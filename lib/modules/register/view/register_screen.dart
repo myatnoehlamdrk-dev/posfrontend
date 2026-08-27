@@ -418,7 +418,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   children: [
                                     _optionalLabel('Gender'),
                                     DropdownButtonFormField<String>(
-                                      value: _viewModel.gender,
+                                      initialValue: _viewModel.gender,
                                       isExpanded: true,
                                       decoration: _inputDecoration(
                                         icon: Icons.wc_outlined,

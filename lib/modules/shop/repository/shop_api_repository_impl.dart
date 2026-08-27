@@ -18,4 +18,21 @@ class ShopApiRepositoryImpl implements ShopApiRepository {
       throw ApiException.fromDio(e);
     }
   }
+
+  @override
+  Future<List<Shop>> getShops() async {
+    try {
+      // Shop controller: GET {BASE_URL}/api/shops (public, paginated).
+      final response = await _dio.get('/api/shops');
+      final payload = response.data;
+      final list = payload is Map<String, dynamic>
+          ? (payload['data'] as List? ?? const [])
+          : (payload as List? ?? const []);
+      return list
+          .map((e) => Shop.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
 }

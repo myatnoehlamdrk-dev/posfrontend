@@ -1,12 +1,18 @@
 import 'package:posfrontend/core/base/base_view_model.dart';
+import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/shop/model/shop.dart';
+import 'package:posfrontend/modules/shop/repository/shop_api_repository.dart';
 import 'package:posfrontend/modules/shop/repository/shop_local_repository.dart';
 
 class ShopViewModel extends BaseViewModel {
   final ShopLocalRepository _repository;
+  final ShopApiRepository _apiRepository;
 
-  ShopViewModel({required ShopLocalRepository repository})
-      : _repository = repository;
+  ShopViewModel({
+    required ShopLocalRepository repository,
+    required ShopApiRepository apiRepository,
+  })  : _repository = repository,
+        _apiRepository = apiRepository;
 
   String? _logoData;
   String? get logoData => _logoData;
@@ -36,6 +42,64 @@ class ShopViewModel extends BaseViewModel {
   bool get isShopCreated => _isShopCreated;
 
   bool get canProceedToRegister => _isShopCreated;
+
+  // Mode: 'create' (new shop form) or 'existing' (pick from database).
+  String _mode = 'create';
+  String get mode => _mode;
+
+  void setMode(String mode) {
+    if (_mode == mode) return;
+    _mode = mode;
+    if (mode == 'existing') {
+      loadShops();
+    }
+    notifyListeners();
+  }
+
+  List<Shop> _shops = const [];
+  List<Shop> get shops => _shops;
+
+  bool _isLoadingShops = false;
+  bool get isLoadingShops => _isLoadingShops;
+
+  Shop? _selectedShop;
+  Shop? get selectedShop => _selectedShop;
+
+  void selectExistingShop(Shop shop) {
+    _selectedShop = shop;
+    notifyListeners();
+  }
+
+  Future<void> loadShops() async {
+    _isLoadingShops = true;
+    notifyListeners();
+    try {
+      _shops = await _apiRepository.getShops();
+    } on ApiException catch (e) {
+      setError(e.message);
+    } catch (e) {
+      setError('Failed to load shops: $e');
+    } finally {
+      _isLoadingShops = false;
+      notifyListeners();
+    }
+  }
+
+  /// Persist a chosen existing shop (id + name) for the registration step.
+  Future<void> saveSelectedShop() async {
+    if (_selectedShop == null) return;
+    await _repository.saveShop(
+      Shop(
+        id: _selectedShop!.id,
+        name: _selectedShop!.name,
+        type: _selectedShop!.type,
+        physicalAddress: _selectedShop!.physicalAddress,
+        ownerInformation: _selectedShop!.ownerInformation,
+      ),
+    );
+    _isShopCreated = true;
+    notifyListeners();
+  }
 
   final Map<String, String?> _fieldErrors = {};
   Map<String, String?> get fieldErrors => Map.unmodifiable(_fieldErrors);

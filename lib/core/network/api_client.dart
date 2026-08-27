@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:posfrontend/core/auth/token_storage.dart';
 
 class ApiException implements Exception {
   final int? statusCode;
@@ -38,6 +39,17 @@ class ApiClient {
     );
     dio.interceptors.add(
       LogInterceptor(requestBody: true, responseBody: true),
+    );
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          final token = await TokenStorage.getToken();
+          if (token != null && token.isNotEmpty) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+          handler.next(options);
+        },
+      ),
     );
     return dio;
   }
