@@ -317,7 +317,7 @@ class DropdownField extends StatelessWidget {
   final String? value;
   final String hint;
   final List<String> items;
-  final ValueChanged<String?> onChanged;
+  final ValueChanged<String?>? onChanged;
 
   const DropdownField({
     super.key,

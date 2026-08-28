@@ -34,7 +34,7 @@ class DashboardRepositoryImpl implements DashboardRepository {
           iconBg: Color(0xFFDBEAFE),
           iconColor: Color(0xFF2563EB),
           label: 'Total Sales',
-          value: '\$12,345',
+          value: 'MMK 12,345',
         ),
       ],
       trendSeries: [

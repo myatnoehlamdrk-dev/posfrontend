@@ -43,7 +43,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
         type: widget.inventoryType,
         name: name,
         description: _descController.text.trim(),
-        amountOfPackage: amount,
+        packageLimit: amount,
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -82,7 +82,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
         if (isWide) {
           return Scaffold(
             backgroundColor: Colors.white,
-            body: Row(children: [sidebar, Expanded(child: body)]),
+            body: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [sidebar, Expanded(child: body)]),
           );
         }
         return Scaffold(
@@ -126,24 +126,6 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
             ),
             const SizedBox(height: 24),
             FormCard(
-              label: 'Category ID',
-              helper: 'Automatically generated.',
-              child: const DisabledField(
-                icon: Icons.shield,
-                value: 'CAT-2024-00013',
-              ),
-            ),
-            const SizedBox(height: 16),
-            FormCard(
-              label: 'Inventory ID',
-              helper: 'Automatically linked to your inventory.',
-              child: const DisabledField(
-                icon: Icons.category,
-                value: 'INV-2024-00007',
-              ),
-            ),
-            const SizedBox(height: 16),
-            FormCard(
               label: 'Category Name',
               required: true,
               helper: 'Enter a name for this category.',
@@ -155,9 +137,9 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
             ),
             const SizedBox(height: 16),
             FormCard(
-              label: 'Amount of Packages',
+              label: 'Amount of Packages (Limit)',
               helper:
-                  'Total number of packages in this category.',
+                  'Maximum number of packages this category can hold.',
               child: CounterTextField(
                 controller: _amountController,
                 hint: '0',

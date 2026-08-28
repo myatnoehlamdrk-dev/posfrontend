@@ -104,7 +104,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
             const Text(
               'Inventory',
               style: TextStyle(
-                fontSize: 36,
+                fontSize: 30,
                 fontWeight: FontWeight.bold,
                 color: title,
               ),

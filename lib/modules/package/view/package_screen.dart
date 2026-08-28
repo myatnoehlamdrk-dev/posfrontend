@@ -54,6 +54,22 @@ class _PackageScreenState extends State<PackageScreen> {
     );
   }
 
+  Future<void> _openAddPackage() async {
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => AddPackageScreen(
+          user: widget.user,
+          category: widget.category,
+        ),
+      ),
+    );
+    if (result is Package) {
+      _viewModel.addPackage(result);
+    } else {
+      _viewModel.load();
+    }
+  }
+
   @override
   void dispose() {
     _viewModel.dispose();
@@ -91,11 +107,7 @@ class _PackageScreenState extends State<PackageScreen> {
           backgroundColor: bg,
           drawer: Drawer(child: sidebar),
           floatingActionButton: FloatingActionButton(
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => AddPackageScreen(user: widget.user),
-              ),
-            ),
+            onPressed: _openAddPackage,
             backgroundColor: const Color(0xFF4FD1D9),
             child: const Icon(Icons.inventory_2, color: Colors.white),
           ),
@@ -125,21 +137,40 @@ class _PackageScreenState extends State<PackageScreen> {
                 const SizedBox(height: 20),
                 _filterToolbar(),
                 const SizedBox(height: 20),
-                Text(
-                  'List of Packages (${_viewModel.total})',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: title,
+                if (_viewModel.isLoading)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(
+                      child: CircularProgressIndicator(color: purple),
+                    ),
+                  )
+                else if (_viewModel.hasError)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 40),
+                    child: Center(
+                      child: Text(
+                        _viewModel.errorMessage ?? 'Failed to load packages.',
+                        style: const TextStyle(color: gray),
+                      ),
+                    ),
+                  )
+                else ...[
+                  Text(
+                    'List of Packages (${_viewModel.total})',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: title,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                LayoutBuilder(
-                  builder: (c, constraints) {
-                    final cols = constraints.maxWidth >= 560 ? 2 : 1;
-                    return _packageGrid(items, cols);
-                  },
-                ),
+                  const SizedBox(height: 16),
+                  LayoutBuilder(
+                    builder: (c, constraints) {
+                      final cols = constraints.maxWidth >= 560 ? 2 : 1;
+                      return _packageGrid(items, cols);
+                    },
+                  ),
+                ],
               ],
             ),
           );
@@ -162,7 +193,9 @@ class _PackageScreenState extends State<PackageScreen> {
         ),
         Expanded(
           child: Text(
-            'Self Inventory',
+            'Self ',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
@@ -223,7 +256,12 @@ class _PackageScreenState extends State<PackageScreen> {
         const Text('  >  ', style: style),
         GestureDetector(
           onTap: () {},
-          child: const Text('Self Inventory', style: TextStyle(fontSize: 13, color: purple)),
+          child: const Text(
+            'Self Inventory',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 13, color: purple),
+          ),
         ),
         const Text('  >  ', style: style),
         Text(widget.category.name, style: style),
@@ -242,14 +280,14 @@ class _PackageScreenState extends State<PackageScreen> {
               Text(
                 widget.category.name,
                 style: const TextStyle(
-                  fontSize: 30,
+                  fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: title,
                 ),
               ),
               const SizedBox(height: 6),
               const Text(
-                'Manage your inventory categories and their packages.',
+                'Manage your category here...',
                 style: TextStyle(fontSize: 16, color: gray),
               ),
             ],
@@ -280,13 +318,9 @@ class _PackageScreenState extends State<PackageScreen> {
           ),
         ],
       ),
-      child: GestureDetector(
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => AddPackageScreen(user: widget.user),
-          ),
-        ),
-        child: const Row(
+        child: GestureDetector(
+          onTap: _openAddPackage,
+          child: const Row(
           children: [
             Icon(Icons.add, color: Colors.white, size: 20),
             SizedBox(width: 8),
@@ -479,7 +513,7 @@ class _PackageScreenState extends State<PackageScreen> {
                   Row(
                     children: [
                       Text(
-                        'Qty: ${p.quantity}',
+                        'Qty: ${p.quantity} in ${p.productLimit}',
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,

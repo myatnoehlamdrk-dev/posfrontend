@@ -8,7 +8,9 @@ class ProductDetail {
   final String color;
   final String size;
   final String packageId;
+  final String packageName;
   final String inventoryId;
+  final String inventoryType;
   final String status;
   final double price;
   final int stockAvailable;
@@ -21,6 +23,7 @@ class ProductDetail {
   final String supplierName;
   final String contractNumber;
   final String supplierSince;
+  final String? imageUrl;
 
   const ProductDetail({
     required this.id,
@@ -32,7 +35,9 @@ class ProductDetail {
     required this.color,
     required this.size,
     required this.packageId,
+    required this.packageName,
     required this.inventoryId,
+    required this.inventoryType,
     required this.status,
     required this.price,
     required this.stockAvailable,
@@ -45,5 +50,51 @@ class ProductDetail {
     required this.supplierName,
     required this.contractNumber,
     required this.supplierSince,
+    this.imageUrl,
   });
+
+  factory ProductDetail.fromJson(Map<String, dynamic> json) {
+    final variants = json['variants'];
+    final variantList = variants is List ? variants : const [];
+    final price = variantList.isNotEmpty
+        ? (variantList.first['price'] ?? 0).toDouble()
+        : 0.0;
+    final stock = (json['stock'] as num?)?.toInt() ?? 0;
+    final size = (json['size'] as String?)?.isNotEmpty == true
+        ? json['size'] as String
+        : (variantList.isNotEmpty ? (variantList.first['size'] ?? '') : '');
+    final image = (json['image'] as String?)?.trim();
+
+    final stockStatus = stock == 0
+        ? 'No Stock'
+        : (stock < 10 ? 'Low Stock' : 'Optimal');
+
+    return ProductDetail(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? 'Unnamed',
+      categoryName: (json['category'] as String?)?.trim() ?? '',
+      sku: (json['sku'] as String?)?.trim() ?? '—',
+      isBundle: (json['isSet'] as bool? ?? false) ? 'Yes' : 'No',
+      brand: (json['brand'] as String?)?.trim() ?? '—',
+      color: (json['color'] as String?)?.trim() ?? '—',
+      size: size?.toString() ?? '—',
+      packageId: (json['packageId'] as String?)?.trim() ?? '—',
+      packageName: (json['packageName'] as String?)?.trim() ?? '—',
+      inventoryId: '—',
+      inventoryType: (json['inventoryType'] as String?)?.trim() ?? '—',
+      status: 'Active',
+      price: price,
+      stockAvailable: stock,
+      stockReserved: 0,
+      reorderLevel: 10,
+      minStock: 5,
+      maxCapacity: stock > 0 ? stock : 100,
+      stockStatus: stockStatus,
+      supplierId: (json['supplierId'] as String?)?.trim() ?? '—',
+      supplierName: (json['supplierName'] as String?)?.trim() ?? '—',
+      contractNumber: '—',
+      supplierSince: '—',
+      imageUrl: image != null && image.isNotEmpty ? image : null,
+    );
+  }
 }

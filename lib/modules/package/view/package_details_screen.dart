@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/category/model/category_models.dart';
 import 'package:posfrontend/modules/inventory/view/inventory_sidebar.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/package/model/package_models.dart';
-import 'package:posfrontend/modules/package/model/product_models.dart';
-import 'package:posfrontend/modules/package/repository/product_repository_impl.dart';
+import 'package:posfrontend/modules/product/model/catalog_product.dart';
+import 'package:posfrontend/modules/product/repository/catalog_product_repository_impl.dart';
 import 'package:posfrontend/modules/product/view/product_detail_screen.dart';
 import 'package:posfrontend/modules/shared/widgets/inventory_form_widgets.dart';
 
@@ -27,7 +28,9 @@ class PackageDetailsScreen extends StatefulWidget {
 class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _search = TextEditingController();
-  late final List<Product> _products;
+  List<CatalogProduct> _products = [];
+  bool _loading = true;
+  String? _error;
 
   String get _initials {
     final name = widget.user?.fullName.trim() ?? 'John Doe';
@@ -61,7 +64,26 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    _products = ProductRepositoryImpl().getProducts(widget.package);
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      _products = await CatalogProductRepositoryImpl()
+          .getProducts(packageId: widget.package.id);
+      if (!mounted) return;
+      setState(() => _loading = false);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.message;
+        _loading = false;
+      });
+    }
   }
 
   @override
@@ -70,18 +92,17 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
     super.dispose();
   }
 
-  List<Product> get _filtered {
+  List<CatalogProduct> get _filtered {
     final q = _search.text.toLowerCase();
     if (q.isEmpty) return _products;
     return _products
         .where((p) =>
             p.name.toLowerCase().contains(q) ||
-            p.description.toLowerCase().contains(q))
+            p.brand.toLowerCase().contains(q))
         .toList();
   }
 
-  int get _totalUnits =>
-      _products.fold(0, (sum, p) => sum + p.quantity);
+  int get _totalUnits => _products.fold(0, (sum, p) => sum + p.stock);
 
   @override
   Widget build(BuildContext context) {
@@ -99,14 +120,19 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
         if (isWide) {
           return Scaffold(
             backgroundColor: Colors.white,
-            body: Row(children: [sidebar, Expanded(child: body)]),
+            body: SafeArea(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [sidebar, Expanded(child: _content())],
+              ),
+            ),
           );
         }
         return Scaffold(
           key: _scaffoldKey,
           backgroundColor: Colors.white,
           drawer: Drawer(child: sidebar),
-          body: body,
+          body: SafeArea(child: body),
         );
       },
     );
@@ -116,8 +142,28 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
     final p = widget.package;
     final c = widget.category;
 
-    return SafeArea(
-      child: ListenableBuilder(
+    if (_loading) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF6D28D9)),
+      );
+    }
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(_error!, style: const TextStyle(color: Colors.red)),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: _load,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListenableBuilder(
         listenable: _search,
         builder: (context, _) {
           final products = _filtered;
@@ -157,7 +203,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                     children: products
                         .map((pr) => Padding(
                               padding: const EdgeInsets.only(bottom: 12),
-                              child: _productRow(pr, c),
+                              child: _productRow(pr),
                             ))
                         .toList(),
                   ),
@@ -166,7 +212,6 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
             ),
           );
         },
-      ),
     );
   }
 
@@ -485,14 +530,13 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
     );
   }
 
-  Widget _productRow(Product pr, Category c) {
+  Widget _productRow(CatalogProduct pr) {
     return GestureDetector(
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => ProductDetailScreen(
             user: widget.user,
-            product: pr,
-            category: c,
+            productId: pr.id,
           ),
         ),
       ),
@@ -517,22 +561,26 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
               height: 80,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                gradient: LinearGradient(
-                  colors: [
-                    c.iconColor.withValues(alpha: 0.85),
-                    c.iconColor.withValues(alpha: 0.55),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: pr.color,
               ),
-              child: Center(
-                child: Icon(
-                  c.icon,
-                  color: Colors.white.withValues(alpha: 0.9),
-                  size: 36,
-                ),
-              ),
+              clipBehavior: Clip.antiAlias,
+              child: pr.imageUrl != null
+                  ? Image.network(
+                      pr.imageUrl!,
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => Icon(
+                        pr.icon,
+                        color: Colors.white.withValues(alpha: 0.9),
+                        size: 36,
+                      ),
+                    )
+                  : Icon(
+                      pr.icon,
+                      color: Colors.white.withValues(alpha: 0.9),
+                      size: 36,
+                    ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -549,7 +597,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    pr.description,
+                    pr.brand,
                     style: const TextStyle(fontSize: 13, color: kGray),
                   ),
                 ],
@@ -565,7 +613,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    '${pr.quantity}',
+                    '${pr.stock}',
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,

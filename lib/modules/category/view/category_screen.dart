@@ -4,6 +4,7 @@ import 'package:posfrontend/modules/category/repository/category_repository_impl
 import 'package:posfrontend/modules/category/view/add_category_screen.dart';
 import 'package:posfrontend/modules/package/view/package_screen.dart';
 import 'package:posfrontend/modules/category/viewmodel/category_view_model.dart';
+import 'package:posfrontend/modules/inventory/repository/inventory_repository_impl.dart';
 import 'package:posfrontend/modules/inventory/view/inventory_sidebar.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
 
@@ -51,7 +52,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
   @override
   void initState() {
     super.initState();
-    _viewModel = CategoryViewModel(repository: CategoryRepositoryImpl());
+    _viewModel = CategoryViewModel(
+      repository: CategoryRepositoryImpl(),
+      inventoryRepository: InventoryRepositoryImpl(),
+      type: widget.inventoryType,
+    );
   }
 
   @override
@@ -115,12 +120,30 @@ class _CategoryScreenState extends State<CategoryScreen> {
                 const SizedBox(height: 20),
                 _filterToolbar(),
                 const SizedBox(height: 20),
-                LayoutBuilder(
-                  builder: (c, constraints) {
-                    final cols = constraints.maxWidth >= 560 ? 2 : 1;
-                    return _categoryGrid(items, cols);
-                  },
-                ),
+                if (_viewModel.isLoading)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(
+                      child: CircularProgressIndicator(color: purple),
+                    ),
+                  )
+                else if (_viewModel.hasError)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 40),
+                    child: Center(
+                      child: Text(
+                        _viewModel.errorMessage ?? 'Failed to load categories.',
+                        style: const TextStyle(color: gray),
+                      ),
+                    ),
+                  )
+                else
+                  LayoutBuilder(
+                    builder: (c, constraints) {
+                      final cols = constraints.maxWidth >= 560 ? 2 : 1;
+                      return _categoryGrid(items, cols);
+                    },
+                  ),
                 const SizedBox(height: 20),
                 _pagination(items.length),
               ],
@@ -142,6 +165,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
         Expanded(
           child: Text(
             _inventoryLabel,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
@@ -202,7 +227,12 @@ class _CategoryScreenState extends State<CategoryScreen> {
         const Text('  >  ', style: style),
         GestureDetector(
           onTap: () {},
-          child: Text(_inventoryLabel, style: const TextStyle(fontSize: 13, color: purple)),
+          child: Text(
+            _inventoryLabel,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 13, color: purple),
+          ),
         ),
         const Text('  >  ', style: style),
         const Text('Categories', style: style),
@@ -221,7 +251,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                 Text(
                   'Categories',
                   style: TextStyle(
-                    fontSize: 22,
+                    fontSize: 19,
                     fontWeight: FontWeight.bold,
                     color: title,
                   ),
@@ -326,13 +356,34 @@ class _CategoryScreenState extends State<CategoryScreen> {
             ),
           ),
         ),
-        IconButton(
-          icon: const Icon(Icons.filter_list, color: title),
-          style: IconButton.styleFrom(
-            side: const BorderSide(color: border),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: border),
           ),
-          onPressed: () {},
+          child: PopupMenuButton<CategorySort>(
+            icon: const Icon(Icons.filter_list, color: title),
+            tooltip: 'Sort',
+            onSelected: (v) => _viewModel.setSort(v),
+            itemBuilder: (ctx) => const [
+              PopupMenuItem(
+                value: CategorySort.dateNewest,
+                child: Text('Newest first'),
+              ),
+              PopupMenuItem(
+                value: CategorySort.dateOldest,
+                child: Text('Oldest first'),
+              ),
+              PopupMenuItem(
+                value: CategorySort.nameAz,
+                child: Text('Name (A–Z)'),
+              ),
+              PopupMenuItem(
+                value: CategorySort.nameZa,
+                child: Text('Name (Z–A)'),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -432,6 +483,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
                   children: [
                     Text(
                       c.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -439,7 +492,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                       ),
                     ),
                     const SizedBox(height: 6),
-                    _packageBadge(c.packageCount),
+                    _packageBadge(c.packageCount, c.packageLimit),
                     const SizedBox(height: 8),
                     Text(
                       c.description,
@@ -499,7 +552,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
     );
   }
 
-  Widget _packageBadge(int count) {
+  Widget _packageBadge(int count, int limit) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
@@ -507,7 +560,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        '$count Packages',
+        '$count in $limit',
         style: const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
@@ -540,7 +593,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
       children: [
         Expanded(
           child: Text(
-            'Showing 1 to $shown of ${_viewModel.totalCount} categories',
+            'First $shown of ${_viewModel.totalCount} categories',
             style: const TextStyle(fontSize: 13, color: gray),
             overflow: TextOverflow.ellipsis,
           ),

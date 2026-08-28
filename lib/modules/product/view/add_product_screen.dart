@@ -1,8 +1,15 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:posfrontend/core/network/api_client.dart';
+import 'package:posfrontend/modules/category/model/category_models.dart';
+import 'package:posfrontend/modules/category/repository/category_repository_impl.dart';
 import 'package:posfrontend/modules/inventory/view/inventory_sidebar.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/product/model/product_create_models.dart';
 import 'package:posfrontend/modules/product/repository/product_create_repository_impl.dart';
+import 'package:posfrontend/shared/repositories/imgbb_repository_impl.dart';
 import 'package:posfrontend/modules/shared/widgets/inventory_form_widgets.dart';
 
 const Color kPurple700 = Color(0xFF7C3AED);
@@ -20,27 +27,29 @@ class AddProductScreen extends StatefulWidget {
 
 class _AddProductScreenState extends State<AddProductScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final ProductCreateRepositoryImpl _repository = ProductCreateRepositoryImpl();
 
   final TextEditingController _name = TextEditingController();
   final TextEditingController _brand = TextEditingController();
-  final TextEditingController _imageUrl = TextEditingController();
-  final TextEditingController _stock = TextEditingController(text: '0');
-  final TextEditingController _price = TextEditingController(text: '0.00');
   final TextEditingController _sku = TextEditingController();
+  final TextEditingController _supplier = TextEditingController();
   final FocusNode _imageFocus = FocusNode();
 
   bool _isSet = false;
-  String? _category;
-  String? _sizeType;
-  String? _supplier;
-  String? _package;
-  final Set<String> _colors = {};
+  String _inventoryType = 'self';
 
-  List<SupplierOption> _suppliers = [];
+  List<Category> _categories = [];
+  Category? _selectedCategory;
   List<PackageOption> _packages = [];
+  PackageOption? _selectedPackage;
 
-  static const String _autoId = 'PRD-009';
-  static const String _staffBadge = 'STF-001';
+  File? _imageFile;
+  String? _imageUrl;
+  bool _uploading = false;
+
+  final List<ProductVariant> _variants = [
+    ProductVariant(size: 'Small', color: 'Black'),
+  ];
 
   static const List<String> _sizeOptions = [
     'Individual',
@@ -54,75 +63,155 @@ class _AddProductScreenState extends State<AddProductScreen> {
     'Enterprise',
   ];
 
-  static const List<String> _categoryOptions = [
-    'Audio',
-    'Charging',
-    'Peripherals',
-    'Accessories',
-  ];
-
   static const List<ProductColorOption> _colorOptions = [
-    ProductColorOption('Matte Black', Color(0xFF1F2937)),
-    ProductColorOption('Pearl White', Color(0xFFF9FAFB)),
-    ProductColorOption('Space Gray', Color(0xFF4B5563)),
-    ProductColorOption('Midnight Blue', Color(0xFF1E3A8A)),
-    ProductColorOption('Orange', Color(0xFFF97316)),
-    ProductColorOption('Charcoal', Color(0xFF374151)),
-    ProductColorOption('Rose Gold', Color(0xFFE8B4B8)),
-    ProductColorOption('Violet', Color(0xFF7C3AED)),
-    ProductColorOption('Forest Green', Color(0xFF166534)),
-    ProductColorOption('Cream', Color(0xFFFDF6E3)),
+    ProductColorOption('Black', Color(0xFF000000)),
+    ProductColorOption('White', Color(0xFFFFFFFF)),
+    ProductColorOption('Gray', Color(0xFF808080)),
+    ProductColorOption('Navy Blue', Color(0xFF000080)),
+    ProductColorOption('Royal Blue', Color(0xFF4169E1)),
+    ProductColorOption('Red', Color(0xFFE53935)),
+    ProductColorOption('Green', Color(0xFF43A047)),
+    ProductColorOption('Yellow', Color(0xFFFDD835)),
+    ProductColorOption('Orange', Color(0xFFFB8C00)),
+    ProductColorOption('Brown', Color(0xFF795548)),
   ];
 
   @override
   void initState() {
     super.initState();
-    ProductCreateRepositoryImpl().getSuppliers().then((v) {
-      if (mounted) setState(() => _suppliers = v);
-    });
-    ProductCreateRepositoryImpl().getPackages().then((v) {
-      if (mounted) setState(() => _packages = v);
-    });
+    _loadCategories();
   }
 
   @override
   void dispose() {
     _name.dispose();
     _brand.dispose();
-    _imageUrl.dispose();
-    _stock.dispose();
-    _price.dispose();
     _sku.dispose();
+    _supplier.dispose();
     _imageFocus.dispose();
     super.dispose();
   }
 
-  Future<void> _save() async {
-    final req = ProductCreateRequest(
-      productId: _autoId,
-      isSet: _isSet,
-      name: _name.text.trim(),
-      imageUrl: _imageUrl.text.trim(),
-      brand: _brand.text.trim(),
-      categoryId: _category ?? '',
-      stock: int.tryParse(_stock.text) ?? 0,
-      price: double.tryParse(_price.text) ?? 0.0,
-      sku: _sku.text.trim(),
-      sizeType: _sizeType ?? '',
-      colors: _colors.toList(),
-      supplierId:
-          _suppliers.where((s) => s.name == _supplier).firstOrNull?.id ?? '',
-      packageId:
-          _packages.where((p) => p.name == _package).firstOrNull?.id ?? '',
-      createdByStaffId: _staffBadge,
-    );
-    await ProductCreateRepositoryImpl().createProduct(req);
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Product $_autoId created')),
-    );
-    Navigator.of(context).pop();
+  Future<void> _loadCategories() async {
+    try {
+      final cats = await CategoryRepositoryImpl().getCategories(type: _inventoryType);
+      if (!mounted) return;
+      setState(() {
+        _categories = cats;
+        _selectedCategory = null;
+        _packages = [];
+        _selectedPackage = null;
+      });
+    } on ApiException {
+      // Leave categories empty on failure.
+    }
   }
+
+  Future<void> _onCategoryChanged(Category? cat) async {
+    setState(() => _selectedCategory = cat);
+    if (cat == null) {
+      setState(() {
+        _packages = [];
+        _selectedPackage = null;
+      });
+      return;
+    }
+    try {
+      final pkgs = await _repository.getPackages(cat.id);
+      if (!mounted) return;
+      setState(() {
+        _packages = pkgs;
+        _selectedPackage = null;
+      });
+    } on ApiException {
+      // Leave packages empty on failure.
+    }
+  }
+
+  Future<void> _pickAndUpload() async {
+    final picker = ImagePicker();
+    final xfile = await picker.pickImage(source: ImageSource.gallery);
+    if (xfile == null) return;
+    final bytes = await xfile.readAsBytes();
+    setState(() {
+      _imageFile = File(xfile.path);
+      _uploading = true;
+    });
+    try {
+      final url = await ImgbbRepositoryImpl().uploadImage(
+        bytes,
+        fileName: xfile.name,
+      );
+      if (!mounted) return;
+      setState(() => _imageUrl = url);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
+  }
+
+  void _onVariantChanged(int index, ProductVariant v) {
+    setState(() {
+      _variants[index] = v;
+    });
+  }
+
+  void _addVariant() {
+    setState(() => _variants.add(ProductVariant(size: 'Small', color: 'Black')));
+  }
+
+  void _removeVariant(int index) {
+    setState(() => _variants.removeAt(index));
+  }
+
+  Future<void> _save() async {
+    final name = _name.text.trim();
+    if (name.isEmpty) {
+      _snack('Product name is required');
+      return;
+    }
+    final valid = _variants
+        .where((v) => v.size.isNotEmpty && v.quantity > 0 && v.price > 0)
+        .toList();
+    if (valid.isEmpty) {
+      _snack('Add at least one variant with a size, quantity and price');
+      return;
+    }
+
+    final req = ProductCreateRequest(
+      isSet: _isSet,
+      name: name,
+      imageUrl: _imageUrl ?? '',
+      brand: _brand.text.trim(),
+      inventoryType: _inventoryType,
+      categoryId: _selectedCategory?.id ?? '',
+      packageId: _selectedPackage?.id ?? '',
+      variants: valid,
+      sku: _sku.text.trim(),
+      supplierName: _supplier.text.trim(),
+    );
+
+    try {
+      await _repository.createProduct(req);
+      if (!mounted) return;
+      _snack('Product created');
+      Navigator.of(context).pop();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _snack(e.message);
+    }
+  }
+
+  void _snack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  int get _totalStock =>
+      _variants.fold(0, (s, v) => s + (v.quantity > 0 ? v.quantity : 0));
 
   @override
   Widget build(BuildContext context) {
@@ -136,11 +225,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
       builder: (ctx, constraints) {
         final isWide = constraints.maxWidth >= 768;
         final body = _content();
-
         final scaffold = isWide
             ? Scaffold(
                 backgroundColor: Colors.white,
-                body: Row(children: [sidebar, Expanded(child: body)]),
+                body: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [sidebar, Expanded(child: body)]),
                 bottomNavigationBar: _createButton(),
               )
             : Scaffold(
@@ -164,13 +252,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
           children: [
             _header(),
             const SizedBox(height: 20),
-            _autoIdCard(),
-            const SizedBox(height: 16),
-            _staffCard(),
+            FormCard(
+              label: 'Inventory Type',
+              helper: 'Choose which inventory this product belongs to.',
+              child: _inventoryTypeToggle(),
+            ),
             const SizedBox(height: 16),
             FormCard(
               label: 'Product Image',
-              helper: 'Upload a product photo or paste an image URL.',
+              helper: 'Upload a product photo from your device.',
               child: _imageSection(),
             ),
             const SizedBox(height: 16),
@@ -180,18 +270,20 @@ class _AddProductScreenState extends State<AddProductScreen> {
             ),
             const SizedBox(height: 16),
             FormCard(
-              label: 'Inventory & Specs',
-              child: _inventorySpecs(),
+              label: 'Category & Package',
+              child: _categoryPackage(),
             ),
             const SizedBox(height: 16),
             FormCard(
-              label: 'Color',
-              helper: 'Select one or more product colors.',
-              child: _colorSection(),
+              label: 'Variants, Stock & Price',
+              helper:
+                  'Split total stock into sizes and colors. Each variant has its own quantity and price.',
+              child: _variantsSection(),
             ),
             const SizedBox(height: 16),
             FormCard(
               label: 'Supply Chain',
+              helper: 'Supplier is optional.',
               child: _supplyChain(),
             ),
             const SizedBox(height: 100),
@@ -221,10 +313,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
           ),
         ),
         const SizedBox(width: 12),
-        Expanded(
+        const Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
+            children: [
               Text(
                 'New Product',
                 style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
@@ -269,106 +361,90 @@ class _AddProductScreenState extends State<AddProductScreen> {
     );
   }
 
-  Widget _autoIdCard() {
-    return _panel(
-      Row(
+  Widget _inventoryTypeToggle() {
+    return Container(
+      decoration: BoxDecoration(
+        color: kLightPurple,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      padding: const EdgeInsets.all(4),
+      child: Row(
         children: [
-          const Text(
-            'AUTO ID',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: kGray,
-            ),
-          ),
-          const Spacer(),
-          Text(
-            _autoId,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: kPurple600,
-            ),
-          ),
+          _toggleOption('self', 'Self Inventory'),
+          _toggleOption('public', 'Public Inventory'),
         ],
       ),
     );
   }
 
-  Widget _staffCard() {
-    return _panel(
-      Row(
-        children: [
-          CircleAvatar(
-            radius: 22,
-            backgroundColor: kPurple600,
-            child: const Text(
-              'JD',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-            ),
+  Widget _toggleOption(String value, String label) {
+    final selected = _inventoryType == value;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          if (_inventoryType == value) return;
+          setState(() => _inventoryType = value);
+          _loadCategories();
+        },
+        child: Container(
+          height: 42,
+          decoration: BoxDecoration(
+            color: selected ? kPurple700 : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  'John Doe',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: kTitle),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  'Admin - Operations',
-                  style: TextStyle(fontSize: 13, color: kGray),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: kPurple700,
-              borderRadius: BorderRadius.circular(20),
-            ),
-              child: const Text(
-              'STF-001',
+          child: Center(
+            child: Text(
+              label,
               style: TextStyle(
-                fontSize: 12,
+                color: selected ? Colors.white : kPurple600,
                 fontWeight: FontWeight.w600,
-                color: Colors.white,
+                fontSize: 14,
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _imageSection() {
+    final hasPreview = _imageFile != null || (_imageUrl?.isNotEmpty ?? false);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         GestureDetector(
-          onTap: () => _imageFocus.requestFocus(),
+          onTap: _uploading ? null : _pickAndUpload,
           child: _DashedBox(
-            child: Column(
-              children: const [
-                Icon(Icons.image_outlined, size: 42, color: kPurple700),
-                SizedBox(height: 10),
-                Text(
-                  'Paste image URL below',
-                  style: TextStyle(fontSize: 14, color: kGray),
-                ),
-              ],
-            ),
+            child: hasPreview
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: _imageFile != null
+                        ? Image.file(_imageFile!, height: 160, fit: BoxFit.cover)
+                        : Image.network(_imageUrl!, height: 160, fit: BoxFit.cover),
+                  )
+                : _uploading
+                    ? const CircularProgressIndicator(color: kPurple700)
+                    : Column(
+                        children: const [
+                          Icon(Icons.image_outlined, size: 42, color: kPurple700),
+                          SizedBox(height: 10),
+                          Text(
+                            'Tap to choose an image file',
+                            style: TextStyle(fontSize: 14, color: kGray),
+                          ),
+                        ],
+                      ),
           ),
         ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _imageUrl,
-          focusNode: _imageFocus,
-          decoration: _decoration('https://...'),
-        ),
+        if (_imageUrl?.isNotEmpty ?? false)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              _imageUrl!,
+              style: const TextStyle(fontSize: 12, color: kGray),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
       ],
     );
   }
@@ -381,7 +457,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
         const SizedBox(height: 16),
         _field('Brand', _brand, 'e.g. SoundMax', req: true),
         const SizedBox(height: 16),
-        _dropdown('Category', _category, _categoryOptions, (v) => setState(() => _category = v)),
+        _field('SKU', _sku, 'e.g. SM-WHP-001', req: true),
         const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -394,7 +470,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
               value: _isSet,
               onChanged: (v) => setState(() => _isSet = v),
               activeThumbColor: kPurple700,
-              activeTrackColor: Color(0xFFC4B5FD),
+              activeTrackColor: const Color(0xFFC4B5FD),
             ),
           ],
         ),
@@ -402,86 +478,106 @@ class _AddProductScreenState extends State<AddProductScreen> {
     );
   }
 
-  Widget _inventorySpecs() {
+  Widget _categoryPackage() {
+    final categoryLabels = _categories.map((c) => c.name).toList();
+    final selectedCategoryLabel = _selectedCategory?.name;
+    final packageLabels = _packages.map((p) => p.name).toList();
+    final selectedPackageLabel = _selectedPackage?.name;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _field('Stock *', _stock, '0', req: true, kt: TextInputType.number),
+        _dropdown(
+          'Category',
+          selectedCategoryLabel,
+          categoryLabels,
+          _categories.isEmpty
+              ? null
+              : (v) => _onCategoryChanged(
+                  _categories.firstWhere((c) => c.name == v),
+                ),
+        ),
         const SizedBox(height: 16),
-        _field('Price (\$) *', _price, '0.00', req: true,
-            kt: const TextInputType.numberWithOptions(decimal: true)),
-        const SizedBox(height: 16),
-        _field('SKU *', _sku, 'e.g. SM-WHP-001', req: true),
-        const SizedBox(height: 16),
-        _dropdown('Size / Family Type *', _sizeType, _sizeOptions,
-            (v) => setState(() => _sizeType = v)),
+        _dropdown(
+          'Package',
+          selectedPackageLabel,
+          packageLabels,
+          _packages.isEmpty || _selectedCategory == null
+              ? null
+              : (v) => setState(() {
+                  _selectedPackage = _packages.firstWhere((p) => p.name == v);
+                }),
+        ),
       ],
     );
   }
 
-  Widget _colorSection() {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: _colorOptions.map(_colorChip).toList(),
-    );
-  }
-
-  Widget _colorChip(ProductColorOption c) {
-    final selected = _colors.contains(c.label);
-    return GestureDetector(
-      onTap: () => setState(() {
-        if (selected) {
-          _colors.remove(c.label);
-        } else {
-          _colors.add(c.label);
-        }
-      }),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? kPurple700.withValues(alpha: 0.1) : Colors.white,
-          border: Border.all(color: selected ? kPurple700 : kBorder),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 14,
-              height: 14,
-              decoration: BoxDecoration(
-                color: c.color,
-                shape: BoxShape.circle,
-                border: Border.all(color: kBorder),
+  Widget _variantsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ..._variants.asMap().entries.map((e) {
+          final i = e.key;
+          final v = e.value;
+          return _VariantTile(
+            index: i,
+            variant: v,
+            sizeOptions: _sizeOptions,
+            colorOptions: _colorOptions,
+            onChanged: (nv) => _onVariantChanged(i, nv),
+            onRemove: _variants.length > 1 ? () => _removeVariant(i) : null,
+          );
+        }),
+        const SizedBox(height: 12),
+        GestureDetector(
+          onTap: _addVariant,
+          child: Container(
+            width: double.infinity,
+            height: 44,
+            decoration: BoxDecoration(
+              border: Border.all(color: kPurple700, style: BorderStyle.solid),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Center(
+              child: Text(
+                '+ Add Variant',
+                style: TextStyle(
+                  color: kPurple700,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
               ),
             ),
-            const SizedBox(width: 8),
-            Text(
-              c.label,
-              style: TextStyle(
-                fontSize: 13,
-                color: selected ? kPurple700 : kTitle,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-              ),
-            ),
-          ],
+          ),
         ),
-      ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: kLightPurple,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: [
+              const Text(
+                'Total Stock',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: kPurple900),
+              ),
+              const Spacer(),
+              Text(
+                '$_totalStock',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: kPurple900),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
   Widget _supplyChain() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _dropdown('Supplier *', _supplier, _suppliers.map((s) => s.name).toList(),
-            (v) => setState(() => _supplier = v)),
-        const SizedBox(height: 16),
-        _dropdown('Package *', _package, _packages.map((p) => p.name).toList(),
-            (v) => setState(() => _package = v)),
-      ],
-    );
+    return _field('Supplier (optional)', _supplier,
+        'Type a supplier name (created if new)');
   }
 
   Widget _field(String label, TextEditingController c, String hint,
@@ -501,7 +597,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   Widget _dropdown(String label, String? value, List<String> items,
-      ValueChanged<String?> onChanged) {
+      ValueChanged<String?>? onChanged) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -556,22 +652,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
     );
   }
 
-  Widget _panel(Widget child) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: kBorder),
-        boxShadow: const [
-          BoxShadow(color: Color(0x0D000000), blurRadius: 8, offset: Offset(0, 2)),
-        ],
-      ),
-      child: child,
-    );
-  }
-
   Widget _createButton() {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
@@ -594,7 +674,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
             onTap: _save,
             child: const Center(
               child: Text(
-                'Create Product PRD-009',
+                'Create Product',
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
@@ -605,6 +685,218 @@ class _AddProductScreenState extends State<AddProductScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _VariantTile extends StatefulWidget {
+  final int index;
+  final ProductVariant variant;
+  final List<String> sizeOptions;
+  final List<ProductColorOption> colorOptions;
+  final ValueChanged<ProductVariant> onChanged;
+  final VoidCallback? onRemove;
+
+  const _VariantTile({
+    required this.index,
+    required this.variant,
+    required this.sizeOptions,
+    required this.colorOptions,
+    required this.onChanged,
+    this.onRemove,
+  });
+
+  @override
+  State<_VariantTile> createState() => _VariantTileState();
+}
+
+class _VariantTileState extends State<_VariantTile> {
+  late String _size;
+  late String _color;
+  late final TextEditingController _qty;
+  late final TextEditingController _price;
+
+  @override
+  void initState() {
+    super.initState();
+    _size = widget.variant.size;
+    _color = widget.variant.color;
+    _qty = TextEditingController(text: widget.variant.quantity.toString());
+    _price = TextEditingController(text: widget.variant.price.toString());
+  }
+
+  @override
+  void dispose() {
+    _qty.dispose();
+    _price.dispose();
+    super.dispose();
+  }
+
+  void _emit() {
+    widget.onChanged(
+      ProductVariant(
+        size: _size,
+        color: _color,
+        quantity: int.tryParse(_qty.text) ?? 0,
+        price: double.tryParse(_price.text) ?? 0.0,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorLabels = widget.colorOptions.map((c) => c.label).toList();
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(color: kBorder),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Text(
+                'Variant ${widget.index + 1}',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: kTitle,
+                ),
+              ),
+              const Spacer(),
+              if (widget.onRemove != null)
+                GestureDetector(
+                  onTap: widget.onRemove,
+                  child: const Icon(Icons.close, size: 18, color: kGray),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _miniDropdown(
+                  'Size',
+                  _size,
+                  widget.sizeOptions,
+                  (v) {
+                    _size = v ?? '';
+                    _emit();
+                  },
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _colorDropdown(colorLabels),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _miniField('Qty', _qty, TextInputType.number, _emit),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _miniField('Price', _price,
+                    const TextInputType.numberWithOptions(decimal: true), _emit),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _miniDropdown(String label, String value, List<String> items,
+      ValueChanged<String?> onChanged) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: const TextStyle(fontSize: 12, color: kGray)),
+        const SizedBox(height: 4),
+        DropdownField(
+          value: value.isEmpty ? null : value,
+          hint: 'Select',
+          items: items,
+          onChanged: onChanged,
+        ),
+      ],
+    );
+  }
+
+  Widget _colorDropdown(List<String> colorLabels) {
+    final swatch = widget.colorOptions
+        .firstWhere(
+          (c) => c.label == _color,
+          orElse: () => const ProductColorOption('', Color(0xFF9E9E9E)),
+        )
+        .color;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text('Color', style: const TextStyle(fontSize: 12, color: kGray)),
+            const SizedBox(width: 6),
+            Container(
+              width: 14,
+              height: 14,
+              decoration: BoxDecoration(
+                color: swatch,
+                shape: BoxShape.circle,
+                border: Border.all(color: kBorder),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        DropdownField(
+          value: _color.isEmpty ? null : _color,
+          hint: 'Select',
+          items: colorLabels,
+          onChanged: (v) {
+            _color = v ?? '';
+            _emit();
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _miniField(String label, TextEditingController c, TextInputType kt,
+      VoidCallback onChanged) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 12, color: kGray)),
+        const SizedBox(height: 4),
+        TextField(
+          controller: c,
+          keyboardType: kt,
+          onChanged: (_) => onChanged(),
+          decoration: InputDecoration(
+            hintText: '0',
+            hintStyle: const TextStyle(color: kGray, fontSize: 13),
+            filled: true,
+            fillColor: kBg,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: kBorder),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: kBorder),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

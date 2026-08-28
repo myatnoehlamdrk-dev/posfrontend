@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/core/network/api_client.dart';
+import 'package:posfrontend/modules/category/model/category_models.dart';
 import 'package:posfrontend/modules/category/repository/category_repository_impl.dart';
 import 'package:posfrontend/modules/inventory/view/inventory_sidebar.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
+import 'package:posfrontend/modules/package/repository/package_repository_impl.dart';
 import 'package:posfrontend/modules/shared/widgets/inventory_form_widgets.dart';
 
 class AddPackageScreen extends StatefulWidget {
   final LoginResponse? user;
-  const AddPackageScreen({super.key, this.user});
+  final Category? category;
+  const AddPackageScreen({super.key, this.user, this.category});
 
   @override
   State<AddPackageScreen> createState() => _AddPackageScreenState();
@@ -19,13 +23,10 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
   final TextEditingController _descController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
 
-  String? _category;
+  Category? _selectedCategory;
   String? _status;
 
-  final List<String> _categories = CategoryRepositoryImpl()
-      .getCategories()
-      .map((c) => c.name)
-      .toList();
+  List<Category> _categoryObjects = [];
   final List<String> _statuses = const [
     'Overstock',
     'Optimal',
@@ -41,11 +42,72 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
     return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 
-  void _save() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Package saved')),
-    );
-    Navigator.of(context).pop();
+  String _labelOf(Category c) =>
+      c.type.isNotEmpty ? '${c.name} (${c.type})' : c.name;
+
+  Future<void> _save() async {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Package name is required')),
+      );
+      return;
+    }
+    if (_selectedCategory == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a category')),
+      );
+      return;
+    }
+
+    try {
+      final amountText = _amountController.text.trim();
+      final amount = int.tryParse(amountText);
+      final created = await PackageRepositoryImpl().createPackage(
+        categoryId: _selectedCategory!.id,
+        name: name,
+        productLimit: amount,
+        description: _descController.text.trim(),
+        location: _locationController.text.trim(),
+        stockStatus: _status,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Package saved')),
+      );
+      Navigator.of(context).pop(created);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _status = _statuses[1];
+    _selectedCategory = widget.category;
+    _loadCategories();
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      final cats = await CategoryRepositoryImpl().getCategories();
+      if (!mounted) return;
+      setState(() {
+        _categoryObjects = cats;
+        if (widget.category != null) {
+          _selectedCategory = cats.firstWhere(
+            (c) => c.id == widget.category!.id,
+            orElse: () => widget.category!,
+          );
+        }
+      });
+    } on ApiException {
+      // Leave the category list empty on failure.
+    }
   }
 
   @override
@@ -65,15 +127,19 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
       onNavigate: (_) {},
     );
 
+    final categoryLabels = _categoryObjects.map(_labelOf).toList();
+    final selectedLabel =
+        _selectedCategory == null ? null : _labelOf(_selectedCategory!);
+
     return LayoutBuilder(
       builder: (ctx, constraints) {
         final isWide = constraints.maxWidth >= 768;
-        final body = _content();
+        final body = _content(categoryLabels, selectedLabel);
 
         if (isWide) {
           return Scaffold(
             backgroundColor: Colors.white,
-            body: Row(children: [sidebar, Expanded(child: body)]),
+            body: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [sidebar, Expanded(child: body)]),
           );
         }
         return Scaffold(
@@ -86,7 +152,7 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
     );
   }
 
-  Widget _content() {
+  Widget _content(List<String> categoryLabels, String? selectedLabel) {
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -117,23 +183,19 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
             ),
             const SizedBox(height: 24),
             FormCard(
-              label: 'Package ID',
-              helper: 'Automatically generated.',
-              child: const DisabledField(
-                icon: Icons.shield,
-                value: 'PKG-2024-00058',
-              ),
-            ),
-            const SizedBox(height: 16),
-            FormCard(
-              label: 'Category ID',
+              label: 'Category',
               required: true,
               helper: 'Select the category for this package.',
               child: DropdownField(
-                value: _category,
+                value: selectedLabel,
                 hint: 'Select category',
-                items: _categories,
-                onChanged: (v) => setState(() => _category = v),
+                items: categoryLabels,
+                onChanged: (v) => setState(() {
+                  _selectedCategory = _categoryObjects.firstWhere(
+                    (c) => _labelOf(c) == v,
+                    orElse: () => _selectedCategory!,
+                  );
+                }),
               ),
             ),
             const SizedBox(height: 16),
@@ -149,9 +211,9 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
             ),
             const SizedBox(height: 16),
             FormCard(
-              label: 'Amount of Products',
+              label: 'Amount of Products (Limit)',
               required: true,
-              helper: 'Total number of products in this package.',
+              helper: 'Maximum number of products this package can hold.',
               child: TextField(
                 controller: _amountController,
                 keyboardType: TextInputType.number,

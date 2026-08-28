@@ -1,22 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:posfrontend/modules/category/model/category_models.dart';
+import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/inventory/view/inventory_sidebar.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
-import 'package:posfrontend/modules/package/model/product_models.dart';
+import 'package:posfrontend/modules/product/model/catalog_product.dart';
 import 'package:posfrontend/modules/product/model/product_detail_models.dart';
 import 'package:posfrontend/modules/product/repository/product_detail_repository.dart';
 import 'package:posfrontend/modules/shared/widgets/inventory_form_widgets.dart';
+import 'package:posfrontend/modules/shared/widgets/price_text.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final LoginResponse? user;
-  final Product product;
-  final Category category;
+  final String productId;
 
   const ProductDetailScreen({
     super.key,
     this.user,
-    required this.product,
-    required this.category,
+    required this.productId,
   });
 
   @override
@@ -25,7 +24,10 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  late final ProductDetail _detail;
+  ProductDetail? _detail;
+  bool _loading = true;
+  String? _error;
+  bool _isWide = false;
   int _tabIndex = 0;
 
   String get _initials {
@@ -38,7 +40,25 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _detail = ProductDetailRepositoryImpl().getDetail(widget.product, widget.category);
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      _detail = await ProductDetailRepositoryImpl().getDetail(widget.productId);
+      if (!mounted) return;
+      setState(() => _loading = false);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.message;
+        _loading = false;
+      });
+    }
   }
 
   @override
@@ -52,36 +72,66 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return LayoutBuilder(
       builder: (ctx, constraints) {
         final isWide = constraints.maxWidth >= 768;
+        _isWide = isWide;
         final body = _content();
 
         if (isWide) {
           return Scaffold(
             backgroundColor: Colors.white,
-            body: Row(children: [sidebar, Expanded(child: body)]),
+            body: SafeArea(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [sidebar, Expanded(child: _content())],
+              ),
+            ),
           );
         }
         return Scaffold(
           key: _scaffoldKey,
           backgroundColor: Colors.white,
           drawer: Drawer(child: sidebar),
-          body: body,
+          body: SafeArea(child: body),
         );
       },
     );
   }
 
   Widget _content() {
-    final c = widget.category;
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+    if (_loading) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF6D28D9)),
+      );
+    }
+    if (_error != null) {
+      return Center(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
+            Text(_error!, style: const TextStyle(color: Colors.red)),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: _load,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+    if (_detail == null) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF6D28D9)),
+      );
+    }
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
             InventoryHeader(
               title: 'Product Detail',
               initials: _initials,
-              showMenu: false,
+              showMenu: !_isWide,
+              onMenu: () => _scaffoldKey.currentState?.openDrawer(),
             ),
             const SizedBox(height: 20),
             const Breadcrumb([
@@ -91,7 +141,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               BreadcrumbItem('Detail', true),
             ]),
             const SizedBox(height: 24),
-            _heroImage(c),
+            _heroImage(),
             const SizedBox(height: 16),
             _summaryCard(),
             const SizedBox(height: 16),
@@ -101,11 +151,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             const SizedBox(height: 16),
           ],
         ),
-      ),
-    );
+      );
   }
 
-  Widget _heroImage(Category c) {
+  Widget _heroImage() {
+    final d = _detail!;
+    final color = CatalogProduct.colorFor(d.categoryName);
+    final hasImage = d.imageUrl != null;
     return Stack(
       children: [
         Container(
@@ -113,22 +165,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           height: 220,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(
-              colors: [
-                c.iconColor.withValues(alpha: 0.85),
-                c.iconColor.withValues(alpha: 0.55),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: color,
           ),
-          child: Center(
-            child: Icon(
-              c.icon,
-              color: Colors.white.withValues(alpha: 0.9),
-              size: 84,
-            ),
-          ),
+          clipBehavior: Clip.antiAlias,
+          child: hasImage
+              ? Image.network(
+                  d.imageUrl!,
+                  width: double.infinity,
+                  height: 220,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => _heroFallback(color),
+                )
+              : _heroFallback(color),
         ),
         Positioned(
           left: 16,
@@ -153,6 +201,30 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
+  Widget _heroFallback(Color color) {
+    return Container(
+      width: double.infinity,
+      height: 220,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            color.withValues(alpha: 0.85),
+            color.withValues(alpha: 0.55),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Center(
+        child: Icon(
+          Icons.inventory_2,
+          color: Colors.white.withValues(alpha: 0.9),
+          size: 84,
+        ),
+      ),
+    );
+  }
+
   Widget _summaryCard() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -174,7 +246,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              _detail.categoryName,
+              _detail!.categoryName,
               style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -188,7 +260,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _detail.name,
+                  _detail!.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -196,15 +270,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  _detail.id,
-                  style: const TextStyle(fontSize: 13, color: kGray),
-                ),
               ],
             ),
           ),
-          Text(
-            '\$${_detail.price.toStringAsFixed(2)}',
+          PriceText(
+            _detail!.price,
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -284,9 +354,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
         const SizedBox(height: 12),
         _card([
-          _row(Icons.tag, 'Product ID', _detail.id),
-          _row(Icons.qr_code, 'SKU', _detail.sku),
-          _row(Icons.layers, 'Is Set / Bundle', _detail.isBundle),
+          _row(Icons.qr_code, 'SKU', _detail!.sku),
+          _row(Icons.layers, 'Is Set / Bundle', _detail!.isBundle),
         ]),
         const SizedBox(height: 24),
         const Text(
@@ -295,24 +364,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
         const SizedBox(height: 12),
         _card([
-          _row(Icons.inventory_2, 'Product Name', _detail.name),
-          _row(Icons.business, 'Brand', _detail.brand),
-          _row(Icons.category, 'Category', _detail.categoryName),
-          _row(Icons.color_lens, 'Color', _detail.color),
-          _row(Icons.straighten, 'Size', _detail.size),
-          _row(Icons.inventory, 'Package ID', _detail.packageId),
-          _row(Icons.store, 'Inventory ID', _detail.inventoryId),
-          _row(Icons.check_circle, 'Product Status', _detail.status),
+          _row(Icons.inventory_2, 'Product Name', _detail!.name),
+          _row(Icons.business, 'Brand', _detail!.brand),
+          _row(Icons.category, 'Category', _detail!.categoryName),
+          _row(Icons.color_lens, 'Color', _detail!.color),
+          _row(Icons.straighten, 'Size', _detail!.size),
+          _row(Icons.inventory, 'Package', _detail!.packageName),
+          _row(Icons.store, 'Inventory', _detail!.inventoryType),
+          _row(Icons.check_circle, 'Product Status', _detail!.status),
         ]),
       ],
     );
   }
 
   Widget _stockTab() {
-    final pct = _detail.stockAvailable / _detail.maxCapacity;
-    final color = _detail.stockStatus == 'Optimal'
+    final pct = _detail!.stockAvailable / _detail!.maxCapacity;
+    final color = _detail!.stockStatus == 'Optimal'
         ? const Color(0xFF16A34A)
-        : (_detail.stockStatus == 'Low Stock'
+        : (_detail!.stockStatus == 'Low Stock'
             ? const Color(0xFFD97706)
             : const Color(0xFFDC2626));
     return Column(
@@ -345,7 +414,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${_detail.stockAvailable}',
+                      '${_detail!.stockAvailable}',
                       style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
@@ -384,11 +453,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
         const SizedBox(height: 12),
         _card([
-          _row(Icons.check_box, 'Available', '${_detail.stockAvailable} units'),
-          _row(Icons.lock, 'Reserved', '${_detail.stockReserved} units'),
-          _row(Icons.warning, 'Reorder Level', '${_detail.reorderLevel} units'),
-          _row(Icons.remove_circle, 'Minimum Stock', '${_detail.minStock} units'),
-          _row(Icons.inventory, 'Maximum Capacity', '${_detail.maxCapacity} units'),
+          _row(Icons.check_box, 'Available', '${_detail!.stockAvailable} units'),
+          _row(Icons.remove_circle, 'Minimum Stock', '${_detail!.minStock} units'),
+          _row(Icons.inventory, 'Maximum Capacity', '${_detail!.maxCapacity} units'),
         ]),
         const SizedBox(height: 16),
         Container(
@@ -412,7 +479,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   ),
                   const Spacer(),
                   Text(
-                    _detail.stockStatus,
+                    _detail!.stockStatus,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -445,10 +512,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
         const SizedBox(height: 12),
         _card([
-          _row(Icons.badge, 'Supplier ID', _detail.supplierId),
-          _row(Icons.business, 'Supplier Name', _detail.supplierName),
-          _row(Icons.description, 'Contract Number', _detail.contractNumber),
-          _row(Icons.calendar_today, 'Supplier Since', _detail.supplierSince),
+          _row(Icons.badge, 'Supplier ID', _detail!.supplierId),
+          _row(Icons.business, 'Supplier Name', _detail!.supplierName),
+          _row(Icons.description, 'Contract Number', _detail!.contractNumber),
+          _row(Icons.calendar_today, 'Supplier Since', _detail!.supplierSince),
         ]),
       ],
     );
@@ -483,17 +550,26 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           Icon(icon, size: 18, color: kPurple),
           const SizedBox(width: 12),
           Expanded(
+            flex: 2,
             child: Text(
               label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 14, color: kGray),
             ),
           ),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: kTitle,
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.end,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: kTitle,
+              ),
             ),
           ),
         ],

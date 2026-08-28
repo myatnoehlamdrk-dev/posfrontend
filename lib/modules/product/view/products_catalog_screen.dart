@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:posfrontend/modules/category/model/category_models.dart';
+import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/inventory/view/inventory_sidebar.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
-import 'package:posfrontend/modules/package/model/product_models.dart';
 import 'package:posfrontend/modules/product/model/catalog_product.dart';
 import 'package:posfrontend/modules/product/repository/catalog_product_repository_impl.dart';
 import 'package:posfrontend/modules/product/view/add_product_screen.dart';
 import 'package:posfrontend/modules/product/view/product_detail_screen.dart';
+import 'package:posfrontend/modules/shared/widgets/price_text.dart';
 
 class ProductsCatalogScreen extends StatefulWidget {
   final LoginResponse? user;
@@ -19,21 +19,24 @@ class ProductsCatalogScreen extends StatefulWidget {
 class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _search = TextEditingController();
-  late final List<CatalogProduct> _all;
+  List<CatalogProduct> _all = [];
   bool _isGrid = true;
+  bool _loading = true;
+  String? _error;
   String _category = 'All';
   static const Color bg = Color(0xFFF8F9FC);
   static const Color gray = Color(0xFF6B7280);
   static const Color purple = Color(0xFF6D28D9);
   static const Color titleColor = Color(0xFF111827);
 
-  final List<String> _filters = const [
-    'All',
-    'Audio',
-    'Charging',
-    'Peripherals',
-    'Accessories',
-  ];
+  List<String> get _filters {
+    final cats = <String>{
+      for (final p in _all)
+        if (p.category.isNotEmpty) p.category,
+    };
+    final sorted = cats.toList()..sort();
+    return ['All', ...sorted];
+  }
 
   String get _initials {
     final name = widget.user?.fullName.trim() ?? 'John Doe';
@@ -45,7 +48,25 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
   @override
   void initState() {
     super.initState();
-    _all = CatalogProductRepositoryImpl().getProducts();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      _all = await CatalogProductRepositoryImpl().getProducts();
+      if (!mounted) return;
+      setState(() => _loading = false);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.message;
+        _loading = false;
+      });
+    }
   }
 
   @override
@@ -65,27 +86,11 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
   }
 
   void _open(CatalogProduct p) {
-    final category = Category(
-      id: p.category.toLowerCase(),
-      name: p.category,
-      packageCount: 0,
-      description: '',
-      createdDate: '',
-      active: true,
-      iconColor: p.color,
-      icon: p.icon,
-    );
-    final product = Product(
-      name: p.name,
-      description: p.brand,
-      quantity: p.stock,
-    );
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => ProductDetailScreen(
           user: widget.user,
-          product: product,
-          category: category,
+          productId: p.id,
         ),
       ),
     );
@@ -107,26 +112,51 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
         if (isWide) {
           return Scaffold(
             backgroundColor: bg,
-            body: Row(children: [sidebar, Expanded(child: body)]),
+            body: SafeArea(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [sidebar, Expanded(child: _content())],
+              ),
+            ),
           );
         }
         return Scaffold(
           key: _scaffoldKey,
           backgroundColor: bg,
           drawer: Drawer(child: sidebar),
-          body: body,
+          body: SafeArea(child: body),
         );
       },
     );
   }
 
   Widget _content() {
+    if (_loading) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF6D28D9)),
+      );
+    }
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(_error!, style: const TextStyle(color: Colors.red)),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: _load,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
     final dateLabel = _formatDate(DateTime.now());
     final products = _filtered;
-    final featured = _all.first;
+    final featured = _all.isNotEmpty ? _all.first : null;
 
-    return SafeArea(
-      child: ListenableBuilder(
+    return ListenableBuilder(
         listenable: _search,
         builder: (context, _) {
           return SingleChildScrollView(
@@ -187,7 +217,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                _banner(featured),
+                if (featured != null) _banner(featured),
                 const SizedBox(height: 24),
                 Row(
                   children: [
@@ -199,7 +229,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                         color: titleColor,
                       ),
                     ),
-                    const Spacer(),
+                    const Spacer(flex: 2),
                     Text(
                       '${products.length} items',
                       style: const TextStyle(fontSize: 14, color: gray),
@@ -209,13 +239,22 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                _isGrid ? _grid(products) : _list(products),
+                products.isEmpty
+                    ? const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 48),
+                        child: Center(
+                          child: Text(
+                            'No products found.',
+                            style: TextStyle(color: Color(0xFF6B7280)),
+                          ),
+                        ),
+                      )
+                    : (_isGrid ? _grid(products) : _list(products)),
                 const SizedBox(height: 16),
               ],
             ),
           );
         },
-      ),
     );
   }
 
@@ -414,8 +453,8 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      Text(
-                        '\$${p.price.toStringAsFixed(0)}',
+                      PriceText(
+                        p.price,
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -455,11 +494,24 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                     color: Colors.white.withValues(alpha: 0.18),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Icon(
-                    p.icon,
-                    color: Colors.white,
-                    size: 48,
-                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: p.imageUrl != null
+                      ? Image.network(
+                          p.imageUrl!,
+                          width: 90,
+                          height: 90,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => Icon(
+                            p.icon,
+                            color: Colors.white,
+                            size: 48,
+                          ),
+                        )
+                      : Icon(
+                          p.icon,
+                          color: Colors.white,
+                          size: 48,
+                        ),
                 ),
               ],
             ),
@@ -503,7 +555,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
           physics: const NeverScrollableScrollPhysics(),
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
-          childAspectRatio: 0.72,
+          childAspectRatio: 0.62,
           children: products.map(_gridCard).toList(),
         );
       },
@@ -533,18 +585,19 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                 Container(
                   height: 120,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        p.color.withValues(alpha: 0.85),
-                        p.color.withValues(alpha: 0.55),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                   ),
-                  child: Center(
-                    child: Icon(p.icon, color: Colors.white, size: 44),
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                    child: p.imageUrl != null
+                        ? Image.network(
+                            p.imageUrl!,
+                            width: double.infinity,
+                            height: 120,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => _imageFallback(p, 44),
+                          )
+                        : _imageFallback(p, 44),
                   ),
                 ),
                 Positioned(
@@ -607,12 +660,12 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                     style: const TextStyle(fontSize: 12, color: gray),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    '\$${p.price.toStringAsFixed(0)}',
+                  PriceText(
+                    p.price,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: purple,
+                      color: titleColor,
                     ),
                   ),
                 ],
@@ -658,17 +711,18 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
               height: 76,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                gradient: LinearGradient(
-                  colors: [
-                    p.color.withValues(alpha: 0.85),
-                    p.color.withValues(alpha: 0.55),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
               ),
-              child: Center(
-                child: Icon(p.icon, color: Colors.white, size: 34),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: p.imageUrl != null
+                    ? Image.network(
+                        p.imageUrl!,
+                        width: 76,
+                        height: 76,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => _imageFallback(p, 34),
+                      )
+                    : _imageFallback(p, 34),
               ),
             ),
             const SizedBox(width: 14),
@@ -691,8 +745,8 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                   const SizedBox(height: 2),
                   Text(p.brand, style: const TextStyle(fontSize: 12, color: gray)),
                   const SizedBox(height: 4),
-                  Text(
-                    '\$${p.price.toStringAsFixed(0)}',
+                  PriceText(
+                    p.price,
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
@@ -725,6 +779,26 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _imageFallback(CatalogProduct p, double iconSize) {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            p.color.withValues(alpha: 0.85),
+            p.color.withValues(alpha: 0.55),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Center(
+        child: Icon(p.icon, color: Colors.white, size: iconSize),
       ),
     );
   }

@@ -1,31 +1,55 @@
-import '../model/product_create_models.dart';
+import 'package:dio/dio.dart';
+import 'package:posfrontend/core/network/api_client.dart';
+import 'package:posfrontend/modules/package/repository/package_repository_impl.dart';
+import 'package:posfrontend/modules/product/model/product_create_models.dart';
 import 'product_create_repository.dart';
 
 class ProductCreateRepositoryImpl implements ProductCreateRepository {
+  List<dynamic> _asList(dynamic data) {
+    if (data is List) return data;
+    if (data is Map<String, dynamic>) {
+      final inner = data['data'];
+      return inner is List ? inner : [];
+    }
+    return [];
+  }
+
   @override
   Future<List<SupplierOption>> getSuppliers() async {
-    await Future.delayed(const Duration(milliseconds: 80));
-    return const [
-      SupplierOption(id: 'SUP-001', name: 'TechSource Ltd'),
-      SupplierOption(id: 'SUP-002', name: 'Global Components'),
-      SupplierOption(id: 'SUP-003', name: 'Prime Electronics'),
-      SupplierOption(id: 'SUP-004', name: 'Nordic Supply Co'),
-    ];
+    try {
+      final dio = ApiClient.create();
+      final resp = await dio.get('/api/suppliers');
+      final data = _asList(resp.data);
+      return data
+          .map((e) => SupplierOption(
+                id: (e['id'] ?? '').toString(),
+                name: e['name'] ?? '',
+              ))
+          .toList();
+    } on DioException {
+      return [];
+    }
   }
 
   @override
-  Future<List<PackageOption>> getPackages() async {
-    await Future.delayed(const Duration(milliseconds: 80));
-    return const [
-      PackageOption(id: 'PKG-001', name: 'Audio Bundle A'),
-      PackageOption(id: 'PKG-002', name: 'Charging Kit'),
-      PackageOption(id: 'PKG-003', name: 'Peripheral Pack'),
-    ];
+  Future<List<PackageOption>> getPackages(String categoryId) async {
+    try {
+      final packages = await PackageRepositoryImpl().getPackages(categoryId);
+      return packages
+          .map((p) => PackageOption(id: p.id, name: p.name))
+          .toList();
+    } on ApiException {
+      return [];
+    }
   }
 
   @override
-  Future<ProductCreateRequest> createProduct(ProductCreateRequest request) async {
-    await Future.delayed(const Duration(milliseconds: 200));
-    return request;
+  Future<void> createProduct(ProductCreateRequest request) async {
+    try {
+      final dio = ApiClient.create();
+      await dio.post('/api/products', data: request.toJson());
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
   }
 }

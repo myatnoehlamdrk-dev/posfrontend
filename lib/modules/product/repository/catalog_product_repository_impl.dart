@@ -1,65 +1,52 @@
-import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
+import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/product/model/catalog_product.dart';
 import 'package:posfrontend/modules/product/repository/catalog_product_repository.dart';
 
 class CatalogProductRepositoryImpl implements CatalogProductRepository {
   @override
-  List<CatalogProduct> getProducts() => const [
-        CatalogProduct(
-          id: 'PRD-201',
-          name: 'Wireless Headphones Pro',
-          brand: 'Sony',
-          sku: 'AUD-SNY-WHPRO',
-          price: 89,
-          stock: 42,
-          category: 'Audio',
-          icon: Icons.headphones,
-          color: Color(0xFF6D28D9),
-        ),
-        CatalogProduct(
-          id: 'PRD-202',
-          name: 'TWS Earbuds Set',
-          brand: 'Bose',
-          sku: 'AUD-BOS-TWS',
-          price: 59,
-          stock: 118,
-          isSet: true,
-          category: 'Audio',
-          icon: Icons.earbuds,
-          color: Color(0xFF7C3AED),
-        ),
-        CatalogProduct(
-          id: 'PRD-203',
-          name: 'USB-C Fast Charger',
-          brand: 'Anker',
-          sku: 'CHG-ANK-USBC',
-          price: 29,
-          stock: 256,
-          category: 'Charging',
-          icon: Icons.flash_on,
-          color: Color(0xFFEA580C),
-        ),
-        CatalogProduct(
-          id: 'PRD-204',
-          name: 'Gaming Mouse X9',
-          brand: 'Logitech',
-          sku: 'PER-LOG-GM9',
-          price: 49,
-          stock: 73,
-          category: 'Peripherals',
-          icon: Icons.mouse,
-          color: Color(0xFF0EA5E9),
-        ),
-        CatalogProduct(
-          id: 'PRD-205',
-          name: 'Bluetooth Speaker Mini',
-          brand: 'JBL',
-          sku: 'AUD-JBL-BSM',
-          price: 39,
-          stock: 88,
-          category: 'Audio',
-          icon: Icons.speaker,
-          color: Color(0xFF16A34A),
-        ),
-      ];
+  Future<List<CatalogProduct>> getProducts({String? packageId}) async {
+    try {
+      final dio = ApiClient.create();
+      final query = <String, dynamic>{};
+      if (packageId != null && packageId.isNotEmpty) {
+        query['packageId'] = packageId;
+      }
+      final resp = await dio.get('/api/products', queryParameters: query);
+      final list = _asList(resp.data);
+      return [for (final item in list) _map(item)];
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  List<dynamic> _asList(dynamic data) {
+    if (data is List) return data;
+    if (data is Map && data['data'] is List) return data['data'] as List;
+    return const [];
+  }
+
+  CatalogProduct _map(Map<String, dynamic> item) {
+    final variants = item['variants'];
+    final variantList = variants is List ? variants : const [];
+    final price = variantList.isNotEmpty
+        ? (variantList.first['price'] ?? 0).toDouble()
+        : 0.0;
+    final category = (item['category'] as String?)?.trim() ?? '';
+    final image = (item['image'] as String?)?.trim();
+    return CatalogProduct(
+      id: item['id']?.toString() ?? '',
+      name: item['name']?.toString() ?? 'Unnamed',
+      brand: item['brand']?.toString() ?? '',
+      sku: item['sku']?.toString() ?? '',
+      price: price,
+      stock: (item['stock'] as num?)?.toInt() ?? 0,
+      isSet: item['isSet'] as bool? ?? false,
+      category: category,
+      packageId: (item['packageId'] as String?) ?? '',
+      icon: CatalogProduct.iconFor(category),
+      color: CatalogProduct.colorFor(category),
+      imageUrl: image != null && image.isNotEmpty ? image : null,
+    );
+  }
 }

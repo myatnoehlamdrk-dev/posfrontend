@@ -3,6 +3,7 @@ import 'package:posfrontend/core/auth/token_storage.dart';
 import 'package:posfrontend/modules/inventory/view/inventory_screen.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/login/view/login_screen.dart';
+import 'package:posfrontend/modules/product/view/products_catalog_screen.dart';
 
 class DashboardDrawer extends StatelessWidget {
   final LoginResponse? user;
@@ -103,7 +104,20 @@ class DashboardDrawer extends StatelessWidget {
                         );
                       },
                     ),
-                    _drawerItem(context, 'Product', Icons.category, false),
+                    _drawerItem(
+                      context,
+                      'Product',
+                      Icons.category,
+                      false,
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => ProductsCatalogScreen(user: user),
+                          ),
+                        );
+                      },
+                    ),
                     _drawerItem(context, 'Sale', Icons.point_of_sale, false),
                     _drawerItem(context, 'Purchase', Icons.shopping_bag, false),
                     _drawerItem(context, 'Setting', Icons.settings, false),
