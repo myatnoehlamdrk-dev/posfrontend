@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/dashboard/model/dashboard_models.dart';
 import 'package:posfrontend/modules/dashboard/repository/dashboard_repository_impl.dart';
-import 'package:posfrontend/modules/dashboard/view/dashboard_drawer.dart';
 import 'package:posfrontend/modules/dashboard/viewmodel/dashboard_view_model.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
+import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/app_top_bar.dart';
+import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
+import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 
 class DashboardScreen extends StatefulWidget {
   final LoginResponse? user;
@@ -23,26 +27,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
   static const Color titleColor = Color(0xFF0F172A);
   static const Color labelColor = Color(0xFF111827);
   static const Color grayText = Color(0xFF6B7280);
-  static const Color primaryLight = Color(0xFF9D4EDD);
   static const Color purpleAction = Color(0xFF6D28D9);
   static const Color cardBorder = Color(0xFFE5E7EB);
-
-  String get _userName =>
-      widget.user != null && widget.user!.fullName.trim().isNotEmpty
-          ? widget.user!.fullName
-          : 'John Doe';
-
-  String _initials(String name) {
-    final parts = name.trim().split(RegExp(r'\s+'));
-    if (parts.length == 1) return parts[0].substring(0, 1).toUpperCase();
-    return (parts[0][0] + parts[1][0]).toUpperCase();
-  }
 
   @override
   void initState() {
     super.initState();
     _viewModel = DashboardViewModel(repository: DashboardRepositoryImpl());
     _viewModel.load();
+    _loadProfileImage();
+  }
+
+  Future<void> _loadProfileImage() async {
+    try {
+      final dio = ApiClient.create();
+      final resp = await dio.get('/api/auth/profile');
+      final data = resp.data;
+      final image = (data is Map<String, dynamic>) ? (data['image'] ?? '') : '';
+      if (image is String && image.isNotEmpty && mounted) {
+        ProfileImageNotifier.instance.update(image);
+      }
+    } catch (_) {}
   }
 
   @override
@@ -53,119 +58,68 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final initials = _initials(_userName);
-
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: bg,
-      drawer: DashboardDrawer(user: widget.user),
+      drawer: AppDrawer(user: widget.user, activeItem: 'Dashboard'),
       body: SafeArea(
         child: ListenableBuilder(
           listenable: _viewModel,
           builder: (context, _) {
-            if (_viewModel.isLoading || _viewModel.data == null) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            final data = _viewModel.data!;
-            return SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(initials),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Summary',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: labelColor,
+            return RefreshableBody(
+              onRefresh: () => _viewModel.load(),
+              child: _viewModel.isLoading || _viewModel.data == null
+                  ? const SizedBox(
+                      height: 300,
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AppTopBar(
+                            title: 'Dashboard',
+                            showMenuButton: true,
+                            onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+                            user: widget.user,
+                          ),
+                          const SizedBox(height: 24),
+                          const Text(
+                            'Summary',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: labelColor,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          _buildSummaryGrid(_viewModel.data!.metrics),
+                          const SizedBox(height: 24),
+                          _buildTrendSection(_viewModel.data!.trendSeries),
+                          const SizedBox(height: 24),
+                          const Text(
+                            'Product Trend',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: labelColor,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          _buildProductTrendSection(
+                            _viewModel.data!.mostBought,
+                            _viewModel.data!.leastBought,
+                          ),
+                          const SizedBox(height: 24),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildSummaryGrid(data.metrics),
-                  const SizedBox(height: 24),
-                  _buildTrendSection(data.trendSeries),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Product Trend',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: labelColor,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildProductTrendSection(data.mostBought, data.leastBought),
-                  const SizedBox(height: 24),
-                ],
-              ),
             );
           },
         ),
       ),
     );
-  }
-
-  Widget _buildHeader(String initials) {
-    return Row(
-      children: [
-        InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () => _scaffoldKey.currentState?.openDrawer(),
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: cardBorder),
-            ),
-            child: const Icon(Icons.menu, color: titleColor),
-          ),
-        ),
-        const SizedBox(width: 12),
-        const Spacer(),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: cardBorder),
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.calendar_today, size: 16, color: grayText),
-              const SizedBox(width: 8),
-              Text(
-                _formatDate(DateTime.now()),
-                style: const TextStyle(fontSize: 13, color: titleColor),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 12),
-        CircleAvatar(
-          radius: 22,
-          backgroundColor: primaryLight,
-          child: Text(
-            initials,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-              fontSize: 14,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  String _formatDate(DateTime d) {
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-    return '${months[d.month - 1]} ${d.day}, ${d.year}';
   }
 
   Widget _summaryCard(Metric m) {

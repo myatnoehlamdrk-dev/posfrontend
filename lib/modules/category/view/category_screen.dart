@@ -5,8 +5,10 @@ import 'package:posfrontend/modules/category/view/add_category_screen.dart';
 import 'package:posfrontend/modules/package/view/package_screen.dart';
 import 'package:posfrontend/modules/category/viewmodel/category_view_model.dart';
 import 'package:posfrontend/modules/inventory/repository/inventory_repository_impl.dart';
-import 'package:posfrontend/modules/inventory/view/inventory_sidebar.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
+import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/app_top_bar.dart';
+import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 
 class CategoryScreen extends StatefulWidget {
   final LoginResponse? user;
@@ -27,17 +29,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
   static const Color gray = Color(0xFF6B7280);
   static const Color purple = Color(0xFF6D28D9);
   static const Color border = Color(0xFFE5E7EB);
-
-  String get _userName =>
-      widget.user != null && widget.user!.fullName.trim().isNotEmpty
-          ? widget.user!.fullName
-          : 'John Doe';
-
-  String _initials(String name) {
-    final parts = name.trim().split(RegExp(r'\s+'));
-    if (parts.length == 1) return parts[0].substring(0, 1).toUpperCase();
-    return (parts[0][0] + parts[1][0]).toUpperCase();
-  }
 
   String get _inventoryLabel {
     switch (widget.inventoryType) {
@@ -67,147 +58,94 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final initials = _initials(_userName);
-    final sidebar = InventorySidebar(
-      user: widget.user,
-      activeItem: 'Inventory',
-      onNavigate: (_) {},
-    );
-
     return LayoutBuilder(
-      builder: (ctx, constraints) {
-        final isWide = constraints.maxWidth >= 768;
-        final body = _buildContent(initials, isWide: isWide);
+        builder: (ctx, constraints) {
+          final isWide = constraints.maxWidth >= 768;
+          final body = _buildContent(isWide: isWide);
 
-        if (isWide) {
+          if (isWide) {
+            return Scaffold(
+              backgroundColor: bg,
+              body: Row(
+                children: [
+                  SizedBox(
+                    width: 240,
+                    child: AppDrawer(user: widget.user, activeItem: 'Inventory'),
+                  ),
+                  Expanded(child: body),
+                ],
+              ),
+            );
+          }
+
           return Scaffold(
+            key: _scaffoldKey,
             backgroundColor: bg,
-            body: Row(
-              children: [
-                sidebar,
-                Expanded(child: body),
-              ],
-            ),
+            drawer: AppDrawer(user: widget.user, activeItem: 'Inventory'),
+            body: body,
           );
-        }
-
-        return Scaffold(
-          key: _scaffoldKey,
-          backgroundColor: bg,
-          drawer: Drawer(child: sidebar),
-          body: body,
-        );
-      },
+        },
     );
   }
 
-  Widget _buildContent(String initials, {required bool isWide}) {
+  Widget _buildContent({required bool isWide}) {
     return SafeArea(
       child: ListenableBuilder(
         listenable: _viewModel,
         builder: (context, _) {
           final items = _viewModel.filtered;
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _topBar(initials, isWide: isWide),
-                const SizedBox(height: 20),
-                _breadcrumb(),
-                const SizedBox(height: 16),
-                _headingRow(),
-                const SizedBox(height: 20),
-                _filterToolbar(),
-                const SizedBox(height: 20),
-                if (_viewModel.isLoading)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 40),
-                    child: Center(
-                      child: CircularProgressIndicator(color: purple),
-                    ),
-                  )
-                else if (_viewModel.hasError)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 40),
-                    child: Center(
-                      child: Text(
-                        _viewModel.errorMessage ?? 'Failed to load categories.',
-                        style: const TextStyle(color: gray),
-                      ),
-                    ),
-                  )
-                else
-                  LayoutBuilder(
-                    builder: (c, constraints) {
-                      final cols = constraints.maxWidth >= 560 ? 2 : 1;
-                      return _categoryGrid(items, cols);
-                    },
+          return RefreshableBody(
+            onRefresh: () => _viewModel.load(),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppTopBar(
+                    title: _inventoryLabel,
+                    showMenuButton: !isWide,
+                    onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+                    user: widget.user,
                   ),
-                const SizedBox(height: 20),
-                _pagination(items.length),
-              ],
+                  const SizedBox(height: 20),
+                  _breadcrumb(),
+                  const SizedBox(height: 16),
+                  _headingRow(),
+                  const SizedBox(height: 20),
+                  _filterToolbar(),
+                  const SizedBox(height: 20),
+                  if (_viewModel.isLoading)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 40),
+                      child: Center(
+                        child: CircularProgressIndicator(color: purple),
+                      ),
+                    )
+                  else if (_viewModel.hasError)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 40),
+                      child: Center(
+                        child: Text(
+                          _viewModel.errorMessage ?? 'Failed to load categories.',
+                          style: const TextStyle(color: gray),
+                        ),
+                      ),
+                    )
+                  else
+                    LayoutBuilder(
+                      builder: (c, constraints) {
+                        final cols = constraints.maxWidth >= 560 ? 2 : 1;
+                        return _categoryGrid(items, cols);
+                      },
+                    ),
+                  const SizedBox(height: 20),
+                  _pagination(items.length),
+                ],
+              ),
             ),
           );
         },
       ),
-    );
-  }
-
-  Widget _topBar(String initials, {required bool isWide}) {
-    return Row(
-      children: [
-        if (!isWide)
-          IconButton(
-            icon: const Icon(Icons.menu, color: title),
-            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-          ),
-        Expanded(
-          child: Text(
-            _inventoryLabel,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: title,
-            ),
-          ),
-        ),
-        Stack(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.notifications_none_outlined, color: title),
-              onPressed: () {},
-            ),
-            Positioned(
-              top: 12,
-              right: 12,
-              child: Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFEF4444),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(width: 8),
-        CircleAvatar(
-          radius: 20,
-          backgroundColor: purple,
-          child: Text(
-            initials,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-              fontSize: 14,
-            ),
-          ),
-        ),
-      ],
     );
   }
 

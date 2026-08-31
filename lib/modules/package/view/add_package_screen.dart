@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/category/model/category_models.dart';
 import 'package:posfrontend/modules/category/repository/category_repository_impl.dart';
-import 'package:posfrontend/modules/inventory/view/inventory_sidebar.dart';
+import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/package/repository/package_repository_impl.dart';
 import 'package:posfrontend/modules/shared/widgets/inventory_form_widgets.dart';
@@ -34,13 +35,6 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
     'Critical',
     'No Stock',
   ];
-
-  String get _initials {
-    final name = widget.user?.fullName.trim() ?? 'John Doe';
-    final parts = name.split(RegExp(r'\s+'));
-    if (parts.length == 1) return parts[0].substring(0, 1).toUpperCase();
-    return (parts[0][0] + parts[1][0]).toUpperCase();
-  }
 
   String _labelOf(Category c) =>
       c.type.isNotEmpty ? '${c.name} (${c.type})' : c.name;
@@ -121,12 +115,6 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final sidebar = InventorySidebar(
-      user: widget.user,
-      activeItem: 'Inventory',
-      onNavigate: (_) {},
-    );
-
     final categoryLabels = _categoryObjects.map(_labelOf).toList();
     final selectedLabel =
         _selectedCategory == null ? null : _labelOf(_selectedCategory!);
@@ -139,13 +127,22 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
         if (isWide) {
           return Scaffold(
             backgroundColor: Colors.white,
-            body: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [sidebar, Expanded(child: body)]),
+            body: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(
+                  width: 240,
+                  child: AppDrawer(user: widget.user, activeItem: 'Inventory'),
+                ),
+                Expanded(child: body),
+              ],
+            ),
           );
         }
         return Scaffold(
           key: _scaffoldKey,
           backgroundColor: Colors.white,
-          drawer: Drawer(child: sidebar),
+          drawer: AppDrawer(user: widget.user, activeItem: 'Inventory'),
           body: body,
         );
       },
@@ -159,10 +156,11 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            InventoryHeader(
+            AppTopBar(
               title: 'Add Package',
-              initials: _initials,
-              showMenu: false,
+              showMenuButton: false,
+              showBackButton: true,
+              user: widget.user,
             ),
             const SizedBox(height: 20),
             const Breadcrumb([

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/core/network/api_client.dart';
-import 'package:posfrontend/modules/inventory/view/inventory_sidebar.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/product/model/catalog_product.dart';
 import 'package:posfrontend/modules/product/repository/catalog_product_repository_impl.dart';
 import 'package:posfrontend/modules/product/view/add_product_screen.dart';
 import 'package:posfrontend/modules/product/view/product_detail_screen.dart';
 import 'package:posfrontend/modules/shared/widgets/price_text.dart';
+import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/app_top_bar.dart';
+import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 
 class ProductsCatalogScreen extends StatefulWidget {
   final LoginResponse? user;
@@ -14,6 +16,15 @@ class ProductsCatalogScreen extends StatefulWidget {
 
   @override
   State<ProductsCatalogScreen> createState() => _ProductsCatalogScreenState();
+}
+
+enum ProductSort {
+  dateNewest,
+  dateOldest,
+  nameAz,
+  nameZa,
+  priceLow,
+  priceHigh,
 }
 
 class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
@@ -24,6 +35,10 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
   bool _loading = true;
   String? _error;
   String _category = 'All';
+  ProductSort _sort = ProductSort.dateNewest;
+  late final PageController _hotPageController;
+  int _hotIndex = 0;
+  bool _hotPaused = false;
   static const Color bg = Color(0xFFF8F9FC);
   static const Color gray = Color(0xFF6B7280);
   static const Color purple = Color(0xFF6D28D9);
@@ -38,17 +53,36 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
     return ['All', ...sorted];
   }
 
-  String get _initials {
-    final name = widget.user?.fullName.trim() ?? 'John Doe';
-    final parts = name.split(RegExp(r'\s+'));
-    if (parts.length == 1) return parts[0].substring(0, 1).toUpperCase();
-    return (parts[0][0] + parts[1][0]).toUpperCase();
-  }
-
   @override
   void initState() {
     super.initState();
+    _hotPageController = PageController(initialPage: 5000);
     _load();
+    _startAutoScroll();
+  }
+
+  void _startAutoScroll() {
+    Future.delayed(const Duration(seconds: 3), () {
+      if (!mounted || _hotPaused) {
+        _startAutoScroll();
+        return;
+      }
+      final hotProducts = _hotProducts;
+      if (hotProducts.length > 1) {
+        _hotIndex = (_hotIndex + 1) % hotProducts.length;
+        _hotPageController.nextPage(
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
+      }
+      _startAutoScroll();
+    });
+  }
+
+  List<CatalogProduct> get _hotProducts {
+    final sorted = List<CatalogProduct>.from(_all);
+    sorted.sort((a, b) => b.name.toLowerCase().compareTo(a.name.toLowerCase()));
+    return sorted.take(4).toList();
   }
 
   Future<void> _load() async {
@@ -72,17 +106,36 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
   @override
   void dispose() {
     _search.dispose();
+    _hotPageController.dispose();
     super.dispose();
   }
 
   List<CatalogProduct> get _filtered {
     final q = _search.text.toLowerCase();
-    return _all.where((p) {
+    final list = _all.where((p) {
       final matchesCat = _category == 'All' || p.category == _category;
       final matchesSearch =
           q.isEmpty || p.name.toLowerCase().contains(q) || p.brand.toLowerCase().contains(q);
       return matchesCat && matchesSearch;
     }).toList();
+
+    list.sort((a, b) {
+      switch (_sort) {
+        case ProductSort.nameAz:
+          return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+        case ProductSort.nameZa:
+          return b.name.toLowerCase().compareTo(a.name.toLowerCase());
+        case ProductSort.priceLow:
+          return a.price.compareTo(b.price);
+        case ProductSort.priceHigh:
+          return b.price.compareTo(a.price);
+        case ProductSort.dateNewest:
+          return b.name.toLowerCase().compareTo(a.name.toLowerCase());
+        case ProductSort.dateOldest:
+          return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+      }
+    });
+    return list;
   }
 
   void _open(CatalogProduct p) {
@@ -96,198 +149,257 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
     );
   }
 
+  void _showDeleteDialog(CatalogProduct p) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Product'),
+        content: Text('Are you sure you want to delete "${p.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                final dio = ApiClient.create();
+                await dio.delete('/api/products/${p.id}');
+                setState(() => _all.removeWhere((item) => item.id == p.id));
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Product deleted')),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Delete failed: $e')),
+                  );
+                }
+              }
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final sidebar = InventorySidebar(
-      user: widget.user,
-      activeItem: 'Product',
-      onNavigate: (_) {},
-    );
-
-    return LayoutBuilder(
-      builder: (ctx, constraints) {
-        final isWide = constraints.maxWidth >= 768;
-        final body = _content();
-
-        if (isWide) {
-          return Scaffold(
-            backgroundColor: bg,
-            body: SafeArea(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [sidebar, Expanded(child: _content())],
-              ),
-            ),
-          );
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          navigateToDashboard(context, user: widget.user);
         }
-        return Scaffold(
-          key: _scaffoldKey,
-          backgroundColor: bg,
-          drawer: Drawer(child: sidebar),
-          body: SafeArea(child: body),
-        );
       },
+      child: LayoutBuilder(
+        builder: (ctx, constraints) {
+          final isWide = constraints.maxWidth >= 768;
+          final body = _content();
+
+          if (isWide) {
+            return Scaffold(
+              backgroundColor: bg,
+              body: SafeArea(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(
+                      width: 240,
+                      child: AppDrawer(user: widget.user, activeItem: 'Product'),
+                    ),
+                    Expanded(child: _content()),
+                  ],
+                ),
+              ),
+            );
+          }
+          return Scaffold(
+            key: _scaffoldKey,
+            backgroundColor: bg,
+            drawer: AppDrawer(user: widget.user, activeItem: 'Product'),
+            body: SafeArea(child: body),
+          );
+        },
+      ),
     );
   }
 
   Widget _content() {
-    if (_loading) {
-      return const Center(
-        child: CircularProgressIndicator(color: Color(0xFF6D28D9)),
-      );
-    }
-    if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(_error!, style: const TextStyle(color: Colors.red)),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: _load,
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      );
-    }
-
     final dateLabel = _formatDate(DateTime.now());
     final products = _filtered;
-    final featured = _all.isNotEmpty ? _all.first : null;
 
-    return ListenableBuilder(
-        listenable: _search,
-        builder: (context, _) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _header(),
-                const SizedBox(height: 16),
-                const Text(
-                  'Catalog',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Expanded(
-                      child: Text(
-                        'Products',
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.w700,
-                          color: titleColor,
+    return RefreshableBody(
+      onRefresh: _load,
+      child: _loading
+          ? const SizedBox(
+              height: 300,
+              child: Center(
+                child: CircularProgressIndicator(color: Color(0xFF6D28D9)),
+              ),
+            )
+          : _error != null
+              ? SizedBox(
+                  height: 300,
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(_error!, style: const TextStyle(color: Colors.red)),
+                        const SizedBox(height: 12),
+                        ElevatedButton(
+                          onPressed: _load,
+                          child: const Text('Retry'),
                         ),
-                      ),
+                      ],
                     ),
-                    _iconButton(
-                      _isGrid ? Icons.grid_view : Icons.view_list,
-                      onTap: () => setState(() => _isGrid = !_isGrid),
-                    ),
-                    const SizedBox(width: 8),
-                    _iconButton(
-                      Icons.filter_list,
-                      onTap: () {},
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                _searchField(),
-                const SizedBox(height: 16),
-                _pills(),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    const Text(
-                      "Today's Products",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: titleColor,
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      dateLabel,
-                      style: const TextStyle(fontSize: 14, color: gray),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                if (featured != null) _banner(featured),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    const Text(
-                      'All Products',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: titleColor,
-                      ),
-                    ),
-                    const Spacer(flex: 2),
-                    Text(
-                      '${products.length} items',
-                      style: const TextStyle(fontSize: 14, color: gray),
-                    ),
-                    const SizedBox(width: 12),
-                    _addProductButton(),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                products.isEmpty
-                    ? const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 48),
-                        child: Center(
-                          child: Text(
-                            'No products found.',
-                            style: TextStyle(color: Color(0xFF6B7280)),
+                  ),
+                )
+              : ListenableBuilder(
+                  listenable: _search,
+                  builder: (context, _) {
+                    return Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AppTopBar(
+                            title: 'Products',
+                            showMenuButton: true,
+                            onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+                            user: widget.user,
                           ),
-                        ),
-                      )
-                    : (_isGrid ? _grid(products) : _list(products)),
-                const SizedBox(height: 16),
-              ],
-            ),
-          );
-        },
-    );
-  }
-
-  Widget _header() {
-    return Row(
-      children: [
-        IconButton(
-          icon: const Icon(Icons.menu, color: titleColor),
-          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-        ),
-        const Spacer(),
-        Container(
-          width: 90,
-          height: 26,
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.85),
-            borderRadius: BorderRadius.circular(13),
-          ),
-        ),
-        const Spacer(),
-        CircleAvatar(
-          radius: 20,
-          backgroundColor: purple,
-          child: Text(
-            _initials,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-              fontSize: 14,
-            ),
-          ),
-        ),
-      ],
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Catalog',
+                            style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Expanded(
+                                child: Text(
+                                  'Products',
+                                  style: TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.w700,
+                                    color: titleColor,
+                                  ),
+                                ),
+                              ),
+                              _iconButton(
+                                _isGrid ? Icons.grid_view : Icons.view_list,
+                                onTap: () => setState(() => _isGrid = !_isGrid),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                height: 40,
+                                width: 40,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                                ),
+                                child: PopupMenuButton<ProductSort>(
+                                  icon: const Icon(Icons.filter_list, color: titleColor),
+                                  tooltip: 'Sort',
+                                  onSelected: (v) => setState(() => _sort = v),
+                                  itemBuilder: (ctx) => const [
+                                    PopupMenuItem(
+                                      value: ProductSort.dateNewest,
+                                      child: Text('Newest first'),
+                                    ),
+                                    PopupMenuItem(
+                                      value: ProductSort.dateOldest,
+                                      child: Text('Oldest first'),
+                                    ),
+                                    PopupMenuItem(
+                                      value: ProductSort.nameAz,
+                                      child: Text('Name (A–Z)'),
+                                    ),
+                                    PopupMenuItem(
+                                      value: ProductSort.nameZa,
+                                      child: Text('Name (Z–A)'),
+                                    ),
+                                    PopupMenuItem(
+                                      value: ProductSort.priceLow,
+                                      child: Text('Price (Low–High)'),
+                                    ),
+                                    PopupMenuItem(
+                                      value: ProductSort.priceHigh,
+                                      child: Text('Price (High–Low)'),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          _searchField(),
+                          const SizedBox(height: 16),
+                          _pills(),
+                          const SizedBox(height: 24),
+                          Row(
+                            children: [
+                              const Text(
+                                "Hot Products",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: titleColor,
+                                ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                dateLabel,
+                                style: const TextStyle(fontSize: 14, color: gray),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          if (_hotProducts.isNotEmpty) _hotCarousel(_hotProducts),
+                          const SizedBox(height: 24),
+                          Row(
+                            children: [
+                              const Text(
+                                'All Products',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: titleColor,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                '${products.length}',
+                                style: const TextStyle(fontSize: 14, color: gray),
+                              ),
+                              const Spacer(),
+                              _addProductButton(),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          products.isEmpty
+                              ? const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 48),
+                                  child: Center(
+                                    child: Text(
+                                      'No products found.',
+                                      style: TextStyle(color: Color(0xFF6B7280)),
+                                    ),
+                                  ),
+                                )
+                              : (_isGrid ? _grid(products) : _list(products)),
+                          const SizedBox(height: 16),
+                        ],
+                      ),
+                    );
+                  },
+                ),
     );
   }
 
@@ -322,11 +434,14 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => AddProductScreen(user: widget.user),
-            ),
-          ),
+          onTap: () async {
+            await Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => AddProductScreen(user: widget.user),
+              ),
+            );
+            if (mounted) _load();
+          },
           child: const Center(
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -402,139 +517,151 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
     );
   }
 
-  Widget _banner(CatalogProduct p) {
-    return Container(
-      height: 190,
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: const LinearGradient(
-          colors: [Color(0xFF8B5CF6), Color(0xFF6D28D9)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Stack(
+  Widget _hotCarousel(List<CatalogProduct> items) {
+    final loopCount = 10000;
+    return GestureDetector(
+      onPanDown: (_) => setState(() => _hotPaused = true),
+      onPanEnd: (_) {
+        Future.delayed(const Duration(seconds: 3), () {
+          if (mounted) setState(() => _hotPaused = false);
+        });
+      },
+      child: Column(
         children: [
-          Positioned(
-            right: -20,
-            top: -20,
-            child: Container(
-              width: 160,
-              height: 160,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-              ),
+          SizedBox(
+            height: 190,
+            child: PageView.builder(
+              controller: _hotPageController,
+              itemCount: loopCount,
+              onPageChanged: (i) => setState(() => _hotIndex = i % items.length),
+              itemBuilder: (ctx, i) => _hotBanner(items[i % items.length]),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        p.name,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        p.brand,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.white70,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      PriceText(
-                        p.price,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const Spacer(),
-                      GestureDetector(
-                        onTap: () => _open(p),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Text(
-                            'View Details',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: purple,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Container(
-                  width: 90,
-                  height: 90,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: p.imageUrl != null
-                      ? Image.network(
-                          p.imageUrl!,
-                          width: 90,
-                          height: 90,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => Icon(
-                            p.icon,
-                            color: Colors.white,
-                            size: 48,
-                          ),
-                        )
-                      : Icon(
-                          p.icon,
-                          color: Colors.white,
-                          size: 48,
-                        ),
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            bottom: 14,
-            right: 20,
-            child: Row(
-              children: List.generate(
-                3,
-                (i) => Container(
-                  margin: const EdgeInsets.only(left: 4),
-                  width: i == 0 ? 18 : 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: i == 0 ? Colors.white : Colors.white54,
-                    borderRadius: BorderRadius.circular(3),
-                  ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              items.length,
+              (i) => Container(
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                width: i == _hotIndex ? 20 : 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: i == _hotIndex ? purple : const Color(0xFFD1D5DB),
+                  borderRadius: BorderRadius.circular(3),
                 ),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _hotBanner(CatalogProduct p) {
+    return GestureDetector(
+      onTap: () => _open(p),
+      child: Container(
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (p.imageUrl != null)
+              Image.network(
+                p.imageUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF8B5CF6), Color(0xFFDDD6FE)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  child: Icon(p.icon, color: Colors.white, size: 60),
+                ),
+              )
+            else
+              Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF8B5CF6), Color(0xFFDDD6FE)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Icon(p.icon, color: Colors.white, size: 60),
+              ),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.black.withValues(alpha: 0.7),
+                    Colors.transparent,
+                  ],
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                ),
+              ),
+            ),
+            Positioned(
+              left: 20,
+              bottom: 20,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    p.name,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    p.brand,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Colors.white70,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  PriceText(
+                    p.price,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
+              right: 20,
+              bottom: 20,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Text(
+                  'View Details',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: purple,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -565,6 +692,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
   Widget _gridCard(CatalogProduct p) {
     return GestureDetector(
       onTap: () => _open(p),
+      onLongPress: () => _showDeleteDialog(p),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -637,38 +765,40 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                   ),
               ],
             ),
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    p.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: titleColor,
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      p.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: titleColor,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    p.brand,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 12, color: gray),
-                  ),
-                  const SizedBox(height: 8),
-                  PriceText(
-                    p.price,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: titleColor,
+                    const SizedBox(height: 4),
+                    Text(
+                      p.brand,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 12, color: gray),
                     ),
-                  ),
-                ],
+                    const Spacer(),
+                    PriceText(
+                      p.price,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: purple,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -691,6 +821,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
   Widget _listCard(CatalogProduct p) {
     return GestureDetector(
       onTap: () => _open(p),
+      onLongPress: () => _showDeleteDialog(p),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(

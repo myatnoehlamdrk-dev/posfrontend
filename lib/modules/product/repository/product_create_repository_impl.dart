@@ -52,4 +52,14 @@ class ProductCreateRepositoryImpl implements ProductCreateRepository {
       throw ApiException.fromDio(e);
     }
   }
+
+  @override
+  Future<void> updateProduct(String id, ProductCreateRequest request) async {
+    try {
+      final dio = ApiClient.create();
+      await dio.put('/api/products/$id', data: request.toJson());
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
 }

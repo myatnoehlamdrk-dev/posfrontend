@@ -50,6 +50,10 @@ class ProductCreateRequest {
   final List<ProductVariant> variants;
   final String sku;
   final String supplierName;
+  final String supplierContact;
+  final String supplierSince;
+  final String supplierAddress;
+  final String imageDeleteUrl;
 
   const ProductCreateRequest({
     this.isSet = false,
@@ -62,6 +66,10 @@ class ProductCreateRequest {
     this.variants = const [],
     this.sku = '',
     this.supplierName = '',
+    this.supplierContact = '',
+    this.supplierSince = '',
+    this.supplierAddress = '',
+    this.imageDeleteUrl = '',
   });
 
   int get totalStock =>
@@ -78,6 +86,10 @@ class ProductCreateRequest {
         if (variants.isNotEmpty) 'color': variants.first.color,
         'variants': variants.map((v) => v.toJson()).toList(),
         'supplierName': supplierName.isEmpty ? null : supplierName,
+        'supplierContact': supplierContact.isEmpty ? null : supplierContact,
+        'supplierSince': supplierSince.isEmpty ? null : supplierSince,
+        'supplierAddress': supplierAddress.isEmpty ? null : supplierAddress,
+        'imageDeleteUrl': imageDeleteUrl.isEmpty ? null : imageDeleteUrl,
         'packageId': packageId.isEmpty ? null : int.tryParse(packageId),
       };
 }

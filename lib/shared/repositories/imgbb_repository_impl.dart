@@ -11,7 +11,7 @@ class ImgbbRepositoryImpl implements ImgbbRepository {
   ImgbbRepositoryImpl([Dio? dio]) : _dio = dio ?? ApiClient.create();
 
   @override
-  Future<String> uploadImage(Uint8List bytes, {String? fileName}) async {
+  Future<ImgbbUploadResult> uploadImage(Uint8List bytes, {String? fileName}) async {
     try {
       final name = fileName ??
           'upload_${DateTime.now().millisecondsSinceEpoch}.jpg';
@@ -39,9 +39,6 @@ class ImgbbRepositoryImpl implements ImgbbRepository {
         ),
       });
 
-      // The upload is proxied through our backend (POST /api/images), which forwards
-      // to ImgBB server-side. This keeps the ImgBB API key on the server instead
-      // of shipping it inside the client app.
       final response = await _dio.post(
         '/api/images',
         data: form,
@@ -55,7 +52,10 @@ class ImgbbRepositoryImpl implements ImgbbRepository {
       if (url == null) {
         throw ApiException(message: 'Upload did not return a URL');
       }
-      return url;
+      return ImgbbUploadResult(
+        url: url,
+        deleteUrl: (data['delete_url'] as String?) ?? '',
+      );
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }

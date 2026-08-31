@@ -35,4 +35,14 @@ class ShopApiRepositoryImpl implements ShopApiRepository {
       throw ApiException.fromDio(e);
     }
   }
+
+  @override
+  Future<Shop> getShopById(String id) async {
+    try {
+      final response = await _dio.get('/api/shops/$id');
+      return Shop.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
 }

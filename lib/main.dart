@@ -6,6 +6,7 @@ import 'package:posfrontend/modules/inventory/view/inventory_screen.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/login/view/login_screen.dart';
 import 'package:posfrontend/modules/product/view/products_catalog_screen.dart';
+import 'package:posfrontend/modules/profile/view/profile_screen.dart';
 
 LoginResponse? _userArg(BuildContext context) {
   final args = ModalRoute.of(context)?.settings.arguments;
@@ -45,6 +46,7 @@ class MyApp extends StatelessWidget {
         '/dashboard': (ctx) => DashboardScreen(user: _userArg(ctx)),
         '/inventory': (ctx) => InventoryScreen(user: _userArg(ctx)),
         '/products': (ctx) => ProductsCatalogScreen(user: _userArg(ctx)),
+        '/profile': (ctx) => ProfileScreen(user: _userArg(ctx)),
       },
     );
   }

@@ -5,10 +5,12 @@ import 'package:image_picker/image_picker.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/category/model/category_models.dart';
 import 'package:posfrontend/modules/category/repository/category_repository_impl.dart';
-import 'package:posfrontend/modules/inventory/view/inventory_sidebar.dart';
+import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/product/model/product_create_models.dart';
+import 'package:posfrontend/modules/product/model/product_detail_models.dart' hide ProductVariant;
 import 'package:posfrontend/modules/product/repository/product_create_repository_impl.dart';
+import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/shared/repositories/imgbb_repository_impl.dart';
 import 'package:posfrontend/modules/shared/widgets/inventory_form_widgets.dart';
 
@@ -19,7 +21,8 @@ const Color kLightPurple = Color(0xFFF5F0FF);
 
 class AddProductScreen extends StatefulWidget {
   final LoginResponse? user;
-  const AddProductScreen({super.key, this.user});
+  final ProductDetail? existingProduct;
+  const AddProductScreen({super.key, this.user, this.existingProduct});
 
   @override
   State<AddProductScreen> createState() => _AddProductScreenState();
@@ -33,6 +36,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final TextEditingController _brand = TextEditingController();
   final TextEditingController _sku = TextEditingController();
   final TextEditingController _supplier = TextEditingController();
+  final TextEditingController _supplierContact = TextEditingController();
+  final TextEditingController _supplierSince = TextEditingController();
+  final TextEditingController _supplierAddress = TextEditingController();
   final FocusNode _imageFocus = FocusNode();
 
   bool _isSet = false;
@@ -45,7 +51,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   File? _imageFile;
   String? _imageUrl;
+  String? _imageDeleteUrl;
   bool _uploading = false;
+  Key _imageKey = UniqueKey();
 
   final List<ProductVariant> _variants = [
     ProductVariant(size: 'Small', color: 'Black'),
@@ -80,6 +88,30 @@ class _AddProductScreenState extends State<AddProductScreen> {
   void initState() {
     super.initState();
     _loadCategories();
+    if (widget.existingProduct != null) {
+      final p = widget.existingProduct!;
+      _name.text = p.name;
+      _brand.text = p.brand;
+      _sku.text = p.sku;
+      _supplier.text = p.supplierName;
+      _supplierContact.text = p.supplierContact;
+      _supplierSince.text = p.supplierSince;
+      _supplierAddress.text = p.supplierAddress;
+      _imageUrl = p.imageUrl;
+      _imageDeleteUrl = p.imageDeleteUrl;
+      _variants.clear();
+      for (final v in p.variants) {
+        _variants.add(ProductVariant(
+          size: v.size,
+          color: v.color,
+          quantity: v.quantity,
+          price: v.price,
+        ));
+      }
+      if (_variants.isEmpty) {
+        _variants.add(ProductVariant(size: 'Small', color: 'Black'));
+      }
+    }
   }
 
   @override
@@ -88,6 +120,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
     _brand.dispose();
     _sku.dispose();
     _supplier.dispose();
+    _supplierContact.dispose();
+    _supplierSince.dispose();
+    _supplierAddress.dispose();
     _imageFocus.dispose();
     super.dispose();
   }
@@ -135,15 +170,25 @@ class _AddProductScreenState extends State<AddProductScreen> {
     final bytes = await xfile.readAsBytes();
     setState(() {
       _imageFile = File(xfile.path);
+      _imageKey = UniqueKey();
       _uploading = true;
     });
     try {
-      final url = await ImgbbRepositoryImpl().uploadImage(
+      final result = await ImgbbRepositoryImpl().uploadImage(
         bytes,
         fileName: xfile.name,
       );
       if (!mounted) return;
-      setState(() => _imageUrl = url);
+      setState(() {
+        _imageUrl = result.url;
+        _imageDeleteUrl = result.deleteUrl;
+        _imageKey = UniqueKey();
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Image uploaded')),
+        );
+      }
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -169,6 +214,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   Future<void> _save() async {
+    if (_uploading) {
+      _snack('Please wait for image upload to finish');
+      return;
+    }
     final name = _name.text.trim();
     if (name.isEmpty) {
       _snack('Product name is required');
@@ -193,13 +242,23 @@ class _AddProductScreenState extends State<AddProductScreen> {
       variants: valid,
       sku: _sku.text.trim(),
       supplierName: _supplier.text.trim(),
+      supplierContact: _supplierContact.text.trim(),
+      supplierSince: _supplierSince.text.trim(),
+      supplierAddress: _supplierAddress.text.trim(),
+      imageDeleteUrl: _imageDeleteUrl ?? '',
     );
 
     try {
-      await _repository.createProduct(req);
-      if (!mounted) return;
-      _snack('Product created');
-      Navigator.of(context).pop();
+      if (widget.existingProduct != null) {
+        await _repository.updateProduct(widget.existingProduct!.id, req);
+        if (!mounted) return;
+        _snack('Product updated');
+      } else {
+        await _repository.createProduct(req);
+        if (!mounted) return;
+        _snack('Product created');
+      }
+      Navigator.of(context).pop(true);
     } on ApiException catch (e) {
       if (!mounted) return;
       _snack(e.message);
@@ -215,12 +274,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final sidebar = InventorySidebar(
-      user: widget.user,
-      activeItem: 'Product',
-      onNavigate: (_) {},
-    );
-
     return LayoutBuilder(
       builder: (ctx, constraints) {
         final isWide = constraints.maxWidth >= 768;
@@ -228,13 +281,22 @@ class _AddProductScreenState extends State<AddProductScreen> {
         final scaffold = isWide
             ? Scaffold(
                 backgroundColor: Colors.white,
-                body: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [sidebar, Expanded(child: body)]),
+                body: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(
+                      width: 240,
+                      child: AppDrawer(user: widget.user, activeItem: 'Product'),
+                    ),
+                    Expanded(child: body),
+                  ],
+                ),
                 bottomNavigationBar: _createButton(),
               )
             : Scaffold(
                 key: _scaffoldKey,
                 backgroundColor: Colors.white,
-                drawer: Drawer(child: sidebar),
+                drawer: AppDrawer(user: widget.user, activeItem: 'Product'),
                 body: body,
                 bottomNavigationBar: _createButton(),
               );
@@ -250,7 +312,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _header(),
+            AppTopBar(
+              title: widget.existingProduct != null ? 'Update Product' : 'Create Product',
+              showMenuButton: false,
+              showBackButton: true,
+              user: widget.user,
+            ),
             const SizedBox(height: 20),
             FormCard(
               label: 'Inventory Type',
@@ -290,74 +357,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _header() {
-    return Row(
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-            border: Border.all(color: kBorder),
-            boxShadow: const [
-              BoxShadow(color: Color(0x0D000000), blurRadius: 6, offset: Offset(0, 2)),
-            ],
-          ),
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: kTitle, size: 20),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ),
-        const SizedBox(width: 12),
-        const Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'New Product',
-                style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
-              ),
-              Text(
-                'Create Product',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: kTitle,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Container(
-          height: 40,
-          padding: const EdgeInsets.symmetric(horizontal: 18),
-          decoration: BoxDecoration(
-            color: kPurple700,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(20),
-              onTap: _save,
-              child: const Center(
-                child: Text(
-                  'Save',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -414,14 +413,31 @@ class _AddProductScreenState extends State<AddProductScreen> {
       children: [
         GestureDetector(
           onTap: _uploading ? null : _pickAndUpload,
-          child: _DashedBox(
-            child: hasPreview
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: _imageFile != null
-                        ? Image.file(_imageFile!, height: 160, fit: BoxFit.cover)
-                        : Image.network(_imageUrl!, height: 160, fit: BoxFit.cover),
-                  )
+            child: _DashedBox(
+              child: hasPreview
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                  child: _imageFile != null
+                      ? Image.file(_imageFile!, key: _imageKey, height: 160, fit: BoxFit.cover)
+                      : Image.network(
+                          _imageUrl!,
+                          key: _imageKey,
+                          height: 160,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (_, child, progress) =>
+                              progress == null
+                                  ? child
+                                  : const Center(
+                                      child: CircularProgressIndicator(
+                                        color: kPurple700,
+                                      ),
+                                    ),
+                          errorBuilder: (_, _, _) => const Center(
+                            child: Icon(Icons.broken_image_outlined,
+                                size: 42, color: kPurple700),
+                          ),
+                        ),
+                    )
                 : _uploading
                     ? const CircularProgressIndicator(color: kPurple700)
                     : Column(
@@ -576,8 +592,18 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   Widget _supplyChain() {
-    return _field('Supplier (optional)', _supplier,
-        'Type a supplier name (created if new)');
+    return Column(
+      children: [
+        _field('Supplier (optional)', _supplier,
+            'Type a supplier name (created if new)'),
+        const SizedBox(height: 16),
+        _field('Contact Number', _supplierContact, 'Supplier phone number'),
+        const SizedBox(height: 16),
+        _field('Supplier Since', _supplierSince, 'e.g. 2024-01-15'),
+        const SizedBox(height: 16),
+        _field('Supplier Address', _supplierAddress, 'Supplier address'),
+      ],
+    );
   }
 
   Widget _field(String label, TextEditingController c, String hint,
@@ -672,10 +698,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
           child: InkWell(
             borderRadius: BorderRadius.circular(12),
             onTap: _save,
-            child: const Center(
+            child: Center(
               child: Text(
-                'Create Product',
-                style: TextStyle(
+                widget.existingProduct != null ? 'Update Product' : 'Create Product',
+                style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
                   fontSize: 16,

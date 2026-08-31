@@ -398,9 +398,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           lastDate: DateTime.now(),
                                         );
                                         if (picked != null) {
-                                          _dobController.text =
-                                              '${picked.day}/${picked.month}/${picked.year}';
-                                          _viewModel.setDob(_dobController.text);
+                                          final formatted =
+                                              '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+                                          _dobController.text = formatted;
+                                          _viewModel.setDob(formatted);
                                         }
                                       },
                                       decoration: _inputDecoration(

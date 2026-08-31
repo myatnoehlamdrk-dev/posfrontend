@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/modules/category/model/category_models.dart';
-import 'package:posfrontend/modules/inventory/view/inventory_sidebar.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/package/model/package_models.dart';
 import 'package:posfrontend/modules/package/repository/package_repository_impl.dart';
 import 'package:posfrontend/modules/package/view/add_package_screen.dart';
 import 'package:posfrontend/modules/package/view/package_details_screen.dart';
 import 'package:posfrontend/modules/package/viewmodel/package_view_model.dart';
+import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/app_top_bar.dart';
+import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 
 class PackageScreen extends StatefulWidget {
   final LoginResponse? user;
@@ -27,17 +29,6 @@ class _PackageScreenState extends State<PackageScreen> {
   static const Color gray = Color(0xFF6B7280);
   static const Color purple = Color(0xFF6D28D9);
   static const Color border = Color(0xFFE5E7EB);
-
-  String get _userName =>
-      widget.user != null && widget.user!.fullName.trim().isNotEmpty
-          ? widget.user!.fullName
-          : 'John Doe';
-
-  String _initials(String name) {
-    final parts = name.trim().split(RegExp(r'\s+'));
-    if (parts.length == 1) return parts[0].substring(0, 1).toUpperCase();
-    return (parts[0][0] + parts[1][0]).toUpperCase();
-  }
 
   String get _badgeCode {
     final cleaned = widget.category.id.replaceAll(RegExp(r'[^a-zA-Z]'), '');
@@ -78,165 +69,109 @@ class _PackageScreenState extends State<PackageScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final initials = _initials(_userName);
-    final sidebar = InventorySidebar(
-      user: widget.user,
-      activeItem: 'Inventory',
-      onNavigate: (_) {},
-    );
-
     return LayoutBuilder(
-      builder: (ctx, constraints) {
-        final isWide = constraints.maxWidth >= 768;
-        final body = _buildContent(initials, isWide: isWide);
+        builder: (ctx, constraints) {
+          final isWide = constraints.maxWidth >= 768;
+          final body = _buildContent(isWide: isWide);
 
-        if (isWide) {
+          if (isWide) {
+            return Scaffold(
+              backgroundColor: bg,
+              body: Row(
+                children: [
+                  SizedBox(
+                    width: 240,
+                    child: AppDrawer(user: widget.user, activeItem: 'Inventory'),
+                  ),
+                  Expanded(child: body),
+                ],
+              ),
+            );
+          }
+
           return Scaffold(
+            key: _scaffoldKey,
             backgroundColor: bg,
-            body: Row(
-              children: [
-                sidebar,
-                Expanded(child: body),
-              ],
+            drawer: AppDrawer(user: widget.user, activeItem: 'Inventory'),
+            floatingActionButton: FloatingActionButton(
+              onPressed: _openAddPackage,
+              backgroundColor: const Color(0xFF4FD1D9),
+              child: const Icon(Icons.inventory_2, color: Colors.white),
             ),
+            floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
+            body: body,
           );
-        }
-
-        return Scaffold(
-          key: _scaffoldKey,
-          backgroundColor: bg,
-          drawer: Drawer(child: sidebar),
-          floatingActionButton: FloatingActionButton(
-            onPressed: _openAddPackage,
-            backgroundColor: const Color(0xFF4FD1D9),
-            child: const Icon(Icons.inventory_2, color: Colors.white),
-          ),
-          floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
-          body: body,
-        );
-      },
+        },
     );
   }
 
-  Widget _buildContent(String initials, {required bool isWide}) {
+  Widget _buildContent({required bool isWide}) {
     return SafeArea(
       child: ListenableBuilder(
         listenable: _viewModel,
         builder: (context, _) {
           final items = _viewModel.filtered;
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _topBar(initials, isWide: isWide),
-                const SizedBox(height: 20),
-                _breadcrumb(),
-                const SizedBox(height: 16),
-                _headingRow(),
-                const SizedBox(height: 20),
-                _filterToolbar(),
-                const SizedBox(height: 20),
-                if (_viewModel.isLoading)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 40),
-                    child: Center(
-                      child: CircularProgressIndicator(color: purple),
-                    ),
-                  )
-                else if (_viewModel.hasError)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 40),
-                    child: Center(
-                      child: Text(
-                        _viewModel.errorMessage ?? 'Failed to load packages.',
-                        style: const TextStyle(color: gray),
+          return RefreshableBody(
+            onRefresh: () => _viewModel.load(),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppTopBar(
+                    title: widget.category.name,
+                    showMenuButton: !isWide,
+                    showBackButton: true,
+                    onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+                    user: widget.user,
+                  ),
+                  const SizedBox(height: 20),
+                  _breadcrumb(),
+                  const SizedBox(height: 16),
+                  _headingRow(),
+                  const SizedBox(height: 20),
+                  _filterToolbar(),
+                  const SizedBox(height: 20),
+                  if (_viewModel.isLoading)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 40),
+                      child: Center(
+                        child: CircularProgressIndicator(color: purple),
+                      ),
+                    )
+                  else if (_viewModel.hasError)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 40),
+                      child: Center(
+                        child: Text(
+                          _viewModel.errorMessage ?? 'Failed to load packages.',
+                          style: const TextStyle(color: gray),
+                        ),
+                      ),
+                    )
+                  else ...[
+                    Text(
+                      'List of Packages (${_viewModel.total})',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: title,
                       ),
                     ),
-                  )
-                else ...[
-                  Text(
-                    'List of Packages (${_viewModel.total})',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: title,
+                    const SizedBox(height: 16),
+                    LayoutBuilder(
+                      builder: (c, constraints) {
+                        final cols = constraints.maxWidth >= 560 ? 2 : 1;
+                        return _packageGrid(items, cols);
+                      },
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  LayoutBuilder(
-                    builder: (c, constraints) {
-                      final cols = constraints.maxWidth >= 560 ? 2 : 1;
-                      return _packageGrid(items, cols);
-                    },
-                  ),
+                  ],
                 ],
-              ],
+              ),
             ),
           );
         },
       ),
-    );
-  }
-
-  Widget _topBar(String initials, {required bool isWide}) {
-    return Row(
-      children: [
-        if (!isWide)
-          IconButton(
-            icon: const Icon(Icons.menu, color: title),
-            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-          ),
-        IconButton(
-          icon: const Icon(Icons.arrow_back, color: title),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        Expanded(
-          child: Text(
-            'Self ',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: title,
-            ),
-          ),
-        ),
-        Stack(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.notifications_none_outlined, color: title),
-              onPressed: () {},
-            ),
-            Positioned(
-              top: 12,
-              right: 12,
-              child: Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFEF4444),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(width: 8),
-        CircleAvatar(
-          radius: 20,
-          backgroundColor: purple,
-          child: Text(
-            initials,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-              fontSize: 14,
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -371,9 +306,28 @@ class _PackageScreenState extends State<PackageScreen> {
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: border),
           ),
-          child: IconButton(
+          child: PopupMenuButton<PackageSort>(
             icon: const Icon(Icons.filter_list, color: title),
-            onPressed: () {},
+            tooltip: 'Sort',
+            onSelected: (v) => _viewModel.setSort(v),
+            itemBuilder: (ctx) => const [
+              PopupMenuItem(
+                value: PackageSort.dateNewest,
+                child: Text('Newest first'),
+              ),
+              PopupMenuItem(
+                value: PackageSort.dateOldest,
+                child: Text('Oldest first'),
+              ),
+              PopupMenuItem(
+                value: PackageSort.nameAz,
+                child: Text('Name (A–Z)'),
+              ),
+              PopupMenuItem(
+                value: PackageSort.nameZa,
+                child: Text('Name (Z–A)'),
+              ),
+            ],
           ),
         ),
       ],

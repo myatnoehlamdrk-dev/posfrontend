@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:posfrontend/modules/dashboard/view/dashboard_screen.dart';
 import 'package:posfrontend/modules/category/view/category_screen.dart';
+import 'package:posfrontend/modules/dashboard/view/dashboard_screen.dart';
 import 'package:posfrontend/modules/inventory/model/inventory_models.dart';
 import 'package:posfrontend/modules/inventory/repository/inventory_repository_impl.dart';
-import 'package:posfrontend/modules/inventory/view/inventory_sidebar.dart';
 import 'package:posfrontend/modules/inventory/viewmodel/inventory_view_model.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
+import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/app_top_bar.dart';
+import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 
 class InventoryScreen extends StatefulWidget {
   final LoginResponse? user;
@@ -25,17 +27,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
   static const Color gray = Color(0xFF6B7280);
   static const Color purple = Color(0xFF6D28D9);
 
-  String get _userName =>
-      widget.user != null && widget.user!.fullName.trim().isNotEmpty
-          ? widget.user!.fullName
-          : 'John Doe';
-
-  String _initials(String name) {
-    final parts = name.trim().split(RegExp(r'\s+'));
-    if (parts.length == 1) return parts[0].substring(0, 1).toUpperCase();
-    return (parts[0][0] + parts[1][0]).toUpperCase();
-  }
-
   @override
   void initState() {
     super.initState();
@@ -48,134 +39,83 @@ class _InventoryScreenState extends State<InventoryScreen> {
     super.dispose();
   }
 
-  void _onNavigate(String label) {
-    if (label == 'Dashboard') {
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => DashboardScreen(user: widget.user)),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final initials = _initials(_userName);
-    final sidebar = InventorySidebar(
-      user: widget.user,
-      activeItem: 'Inventory',
-      onNavigate: _onNavigate,
-    );
-
-    return LayoutBuilder(
-      builder: (ctx, constraints) {
-        final isWide = constraints.maxWidth >= 768;
-        if (isWide) {
-          return Scaffold(
-            backgroundColor: bg,
-            body: Row(
-              children: [
-                sidebar,
-                Expanded(child: _buildContent(initials, isWide: true)),
-              ],
-            ),
-          );
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          navigateToDashboard(context, user: widget.user);
         }
-        return Scaffold(
-          key: _scaffoldKey,
-          backgroundColor: bg,
-          drawer: Drawer(child: sidebar),
-          body: _buildContent(initials, isWide: false),
-        );
       },
-    );
-  }
-
-  Widget _buildContent(String initials, {required bool isWide}) {
-    final options = _viewModel.options;
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _topBar(initials, isWide: isWide),
-            const SizedBox(height: 24),
-            _breadcrumb(),
-            const SizedBox(height: 16),
-            const Text(
-              'Inventory',
-              style: TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.bold,
-                color: title,
+      child: LayoutBuilder(
+        builder: (ctx, constraints) {
+          final isWide = constraints.maxWidth >= 768;
+          if (isWide) {
+            return Scaffold(
+              backgroundColor: bg,
+              body: Row(
+                children: [
+                  SizedBox(
+                    width: 240,
+                    child: AppDrawer(user: widget.user, activeItem: 'Inventory'),
+                  ),
+                  Expanded(child: _buildContent(isWide: true)),
+                ],
               ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Choose an inventory to manage your items.',
-              style: TextStyle(fontSize: 16, color: gray),
-            ),
-            const SizedBox(height: 32),
-            _buildOptionCards(options, isWide: isWide),
-            const SizedBox(height: 32),
-            _infoCard(),
-          ],
-        ),
+            );
+          }
+          return Scaffold(
+            key: _scaffoldKey,
+            backgroundColor: bg,
+            drawer: AppDrawer(user: widget.user, activeItem: 'Inventory'),
+            body: _buildContent(isWide: false),
+          );
+        },
       ),
     );
   }
 
-  Widget _topBar(String initials, {required bool isWide}) {
-    return Row(
-      children: [
-        if (!isWide)
-          IconButton(
-            icon: const Icon(Icons.menu, color: title),
-            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-          ),
-        Expanded(
-          child: const Text(
-            'Inventory',
-            style: TextStyle(
-              fontSize: 34,
-              fontWeight: FontWeight.bold,
-              color: title,
-            ),
-          ),
-        ),
-        Stack(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.notifications_none_outlined, color: title),
-              onPressed: () {},
-            ),
-            Positioned(
-              top: 12,
-              right: 12,
-              child: Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFEF4444),
-                  shape: BoxShape.circle,
+  Widget _buildContent({required bool isWide}) {
+    final options = _viewModel.options;
+    return SafeArea(
+      child: RefreshableBody(
+        onRefresh: () async {},
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppTopBar(
+                title: 'Inventory',
+                showMenuButton: !isWide,
+                onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+                user: widget.user,
+              ),
+              const SizedBox(height: 24),
+              _breadcrumb(),
+              const SizedBox(height: 16),
+              const Text(
+                'Inventory',
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.bold,
+                  color: title,
                 ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(width: 8),
-        CircleAvatar(
-          radius: 20,
-          backgroundColor: purple,
-          child: Text(
-            initials,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-              fontSize: 14,
-            ),
+              const SizedBox(height: 8),
+              const Text(
+                'Choose an inventory to manage your items.',
+                style: TextStyle(fontSize: 16, color: gray),
+              ),
+              const SizedBox(height: 32),
+              _buildOptionCards(options, isWide: isWide),
+              const SizedBox(height: 32),
+              _infoCard(),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 
@@ -183,7 +123,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
     return Row(
       children: [
         GestureDetector(
-          onTap: () => _onNavigate('Dashboard'),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => DashboardScreen(user: widget.user)),
+          ),
           child: const Text(
             'Dashboard',
             style: TextStyle(

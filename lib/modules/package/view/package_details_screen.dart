@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/category/model/category_models.dart';
-import 'package:posfrontend/modules/inventory/view/inventory_sidebar.dart';
+import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/package/model/package_models.dart';
 import 'package:posfrontend/modules/product/model/catalog_product.dart';
 import 'package:posfrontend/modules/product/repository/catalog_product_repository_impl.dart';
 import 'package:posfrontend/modules/product/view/product_detail_screen.dart';
 import 'package:posfrontend/modules/shared/widgets/inventory_form_widgets.dart';
+import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 
 class PackageDetailsScreen extends StatefulWidget {
   final LoginResponse? user;
@@ -31,13 +33,6 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
   List<CatalogProduct> _products = [];
   bool _loading = true;
   String? _error;
-
-  String get _initials {
-    final name = widget.user?.fullName.trim() ?? 'John Doe';
-    final parts = name.split(RegExp(r'\s+'));
-    if (parts.length == 1) return parts[0].substring(0, 1).toUpperCase();
-    return (parts[0][0] + parts[1][0]).toUpperCase();
-  }
 
   String get _stockLabel {
     switch (widget.package.status) {
@@ -106,12 +101,6 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final sidebar = InventorySidebar(
-      user: widget.user,
-      activeItem: 'Inventory',
-      onNavigate: (_) {},
-    );
-
     return LayoutBuilder(
       builder: (ctx, constraints) {
         final isWide = constraints.maxWidth >= 768;
@@ -123,7 +112,13 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
             body: SafeArea(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [sidebar, Expanded(child: _content())],
+                children: [
+                  SizedBox(
+                    width: 240,
+                    child: AppDrawer(user: widget.user, activeItem: 'Inventory'),
+                  ),
+                  Expanded(child: _content()),
+                ],
               ),
             ),
           );
@@ -131,7 +126,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
         return Scaffold(
           key: _scaffoldKey,
           backgroundColor: Colors.white,
-          drawer: Drawer(child: sidebar),
+          drawer: AppDrawer(user: widget.user, activeItem: 'Inventory'),
           body: SafeArea(child: body),
         );
       },
@@ -167,48 +162,51 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
         listenable: _search,
         builder: (context, _) {
           final products = _filtered;
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                InventoryHeader(
-                  title: 'Package Details',
-                  initials: _initials,
-                  showMenu: false,
-                ),
-                const SizedBox(height: 20),
-                const Breadcrumb([
-                  BreadcrumbItem('Dashboard', false),
-                  BreadcrumbItem('Inventory', false),
-                  BreadcrumbItem('Packages', false),
-                  BreadcrumbItem('Package Details', true),
-                ]),
-                const SizedBox(height: 24),
-                _summaryCard(p, c),
-                const SizedBox(height: 16),
-                _stockSection(p),
-                const SizedBox(height: 24),
-                _productsHeader(),
-                const SizedBox(height: 12),
-                if (products.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
-                    child: Center(
-                      child: Text('No products found.', style: TextStyle(color: kGray)),
-                    ),
-                  )
-                else
-                  Column(
-                    children: products
-                        .map((pr) => Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: _productRow(pr),
-                            ))
-                        .toList(),
+          return RefreshableBody(
+            onRefresh: _load,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppTopBar(
+                    title: 'Package Details',
+                    showMenuButton: false,
+                    showBackButton: true,
+                    user: widget.user,
                   ),
-                const SizedBox(height: 16),
-              ],
+                  const SizedBox(height: 20),
+                  const Breadcrumb([
+                    BreadcrumbItem('Dashboard', false),
+                    BreadcrumbItem('Inventory', false),
+                    BreadcrumbItem('Packages', false),
+                    BreadcrumbItem('Package Details', true),
+                  ]),
+                  const SizedBox(height: 24),
+                  _summaryCard(p, c),
+                  const SizedBox(height: 16),
+                  _stockSection(p),
+                  const SizedBox(height: 24),
+                  _productsHeader(),
+                  const SizedBox(height: 12),
+                  if (products.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Center(
+                        child: Text('No products found.', style: TextStyle(color: kGray)),
+                      ),
+                    )
+                  else
+                    Column(
+                      children: products
+                          .map((pr) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: _productRow(pr),
+                              ))
+                          .toList(),
+                    ),
+                ],
+              ),
             ),
           );
         },

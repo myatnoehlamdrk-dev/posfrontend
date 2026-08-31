@@ -194,11 +194,11 @@ class RegisterViewModel extends BaseViewModel {
         var shop = localShop;
         if (shop.logoData != null && shop.logoData!.isNotEmpty) {
           final bytes = base64Decode(shop.logoData!);
-          final logoUrl = await _imgbbRepository.uploadImage(
+          final result = await _imgbbRepository.uploadImage(
             bytes,
             fileName: 'shop_logo.jpg',
           );
-          shop = shop.copyWith(logoUrl: logoUrl);
+          shop = shop.copyWith(logoUrl: result.url);
           await _shopRepository.saveShop(shop);
         }
 

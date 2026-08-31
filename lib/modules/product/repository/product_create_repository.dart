@@ -4,4 +4,5 @@ abstract class ProductCreateRepository {
   Future<List<SupplierOption>> getSuppliers();
   Future<List<PackageOption>> getPackages(String categoryId);
   Future<void> createProduct(ProductCreateRequest request);
+  Future<void> updateProduct(String id, ProductCreateRequest request);
 }

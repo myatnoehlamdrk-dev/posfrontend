@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/core/network/api_client.dart';
-import 'package:posfrontend/modules/inventory/view/inventory_sidebar.dart';
+import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/product/model/catalog_product.dart';
 import 'package:posfrontend/modules/product/model/product_detail_models.dart';
 import 'package:posfrontend/modules/product/repository/product_detail_repository.dart';
+import 'package:posfrontend/modules/product/view/add_product_screen.dart';
 import 'package:posfrontend/modules/shared/widgets/inventory_form_widgets.dart';
+import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 import 'package:posfrontend/modules/shared/widgets/price_text.dart';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -29,13 +32,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   String? _error;
   bool _isWide = false;
   int _tabIndex = 0;
-
-  String get _initials {
-    final name = widget.user?.fullName.trim() ?? 'John Doe';
-    final parts = name.split(RegExp(r'\s+'));
-    if (parts.length == 1) return parts[0].substring(0, 1).toUpperCase();
-    return (parts[0][0] + parts[1][0]).toUpperCase();
-  }
 
   @override
   void initState() {
@@ -63,12 +59,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final sidebar = InventorySidebar(
-      user: widget.user,
-      activeItem: 'Inventory',
-      onNavigate: (_) {},
-    );
-
     return LayoutBuilder(
       builder: (ctx, constraints) {
         final isWide = constraints.maxWidth >= 768;
@@ -81,7 +71,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             body: SafeArea(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [sidebar, Expanded(child: _content())],
+                children: [
+                  SizedBox(
+                    width: 240,
+                    child: AppDrawer(user: widget.user, activeItem: 'Inventory'),
+                  ),
+                  Expanded(child: _content()),
+                ],
               ),
             ),
           );
@@ -89,7 +85,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         return Scaffold(
           key: _scaffoldKey,
           backgroundColor: Colors.white,
-          drawer: Drawer(child: sidebar),
+          drawer: AppDrawer(user: widget.user, activeItem: 'Inventory'),
           body: SafeArea(child: body),
         );
       },
@@ -122,16 +118,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         child: CircularProgressIndicator(color: Color(0xFF6D28D9)),
       );
     }
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-            InventoryHeader(
+    return RefreshableBody(
+      onRefresh: _load,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AppTopBar(
               title: 'Product Detail',
-              initials: _initials,
-              showMenu: !_isWide,
-              onMenu: () => _scaffoldKey.currentState?.openDrawer(),
+              showMenuButton: !_isWide,
+              showBackButton: false,
+              onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+              user: widget.user,
             ),
             const SizedBox(height: 20),
             const Breadcrumb([
@@ -145,13 +144,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             const SizedBox(height: 16),
             _summaryCard(),
             const SizedBox(height: 16),
+            _updateButton(),
+            const SizedBox(height: 16),
             _segmented(),
             const SizedBox(height: 16),
             _tabContent(),
             const SizedBox(height: 16),
           ],
         ),
-      );
+      ),
+    );
   }
 
   Widget _heroImage() {
@@ -344,7 +346,40 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
   }
 
+  Widget _updateButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 48,
+      child: ElevatedButton.icon(
+        onPressed: () async {
+          await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => AddProductScreen(
+                user: widget.user,
+                existingProduct: _detail,
+              ),
+            ),
+          );
+          if (mounted) _load();
+        },
+        icon: const Icon(Icons.edit, size: 20),
+        label: const Text(
+          'Update Product',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF6D28D9),
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _infoTab() {
+    final variants = _detail!.variants;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -373,6 +408,71 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           _row(Icons.store, 'Inventory', _detail!.inventoryType),
           _row(Icons.check_circle, 'Product Status', _detail!.status),
         ]),
+        if (variants.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          const Text(
+            'Variants',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: kTitle),
+          ),
+          const SizedBox(height: 12),
+          ...variants.where((v) => v.quantity > 0).map((v) => Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5F0FF),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.inventory_2, color: Color(0xFF6D28D9), size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          v.size.isNotEmpty ? v.size : (v.color.isNotEmpty ? v.color : 'Default'),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            color: kTitle,
+                          ),
+                        ),
+                        if (v.color.isNotEmpty && v.size.isNotEmpty)
+                          Text(
+                            v.color,
+                            style: const TextStyle(fontSize: 12, color: kGray),
+                          ),
+                        Text(
+                          'Qty: ${v.quantity}',
+                          style: const TextStyle(fontSize: 12, color: kGray),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    'MMK ${v.price.toStringAsFixed(0)}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      color: Color(0xFF6D28D9),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )),
+        ],
       ],
     );
   }
@@ -454,8 +554,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         const SizedBox(height: 12),
         _card([
           _row(Icons.check_box, 'Available', '${_detail!.stockAvailable} units'),
-          _row(Icons.remove_circle, 'Minimum Stock', '${_detail!.minStock} units'),
-          _row(Icons.inventory, 'Maximum Capacity', '${_detail!.maxCapacity} units'),
+          _row(Icons.remove_circle, 'Minimum', '${_detail!.minStock} units'),
+          _row(Icons.inventory, 'Maximum', '${_detail!.maxCapacity} units'),
         ]),
         const SizedBox(height: 16),
         Container(
