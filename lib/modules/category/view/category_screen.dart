@@ -50,6 +50,20 @@ class _CategoryScreenState extends State<CategoryScreen> {
     );
   }
 
+  Future<void> _openAddCategory() async {
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => AddCategoryScreen(
+          user: widget.user,
+          inventoryType: widget.inventoryType,
+        ),
+      ),
+    );
+    if (result is Category) {
+      _viewModel.addCategory(result);
+    }
+  }
+
   @override
   void dispose() {
     _viewModel.dispose();
@@ -66,6 +80,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
           if (isWide) {
             return Scaffold(
               backgroundColor: bg,
+              floatingActionButton: FloatingActionButton(
+                onPressed: _openAddCategory,
+                backgroundColor: const Color(0xFF4FD1D9),
+                child: const Icon(Icons.category, color: Colors.white),
+              ),
               body: Row(
                 children: [
                   SizedBox(
@@ -82,6 +101,12 @@ class _CategoryScreenState extends State<CategoryScreen> {
             key: _scaffoldKey,
             backgroundColor: bg,
             drawer: AppDrawer(user: widget.user, activeItem: 'Inventory'),
+            floatingActionButton: FloatingActionButton(
+              onPressed: _openAddCategory,
+              backgroundColor: const Color(0xFF4FD1D9),
+              child: const Icon(Icons.category, color: Colors.white),
+            ),
+            floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
             body: body,
           );
         },
@@ -180,7 +205,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
   Widget _headingRow() {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
           Expanded(
             child: Column(
@@ -197,83 +222,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
               ],
             ),
           ),
-        const SizedBox(width: 16),
-        _addCategoryButton(),
-      ],
-    );
-  }
-
-  Widget _addCategoryButton() {
-    return Container(
-      height: 48,
-      padding: const EdgeInsets.symmetric(horizontal: 18),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF7C3AED), Color(0xFF5B21B6)],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: GestureDetector(
-        onTap: () async {
-          final result = await Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => AddCategoryScreen(
-                user: widget.user,
-                inventoryType: widget.inventoryType,
-              ),
-            ),
-          );
-          if (result is Category) {
-            _viewModel.addCategory(result);
-          }
-        },
-        child: const Row(
-          children: [
-            Icon(Icons.add, color: Colors.white, size: 20),
-            SizedBox(width: 8),
-            Text(
-              'Add Category',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-                fontSize: 15,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _filterToolbar() {
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      children: [
-        SizedBox(
-          width: 280,
-          child: TextField(
-            onChanged: _viewModel.setSearch,
-            decoration: InputDecoration(
-              hintText: 'Search categories...',
-              hintStyle: const TextStyle(color: gray, fontSize: 14),
-              prefixIcon: const Icon(Icons.search, color: gray, size: 20),
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding: const EdgeInsets.symmetric(vertical: 0),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: border),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: border),
-              ),
-            ),
-          ),
-        ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
@@ -294,8 +242,40 @@ class _CategoryScreenState extends State<CategoryScreen> {
             ),
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _filterToolbar() {
+    return Row(
+      children: [
+        Expanded(
+          child: TextField(
+            onChanged: _viewModel.setSearch,
+            decoration: InputDecoration(
+              hintText: 'Search categories...',
+              hintStyle: const TextStyle(color: gray, fontSize: 14),
+              prefixIcon: const Icon(Icons.search, color: gray, size: 20),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(vertical: 0),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: border),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: border),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
         Container(
+          height: 48,
+          width: 48,
           decoration: BoxDecoration(
+            color: Colors.white,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: border),
           ),

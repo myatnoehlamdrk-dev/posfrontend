@@ -34,26 +34,22 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
   bool _loading = true;
   String? _error;
 
-  String get _stockLabel {
-    switch (widget.package.status) {
-      case StockStatus.inStock:
-        return 'Optimal';
-      case StockStatus.lowStock:
-        return 'Low Stock';
-      case StockStatus.outOfStock:
-        return 'No Stock';
-    }
+  StockStatus get _computedStatus {
+    final limit = widget.package.productLimit;
+    final qty = widget.package.quantity;
+    if (limit <= 0 || qty == 0) return StockStatus.outOfStock;
+    final pct = (qty / limit) * 100;
+    if (pct >= 70) return StockStatus.highStock;
+    if (pct >= 30) return StockStatus.midStock;
+    return StockStatus.lowStock;
   }
 
+  String get _stockLabel => stockLabel(_computedStatus);
+
   int get _stockPct {
-    switch (widget.package.status) {
-      case StockStatus.inStock:
-        return 75;
-      case StockStatus.lowStock:
-        return 40;
-      case StockStatus.outOfStock:
-        return 5;
-    }
+    final limit = widget.package.productLimit;
+    if (limit <= 0) return 0;
+    return ((widget.package.quantity / limit) * 100).round().clamp(0, 100);
   }
 
   @override
@@ -176,11 +172,12 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                     user: widget.user,
                   ),
                   const SizedBox(height: 20),
-                  const Breadcrumb([
-                    BreadcrumbItem('Dashboard', false),
-                    BreadcrumbItem('Inventory', false),
-                    BreadcrumbItem('Packages', false),
-                    BreadcrumbItem('Package Details', true),
+                  Breadcrumb([
+                    const BreadcrumbItem('Dashboard', false),
+                    const BreadcrumbItem('Inventory', false),
+                    BreadcrumbItem(widget.category.name, false),
+                    BreadcrumbItem(widget.package.name, false),
+                    const BreadcrumbItem('Package Detail', true),
                   ]),
                   const SizedBox(height: 24),
                   _summaryCard(p, c),

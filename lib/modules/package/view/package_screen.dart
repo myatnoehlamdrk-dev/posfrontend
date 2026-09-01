@@ -31,9 +31,8 @@ class _PackageScreenState extends State<PackageScreen> {
   static const Color border = Color(0xFFE5E7EB);
 
   String get _badgeCode {
-    final cleaned = widget.category.id.replaceAll(RegExp(r'[^a-zA-Z]'), '');
-    final len = cleaned.length >= 4 ? 4 : cleaned.length;
-    return 'CAT-${cleaned.toUpperCase().substring(0, len)}';
+    final name = widget.category.name;
+    return name.length > 12 ? '${name.substring(0, 12)}...' : name;
   }
 
   @override
@@ -77,6 +76,11 @@ class _PackageScreenState extends State<PackageScreen> {
           if (isWide) {
             return Scaffold(
               backgroundColor: bg,
+              floatingActionButton: FloatingActionButton(
+                onPressed: _openAddPackage,
+                backgroundColor: const Color(0xFF4FD1D9),
+                child: const Icon(Icons.inventory_2, color: Colors.white),
+              ),
               body: Row(
                 children: [
                   SizedBox(
@@ -208,68 +212,27 @@ class _PackageScreenState extends State<PackageScreen> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.category.name,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: title,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.category.name,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: title,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                'Manage your category here...',
-                style: TextStyle(fontSize: 16, color: gray),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 16),
-        _addButton(),
-      ],
-    );
-  }
-
-  Widget _addButton() {
-    return Container(
-      height: 48,
-      padding: const EdgeInsets.symmetric(horizontal: 18),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF7C3AED), Color(0xFF5B21B6)],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x1A000000),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-        child: GestureDetector(
-          onTap: _openAddPackage,
-          child: const Row(
-          children: [
-            Icon(Icons.add, color: Colors.white, size: 20),
-            SizedBox(width: 8),
-            Text(
-              'Add Package',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-                fontSize: 15,
-              ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Manage your category here...',
+                  style: TextStyle(fontSize: 16, color: gray),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+      ],
     );
   }
 
@@ -487,7 +450,7 @@ class _PackageScreenState extends State<PackageScreen> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  _statusBadge(p.status),
+                  _statusBadge(_computedStatus(p)),
                 ],
               ),
             ),
@@ -495,6 +458,16 @@ class _PackageScreenState extends State<PackageScreen> {
         ),
       ),
     );
+  }
+
+  StockStatus _computedStatus(Package p) {
+    final limit = p.productLimit;
+    final qty = p.quantity;
+    if (limit <= 0 || qty == 0) return StockStatus.outOfStock;
+    final pct = (qty / limit) * 100;
+    if (pct >= 70) return StockStatus.highStock;
+    if (pct >= 30) return StockStatus.midStock;
+    return StockStatus.lowStock;
   }
 
   Widget _catBadge() {

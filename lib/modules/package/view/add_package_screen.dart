@@ -25,16 +25,8 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
   final TextEditingController _locationController = TextEditingController();
 
   Category? _selectedCategory;
-  String? _status;
 
   List<Category> _categoryObjects = [];
-  final List<String> _statuses = const [
-    'Overstock',
-    'Optimal',
-    'Low Stock',
-    'Critical',
-    'No Stock',
-  ];
 
   String _labelOf(Category c) =>
       c.type.isNotEmpty ? '${c.name} (${c.type})' : c.name;
@@ -63,7 +55,7 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
         productLimit: amount,
         description: _descController.text.trim(),
         location: _locationController.text.trim(),
-        stockStatus: _status,
+        stockStatus: null,
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -81,7 +73,6 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
   @override
   void initState() {
     super.initState();
-    _status = _statuses[1];
     _selectedCategory = widget.category;
     _loadCategories();
   }
@@ -241,24 +232,6 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            FormCard(
-              label: 'Stock Status',
-              required: true,
-              helper: 'Current stock analysis based on amount of products.',
-              child: DropdownField(
-                value: _status,
-                hint: 'Select stock status',
-                items: _statuses,
-                onChanged: (v) => setState(() => _status = v),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const InfoBox(
-              title: 'About Stock Status',
-              body:
-                  'Indicates how the current amount compares to expected or target levels. Examples: Overstock, Optimal, Low Stock, Critical, No Stock.',
-            ),
-            const SizedBox(height: 24),
             FormActions(
               onCancel: () => Navigator.of(context).pop(),
               onSave: _save,

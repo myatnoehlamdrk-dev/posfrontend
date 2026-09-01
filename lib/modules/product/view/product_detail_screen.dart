@@ -144,8 +144,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             const SizedBox(height: 16),
             _summaryCard(),
             const SizedBox(height: 16),
-            _updateButton(),
-            const SizedBox(height: 16),
             _segmented(),
             const SizedBox(height: 16),
             _tabContent(),
@@ -196,6 +194,31 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
+            ),
+          ),
+        ),
+        Positioned(
+          top: 12,
+          right: 12,
+          child: GestureDetector(
+            onTap: () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => AddProductScreen(
+                    user: widget.user,
+                    existingProduct: _detail,
+                  ),
+                ),
+              );
+              if (mounted) _load();
+            },
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.5),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.edit, color: Colors.white, size: 20),
             ),
           ),
         ),
@@ -346,38 +369,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
   }
 
-  Widget _updateButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 48,
-      child: ElevatedButton.icon(
-        onPressed: () async {
-          await Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => AddProductScreen(
-                user: widget.user,
-                existingProduct: _detail,
-              ),
-            ),
-          );
-          if (mounted) _load();
-        },
-        icon: const Icon(Icons.edit, size: 20),
-        label: const Text(
-          'Update Product',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF6D28D9),
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _infoTab() {
     final variants = _detail!.variants;
     return Column(
@@ -460,8 +451,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       ],
                     ),
                   ),
-                  Text(
-                    'MMK ${v.price.toStringAsFixed(0)}',
+                  PriceText(
+                    v.price,
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
@@ -479,11 +470,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   Widget _stockTab() {
     final pct = _detail!.stockAvailable / _detail!.maxCapacity;
-    final color = _detail!.stockStatus == 'Optimal'
+    final color = _detail!.stockStatus == 'High Stock'
         ? const Color(0xFF16A34A)
-        : (_detail!.stockStatus == 'Low Stock'
-            ? const Color(0xFFD97706)
-            : const Color(0xFFDC2626));
+        : (_detail!.stockStatus == 'Mid-Cap Stock'
+            ? const Color(0xFF2563EB)
+            : (_detail!.stockStatus == 'Low Stock'
+                ? const Color(0xFFD97706)
+                : const Color(0xFFDC2626)));
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

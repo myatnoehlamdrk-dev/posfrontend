@@ -106,8 +106,10 @@ class ProductDetail {
     final image = (json['image'] as String?)?.trim();
 
     final stockStatus = stock == 0
-        ? 'No Stock'
-        : (stock < 10 ? 'Low Stock' : 'Optimal');
+        ? 'Out of Stock'
+        : (stock < 10
+            ? 'Low Stock'
+            : (stock <= 20 ? 'Mid-Cap Stock' : 'High Stock'));
 
     return ProductDetail(
       id: json['id']?.toString() ?? '',

@@ -5,6 +5,10 @@ import 'package:posfrontend/modules/inventory/view/inventory_screen.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/login/view/login_screen.dart';
 import 'package:posfrontend/modules/product/view/products_catalog_screen.dart';
+import 'package:posfrontend/modules/purchase_items/view/purchase_items_screen.dart';
+import 'package:posfrontend/modules/sale/view/new_sale_screen.dart';
+import 'package:posfrontend/modules/sale_items/view/sale_items_screen.dart';
+import 'package:posfrontend/modules/settings/view/settings_screen.dart';
 
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
 
@@ -116,7 +120,9 @@ class AppDrawer extends StatelessWidget {
                     _navItem(context, 'Inventory', Icons.inventory_2_outlined),
                     _navItem(context, 'Product', Icons.category_outlined),
                     _navItem(context, 'Sale', Icons.point_of_sale_outlined),
-                    _navItem(context, 'Purchase', Icons.shopping_bag_outlined),
+                    _navItem(context, 'Sale Item', Icons.receipt_long_outlined),
+                    
+                    _navItem(context, 'Purchase Item', Icons.local_shipping_outlined),
                     _navItem(context, 'Setting', Icons.settings_outlined)
                     ],
                 ),
@@ -210,9 +216,27 @@ class AppDrawer extends StatelessWidget {
       case 'Product':
         destination = ProductsCatalogScreen(user: user);
         break;
+      case 'Sale':
+        destination = NewSaleScreen(user: user);
+        break;
+      case 'Sale Item':
+        destination = SaleItemScreen(user: user);
+        break;
+      case 'Purchase Item':
+        destination = PurchaseItemsScreen(user: user);
+        break;
+      case 'Setting':
+        destination = SettingsScreen(user: user);
+        break;
 
       default:
         return;
+    }
+    if (label == 'Setting' || label == 'Sale' || label == 'Sale Item' || label == 'Purchase Item') {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => destination),
+      );
+      return;
     }
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => destination),
