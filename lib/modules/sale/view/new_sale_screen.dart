@@ -5,9 +5,12 @@ import 'package:posfrontend/modules/sale/model/sale_models.dart';
 import 'package:posfrontend/modules/sale/repository/sale_product_repository_impl.dart';
 import 'package:posfrontend/modules/sale/repository/sale_repository_impl.dart';
 import 'package:posfrontend/modules/sale/view/add_products_screen.dart';
+import 'package:posfrontend/modules/sale/view/sale_preview_screen.dart';
 import 'package:posfrontend/modules/sale/viewmodel/sale_view_model.dart';
 import 'package:posfrontend/modules/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/modules/shared/widgets/price_text.dart';
+import 'package:posfrontend/modules/shop/model/shop.dart';
+import 'package:posfrontend/modules/shop/repository/shop_local_repository_impl.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 
@@ -33,6 +36,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   late String _voucherRandom;
   late String _orderRandom;
   bool _isSubmitting = false;
+  Shop? _shop;
 
   final List<SaleItem> _items = [];
 
@@ -46,6 +50,12 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     super.initState();
     _voucherRandom = _generateRandom5();
     _orderRandom = _generateRandom5();
+    _loadShop();
+  }
+
+  Future<void> _loadShop() async {
+    final shop = await ShopLocalRepositoryImpl().getShop();
+    if (mounted) setState(() => _shop = shop);
   }
 
   void _refreshRandoms() {
@@ -67,6 +77,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         orderId: 'ORD-$_orderRandom',
         items: _items,
         grandTotal: _totalPayable,
+        discount: _discountPct.toInt(),
         notes: _notesCtrl.text.isNotEmpty ? _notesCtrl.text : null,
       );
       if (!mounted) return;
@@ -694,7 +705,31 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: _outlineBtn('Preview', Icons.visibility_outlined, () {}),
+          child: _outlineBtn('Preview', Icons.visibility_outlined, () {
+            if (_items.isEmpty) return;
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => SalePreviewScreen(
+                  customerName: _customerName,
+                  staffName: widget.user?.fullName ?? 'Staff',
+                  voucherNo: 'INV-$_voucherRandom',
+                  orderId: 'ORD-$_orderRandom',
+                  dateTime: DateTime.now(),
+                  items: List<SaleItem>.from(_items),
+                  discountPct: _discountPct,
+                  subtotal: _subtotal,
+                  discountAmt: _discountAmt,
+                  totalPayable: _totalPayable,
+                  paymentMethod: _paymentMethod,
+                  notes: _notesCtrl.text.isNotEmpty ? _notesCtrl.text : null,
+                  shopName: _shop?.name,
+                  shopAddress: _shop?.physicalAddress,
+                  shopPhone: _shop?.ownerInformation.phone,
+                  shopEmail: _shop?.ownerInformation.email,
+                ),
+              ),
+            );
+          }),
         ),
         const SizedBox(width: 10),
         Expanded(

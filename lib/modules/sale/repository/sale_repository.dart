@@ -9,6 +9,7 @@ abstract class SaleRepository {
     String? payMethod,
     required List<SaleItem> items,
     required double grandTotal,
+    int? discount,
     String? notes,
   });
 }

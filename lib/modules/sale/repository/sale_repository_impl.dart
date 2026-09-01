@@ -12,6 +12,7 @@ class SaleRepositoryImpl implements SaleRepository {
     String? payMethod,
     required List<SaleItem> items,
     required double grandTotal,
+    int? discount,
     String? notes,
   }) async {
     final dio = ApiClient.create();
@@ -39,6 +40,7 @@ class SaleRepositoryImpl implements SaleRepository {
       'payMethod': payMethod,
       'items': itemsData,
       'grandTotal': grandTotal,
+      if (discount != null) 'discount': discount,
       if (notes != null && notes.isNotEmpty) 'notes': notes,
     };
 

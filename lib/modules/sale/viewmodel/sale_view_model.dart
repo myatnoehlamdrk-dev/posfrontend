@@ -37,6 +37,7 @@ class SaleViewModel extends BaseViewModel {
     String? payMethod,
     required List<SaleItem> items,
     required double grandTotal,
+    int? discount,
     String? notes,
   }) async {
     setLoading(true);
@@ -50,6 +51,7 @@ class SaleViewModel extends BaseViewModel {
         payMethod: payMethod,
         items: items,
         grandTotal: grandTotal,
+        discount: discount,
         notes: notes,
       );
       setLoading(false);
