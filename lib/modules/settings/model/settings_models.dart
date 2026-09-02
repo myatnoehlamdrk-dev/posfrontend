@@ -6,6 +6,7 @@ class SettingsData {
   final ThemeMode themeMode;
   final String language;
   final ShopType shopType;
+  final String shopImage;
   final String appVersion;
   final String privacyPolicyVersion;
   final String termsOfServiceVersion;
@@ -15,6 +16,7 @@ class SettingsData {
     this.themeMode = ThemeMode.light,
     this.language = 'Myanmar',
     this.shopType = ShopType.shop,
+    this.shopImage = '',
     this.appVersion = '1.0.0',
     this.privacyPolicyVersion = '1.0',
     this.termsOfServiceVersion = '1.0',
@@ -25,6 +27,7 @@ class SettingsData {
     ThemeMode? themeMode,
     String? language,
     ShopType? shopType,
+    String? shopImage,
     String? appVersion,
     String? privacyPolicyVersion,
     String? termsOfServiceVersion,
@@ -34,6 +37,7 @@ class SettingsData {
       themeMode: themeMode ?? this.themeMode,
       language: language ?? this.language,
       shopType: shopType ?? this.shopType,
+      shopImage: shopImage ?? this.shopImage,
       appVersion: appVersion ?? this.appVersion,
       privacyPolicyVersion: privacyPolicyVersion ?? this.privacyPolicyVersion,
       termsOfServiceVersion: termsOfServiceVersion ?? this.termsOfServiceVersion,

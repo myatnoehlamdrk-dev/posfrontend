@@ -1,4 +1,7 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart' hide ThemeMode;
+import 'package:image_picker/image_picker.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/login/view/login_screen.dart';
 import 'package:posfrontend/modules/settings/model/settings_models.dart';
@@ -90,6 +93,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         const SizedBox(height: 28),
                         _sectionHeader('BUSINESS'),
                         const SizedBox(height: 10),
+                        _buildShopImageCard(),
+                        const SizedBox(height: 12),
                         _buildBusinessCard(),
                         const SizedBox(height: 28),
                         _sectionHeader('SUPPORT'),
@@ -292,6 +297,95 @@ class _SettingsScreenState extends State<SettingsScreen> {
         onTap: _showShopTypeModal,
       ),
     );
+  }
+
+  Widget _buildShopImageCard() {
+    final shopImage = _viewModel.shopImage;
+    final hasImage = shopImage.isNotEmpty;
+
+    return _settingsCard(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.image_outlined, color: titleColor, size: 22),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Text(
+                    'Shop Image',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: titleColor,
+                    ),
+                  ),
+                ),
+                if (_viewModel.isUploadingImage)
+                  const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: orange,
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: _viewModel.isUploadingImage ? null : _pickShopImage,
+              child: Container(
+                width: double.infinity,
+                height: 140,
+                decoration: BoxDecoration(
+                  color: cardBg,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: border),
+                ),
+                child: hasImage
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          shopImage,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => _imagePlaceholder(),
+                        ),
+                      )
+                    : _imagePlaceholder(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _imagePlaceholder() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.add_a_photo_outlined, color: gray, size: 32),
+          const SizedBox(height: 8),
+          Text(
+            'Tap to change shop image',
+            style: TextStyle(fontSize: 13, color: gray),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickShopImage() async {
+    final picker = ImagePicker();
+    final xfile = await picker.pickImage(source: ImageSource.gallery);
+    if (xfile != null) {
+      final bytes = await xfile.readAsBytes();
+      _viewModel.updateShopImage(bytes, fileName: xfile.name);
+    }
   }
 
   Widget _buildSupportCard() {

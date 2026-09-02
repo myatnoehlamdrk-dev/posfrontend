@@ -96,10 +96,7 @@ class ProductDetail {
     final parsedVariants = variantList
         .map((v) => ProductVariant.fromJson(v as Map<String, dynamic>))
         .toList();
-    final totalStock = parsedVariants.fold(0, (sum, v) => sum + v.quantity);
-    final stock = totalStock > 0
-        ? totalStock
-        : ((json['stock'] as num?)?.toInt() ?? 0);
+    final stock = (json['stock'] as num?)?.toInt() ?? 0;
     final size = (json['size'] as String?)?.isNotEmpty == true
         ? json['size'] as String
         : (variantList.isNotEmpty ? (variantList.first['size'] ?? '') : '');

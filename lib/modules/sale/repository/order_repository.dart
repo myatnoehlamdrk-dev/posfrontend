@@ -1,7 +1,7 @@
 import 'package:posfrontend/modules/sale/model/sale_models.dart';
 
-abstract class SaleRepository {
-  Future<void> createSale({
+abstract class OrderRepository {
+  Future<void> createOrder({
     required String userName,
     required String voucherNo,
     required String orderId,
@@ -12,5 +12,6 @@ abstract class SaleRepository {
     required double grandTotal,
     int? discount,
     String? notes,
+    String status,
   });
 }

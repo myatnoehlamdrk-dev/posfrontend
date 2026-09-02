@@ -35,19 +35,25 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final TextEditingController _name = TextEditingController();
   final TextEditingController _brand = TextEditingController();
   final TextEditingController _sku = TextEditingController();
-  final TextEditingController _supplier = TextEditingController();
   final TextEditingController _supplierContact = TextEditingController();
   final TextEditingController _supplierSince = TextEditingController();
   final TextEditingController _supplierAddress = TextEditingController();
+  final TextEditingController _productSearch = TextEditingController();
   final FocusNode _imageFocus = FocusNode();
 
   bool _isSet = false;
   String _inventoryType = 'self';
+  String? _selectedSupplierId;
+  List<ProductSearchResult> _searchResults = [];
+  bool _showSearchResults = false;
+  String? _selectedPurchaseItemId;
 
   List<Category> _categories = [];
   Category? _selectedCategory;
   List<PackageOption> _packages = [];
   PackageOption? _selectedPackage;
+  List<SupplierOption> _suppliers = [];
+  List<PendingPurchaseItem> _pendingPurchaseItems = [];
 
   File? _imageFile;
   String? _imageUrl;
@@ -88,12 +94,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
   void initState() {
     super.initState();
     _loadCategories();
+    _loadSuppliers();
+    _loadPendingPurchaseItems();
     if (widget.existingProduct != null) {
       final p = widget.existingProduct!;
       _name.text = p.name;
       _brand.text = p.brand;
       _sku.text = p.sku;
-      _supplier.text = p.supplierName;
+      _selectedSupplierId = p.supplierId;
       _supplierContact.text = p.supplierContact;
       _supplierSince.text = p.supplierSince;
       _supplierAddress.text = p.supplierAddress;
@@ -119,12 +127,97 @@ class _AddProductScreenState extends State<AddProductScreen> {
     _name.dispose();
     _brand.dispose();
     _sku.dispose();
-    _supplier.dispose();
     _supplierContact.dispose();
     _supplierSince.dispose();
     _supplierAddress.dispose();
+    _productSearch.dispose();
     _imageFocus.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadSuppliers() async {
+    try {
+      final list = await _repository.getSuppliers();
+      if (!mounted) return;
+      setState(() => _suppliers = list);
+    } catch (_) {}
+  }
+
+  Future<void> _loadPendingPurchaseItems() async {
+    try {
+      final list = await _repository.getPendingPurchaseItems();
+      if (!mounted) return;
+      setState(() => _pendingPurchaseItems = list);
+    } catch (_) {}
+  }
+
+  void _selectPurchaseItem(PendingPurchaseItem item) {
+    setState(() {
+      _selectedPurchaseItemId = item.id;
+      _name.text = item.productName;
+      if (item.supplierId.isNotEmpty) {
+        _selectedSupplierId = item.supplierId;
+      }
+      _variants.clear();
+      _variants.add(ProductVariant(
+        size: 'Regular',
+        color: '',
+        quantity: item.quantity,
+        price: item.unitPrice.toDouble(),
+      ));
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Loaded: ${item.productName} (${item.quantity} units)')),
+    );
+  }
+
+  Future<void> _searchProducts(String query) async {
+    if (query.length < 2) {
+      setState(() {
+        _searchResults = [];
+        _showSearchResults = false;
+      });
+      return;
+    }
+    try {
+      final results = await _repository.searchProducts(query);
+      if (!mounted) return;
+      setState(() {
+        _searchResults = results;
+        _showSearchResults = results.isNotEmpty;
+      });
+    } catch (_) {}
+  }
+
+  void _selectProduct(ProductSearchResult product) {
+    setState(() {
+      _name.text = product.name;
+      _brand.text = product.brand;
+      _sku.text = product.sku;
+      _selectedSupplierId = product.supplierId;
+      _supplierContact.text = product.supplierContact;
+      _supplierAddress.text = product.supplierAddress;
+      _imageUrl = product.imageUrl;
+      _showSearchResults = false;
+      _searchResults = [];
+      _productSearch.clear();
+      _variants.clear();
+      if (product.variants.isNotEmpty) {
+        for (final v in product.variants) {
+          _variants.add(ProductVariant(
+            size: (v['size'] ?? '').toString(),
+            color: (v['color'] ?? '').toString(),
+            quantity: v['quantity'] as int? ?? 0,
+            price: (v['price'] as num?)?.toDouble() ?? 0.0,
+          ));
+        }
+      } else {
+        _variants.add(ProductVariant(
+          size: product.size.isNotEmpty ? product.size : 'Small',
+          color: product.color.isNotEmpty ? product.color : 'Black',
+        ));
+      }
+    });
   }
 
   Future<void> _loadCategories() async {
@@ -241,7 +334,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
       packageId: _selectedPackage?.id ?? '',
       variants: valid,
       sku: _sku.text.trim(),
-      supplierName: _supplier.text.trim(),
+      supplierId: _selectedSupplierId ?? '',
+      supplierName: _suppliers.firstWhere((s) => s.id == (_selectedSupplierId ?? ''), orElse: () => const SupplierOption(id: '', name: '')).name,
       supplierContact: _supplierContact.text.trim(),
       supplierSince: _supplierSince.text.trim(),
       supplierAddress: _supplierAddress.text.trim(),
@@ -257,6 +351,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
         await _repository.createProduct(req);
         if (!mounted) return;
         _snack('Product created');
+      }
+      if (_selectedPurchaseItemId != null) {
+        try {
+          await _repository.completePurchaseItem(_selectedPurchaseItemId!);
+          if (mounted) _snack('Purchase item marked as completed');
+        } catch (_) {}
       }
       Navigator.of(context).pop(true);
     } on ApiException catch (e) {
@@ -319,6 +419,20 @@ class _AddProductScreenState extends State<AddProductScreen> {
               user: widget.user,
             ),
             const SizedBox(height: 20),
+            if (_pendingPurchaseItems.isNotEmpty) ...[
+              FormCard(
+                label: 'Use from Purchase',
+                helper: 'Select a pending purchase item to auto-fill product details.',
+                child: _pendingPurchaseSection(),
+              ),
+              const SizedBox(height: 16),
+            ],
+            FormCard(
+              label: 'Find Existing Product',
+              helper: 'Type to search existing products. Selecting one fills all fields.',
+              child: _productSearchField(),
+            ),
+            const SizedBox(height: 16),
             FormCard(
               label: 'Inventory Type',
               helper: 'Choose which inventory this product belongs to.',
@@ -357,6 +471,120 @@ class _AddProductScreenState extends State<AddProductScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _pendingPurchaseSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            isExpanded: true,
+            value: _selectedPurchaseItemId,
+            hint: const Text('Select a pending purchase item...', style: TextStyle(color: kGray, fontSize: 14)),
+            items: _pendingPurchaseItems.map((item) {
+              final price = item.unitPrice.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+              return DropdownMenuItem(
+                value: item.id,
+                child: Text(
+                  '${item.productName} (x${item.quantity} @ MMK $price)',
+                  style: const TextStyle(fontSize: 13),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              );
+            }).toList(),
+            onChanged: (val) {
+              if (val == null) return;
+              final item = _pendingPurchaseItems.firstWhere((i) => i.id == val);
+              _selectPurchaseItem(item);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _productSearchField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: _productSearch,
+          onChanged: _searchProducts,
+          decoration: InputDecoration(
+            hintText: 'Search product name...',
+            hintStyle: const TextStyle(color: kGray, fontSize: 14),
+            prefixIcon: const Icon(Icons.search, color: kGray, size: 22),
+            suffixIcon: _productSearch.text.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.close, color: kGray, size: 20),
+                    onPressed: () {
+                      _productSearch.clear();
+                      setState(() {
+                        _searchResults = [];
+                        _showSearchResults = false;
+                      });
+                    },
+                  )
+                : null,
+            filled: true,
+            fillColor: kBg,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: kBorder),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: kBorder),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: kPurple700),
+            ),
+          ),
+        ),
+        if (_showSearchResults && _searchResults.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Container(
+            constraints: const BoxConstraints(maxHeight: 200),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: kBorder),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: ListView.builder(
+              shrinkWrap: true,
+              padding: const EdgeInsets.all(8),
+              itemCount: _searchResults.length,
+              itemBuilder: (ctx, i) {
+                final p = _searchResults[i];
+                return ListTile(
+                  dense: true,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  leading: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: kLightPurple,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.inventory_2_outlined, color: kPurple700, size: 20),
+                  ),
+                  title: Text(p.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: kTitle)),
+                  subtitle: Text(
+                    [if (p.brand.isNotEmpty) p.brand, if (p.sku.isNotEmpty) 'SKU: ${p.sku}'].join(' | '),
+                    style: const TextStyle(fontSize: 12, color: kGray),
+                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: kGray),
+                  onTap: () => _selectProduct(p),
+                );
+              },
+            ),
+          ),
+        ],
+      ],
     );
   }
 
@@ -594,8 +822,56 @@ class _AddProductScreenState extends State<AddProductScreen> {
   Widget _supplyChain() {
     return Column(
       children: [
-        _field('Supplier (optional)', _supplier,
-            'Type a supplier name (created if new)'),
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _label('Supplier', req: false),
+                  const SizedBox(height: 8),
+                  DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      isExpanded: true,
+                      value: _selectedSupplierId,
+                      hint: const Text('Select a supplier...', style: TextStyle(color: kGray, fontSize: 14)),
+                      items: _suppliers.map((s) => DropdownMenuItem(
+                        value: s.id,
+                        child: Text(s.name, style: const TextStyle(fontSize: 14)),
+                      )).toList(),
+                      onChanged: (val) {
+                        setState(() => _selectedSupplierId = val);
+                        final selected = _suppliers.firstWhere((s) => s.id == val, orElse: () => const SupplierOption(id: '', name: ''));
+                        if (selected.id.isNotEmpty) {
+                          _supplierAddress.clear();
+                          _supplierContact.clear();
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Padding(
+              padding: const EdgeInsets.only(top: 22),
+              child: GestureDetector(
+                onTap: _showAddSupplierSheet,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: kPurple700,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Text(
+                    '+ Add',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 16),
         _field('Contact Number', _supplierContact, 'Supplier phone number'),
         const SizedBox(height: 16),
@@ -603,6 +879,105 @@ class _AddProductScreenState extends State<AddProductScreen> {
         const SizedBox(height: 16),
         _field('Supplier Address', _supplierAddress, 'Supplier address'),
       ],
+    );
+  }
+
+  void _showAddSupplierSheet() {
+    final nameController = TextEditingController();
+    final phoneController = TextEditingController();
+    final addressController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(color: kBorder, borderRadius: BorderRadius.circular(2)),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Add New Supplier',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: kTitle),
+                      ),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(ctx),
+                        child: const Icon(Icons.close, color: kGray),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  _field('Supplier Name', nameController, 'e.g. Golden Harvest Co.', req: true),
+                  const SizedBox(height: 16),
+                  _field('Contact / Phone', phoneController, 'e.g. 09-1234-5678'),
+                  const SizedBox(height: 16),
+                  _field('Address', addressController, 'e.g. No.12, Market St, Yangon'),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        if (nameController.text.isNotEmpty) {
+                          try {
+                            final dio = ApiClient.create();
+                            final resp = await dio.post('/api/suppliers', data: {
+                              'name': nameController.text.trim(),
+                              'contact': phoneController.text.trim(),
+                              'address': addressController.text.trim(),
+                            });
+                            final data = resp.data;
+                            if (data is Map<String, dynamic>) {
+                              final newSupplier = SupplierOption(
+                                id: (data['id'] ?? '').toString(),
+                                name: data['name'] ?? nameController.text.trim(),
+                              );
+                              setState(() {
+                                _suppliers.insert(0, newSupplier);
+                                _selectedSupplierId = newSupplier.id;
+                              });
+                            }
+                            if (ctx.mounted) Navigator.pop(ctx);
+                          } on ApiException catch (e) {
+                            if (ctx.mounted) {
+                              ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(e.message)));
+                            }
+                          }
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kPurple700,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('Save Supplier', style: TextStyle(fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 

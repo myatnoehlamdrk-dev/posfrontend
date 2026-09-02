@@ -62,4 +62,42 @@ class ProductCreateRepositoryImpl implements ProductCreateRepository {
       throw ApiException.fromDio(e);
     }
   }
+
+  @override
+  Future<List<ProductSearchResult>> searchProducts(String query) async {
+    try {
+      final dio = ApiClient.create();
+      final resp = await dio.get('/api/products/search', queryParameters: {'q': query});
+      final data = _asList(resp.data);
+      return data
+          .map((e) => ProductSearchResult.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException {
+      return [];
+    }
+  }
+
+  @override
+  Future<List<PendingPurchaseItem>> getPendingPurchaseItems() async {
+    try {
+      final dio = ApiClient.create();
+      final resp = await dio.get('/api/purchase-items', queryParameters: {'status': 'pending'});
+      final data = _asList(resp.data);
+      return data
+          .map((e) => PendingPurchaseItem.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException {
+      return [];
+    }
+  }
+
+  @override
+  Future<void> completePurchaseItem(String id) async {
+    try {
+      final dio = ApiClient.create();
+      await dio.put('/api/purchase-items/$id', data: {'status': 'completed'});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/purchase_items/model/purchase_models.dart';
+import 'package:posfrontend/modules/purchase_items/viewmodel/purchase_item_view_model.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 
 class PurchaseItemsScreen extends StatefulWidget {
@@ -15,6 +16,7 @@ class PurchaseItemsScreen extends StatefulWidget {
 class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
   int _selectedTab = 0;
   final _searchController = TextEditingController();
+  late final PurchaseItemViewModel _viewModel;
 
   static const Color teal = Color(0xFF14B8A6);
   static const Color tealDark = Color(0xFF0F9D8A);
@@ -26,43 +28,25 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
   static const Color orange = Color(0xFFD97706);
   static const Color orangeBg = Color(0xFFFEF3C7);
 
-  final List<Supplier> _suppliers = [
-    const Supplier(id: 'SUP-001', name: 'Golden Harvest Co.', phone: '09-1234-5678', address: 'No.12, Market St, Yangon'),
-    const Supplier(id: 'SUP-002', name: 'Fresh Farm Supply', phone: '09-8765-4321', address: 'No.45, Farm Road, Mandalay'),
-    const Supplier(id: 'SUP-003', name: 'City Beverage Ltd.', phone: '09-1111-2222', address: 'No.78, Business Ave, Yangon'),
-  ];
-
-  final List<PurchaseOrder> _orders = [
-    const PurchaseOrder(orderId: 'PUR-2025-0001', supplierId: 'SUP-001', supplierName: 'Golden Harvest Co.', productName: 'All-Purpose Flour (50kg)', quantity: 10, unitPrice: 45000, date: '30 Aug 2025', status: PurchaseStatus.completed),
-    const PurchaseOrder(orderId: 'PUR-2025-0002', supplierId: 'SUP-002', supplierName: 'Fresh Farm Supply', productName: 'Fresh Tomatoes (10kg)', quantity: 20, unitPrice: 5000, date: '30 Aug 2025', status: PurchaseStatus.completed),
-    const PurchaseOrder(orderId: 'PUR-2025-0003', supplierId: 'SUP-003', supplierName: 'City Beverage Ltd.', productName: 'Coca-Cola (24 cans)', quantity: 15, unitPrice: 12000, date: '31 Aug 2025', status: PurchaseStatus.completed),
-    const PurchaseOrder(orderId: 'PUR-2025-0004', supplierId: 'SUP-001', supplierName: 'Golden Harvest Co.', productName: 'Cheese Block (5kg)', quantity: 8, unitPrice: 35000, date: '31 Aug 2025', status: PurchaseStatus.pending),
-    const PurchaseOrder(orderId: 'PUR-2025-0005', supplierId: 'SUP-002', supplierName: 'Fresh Farm Supply', productName: 'Fresh Milk (1L x 12)', quantity: 12, unitPrice: 8000, date: '01 Sep 2025', status: PurchaseStatus.pending),
-  ];
-
-  List<PurchaseOrder> get _filteredOrders {
-    var list = _orders;
-    if (_selectedTab == 1) {
-      list = list.where((o) => o.status == PurchaseStatus.completed).toList();
-    } else if (_selectedTab == 2) {
-      list = list.where((o) => o.status == PurchaseStatus.pending).toList();
-    }
-    final query = _searchController.text.toLowerCase();
-    if (query.isNotEmpty) {
-      list = list.where((o) =>
-          o.orderId.toLowerCase().contains(query) ||
-          o.productName.toLowerCase().contains(query) ||
-          o.supplierName.toLowerCase().contains(query)).toList();
-    }
-    return list;
+  @override
+  void initState() {
+    super.initState();
+    _viewModel = PurchaseItemViewModel();
+    _viewModel.addListener(_onViewModelChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _viewModel.loadPurchaseItems(refresh: true);
+      _viewModel.loadSuppliers();
+    });
   }
 
-  int get _allCount => _orders.length;
-  int get _completedCount => _orders.where((o) => o.status == PurchaseStatus.completed).length;
-  int get _pendingCount => _orders.where((o) => o.status == PurchaseStatus.pending).length;
+  void _onViewModelChanged() {
+    if (mounted) setState(() {});
+  }
 
   @override
   void dispose() {
+    _viewModel.removeListener(_onViewModelChanged);
+    _viewModel.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -83,31 +67,75 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
           children: [
             _buildTopBar(),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Manage purchase orders from your suppliers',
-                      style: TextStyle(fontSize: 13, color: gray),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildTabs(),
-                    const SizedBox(height: 16),
-                    _buildSearchBar(),
-                    const SizedBox(height: 16),
-                    ..._filteredOrders.map((order) => _buildOrderCard(order)),
-                    const SizedBox(height: 80),
-                  ],
-                ),
-              ),
+              child: _buildBody(),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildBody() {
+    if (_viewModel.isLoading && _viewModel.purchaseItems.isEmpty) {
+      return const Center(child: CircularProgressIndicator(color: teal));
+    }
+    if (_viewModel.error != null && _viewModel.purchaseItems.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, color: Colors.red, size: 48),
+            const SizedBox(height: 12),
+            Text(_viewModel.error!, style: const TextStyle(color: gray)),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: () => _viewModel.loadPurchaseItems(refresh: true),
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: () => _viewModel.loadPurchaseItems(refresh: true),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 12),
+            const Text(
+              'Manage purchase orders from your suppliers',
+              style: TextStyle(fontSize: 13, color: gray),
+            ),
+            const SizedBox(height: 16),
+            _buildTabs(),
+            const SizedBox(height: 16),
+            _buildSearchBar(),
+            const SizedBox(height: 16),
+            ..._filteredOrders.map((order) => _buildOrderCard(order)),
+            const SizedBox(height: 80),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<PurchaseOrder> get _filteredOrders {
+    var list = _viewModel.purchaseItems;
+    if (_selectedTab == 1) {
+      list = list.where((o) => o.status == PurchaseStatus.completed).toList();
+    } else if (_selectedTab == 2) {
+      list = list.where((o) => o.status == PurchaseStatus.pending).toList();
+    }
+    final query = _searchController.text.toLowerCase();
+    if (query.isNotEmpty) {
+      list = list.where((o) =>
+          o.orderId.toLowerCase().contains(query) ||
+          o.productName.toLowerCase().contains(query) ||
+          o.supplierName.toLowerCase().contains(query)).toList();
+    }
+    return list;
   }
 
   Widget _buildTopBar() {
@@ -168,7 +196,10 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
   }
 
   Widget _buildTabs() {
-    final tabs = [('All', _allCount), ('Completed', _completedCount), ('Pending', _pendingCount)];
+    final allCount = _viewModel.purchaseItems.length;
+    final completedCount = _viewModel.purchaseItems.where((o) => o.status == PurchaseStatus.completed).length;
+    final pendingCount = _viewModel.purchaseItems.where((o) => o.status == PurchaseStatus.pending).length;
+    final tabs = [('All', allCount), ('Completed', completedCount), ('Pending', pendingCount)];
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -308,6 +339,19 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
               const SizedBox(width: 4),
               Text(order.date, style: const TextStyle(fontSize: 11, color: gray)),
               const Spacer(),
+              if (!isCompleted)
+                GestureDetector(
+                  onTap: () => _viewModel.updateStatus(order.orderId, 'completed'),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: greenBg,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text('Mark Completed', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: green)),
+                  ),
+                ),
+              if (isCompleted) const SizedBox(width: 8),
               Text(
                 'MMK ${_formatAmount(order.totalAmount)}',
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: tealDark),
@@ -324,7 +368,12 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
     final nameController = TextEditingController();
     final qtyController = TextEditingController();
     final priceController = TextEditingController();
-    final dateController = TextEditingController(text: '08/31/2025');
+    final sizeController = TextEditingController();
+    final colorController = TextEditingController();
+    final dateController = TextEditingController(
+      text: '${DateTime.now().month.toString().padLeft(2, '0')}/${DateTime.now().day.toString().padLeft(2, '0')}/${DateTime.now().year}',
+    );
+    final notesController = TextEditingController();
 
     showModalBottomSheet(
       context: context,
@@ -394,7 +443,7 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                             isExpanded: true,
                             value: selectedSupplierId,
                             hint: const Text('Select a supplier...', style: TextStyle(color: gray, fontSize: 14)),
-                            items: _suppliers.map((s) => DropdownMenuItem(
+                            items: _viewModel.suppliers.map((s) => DropdownMenuItem(
                               value: s.id,
                               child: Text(s.name, style: const TextStyle(fontSize: 14)),
                             )).toList(),
@@ -407,35 +456,45 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                       const SizedBox(height: 16),
                       Row(
                         children: [
+                          Expanded(child: _inputField('Size (optional)', 'e.g. Large', sizeController)),
+                          const SizedBox(width: 12),
+                          Expanded(child: _inputField('Color (optional)', 'e.g. Red', colorController)),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
                           Expanded(child: _inputField('Quantity', '0', qtyController, isNumber: true)),
                           const SizedBox(width: 12),
                           Expanded(child: _inputField('Unit Price (MMK)', '0', priceController, isNumber: true)),
                         ],
                       ),
                       const SizedBox(height: 16),
-                      _inputField('Purchase Date', 'mm/dd/yyyy', dateController),
+                      _inputField('Purchase Date (MM/DD/YYYY)', 'mm/dd/yyyy', dateController),
+                      const SizedBox(height: 16),
+                      _inputField('Notes (optional)', 'Any notes...', notesController),
                       const SizedBox(height: 24),
                       SizedBox(
                         width: double.infinity,
                         height: 48,
                         child: ElevatedButton(
-                          onPressed: () {
-                            if (selectedSupplierId != null && nameController.text.isNotEmpty) {
-                              final supplier = _suppliers.firstWhere((s) => s.id == selectedSupplierId);
-                              final qty = int.tryParse(qtyController.text) ?? 1;
-                              final price = int.tryParse(priceController.text) ?? 0;
-                              setState(() {
-                                _orders.insert(0, PurchaseOrder(
-                                  orderId: 'PUR-2025-${(_orders.length + 1).toString().padLeft(4, '0')}',
-                                  supplierId: supplier.id,
-                                  supplierName: supplier.name,
-                                  productName: nameController.text,
-                                  quantity: qty,
-                                  unitPrice: price,
-                                  date: dateController.text,
-                                  status: PurchaseStatus.pending,
-                                ));
-                              });
+                          onPressed: () async {
+                            if (nameController.text.isEmpty) return;
+                            final qty = int.tryParse(qtyController.text) ?? 0;
+                            final price = int.tryParse(priceController.text) ?? 0;
+                            if (qty <= 0) return;
+
+                            final success = await _viewModel.createPurchaseItem(
+                              productName: nameController.text,
+                              quantity: qty,
+                              unitPrice: price,
+                              date: dateController.text,
+                              supplierId: selectedSupplierId,
+                              notes: notesController.text,
+                              size: sizeController.text,
+                              color: colorController.text,
+                            );
+                            if (success && ctx.mounted) {
                               Navigator.pop(ctx);
                             }
                           },
@@ -512,18 +571,17 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                     width: double.infinity,
                     height: 48,
                     child: ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         if (nameController.text.isNotEmpty) {
-                          setState(() {
-                            _suppliers.add(Supplier(
-                              id: 'SUP-${(_suppliers.length + 1).toString().padLeft(3, '0')}',
-                              name: nameController.text,
-                              phone: phoneController.text,
-                              address: addressController.text,
-                            ));
-                          });
-                          Navigator.pop(ctx);
-                          _showNewPurchaseSheet();
+                          final supplier = await _viewModel.createSupplier(
+                            name: nameController.text,
+                            contact: phoneController.text,
+                            address: addressController.text,
+                          );
+                          if (supplier != null && ctx.mounted) {
+                            Navigator.pop(ctx);
+                            _showNewPurchaseSheet();
+                          }
                         }
                       },
                       style: ElevatedButton.styleFrom(

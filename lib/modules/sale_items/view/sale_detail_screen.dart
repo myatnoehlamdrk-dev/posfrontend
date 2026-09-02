@@ -36,18 +36,46 @@ class SaleDetailScreen extends StatelessWidget {
                     _buildOrderHeader(isAlreadySale),
                     const SizedBox(height: 12),
                     _buildInfoCard('Customer Information', [
-                      _infoRow('Customer Name', order.customerName),
-                      _infoRow('Customer ID', 'CUS-001'),
+                      _infoRow('Customer Name', order.customerName.isNotEmpty ? order.customerName : '-'),
+                      _infoRow('Phone', order.customerPhone.isNotEmpty ? order.customerPhone : '-'),
                     ]),
                     const SizedBox(height: 12),
-                    _buildInfoCard('Ordered Items', [
-                      _infoRow('Product', order.productName),
-                      _infoRow('Description', order.description),
-                      _infoRow('Quantity', 'x${order.quantity}'),
-                    ]),
+                    if (order.saleItems.isNotEmpty) ...[
+                      _buildInfoCard('Ordered Items (${order.saleItems.length})', order.saleItems.map((item) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(item.productName, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: titleColor)),
+                                    if (item.size.isNotEmpty || item.color.isNotEmpty)
+                                      Text(
+                                        [if (item.size.isNotEmpty) 'Size: ${item.size}', if (item.color.isNotEmpty) 'Color: ${item.color}'].join(' | '),
+                                        style: const TextStyle(fontSize: 11, color: gray),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              Text('x${item.quantity}', style: const TextStyle(fontSize: 12, color: gray)),
+                              const SizedBox(width: 12),
+                              Text('MMK ${_formatAmount(item.subtotal)}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: titleColor)),
+                            ],
+                          ),
+                        );
+                      }).toList()),
+                    ] else ...[
+                      _buildInfoCard('Ordered Items', [
+                        _infoRow('Product', order.productName),
+                        _infoRow('Description', order.description),
+                        _infoRow('Quantity', 'x${order.quantity}'),
+                      ]),
+                    ],
                     const SizedBox(height: 12),
                     _buildInfoCard('Payment Information', [
-                      _infoRow('Payment Method', 'Cash'),
+                      _infoRow('Payment Method', order.payMethod.isNotEmpty ? order.payMethod : 'Cash'),
                       _infoRow('Payment Status', isAlreadySale ? 'Paid' : 'Pending'),
                       _infoRow('Total Amount', 'MMK ${_formatAmount(order.amount)}'),
                     ]),
@@ -55,7 +83,7 @@ class SaleDetailScreen extends StatelessWidget {
                     _buildInfoCard('Order Status & History', [
                       _infoRow('Order Date', order.date),
                       _infoRow('Order Status', isAlreadySale ? 'Completed' : 'Pending'),
-                      _infoRow('Voucher Ref', '#${order.orderId}'),
+                      _infoRow('Voucher Ref', order.voucherNo.isNotEmpty ? '#${order.voucherNo}' : '#${order.orderId}'),
                     ]),
                     const SizedBox(height: 24),
                   ],
@@ -120,7 +148,7 @@ class SaleDetailScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Order #${order.orderId}',
+                  order.voucherNo.isNotEmpty ? order.voucherNo : 'Order #${order.orderId}',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -154,8 +182,10 @@ class SaleDetailScreen extends StatelessWidget {
               color: titleColor,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(order.description, style: const TextStyle(fontSize: 13, color: gray)),
+          if (order.description.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(order.description, style: const TextStyle(fontSize: 13, color: gray)),
+          ],
           const SizedBox(height: 12),
           const Divider(color: border, height: 1),
           const SizedBox(height: 12),
@@ -163,14 +193,26 @@ class SaleDetailScreen extends StatelessWidget {
             children: [
               const Icon(Icons.calendar_today_outlined, size: 14, color: gray),
               const SizedBox(width: 6),
-              Text(order.date, style: const TextStyle(fontSize: 13, color: gray)),
-              const Spacer(),
-              Text(
-                'MMK ${_formatAmount(order.amount)}',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: teal,
+              Expanded(
+                child: Text(
+                  _formatDate(order.date),
+                  style: const TextStyle(fontSize: 13, color: gray),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  'MMK ${_formatAmount(order.amount)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.end,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: teal,
+                  ),
                 ),
               ),
             ],
@@ -235,6 +277,16 @@ class SaleDetailScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _formatDate(String dateStr) {
+    if (dateStr.isEmpty) return '-';
+    try {
+      final dt = DateTime.parse(dateStr);
+      return '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
+    } catch (_) {
+      return dateStr;
+    }
   }
 
   String _formatAmount(int amount) {

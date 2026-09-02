@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/sale_items/model/sale_item_models.dart';
 import 'package:posfrontend/modules/sale_items/view/sale_detail_screen.dart';
+import 'package:posfrontend/modules/sale_items/viewmodel/sale_item_view_model.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 
 class SaleItemScreen extends StatefulWidget {
@@ -16,6 +17,7 @@ class SaleItemScreen extends StatefulWidget {
 class _SaleItemScreenState extends State<SaleItemScreen> {
   int _selectedTab = 0;
   final _searchController = TextEditingController();
+  late final SaleItemViewModel _viewModel;
 
   static const Color teal = Color(0xFF14B8A6);
   static const Color titleColor = Color(0xFF111827);
@@ -26,72 +28,24 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
   static const Color orange = Color(0xFFD97706);
   static const Color orangeBg = Color(0xFFFEF3C7);
 
-  final List<SaleOrder> _orders = const [
-    SaleOrder(
-      orderId: 'ORD-2025-0001',
-      productName: 'Burger Set',
-      description: 'Burger + Fries + Coca Cola',
-      quantity: 2,
-      date: '31 Aug 2025 - 10:30 AM',
-      status: OrderStatus.alreadySale,
-      amount: 12000,
-      customerName: 'Aung Kyaw',
-    ),
-    SaleOrder(
-      orderId: 'ORD-2025-0002',
-      productName: 'Margherita Pizza (M)',
-      description: 'Cheese, Tomato, Basil',
-      quantity: 1,
-      date: '31 Aug 2025 - 09:15 AM',
-      status: OrderStatus.alreadySale,
-      amount: 8500,
-      customerName: 'Su Su',
-    ),
-    SaleOrder(
-      orderId: 'ORD-2025-0003',
-      productName: 'Iced Latte',
-      description: 'Size Large',
-      quantity: 3,
-      date: '31 Aug 2025 - 01:00 PM',
-      status: OrderStatus.willBeSale,
-      amount: 10500,
-      customerName: 'Min Min',
-    ),
-    SaleOrder(
-      orderId: 'ORD-2025-0004',
-      productName: 'Chocolate Cake',
-      description: '1 Slice',
-      quantity: 2,
-      date: '31 Aug 2025 - 02:30 PM',
-      status: OrderStatus.willBeSale,
-      amount: 6000,
-      customerName: 'Kyaw Zin',
-    ),
-  ];
-
-  List<SaleOrder> get _filteredOrders {
-    var list = _orders;
-    if (_selectedTab == 1) {
-      list = list.where((o) => o.status == OrderStatus.alreadySale).toList();
-    } else if (_selectedTab == 2) {
-      list = list.where((o) => o.status == OrderStatus.willBeSale).toList();
-    }
-    final query = _searchController.text.toLowerCase();
-    if (query.isNotEmpty) {
-      list = list.where((o) =>
-          o.orderId.toLowerCase().contains(query) ||
-          o.productName.toLowerCase().contains(query) ||
-          o.customerName.toLowerCase().contains(query)).toList();
-    }
-    return list;
+  @override
+  void initState() {
+    super.initState();
+    _viewModel = SaleItemViewModel();
+    _viewModel.addListener(_onViewModelChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _viewModel.loadSales(refresh: true);
+    });
   }
 
-  int get _allCount => _orders.length;
-  int get _alreadySaleCount => _orders.where((o) => o.status == OrderStatus.alreadySale).length;
-  int get _willBeSaleCount => _orders.where((o) => o.status == OrderStatus.willBeSale).length;
+  void _onViewModelChanged() {
+    if (mounted) setState(() {});
+  }
 
   @override
   void dispose() {
+    _viewModel.removeListener(_onViewModelChanged);
+    _viewModel.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -106,31 +60,75 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
           children: [
             _buildTopBar(),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Products that are already sale and will be sale (Order)',
-                      style: TextStyle(fontSize: 13, color: gray),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildTabs(),
-                    const SizedBox(height: 16),
-                    _buildSearchBar(),
-                    const SizedBox(height: 16),
-                    ..._filteredOrders.map((order) => _buildOrderCard(order)),
-                    const SizedBox(height: 24),
-                  ],
-                ),
-              ),
+              child: _buildBody(),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildBody() {
+    if (_viewModel.isLoading && _viewModel.sales.isEmpty) {
+      return const Center(child: CircularProgressIndicator(color: teal));
+    }
+    if (_viewModel.error != null && _viewModel.sales.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, color: Colors.red, size: 48),
+            const SizedBox(height: 12),
+            Text(_viewModel.error!, style: const TextStyle(color: gray)),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: () => _viewModel.loadSales(refresh: true),
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: () => _viewModel.loadSales(refresh: true),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 12),
+            const Text(
+              'Products that are already sale and will be sale (Order)',
+              style: TextStyle(fontSize: 13, color: gray),
+            ),
+            const SizedBox(height: 16),
+            _buildTabs(),
+            const SizedBox(height: 16),
+            _buildSearchBar(),
+            const SizedBox(height: 16),
+            ..._filteredOrders.map((order) => _buildOrderCard(order)),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<SaleOrder> get _filteredOrders {
+    var list = _viewModel.sales;
+    if (_selectedTab == 1) {
+      list = list.where((o) => o.status == OrderStatus.alreadySale).toList();
+    } else if (_selectedTab == 2) {
+      list = list.where((o) => o.status == OrderStatus.willBeSale).toList();
+    }
+    final query = _searchController.text.toLowerCase();
+    if (query.isNotEmpty) {
+      list = list.where((o) =>
+          o.orderId.toLowerCase().contains(query) ||
+          o.productName.toLowerCase().contains(query) ||
+          o.customerName.toLowerCase().contains(query)).toList();
+    }
+    return list;
   }
 
   Widget _buildTopBar() {
@@ -198,10 +196,13 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
   }
 
   Widget _buildTabs() {
+    final allCount = _viewModel.sales.length;
+    final alreadySaleCount = _viewModel.sales.where((o) => o.status == OrderStatus.alreadySale).length;
+    final willBeSaleCount = _viewModel.sales.where((o) => o.status == OrderStatus.willBeSale).length;
     final tabs = [
-      ('All', _allCount),
-      ('Sold', _alreadySaleCount),
-      ('Order', _willBeSaleCount),
+      ('All', allCount),
+      ('Sold', alreadySaleCount),
+      ('Order', willBeSaleCount),
     ];
     return Container(
       decoration: BoxDecoration(
@@ -303,7 +304,7 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                     children: [
                       Expanded(
                         child: Text(
-                          'Order #${order.orderId}',
+                          order.voucherNo.isNotEmpty ? order.voucherNo : 'Order #${order.orderId}',
                           style: const TextStyle(
                             fontSize: 12,
                             color: gray,
@@ -337,13 +338,15 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                       color: titleColor,
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    order.description,
-                    style: const TextStyle(fontSize: 12, color: gray),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  if (order.customerName.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      order.customerName,
+                      style: const TextStyle(fontSize: 12, color: gray),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                   const SizedBox(height: 6),
                   Row(
                     children: [
@@ -356,7 +359,7 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          order.date,
+                          _formatDate(order.date),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(fontSize: 11, color: gray),
@@ -384,6 +387,16 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
         ),
       ),
     );
+  }
+
+  String _formatDate(String dateStr) {
+    if (dateStr.isEmpty) return '-';
+    try {
+      final dt = DateTime.parse(dateStr);
+      return '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
+    } catch (_) {
+      return dateStr;
+    }
   }
 
   String _formatAmount(int amount) {

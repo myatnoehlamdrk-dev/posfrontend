@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:posfrontend/modules/sale/model/sale_models.dart';
 import 'package:posfrontend/modules/shared/widgets/inventory_form_widgets.dart';
@@ -15,6 +17,7 @@ String _fmtPrice(double value) {
 
 class SalePreviewScreen extends StatelessWidget {
   final String customerName;
+  final String? customerPhone;
   final String staffName;
   final String voucherNo;
   final String orderId;
@@ -30,10 +33,12 @@ class SalePreviewScreen extends StatelessWidget {
   final String? shopAddress;
   final String? shopPhone;
   final String? shopEmail;
+  final String? shopImage;
 
   const SalePreviewScreen({
     super.key,
     required this.customerName,
+    this.customerPhone,
     required this.staffName,
     required this.voucherNo,
     required this.orderId,
@@ -49,6 +54,7 @@ class SalePreviewScreen extends StatelessWidget {
     this.shopAddress,
     this.shopPhone,
     this.shopEmail,
+    this.shopImage,
   });
 
   @override
@@ -125,15 +131,21 @@ class SalePreviewScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
+          if (shopImage != null && shopImage!.isNotEmpty)
+            ClipRRect(
               borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.store, color: Colors.white, size: 26),
-          ),
+              child: shopImage!.startsWith('http')
+                  ? Image.network(
+                      shopImage!,
+                      width: 64,
+                      height: 64,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _shopPlaceholder(),
+                    )
+                  : _base64Image(shopImage!),
+            )
+          else
+            _shopPlaceholder(),
           const SizedBox(height: 10),
           if (shopName != null && shopName!.isNotEmpty)
             Text(
@@ -256,14 +268,21 @@ class SalePreviewScreen extends StatelessWidget {
             child: const Icon(Icons.person, color: kPurple, size: 18),
           ),
           const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Customer', style: TextStyle(fontSize: 11, color: kGray)),
-              const SizedBox(height: 2),
-              Text(customerName,
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: kTitle)),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Customer', style: TextStyle(fontSize: 11, color: kGray)),
+                const SizedBox(height: 2),
+                Text(customerName,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: kTitle)),
+                if (customerPhone != null && customerPhone!.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(customerPhone!,
+                      style: const TextStyle(fontSize: 12, color: kGray)),
+                ],
+              ],
+            ),
           ),
         ],
       ),
@@ -470,6 +489,27 @@ class SalePreviewScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _shopPlaceholder() {
+    return Container(
+      width: 64,
+      height: 64,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: const Icon(Icons.store, color: Colors.white, size: 32),
+    );
+  }
+
+  Widget _base64Image(String data) {
+    try {
+      Uint8List bytes = base64Decode(data);
+      return Image.memory(bytes, width: 64, height: 64, fit: BoxFit.cover);
+    } catch (_) {
+      return _shopPlaceholder();
+    }
   }
 }
 

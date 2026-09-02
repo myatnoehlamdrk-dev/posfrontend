@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/sale/model/sale_models.dart';
+import 'package:posfrontend/modules/sale/repository/order_repository_impl.dart';
 import 'package:posfrontend/modules/sale/repository/sale_product_repository_impl.dart';
 import 'package:posfrontend/modules/sale/repository/sale_repository_impl.dart';
 import 'package:posfrontend/modules/sale/view/add_products_screen.dart';
@@ -10,6 +11,7 @@ import 'package:posfrontend/modules/sale/viewmodel/sale_view_model.dart';
 import 'package:posfrontend/modules/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/modules/shared/widgets/price_text.dart';
 import 'package:posfrontend/modules/shop/model/shop.dart';
+import 'package:posfrontend/modules/shop/repository/shop_api_repository_impl.dart';
 import 'package:posfrontend/modules/shop/repository/shop_local_repository_impl.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
@@ -32,6 +34,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   );
 
   String _customerName = 'Walk-in Customer';
+  String _customerPhone = '';
   String _paymentMethod = 'Cash';
   late String _voucherRandom;
   late String _orderRandom;
@@ -54,8 +57,16 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   }
 
   Future<void> _loadShop() async {
+    try {
+      final shopId = widget.user?.shopId ?? '';
+      if (shopId.isNotEmpty) {
+        final shop = await ShopApiRepositoryImpl().getShopById(shopId);
+        if (mounted) setState(() => _shop = shop);
+        return;
+      }
+    } catch (_) {}
     final shop = await ShopLocalRepositoryImpl().getShop();
-    if (mounted) setState(() => _shop = shop);
+    if (mounted && shop != null) setState(() => _shop = shop);
   }
 
   void _refreshRandoms() {
@@ -72,6 +83,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       await _viewModel.submitSale(
         userName: widget.user?.fullName ?? 'Staff',
         customerName: _customerName,
+        customerPhone: _customerPhone.isNotEmpty ? _customerPhone : null,
         payMethod: _paymentMethod,
         voucherNo: 'INV-$_voucherRandom',
         orderId: 'ORD-$_orderRandom',
@@ -87,6 +99,46 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       setState(() {
         _items.clear();
         _customerName = 'Walk-in Customer';
+        _customerPhone = '';
+        _discountCtrl.text = '0';
+        _notesCtrl.clear();
+        _refreshRandoms();
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: const Color(0xFFDC2626)),
+      );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  Future<void> _submitDraft() async {
+    if (_items.isEmpty) return;
+    setState(() => _isSubmitting = true);
+    try {
+      await OrderRepositoryImpl().createOrder(
+        userName: widget.user?.fullName ?? 'Staff',
+        customerName: _customerName,
+        customerPhone: _customerPhone.isNotEmpty ? _customerPhone : null,
+        payMethod: _paymentMethod,
+        voucherNo: 'INV-$_voucherRandom',
+        orderId: 'ORD-$_orderRandom',
+        items: _items,
+        grandTotal: _totalPayable,
+        discount: _discountPct.toInt(),
+        notes: _notesCtrl.text.isNotEmpty ? _notesCtrl.text : null,
+        status: 'draft',
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Draft saved successfully!'), backgroundColor: Color(0xFF2563EB)),
+      );
+      setState(() {
+        _items.clear();
+        _customerName = 'Walk-in Customer';
+        _customerPhone = '';
         _discountCtrl.text = '0';
         _notesCtrl.clear();
         _refreshRandoms();
@@ -207,46 +259,88 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
 
   Widget _customerCard() {
     return _card(
-      child: Row(
+      child: Column(
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5F0FF),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.person, color: kPurple, size: 22),
-          ),
-          const SizedBox(width: 14),
-          const Text('Customer',
-              style: TextStyle(fontSize: 12, color: kGray)),
-          const SizedBox(width: 8),
-          Expanded(
-            child: TextField(
-              controller: TextEditingController(text: _customerName),
-              onChanged: (v) => _customerName = v,
-              style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: kTitle),
-              decoration: const InputDecoration(
-                border: InputBorder.none,
-                isDense: true,
-                contentPadding: EdgeInsets.zero,
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5F0FF),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.person, color: kPurple, size: 22),
               ),
-            ),
-          ),
-          GestureDetector(
-            
-            child: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F0FF),
-                borderRadius: BorderRadius.circular(8),
+              const SizedBox(width: 14),
+              const Text('Customer',
+                  style: TextStyle(fontSize: 12, color: kGray)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextField(
+                  controller: TextEditingController(text: _customerName),
+                  onChanged: (v) => _customerName = v,
+                  style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: kTitle),
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
               ),
-              child: const Icon(Icons.edit, color: kPurple, size: 18),
-            ),
+              GestureDetector(
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5F0FF),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.edit, color: kPurple, size: 18),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5F0FF),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.phone, color: kPurple, size: 22),
+              ),
+              const SizedBox(width: 14),
+              const Text('Phone',
+                  style: TextStyle(fontSize: 12, color: kGray)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextField(
+                  controller: TextEditingController(text: _customerPhone),
+                  onChanged: (v) => _customerPhone = v,
+                  keyboardType: TextInputType.phone,
+                  style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: kTitle),
+                  decoration: InputDecoration(
+                    hintText: 'Optional',
+                    hintStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: Color(0xFFD1D5DB)),
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -701,16 +795,22 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     return Row(
       children: [
         Expanded(
-          child: _outlineBtn('Draft', Icons.save_outlined, () {}),
+          child: _outlineBtn('Draft', Icons.save_outlined, () {
+            if (_items.isEmpty) return;
+            _submitDraft();
+          }),
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: _outlineBtn('Preview', Icons.visibility_outlined, () {
+          child: _outlineBtn('Preview', Icons.visibility_outlined, () async {
             if (_items.isEmpty) return;
+            await _loadShop();
+            if (!mounted) return;
             Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (_) => SalePreviewScreen(
                   customerName: _customerName,
+                  customerPhone: _customerPhone.isNotEmpty ? _customerPhone : null,
                   staffName: widget.user?.fullName ?? 'Staff',
                   voucherNo: 'INV-$_voucherRandom',
                   orderId: 'ORD-$_orderRandom',
@@ -726,6 +826,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                   shopAddress: _shop?.physicalAddress,
                   shopPhone: _shop?.ownerInformation.phone,
                   shopEmail: _shop?.ownerInformation.email,
+                  shopImage: _shop?.logoData ?? _shop?.logoUrl,
                 ),
               ),
             );

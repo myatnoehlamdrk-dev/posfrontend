@@ -406,7 +406,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: kTitle),
           ),
           const SizedBox(height: 12),
-          ...variants.where((v) => v.quantity > 0).map((v) => Padding(
+          ...variants.map((v) => Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: Container(
               padding: const EdgeInsets.all(14),
@@ -445,7 +445,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             style: const TextStyle(fontSize: 12, color: kGray),
                           ),
                         Text(
-                          'Qty: ${v.quantity}',
+                          'Qty: ${_detail!.stockAvailable}',
                           style: const TextStyle(fontSize: 12, color: kGray),
                         ),
                       ],
