@@ -1,8 +1,8 @@
-import 'dart:convert';
 import 'package:posfrontend/core/base/base_view_model.dart';
-import 'package:dio/dio.dart';
+import 'package:posfrontend/core/network/api_client.dart';
 import '../model/sale_item_models.dart';
 import '../repository/sale_item_repository.dart';
+import '../repository/sale_item_repository_impl.dart';
 
 class SaleItemViewModel extends BaseViewModel {
   final SaleItemRepository _repository;
@@ -38,22 +38,17 @@ class SaleItemViewModel extends BaseViewModel {
       final salesResponse = await _repository.getSales(page: _currentPage);
       final ordersResponse = await _repository.getOrders(page: _currentPage);
 
-      final List<SaleOrder> salesList = _parseItems(salesResponse, fromOrder: false);
-      final List<SaleOrder> ordersList = _parseItems(ordersResponse, fromOrder: true);
-
-      final allItems = [...salesList, ...ordersList];
+      final allItems = [...salesResponse.data, ...ordersResponse.data];
       allItems.sort((a, b) => b.date.compareTo(a.date));
 
       _sales = _currentPage == 1 ? allItems : [..._sales, ...allItems];
 
-      final salesMeta = salesResponse['meta'];
-      final ordersMeta = ordersResponse['meta'];
-      final salesLastPage = (salesMeta is Map) ? (salesMeta['last_page'] ?? 1) : 1;
-      final ordersLastPage = (ordersMeta is Map) ? (ordersMeta['last_page'] ?? 1) : 1;
+      final salesLastPage = salesResponse.lastPage;
+      final ordersLastPage = ordersResponse.lastPage;
       _lastPage = salesLastPage > ordersLastPage ? salesLastPage : ordersLastPage;
       _currentPage++;
-    } on DioException catch (e) {
-      _error = e.message ?? 'Failed to load sales';
+    } on ApiException catch (e) {
+      _error = e.message;
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -62,21 +57,24 @@ class SaleItemViewModel extends BaseViewModel {
     }
   }
 
-  List<SaleOrder> _parseItems(Map<String, dynamic> response, {required bool fromOrder}) {
-    final dynamic rawData = response['data'];
-    List<dynamic> itemsList;
-    if (rawData is List) {
-      itemsList = rawData;
-    } else if (rawData is String) {
-      itemsList = jsonDecode(rawData) as List<dynamic>;
-    } else {
-      itemsList = [];
-    }
-    return itemsList.map((e) {
-      if (e is Map<String, dynamic>) {
-        return fromOrder ? SaleOrder.fromOrderJson(e) : SaleOrder.fromJson(e);
+  Future<bool> deleteItem(SaleOrder order) async {
+    try {
+      if (order.status == OrderStatus.alreadySale) {
+        await _repository.deleteSale(order.orderId);
+      } else {
+        await _repository.deleteOrder(order.orderId);
       }
-      return null;
-    }).whereType<SaleOrder>().toList();
+      _sales.removeWhere((o) => o.orderId == order.orderId);
+      notifyListeners();
+      return true;
+    } on ApiException catch (e) {
+      _error = e.message;
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    }
   }
 }

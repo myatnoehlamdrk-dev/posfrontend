@@ -35,9 +35,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final TextEditingController _name = TextEditingController();
   final TextEditingController _brand = TextEditingController();
   final TextEditingController _sku = TextEditingController();
-  final TextEditingController _supplierContact = TextEditingController();
-  final TextEditingController _supplierSince = TextEditingController();
-  final TextEditingController _supplierAddress = TextEditingController();
+
   final TextEditingController _productSearch = TextEditingController();
   final FocusNode _imageFocus = FocusNode();
 
@@ -54,6 +52,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   PackageOption? _selectedPackage;
   List<SupplierOption> _suppliers = [];
   List<PendingPurchaseItem> _pendingPurchaseItems = [];
+  bool _loadingPurchaseItems = false;
 
   File? _imageFile;
   String? _imageUrl;
@@ -102,9 +101,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
       _brand.text = p.brand;
       _sku.text = p.sku;
       _selectedSupplierId = p.supplierId;
-      _supplierContact.text = p.supplierContact;
-      _supplierSince.text = p.supplierSince;
-      _supplierAddress.text = p.supplierAddress;
       _imageUrl = p.imageUrl;
       _imageDeleteUrl = p.imageDeleteUrl;
       _variants.clear();
@@ -127,9 +123,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
     _name.dispose();
     _brand.dispose();
     _sku.dispose();
-    _supplierContact.dispose();
-    _supplierSince.dispose();
-    _supplierAddress.dispose();
     _productSearch.dispose();
     _imageFocus.dispose();
     super.dispose();
@@ -140,15 +133,26 @@ class _AddProductScreenState extends State<AddProductScreen> {
       final list = await _repository.getSuppliers();
       if (!mounted) return;
       setState(() => _suppliers = list);
-    } catch (_) {}
+    } catch (e) {
+      if (!mounted) return;
+      _snack('Failed to load suppliers');
+    }
   }
 
   Future<void> _loadPendingPurchaseItems() async {
+    setState(() => _loadingPurchaseItems = true);
     try {
       final list = await _repository.getPendingPurchaseItems();
       if (!mounted) return;
-      setState(() => _pendingPurchaseItems = list);
-    } catch (_) {}
+      setState(() {
+        _pendingPurchaseItems = list;
+        _loadingPurchaseItems = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loadingPurchaseItems = false);
+      _snack('Failed to load pending purchases');
+    }
   }
 
   void _selectPurchaseItem(PendingPurchaseItem item) {
@@ -195,8 +199,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
       _brand.text = product.brand;
       _sku.text = product.sku;
       _selectedSupplierId = product.supplierId;
-      _supplierContact.text = product.supplierContact;
-      _supplierAddress.text = product.supplierAddress;
       _imageUrl = product.imageUrl;
       _showSearchResults = false;
       _searchResults = [];
@@ -230,8 +232,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
         _packages = [];
         _selectedPackage = null;
       });
-    } on ApiException {
-      // Leave categories empty on failure.
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _snack('Failed to load categories: ${e.message}');
+    } catch (e) {
+      if (!mounted) return;
+      _snack('Failed to load categories: $e');
     }
   }
 
@@ -323,6 +329,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
       _snack('Add at least one variant with a size, quantity and price');
       return;
     }
+    if (_selectedCategory == null) {
+      _snack('Category is required');
+      return;
+    }
+    if (_selectedPackage == null) {
+      _snack('Package is required');
+      return;
+    }
 
     final req = ProductCreateRequest(
       isSet: _isSet,
@@ -336,10 +350,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
       sku: _sku.text.trim(),
       supplierId: _selectedSupplierId ?? '',
       supplierName: _suppliers.firstWhere((s) => s.id == (_selectedSupplierId ?? ''), orElse: () => const SupplierOption(id: '', name: '')).name,
-      supplierContact: _supplierContact.text.trim(),
-      supplierSince: _supplierSince.text.trim(),
-      supplierAddress: _supplierAddress.text.trim(),
+      supplierContact: '',
+      supplierSince: '',
+      supplierAddress: '',
       imageDeleteUrl: _imageDeleteUrl ?? '',
+      purchaseItemId: _selectedPurchaseItemId ?? '',
     );
 
     try {
@@ -351,12 +366,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
         await _repository.createProduct(req);
         if (!mounted) return;
         _snack('Product created');
-      }
-      if (_selectedPurchaseItemId != null) {
-        try {
-          await _repository.completePurchaseItem(_selectedPurchaseItemId!);
-          if (mounted) _snack('Purchase item marked as completed');
-        } catch (_) {}
       }
       Navigator.of(context).pop(true);
     } on ApiException catch (e) {
@@ -419,14 +428,36 @@ class _AddProductScreenState extends State<AddProductScreen> {
               user: widget.user,
             ),
             const SizedBox(height: 20),
-            if (_pendingPurchaseItems.isNotEmpty) ...[
-              FormCard(
-                label: 'Use from Purchase',
-                helper: 'Select a pending purchase item to auto-fill product details.',
-                child: _pendingPurchaseSection(),
-              ),
-              const SizedBox(height: 16),
-            ],
+            FormCard(
+              label: 'Use from Purchase',
+              helper: 'Select a pending purchase item to auto-fill product details.',
+              child: _loadingPurchaseItems
+                  ? const SizedBox(
+                      height: 48,
+                      child: Center(
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Color(0xFF6D28D9),
+                          ),
+                        ),
+                      ),
+                    )
+                  : _pendingPurchaseItems.isEmpty
+                      ? const SizedBox(
+                          height: 48,
+                          child: Center(
+                            child: Text(
+                              'No pending purchases available.',
+                              style: TextStyle(color: kGray, fontSize: 14),
+                            ),
+                          ),
+                        )
+                      : _pendingPurchaseSection(),
+            ),
+            const SizedBox(height: 16),
             FormCard(
               label: 'Find Existing Product',
               helper: 'Type to search existing products. Selecting one fills all fields.',
@@ -732,7 +763,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _dropdown(
-          'Category',
+          'Category *',
           selectedCategoryLabel,
           categoryLabels,
           _categories.isEmpty
@@ -743,7 +774,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
         ),
         const SizedBox(height: 16),
         _dropdown(
-          'Package',
+          'Package *',
           selectedPackageLabel,
           packageLabels,
           _packages.isEmpty || _selectedCategory == null
@@ -841,11 +872,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       )).toList(),
                       onChanged: (val) {
                         setState(() => _selectedSupplierId = val);
-                        final selected = _suppliers.firstWhere((s) => s.id == val, orElse: () => const SupplierOption(id: '', name: ''));
-                        if (selected.id.isNotEmpty) {
-                          _supplierAddress.clear();
-                          _supplierContact.clear();
-                        }
                       },
                     ),
                   ),
@@ -873,11 +899,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
           ],
         ),
         const SizedBox(height: 16),
-        _field('Contact Number', _supplierContact, 'Supplier phone number'),
-        const SizedBox(height: 16),
-        _field('Supplier Since', _supplierSince, 'e.g. 2024-01-15'),
-        const SizedBox(height: 16),
-        _field('Supplier Address', _supplierAddress, 'Supplier address'),
       ],
     );
   }

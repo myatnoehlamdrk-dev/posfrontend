@@ -148,6 +148,7 @@ class ProductCreateRequest {
   final String supplierSince;
   final String supplierAddress;
   final String imageDeleteUrl;
+  final String purchaseItemId;
 
   const ProductCreateRequest({
     this.isSet = false,
@@ -165,6 +166,7 @@ class ProductCreateRequest {
     this.supplierSince = '',
     this.supplierAddress = '',
     this.imageDeleteUrl = '',
+    this.purchaseItemId = '',
   });
 
   int get totalStock =>
@@ -187,5 +189,6 @@ class ProductCreateRequest {
         'supplierAddress': supplierAddress.isEmpty ? null : supplierAddress,
         'imageDeleteUrl': imageDeleteUrl.isEmpty ? null : imageDeleteUrl,
         'packageId': packageId.isEmpty ? null : int.tryParse(packageId),
+        'purchaseItemId': purchaseItemId.isEmpty ? null : int.tryParse(purchaseItemId),
       };
 }

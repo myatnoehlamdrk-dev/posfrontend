@@ -6,6 +6,7 @@ import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/product/model/catalog_product.dart';
 import 'package:posfrontend/modules/product/model/product_detail_models.dart';
 import 'package:posfrontend/modules/product/repository/product_detail_repository.dart';
+import 'package:posfrontend/modules/product/repository/product_detail_repository_impl.dart';
 import 'package:posfrontend/modules/product/view/add_product_screen.dart';
 import 'package:posfrontend/modules/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
@@ -93,64 +94,83 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Widget _content() {
-    if (_loading) {
-      return const Center(
-        child: CircularProgressIndicator(color: Color(0xFF6D28D9)),
-      );
-    }
-    if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(_error!, style: const TextStyle(color: Colors.red)),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: _load,
-              child: const Text('Retry'),
-            ),
-          ],
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppTopBar(
+                title: 'Product Detail',
+                showMenuButton: !_isWide,
+                showBackButton: false,
+                onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+                user: widget.user,
+              ),
+              const SizedBox(height: 20),
+              const Breadcrumb([
+                BreadcrumbItem('Dashboard', false),
+                BreadcrumbItem('Inventory', false),
+                BreadcrumbItem('Products', false),
+                BreadcrumbItem('Detail', true),
+              ]),
+            ],
+          ),
         ),
-      );
-    }
-    if (_detail == null) {
-      return const Center(
-        child: CircularProgressIndicator(color: Color(0xFF6D28D9)),
-      );
-    }
-    return RefreshableBody(
-      onRefresh: _load,
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AppTopBar(
-              title: 'Product Detail',
-              showMenuButton: !_isWide,
-              showBackButton: false,
-              onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
-              user: widget.user,
-            ),
-            const SizedBox(height: 20),
-            const Breadcrumb([
-              BreadcrumbItem('Dashboard', false),
-              BreadcrumbItem('Inventory', false),
-              BreadcrumbItem('Products', false),
-              BreadcrumbItem('Detail', true),
-            ]),
-            const SizedBox(height: 24),
-            _heroImage(),
-            const SizedBox(height: 16),
-            _summaryCard(),
-            const SizedBox(height: 16),
-            _segmented(),
-            const SizedBox(height: 16),
-            _tabContent(),
-            const SizedBox(height: 16),
-          ],
+        Expanded(
+          child: RefreshableBody(
+            onRefresh: _load,
+            child: _loading
+                ? const SizedBox(
+                    height: 300,
+                    child: Center(
+                      child: CircularProgressIndicator(color: Color(0xFF6D28D9)),
+                    ),
+                  )
+                : _error != null
+                    ? SizedBox(
+                        height: 300,
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(_error!, style: const TextStyle(color: Colors.red)),
+                              const SizedBox(height: 12),
+                              ElevatedButton(
+                                onPressed: _load,
+                                child: const Text('Retry'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : _detail == null
+                        ? const SizedBox(
+                            height: 300,
+                            child: Center(
+                              child: CircularProgressIndicator(color: Color(0xFF6D28D9)),
+                            ),
+                          )
+                        : Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _heroImage(),
+                                const SizedBox(height: 16),
+                                _summaryCard(),
+                                const SizedBox(height: 16),
+                                _segmented(),
+                                const SizedBox(height: 16),
+                                _tabContent(),
+                                const SizedBox(height: 16),
+                              ],
+                            ),
+                          ),
+          ),
         ),
-      ),
+      ],
     );
   }
 

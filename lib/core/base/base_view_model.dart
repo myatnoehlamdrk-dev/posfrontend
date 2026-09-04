@@ -26,6 +26,23 @@ abstract class BaseViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<T?> runAsync<T>(
+    Future<T> Function() action, {
+    bool showLoading = true,
+    String? errorPrefix,
+  }) async {
+    try {
+      if (showLoading) setLoading(true);
+      resetError();
+      return await action();
+    } catch (e) {
+      setError(errorPrefix != null ? '$errorPrefix: $e' : e.toString());
+      return null;
+    } finally {
+      if (showLoading) setLoading(false);
+    }
+  }
+
   @override
   void dispose() {
     _isLoading = false;

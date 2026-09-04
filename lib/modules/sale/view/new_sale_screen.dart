@@ -8,6 +8,7 @@ import 'package:posfrontend/modules/sale/repository/sale_repository_impl.dart';
 import 'package:posfrontend/modules/sale/view/add_products_screen.dart';
 import 'package:posfrontend/modules/sale/view/sale_preview_screen.dart';
 import 'package:posfrontend/modules/sale/viewmodel/sale_view_model.dart';
+import 'package:posfrontend/modules/sale_items/view/sale_items_screen.dart';
 import 'package:posfrontend/modules/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/modules/shared/widgets/price_text.dart';
 import 'package:posfrontend/modules/shop/model/shop.dart';
@@ -28,13 +29,13 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _discountCtrl = TextEditingController(text: '0');
   final TextEditingController _notesCtrl = TextEditingController();
+  final TextEditingController _customerNameCtrl = TextEditingController(text: 'Customer');
+  final TextEditingController _customerPhoneCtrl = TextEditingController();
   final SaleViewModel _viewModel = SaleViewModel(
     productRepository: SaleProductRepositoryImpl(),
     saleRepository: SaleRepositoryImpl(),
   );
 
-  String _customerName = 'Walk-in Customer';
-  String _customerPhone = '';
   String _paymentMethod = 'Cash';
   late String _voucherRandom;
   late String _orderRandom;
@@ -82,8 +83,8 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     try {
       await _viewModel.submitSale(
         userName: widget.user?.fullName ?? 'Staff',
-        customerName: _customerName,
-        customerPhone: _customerPhone.isNotEmpty ? _customerPhone : null,
+        customerName: _customerNameCtrl.text,
+        customerPhone: _customerPhoneCtrl.text.isNotEmpty ? _customerPhoneCtrl.text : null,
         payMethod: _paymentMethod,
         voucherNo: 'INV-$_voucherRandom',
         orderId: 'ORD-$_orderRandom',
@@ -98,8 +99,8 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       );
       setState(() {
         _items.clear();
-        _customerName = 'Walk-in Customer';
-        _customerPhone = '';
+        _customerNameCtrl.text = 'Customer';
+        _customerPhoneCtrl.clear();
         _discountCtrl.text = '0';
         _notesCtrl.clear();
         _refreshRandoms();
@@ -120,8 +121,8 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     try {
       await OrderRepositoryImpl().createOrder(
         userName: widget.user?.fullName ?? 'Staff',
-        customerName: _customerName,
-        customerPhone: _customerPhone.isNotEmpty ? _customerPhone : null,
+        customerName: _customerNameCtrl.text,
+        customerPhone: _customerPhoneCtrl.text.isNotEmpty ? _customerPhoneCtrl.text : null,
         payMethod: _paymentMethod,
         voucherNo: 'INV-$_voucherRandom',
         orderId: 'ORD-$_orderRandom',
@@ -137,8 +138,8 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       );
       setState(() {
         _items.clear();
-        _customerName = 'Walk-in Customer';
-        _customerPhone = '';
+        _customerNameCtrl.text = 'Customer';
+        _customerPhoneCtrl.clear();
         _discountCtrl.text = '0';
         _notesCtrl.clear();
         _refreshRandoms();
@@ -157,6 +158,8 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   void dispose() {
     _discountCtrl.dispose();
     _notesCtrl.dispose();
+    _customerNameCtrl.dispose();
+    _customerPhoneCtrl.dispose();
     super.dispose();
   }
 
@@ -278,8 +281,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: TextField(
-                  controller: TextEditingController(text: _customerName),
-                  onChanged: (v) => _customerName = v,
+                  controller: _customerNameCtrl,
                   style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
@@ -321,8 +323,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: TextField(
-                  controller: TextEditingController(text: _customerPhone),
-                  onChanged: (v) => _customerPhone = v,
+                  controller: _customerPhoneCtrl,
                   keyboardType: TextInputType.phone,
                   style: const TextStyle(
                       fontSize: 15,
@@ -809,8 +810,8 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (_) => SalePreviewScreen(
-                  customerName: _customerName,
-                  customerPhone: _customerPhone.isNotEmpty ? _customerPhone : null,
+                  customerName: _customerNameCtrl.text,
+                  customerPhone: _customerPhoneCtrl.text.isNotEmpty ? _customerPhoneCtrl.text : null,
                   staffName: widget.user?.fullName ?? 'Staff',
                   voucherNo: 'INV-$_voucherRandom',
                   orderId: 'ORD-$_orderRandom',
@@ -911,7 +912,16 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           color: kBorder,
           margin: const EdgeInsets.symmetric(horizontal: 20),
         ),
-        _footerBtn(Icons.history, 'Recent Sales'),
+        GestureDetector(
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => SaleItemScreen(user: widget.user),
+              ),
+            );
+          },
+          child: _footerBtn(Icons.history, 'Recent Sales'),
+        ),
       ],
     );
   }

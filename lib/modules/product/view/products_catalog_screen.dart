@@ -68,7 +68,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
         return;
       }
       final hotProducts = _hotProducts;
-      if (hotProducts.length > 1) {
+      if (hotProducts.length > 1 && _hotPageController.hasClients) {
         _hotIndex = (_hotIndex + 1) % hotProducts.length;
         _hotPageController.nextPage(
           duration: const Duration(milliseconds: 400),
@@ -80,9 +80,8 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
   }
 
   List<CatalogProduct> get _hotProducts {
-    final sorted = List<CatalogProduct>.from(_all);
-    sorted.sort((a, b) => b.name.toLowerCase().compareTo(a.name.toLowerCase()));
-    return sorted.take(4).toList();
+    final list = List<CatalogProduct>.from(_all);
+    return list.length > 4 ? list.sublist(list.length - 4) : list;
   }
 
   Future<void> _load() async {
@@ -93,6 +92,10 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
     try {
       _all = await CatalogProductRepositoryImpl().getProducts();
       if (!mounted) return;
+      _hotIndex = 0;
+      if (_hotPageController.hasClients) {
+        _hotPageController.jumpToPage(5000);
+      }
       setState(() => _loading = false);
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -233,173 +236,186 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
     final dateLabel = _formatDate(DateTime.now());
     final products = _filtered;
 
-    return RefreshableBody(
-      onRefresh: _load,
-      child: _loading
-          ? const SizedBox(
-              height: 300,
-              child: Center(
-                child: CircularProgressIndicator(color: Color(0xFF6D28D9)),
-              ),
-            )
-          : _error != null
-              ? SizedBox(
-                  height: 300,
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(_error!, style: const TextStyle(color: Colors.red)),
-                        const SizedBox(height: 12),
-                        ElevatedButton(
-                          onPressed: _load,
-                          child: const Text('Retry'),
-                        ),
-                      ],
-                    ),
+    return ListenableBuilder(
+      listenable: _search,
+      builder: (context, _) {
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppTopBar(
+                    title: 'Products',
+                    showMenuButton: true,
+                    onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+                    user: widget.user,
                   ),
-                )
-              : ListenableBuilder(
-                  listenable: _search,
-                  builder: (context, _) {
-                    return Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          AppTopBar(
-                            title: 'Products',
-                            showMenuButton: true,
-                            onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
-                            user: widget.user,
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Catalog',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Products',
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w700,
+                            color: titleColor,
                           ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'Catalog',
-                            style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              const Expanded(
-                                child: Text(
-                                  'Products',
-                                  style: TextStyle(
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.w700,
-                                    color: titleColor,
+                        ),
+                      ),
+                      _iconButton(
+                        _isGrid ? Icons.grid_view : Icons.view_list,
+                        onTap: () => setState(() => _isGrid = !_isGrid),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        height: 40,
+                        width: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFE5E7EB)),
+                        ),
+                        child: PopupMenuButton<ProductSort>(
+                          icon: const Icon(Icons.filter_list, color: titleColor),
+                          tooltip: 'Sort',
+                          onSelected: (v) => setState(() => _sort = v),
+                          itemBuilder: (ctx) => const [
+                            PopupMenuItem(
+                              value: ProductSort.dateNewest,
+                              child: Text('Newest first'),
+                            ),
+                            PopupMenuItem(
+                              value: ProductSort.dateOldest,
+                              child: Text('Oldest first'),
+                            ),
+                            PopupMenuItem(
+                              value: ProductSort.nameAz,
+                              child: Text('Name (A–Z)'),
+                            ),
+                            PopupMenuItem(
+                              value: ProductSort.nameZa,
+                              child: Text('Name (Z–A)'),
+                            ),
+                            PopupMenuItem(
+                              value: ProductSort.priceLow,
+                              child: Text('Price (Low–High)'),
+                            ),
+                            PopupMenuItem(
+                              value: ProductSort.priceHigh,
+                              child: Text('Price (High–Low)'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _searchField(),
+                  const SizedBox(height: 16),
+                  _pills(),
+                ],
+              ),
+            ),
+            Expanded(
+              child: RefreshableBody(
+                onRefresh: _load,
+                child: _loading
+                    ? const SizedBox(
+                        height: 300,
+                        child: Center(
+                          child: CircularProgressIndicator(color: Color(0xFF6D28D9)),
+                        ),
+                      )
+                    : _error != null
+                        ? SizedBox(
+                            height: 300,
+                            child: Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(_error!, style: const TextStyle(color: Colors.red)),
+                                  const SizedBox(height: 12),
+                                  ElevatedButton(
+                                    onPressed: _load,
+                                    child: const Text('Retry'),
                                   ),
-                                ),
+                                ],
                               ),
-                              _iconButton(
-                                _isGrid ? Icons.grid_view : Icons.view_list,
-                                onTap: () => setState(() => _isGrid = !_isGrid),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                height: 40,
-                                width: 40,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: const Color(0xFFE5E7EB)),
-                                ),
-                                child: PopupMenuButton<ProductSort>(
-                                  icon: const Icon(Icons.filter_list, color: titleColor),
-                                  tooltip: 'Sort',
-                                  onSelected: (v) => setState(() => _sort = v),
-                                  itemBuilder: (ctx) => const [
-                                    PopupMenuItem(
-                                      value: ProductSort.dateNewest,
-                                      child: Text('Newest first'),
+                            ),
+                          )
+                        : Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Text(
+                                      "Hot Products",
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                        color: titleColor,
+                                      ),
                                     ),
-                                    PopupMenuItem(
-                                      value: ProductSort.dateOldest,
-                                      child: Text('Oldest first'),
-                                    ),
-                                    PopupMenuItem(
-                                      value: ProductSort.nameAz,
-                                      child: Text('Name (A–Z)'),
-                                    ),
-                                    PopupMenuItem(
-                                      value: ProductSort.nameZa,
-                                      child: Text('Name (Z–A)'),
-                                    ),
-                                    PopupMenuItem(
-                                      value: ProductSort.priceLow,
-                                      child: Text('Price (Low–High)'),
-                                    ),
-                                    PopupMenuItem(
-                                      value: ProductSort.priceHigh,
-                                      child: Text('Price (High–Low)'),
+                                    const Spacer(),
+                                    Text(
+                                      dateLabel,
+                                      style: const TextStyle(fontSize: 14, color: gray),
                                     ),
                                   ],
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          _searchField(),
-                          const SizedBox(height: 16),
-                          _pills(),
-                          const SizedBox(height: 24),
-                          Row(
-                            children: [
-                              const Text(
-                                "Hot Products",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                  color: titleColor,
-                                ),
-                              ),
-                              const Spacer(),
-                              Text(
-                                dateLabel,
-                                style: const TextStyle(fontSize: 14, color: gray),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          if (_hotProducts.isNotEmpty) _hotCarousel(_hotProducts),
-                          const SizedBox(height: 24),
-                          Row(
-                            children: [
-                              const Text(
-                                'All Products',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                  color: titleColor,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                '${products.length}',
-                                style: const TextStyle(fontSize: 14, color: gray),
-                              ),
-                              const Spacer(),
-                              _addProductButton(),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          products.isEmpty
-                              ? const Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 48),
-                                  child: Center(
-                                    child: Text(
-                                      'No products found.',
-                                      style: TextStyle(color: Color(0xFF6B7280)),
+                                const SizedBox(height: 12),
+                                if (_hotProducts.isNotEmpty) _hotCarousel(_hotProducts),
+                                const SizedBox(height: 24),
+                                Row(
+                                  children: [
+                                    const Text(
+                                      'All Products',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                        color: titleColor,
+                                      ),
                                     ),
-                                  ),
-                                )
-                              : (_isGrid ? _grid(products) : _list(products)),
-                          const SizedBox(height: 16),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      '${products.length}',
+                                      style: const TextStyle(fontSize: 14, color: gray),
+                                    ),
+                                    const Spacer(),
+                                    _addProductButton(),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                products.isEmpty
+                                    ? const Padding(
+                                        padding: EdgeInsets.symmetric(vertical: 48),
+                                        child: Center(
+                                          child: Text(
+                                            'No products found.',
+                                            style: TextStyle(color: Color(0xFF6B7280)),
+                                          ),
+                                        ),
+                                      )
+                                    : (_isGrid ? _grid(products) : _list(products)),
+                                const SizedBox(height: 16),
+                              ],
+                            ),
+                          ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 

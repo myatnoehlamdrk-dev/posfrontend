@@ -25,7 +25,16 @@ class ApiException implements Exception {
 class ApiClient {
   static const String baseUrl = String.fromEnvironment('BASE_URL');
 
-  static Dio create() {
+  static Dio? _instance;
+
+  static Dio get instance {
+    _instance ??= _create();
+    return _instance!;
+  }
+
+  static Dio create() => _create();
+
+  static Dio _create() {
     final dio = Dio(
       BaseOptions(
         baseUrl: baseUrl,
