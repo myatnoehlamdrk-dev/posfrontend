@@ -22,6 +22,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late final DashboardViewModel _viewModel;
+  String _selectedPeriod = 'This Year';
 
   static const Color bg = Color(0xFFF8F9FC);
   static const Color titleColor = Color(0xFF0F172A);
@@ -68,53 +69,100 @@ class _DashboardScreenState extends State<DashboardScreen> {
           builder: (context, _) {
             return RefreshableBody(
               onRefresh: () => _viewModel.load(),
-              child: _viewModel.isLoading || _viewModel.data == null
-                  ? const SizedBox(
-                      height: 300,
-                      child: Center(child: CircularProgressIndicator()),
-                    )
-                  : Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          AppTopBar(
-                            title: 'Dashboard',
-                            showMenuButton: true,
-                            onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
-                            user: widget.user,
-                          ),
-                          const SizedBox(height: 24),
-                          const Text(
-                            'Summary',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: labelColor,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          _buildSummaryGrid(_viewModel.data!.metrics),
-                          const SizedBox(height: 24),
-                          _buildTrendSection(_viewModel.data!.trendSeries),
-                          const SizedBox(height: 24),
-                          const Text(
-                            'Product Trend',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: labelColor,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          _buildProductTrendSection(
-                            _viewModel.data!.mostBought,
-                            _viewModel.data!.leastBought,
-                          ),
-                          const SizedBox(height: 24),
-                        ],
-                      ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppTopBar(
+                      title: 'Dashboard',
+                      showMenuButton: true,
+                      onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+                      user: widget.user,
                     ),
+                    const SizedBox(height: 24),
+                    if (_viewModel.isLoading)
+                      const SizedBox(
+                        height: 300,
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else if (_viewModel.hasError)
+                      SizedBox(
+                        height: 300,
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.error_outline, color: Color(0xFFEF4444), size: 48),
+                              const SizedBox(height: 12),
+                              Text(
+                                _viewModel.errorMessage ?? 'Something went wrong',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(fontSize: 14, color: grayText),
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton.icon(
+                                onPressed: () => _viewModel.load(),
+                                icon: const Icon(Icons.refresh, size: 18),
+                                label: const Text('Retry'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: purpleAction,
+                                  foregroundColor: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    else if (_viewModel.data == null)
+                      const SizedBox(
+                        height: 300,
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else ...[
+                      const Text(
+                        'Summary',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: labelColor,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildSummaryGrid(_viewModel.data!.metrics),
+                      const SizedBox(height: 24),
+                      _buildTrendSection(
+                        _viewModel.data!.trendSeries,
+                        _selectedPeriod,
+                        (period) {
+                          setState(() => _selectedPeriod = period);
+                          final days = period == 'This Week'
+                              ? 7
+                              : period == 'This Month'
+                                  ? 30
+                                  : 365;
+                          _viewModel.load(days: days);
+                        },
+                      ),
+                      const SizedBox(height: 24),
+                      const Text(
+                        'Product Trend',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: labelColor,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildProductTrendSection(
+                        _viewModel.data!.mostBought,
+                        _viewModel.data!.leastBought,
+                      ),
+                    ],
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
             );
           },
         ),
@@ -218,8 +266,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildTrendSection(List<TrendSeries> series) {
+  Widget _buildTrendSection(
+    List<TrendSeries> series,
+    String selectedPeriod,
+    ValueChanged<String> onPeriodChanged,
+  ) {
     final chartH = (MediaQuery.of(context).size.height * 0.32).clamp(200.0, 300.0);
+
+    final allDates = series.isNotEmpty ? series.first.dates : <String>[];
+    final maxVal = series.fold<double>(0, (max, s) {
+      final seriesMax = s.values.fold<double>(0, (m, v) => v > m ? v : m);
+      return seriesMax > max ? seriesMax : max;
+    });
+    final yInterval = maxVal > 0 ? (maxVal / 5).ceilToDouble().clamp(1.0, double.infinity).toDouble() : 5.0;
 
     final lineBars = series.asMap().entries.map((entry) {
       final s = entry.value;
@@ -240,6 +299,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
       );
     }).toList();
 
+    String formatShortDate(String dateStr) {
+      try {
+        final parts = dateStr.split('-');
+        if (parts.length == 3) {
+          return '${parts[1]}/${parts[2]}';
+        }
+        return dateStr;
+      } catch (_) {
+        return dateStr;
+      }
+    }
+
+    final bottomInterval = allDates.length > 7
+        ? (allDates.length / 7).ceilToDouble()
+        : 1.0;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -255,7 +330,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ),
-            _PeriodDropdown(),
+            _PeriodDropdown(
+              value: selectedPeriod,
+              onChanged: onPeriodChanged,
+            ),
           ],
         ),
         const SizedBox(height: 12),
@@ -276,10 +354,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: LineChart(
                   LineChartData(
                     minY: 0,
+                    maxY: maxVal > 0 ? (maxVal * 1.2).ceilToDouble() : 10,
                     gridData: FlGridData(
                       show: true,
                       drawVerticalLine: false,
-                      horizontalInterval: 20,
+                      horizontalInterval: yInterval,
                       getDrawingHorizontalLine: (value) => FlLine(
                         color: cardBorder,
                         strokeWidth: 1,
@@ -289,8 +368,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       leftTitles: AxisTitles(
                         sideTitles: SideTitles(
                           showTitles: true,
-                          reservedSize: 28,
-                          interval: 20,
+                          reservedSize: 32,
+                          interval: yInterval,
                           getTitlesWidget: (value, _) => Text(
                             value.toInt().toString(),
                             style: const TextStyle(fontSize: 10, color: grayText),
@@ -303,8 +382,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       topTitles: const AxisTitles(
                         sideTitles: SideTitles(showTitles: false),
                       ),
-                      bottomTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 30,
+                          interval: bottomInterval,
+                          getTitlesWidget: (value, _) {
+                            final idx = value.toInt();
+                            if (idx < 0 || idx >= allDates.length) {
+                              return const SizedBox.shrink();
+                            }
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Transform.rotate(
+                                angle: -0.5,
+                                child: Text(
+                                  formatShortDate(allDates[idx]),
+                                  style: const TextStyle(fontSize: 9, color: grayText),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                       ),
                     ),
                     borderData: FlBorderData(show: false),
@@ -471,17 +570,16 @@ class _ProductListCard extends StatelessWidget {
   }
 }
 
-class _PeriodDropdown extends StatefulWidget {
-  @override
-  State<_PeriodDropdown> createState() => _PeriodDropdownState();
-}
+class _PeriodDropdown extends StatelessWidget {
+  final String value;
+  final ValueChanged<String> onChanged;
 
-class _PeriodDropdownState extends State<_PeriodDropdown> {
-  String _value = 'This Year';
-  final List<String> _options = ['This Week', 'This Month', 'This Year'];
+  const _PeriodDropdown({required this.value, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
+    final options = ['This Week', 'This Month', 'This Year'];
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -491,13 +589,15 @@ class _PeriodDropdownState extends State<_PeriodDropdown> {
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
-          value: _value,
+          value: value,
           icon: const Icon(Icons.keyboard_arrow_down, size: 18),
           style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
-          items: _options
+          items: options
               .map((e) => DropdownMenuItem(value: e, child: Text(e)))
               .toList(),
-          onChanged: (v) => setState(() => _value = v!),
+          onChanged: (v) {
+            if (v != null) onChanged(v);
+          },
         ),
       ),
     );

@@ -11,14 +11,14 @@ class DashboardViewModel extends BaseViewModel {
   DashboardData? _data;
   DashboardData? get data => _data;
 
-  Future<void> load() async {
-    setLoading(true);
-    try {
-      _data = await _repository.getDashboardData();
-    } catch (e) {
-      setError('Failed to load dashboard');
-    } finally {
-      setLoading(false);
-    }
+  int _days = 365;
+
+  Future<void> load({int? days}) async {
+    if (days != null) _days = days;
+    final result = await runAsync(
+      () => _repository.getDashboardData(days: _days),
+      errorPrefix: 'Failed to load dashboard',
+    );
+    if (result != null) _data = result;
   }
 }

@@ -20,8 +20,9 @@ class TrendSeries {
   final String name;
   final Color color;
   final List<double> values;
+  final List<String> dates;
 
-  const TrendSeries(this.name, this.color, this.values);
+  const TrendSeries(this.name, this.color, this.values, [this.dates = const []]);
 }
 
 class ProductItem {

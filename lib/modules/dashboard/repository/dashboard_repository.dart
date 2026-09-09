@@ -1,5 +1,5 @@
 import 'package:posfrontend/modules/dashboard/model/dashboard_models.dart';
 
 abstract class DashboardRepository {
-  Future<DashboardData> getDashboardData();
+  Future<DashboardData> getDashboardData({int days = 30});
 }
