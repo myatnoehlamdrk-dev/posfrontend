@@ -626,6 +626,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
             Positioned(
               left: 20,
               bottom: 20,
+              right: 120,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -646,6 +647,41 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                     ),
                   ),
                   const SizedBox(height: 6),
+                  if (p.variants.isNotEmpty) ...[
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: p.variants.take(3).map((v) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            '${v.size}${v.color.isNotEmpty ? '/${v.color}' : ''} (${v.quantity})',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    if (p.variants.length > 3)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          '+${p.variants.length - 3} more variants',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.white60,
+                          ),
+                        ),
+                      ),
+                  ],
+                  const SizedBox(height: 4),
                   PriceText(
                     p.price,
                     style: const TextStyle(

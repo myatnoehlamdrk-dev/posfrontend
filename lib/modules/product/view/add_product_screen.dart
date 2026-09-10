@@ -92,7 +92,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
   @override
   void initState() {
     super.initState();
-    _loadCategories();
     _loadSuppliers();
     _loadPendingPurchaseItems();
     if (widget.existingProduct != null) {
@@ -103,6 +102,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
       _selectedSupplierId = p.supplierId;
       _imageUrl = p.imageUrl;
       _imageDeleteUrl = p.imageDeleteUrl;
+      _inventoryType = p.inventoryType.isNotEmpty ? p.inventoryType : 'self';
+      _isSet = p.isBundle == 'Yes';
       _variants.clear();
       for (final v in p.variants) {
         _variants.add(ProductVariant(
@@ -115,6 +116,25 @@ class _AddProductScreenState extends State<AddProductScreen> {
       if (_variants.isEmpty) {
         _variants.add(ProductVariant(size: 'Small', color: 'Black'));
       }
+      _loadCategories().then((_) {
+        if (!mounted) return;
+        if (p.categoryName.isNotEmpty) {
+          final cat = _categories.where((c) => c.name == p.categoryName).firstOrNull;
+          if (cat != null) {
+            _onCategoryChanged(cat).then((_) {
+              if (!mounted) return;
+              if (p.packageId.isNotEmpty && p.packageId != '—') {
+                final pkg = _packages.where((pk) => pk.id == p.packageId).firstOrNull;
+                if (pkg != null) {
+                  setState(() => _selectedPackage = pkg);
+                }
+              }
+            });
+          }
+        }
+      });
+    } else {
+      _loadCategories();
     }
   }
 
@@ -200,6 +220,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
       _sku.text = product.sku;
       _selectedSupplierId = product.supplierId;
       _imageUrl = product.imageUrl;
+      _isSet = product.isSet;
+      _inventoryType = product.inventoryType.isNotEmpty ? product.inventoryType : 'self';
       _showSearchResults = false;
       _searchResults = [];
       _productSearch.clear();
@@ -218,6 +240,24 @@ class _AddProductScreenState extends State<AddProductScreen> {
           size: product.size.isNotEmpty ? product.size : 'Small',
           color: product.color.isNotEmpty ? product.color : 'Black',
         ));
+      }
+    });
+
+    _loadCategories().then((_) {
+      if (!mounted) return;
+      if (product.categoryId.isNotEmpty) {
+        final cat = _categories.where((c) => c.id == product.categoryId).firstOrNull;
+        if (cat != null) {
+          _onCategoryChanged(cat).then((_) {
+            if (!mounted) return;
+            if (product.packageId.isNotEmpty) {
+              final pkg = _packages.where((p) => p.id == product.packageId).firstOrNull;
+              if (pkg != null) {
+                setState(() => _selectedPackage = pkg);
+              }
+            }
+          });
+        }
       }
     });
   }
@@ -795,6 +835,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
           final i = e.key;
           final v = e.value;
           return _VariantTile(
+            key: ValueKey('variant_${i}_${v.size}_${v.color}_${v.quantity}_${v.price}'),
             index: i,
             variant: v,
             sizeOptions: _sizeOptions,
@@ -1120,6 +1161,7 @@ class _VariantTile extends StatefulWidget {
   final VoidCallback? onRemove;
 
   const _VariantTile({
+    super.key,
     required this.index,
     required this.variant,
     required this.sizeOptions,

@@ -465,7 +465,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             style: const TextStyle(fontSize: 12, color: kGray),
                           ),
                         Text(
-                          'Qty: ${_detail!.stockAvailable}',
+                          'Qty: ${v.quantity}',
                           style: const TextStyle(fontSize: 12, color: kGray),
                         ),
                       ],
@@ -627,7 +627,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         _card([
           _row(Icons.badge, 'Supplier ID', _detail!.supplierId),
           _row(Icons.business, 'Supplier Name', _detail!.supplierName),
-          _row(Icons.description, 'Contract Number', _detail!.contractNumber),
+          _row(Icons.description, 'Contact No', _detail!.contractNumber),
           _row(Icons.calendar_today, 'Supplier Since', _detail!.supplierSince),
         ]),
       ],

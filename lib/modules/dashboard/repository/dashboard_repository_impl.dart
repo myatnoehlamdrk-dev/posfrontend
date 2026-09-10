@@ -93,7 +93,8 @@ class DashboardRepositoryImpl implements DashboardRepository {
   ProductItem _parseProductItem(Map<String, dynamic> item) {
     final name = item['product_name'] as String? ?? 'Unknown';
     final qty = _toInt(item['total_quantity']);
-    return ProductItem(name, '$qty sold', Icons.inventory_2);
+    final image = item['product_image'] as String? ?? '';
+    return ProductItem(name, '$qty sold', Icons.inventory_2, image: image);
   }
 
   static int _toInt(dynamic value) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/core/auth/token_storage.dart';
+import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/dashboard/view/dashboard_screen.dart';
 import 'package:posfrontend/modules/inventory/view/inventory_screen.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
@@ -66,6 +67,9 @@ class AppDrawer extends StatelessWidget {
                         radius: 28,
                         backgroundColor: Colors.white.withValues(alpha: 0.25),
                         backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
+                        onBackgroundImageError: imageUrl.isNotEmpty ? (_, __) {
+                          ProfileImageNotifier.instance.update('');
+                        } : null,
                         child: imageUrl.isEmpty
                             ? Text(
                                 initials,
@@ -182,10 +186,10 @@ class AppDrawer extends StatelessWidget {
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         onTap: () async {
-          final scaffold = Scaffold.maybeOf(context);
-          if (scaffold != null && scaffold.isDrawerOpen) {
-            Navigator.of(context).pop();
-          }
+          try {
+            final dio = ApiClient.create();
+            await dio.post('/api/auth/logout');
+          } catch (_) {}
           await TokenStorage.clearToken();
           if (context.mounted) {
             Navigator.of(context).pushAndRemoveUntil(

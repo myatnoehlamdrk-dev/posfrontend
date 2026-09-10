@@ -1,3 +1,4 @@
+import 'package:posfrontend/modules/sale_items/model/sale_item_models.dart';
 import 'package:posfrontend/modules/sale_items/model/sale_list_response.dart';
 
 abstract class SaleItemRepository {
@@ -6,4 +7,5 @@ abstract class SaleItemRepository {
   Future<SaleDetailResponse> getSaleById(String id);
   Future<void> deleteSale(String id);
   Future<void> deleteOrder(String id);
+  Future<SaleOrder> deleteSaleItem(String saleId, String itemId);
 }

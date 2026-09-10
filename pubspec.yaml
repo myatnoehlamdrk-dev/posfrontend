@@ -47,6 +47,10 @@ dependencies:
   google_fonts: ^6.2.1
   # Explicit dependency for multipart image upload content types.
   http_parser: ^4.0.2
+  # Print PDF dialog
+  printing: ^5.14.3
+  # PDF generation
+  pdf: ^3.11.2
 
 dev_dependencies:
   flutter_test:

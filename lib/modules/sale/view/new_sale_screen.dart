@@ -8,6 +8,7 @@ import 'package:posfrontend/modules/sale/repository/sale_repository_impl.dart';
 import 'package:posfrontend/modules/sale/view/add_products_screen.dart';
 import 'package:posfrontend/modules/sale/view/sale_preview_screen.dart';
 import 'package:posfrontend/modules/sale/viewmodel/sale_view_model.dart';
+import 'package:posfrontend/modules/sale/service/voucher_pdf_service.dart';
 import 'package:posfrontend/modules/sale_items/view/sale_items_screen.dart';
 import 'package:posfrontend/modules/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/modules/shared/widgets/price_text.dart';
@@ -40,6 +41,8 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   late String _voucherRandom;
   late String _orderRandom;
   bool _isSubmitting = false;
+  bool _pdfExportEnabled = true;
+  bool _voucherPaperEnabled = true;
   Shop? _shop;
 
   final List<SaleItem> _items = [];
@@ -81,22 +84,58 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     if (_items.isEmpty) return;
     setState(() => _isSubmitting = true);
     try {
+      final discountPct = _discountPct;
+      final subtotal = _subtotal;
+      final discountAmt = _discountAmt;
+      final totalPayable = _totalPayable;
+      final items = List<SaleItem>.from(_items);
+      final customerName = _customerNameCtrl.text;
+      final customerPhone = _customerPhoneCtrl.text.isNotEmpty ? _customerPhoneCtrl.text : null;
+      final paymentMethod = _paymentMethod;
+      final notes = _notesCtrl.text.isNotEmpty ? _notesCtrl.text : null;
+      final staffName = widget.user?.fullName ?? 'Staff';
+      final voucherNo = 'INV-$_voucherRandom';
+      final orderId = 'ORD-$_orderRandom';
+
       await _viewModel.submitSale(
-        userName: widget.user?.fullName ?? 'Staff',
-        customerName: _customerNameCtrl.text,
-        customerPhone: _customerPhoneCtrl.text.isNotEmpty ? _customerPhoneCtrl.text : null,
-        payMethod: _paymentMethod,
-        voucherNo: 'INV-$_voucherRandom',
-        orderId: 'ORD-$_orderRandom',
-        items: _items,
-        grandTotal: _totalPayable,
-        discount: _discountPct.toInt(),
-        notes: _notesCtrl.text.isNotEmpty ? _notesCtrl.text : null,
+        userName: staffName,
+        customerName: customerName,
+        customerPhone: customerPhone,
+        payMethod: paymentMethod,
+        voucherNo: voucherNo,
+        orderId: orderId,
+        items: items,
+        grandTotal: totalPayable,
+        discount: discountPct.toInt(),
+        notes: notes,
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Sale saved successfully!'), backgroundColor: Color(0xFF16A34A)),
       );
+
+      if (_pdfExportEnabled) {
+        await VoucherPdfService.generateAndPrint(
+          customerName: customerName,
+          customerPhone: customerPhone,
+          staffName: staffName,
+          voucherNo: voucherNo,
+          orderId: orderId,
+          dateTime: DateTime.now(),
+          items: items,
+          discountPct: discountPct,
+          subtotal: subtotal,
+          discountAmt: discountAmt,
+          totalPayable: totalPayable,
+          paymentMethod: paymentMethod,
+          notes: notes,
+          shopName: _shop?.name,
+          shopAddress: _shop?.physicalAddress,
+          shopPhone: _shop?.ownerInformation.phone,
+          shopImage: _shop?.logoUrl ?? _shop?.logoData,
+        );
+      }
+
       setState(() {
         _items.clear();
         _customerNameCtrl.text = 'Customer';
@@ -901,11 +940,154 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     );
   }
 
+  void _showPrintVoucherSettings() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: kBorder,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Print Voucher Settings',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: kTitle,
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () => Navigator.pop(ctx),
+                            child: const Icon(Icons.close, color: kGray),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      _toggleRow(
+                        icon: Icons.picture_as_pdf,
+                        title: 'PDF Export',
+                        subtitle: 'Export voucher as PDF file',
+                        value: _pdfExportEnabled,
+                        onChanged: (v) {
+                          setSheetState(() => _pdfExportEnabled = v);
+                          setState(() => _pdfExportEnabled = v);
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      _toggleRow(
+                        icon: Icons.receipt_long,
+                        title: 'Voucher Paper',
+                        subtitle: 'Print on voucher paper',
+                        value: _voucherPaperEnabled,
+                        onChanged: (v) {
+                          setSheetState(() => _voucherPaperEnabled = v);
+                          setState(() => _voucherPaperEnabled = v);
+                        },
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _toggleRow({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: kBorder),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF3F4F6),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: kGray, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: kTitle,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: const TextStyle(fontSize: 12, color: kGray),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeThumbColor: Colors.white,
+            activeTrackColor: kPurple,
+            inactiveThumbColor: Colors.white,
+            inactiveTrackColor: kBorder,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _footerActions() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _footerBtn(Icons.print_outlined, 'Print Voucher'),
+        GestureDetector(
+          onTap: _showPrintVoucherSettings,
+          child: _footerBtn(Icons.print_outlined, 'Print Voucher'),
+        ),
         Container(
           width: 1,
           height: 20,

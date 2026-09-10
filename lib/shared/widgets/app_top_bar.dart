@@ -98,6 +98,9 @@ class AppTopBar extends StatelessWidget {
                 radius: 20,
                 backgroundColor: const Color(0xFF6D28D9),
                 backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
+                onBackgroundImageError: imageUrl.isNotEmpty ? (_, __) {
+                  ProfileImageNotifier.instance.update('');
+                } : null,
                 child: imageUrl.isEmpty
                     ? const Icon(Icons.person, color: Colors.white, size: 22)
                     : null,

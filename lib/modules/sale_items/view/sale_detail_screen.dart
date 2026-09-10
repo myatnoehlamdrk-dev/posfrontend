@@ -1,13 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/sale_items/model/sale_item_models.dart';
+import 'package:posfrontend/modules/sale_items/viewmodel/sale_item_view_model.dart';
 import 'package:posfrontend/modules/shared/widgets/price_text.dart';
+import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
-class SaleDetailScreen extends StatelessWidget {
+class SaleDetailScreen extends StatefulWidget {
   final SaleOrder order;
   final LoginResponse? user;
+  final SaleItemViewModel viewModel;
 
-  const SaleDetailScreen({super.key, required this.order, this.user});
+  const SaleDetailScreen({super.key, required this.order, required this.viewModel, this.user});
+
+  @override
+  State<SaleDetailScreen> createState() => _SaleDetailScreenState();
+}
+
+class _SaleDetailScreenState extends State<SaleDetailScreen> {
+  late SaleOrder _order;
 
   static const Color teal = Color(0xFF14B8A6);
   static const Color titleColor = Color(0xFF111827);
@@ -19,8 +29,54 @@ class SaleDetailScreen extends StatelessWidget {
   static const Color orangeBg = Color(0xFFFEF3C7);
 
   @override
+  void initState() {
+    super.initState();
+    _order = widget.order;
+  }
+
+  void _confirmDeleteItem(SaleItemDetail item) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Delete Item', style: TextStyle(fontWeight: FontWeight.w600, color: titleColor)),
+        content: Text(
+          'Are you sure you want to delete "${item.productName}"?',
+          style: const TextStyle(color: gray),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: TextStyle(color: gray)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final updatedOrder = await widget.viewModel.deleteSaleItem(_order.orderId, item.id);
+              if (mounted) {
+                if (updatedOrder != null) {
+                  setState(() => _order = updatedOrder);
+                  showSuccessSnackBar(context, 'Item deleted');
+                } else {
+                  showErrorSnackBar(context, 'Failed to delete item');
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final isAlreadySale = order.status == OrderStatus.alreadySale;
+    final isAlreadySale = _order.status == OrderStatus.alreadySale;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FC),
@@ -39,12 +95,12 @@ class SaleDetailScreen extends StatelessWidget {
                       _buildOrderHeader(isAlreadySale),
                       const SizedBox(height: 12),
                       _buildInfoCard('Customer Information', [
-                        _infoRow('Customer Name', order.customerName.isNotEmpty ? order.customerName : '-'),
-                        _infoRow('Phone', order.customerPhone.isNotEmpty ? order.customerPhone : '-'),
+                        _infoRow('Customer Name', _order.customerName.isNotEmpty ? _order.customerName : '-'),
+                        _infoRow('Phone', _order.customerPhone.isNotEmpty ? _order.customerPhone : '-'),
                       ]),
                       const SizedBox(height: 12),
-                      if (order.saleItems.isNotEmpty) ...[
-                        _buildInfoCard('Ordered Items (${order.saleItems.length})', order.saleItems.map((item) {
+                      if (_order.saleItems.isNotEmpty) ...[
+                        _buildInfoCard('Ordered Items (${_order.saleItems.length})', _order.saleItems.map((item) {
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 8),
                             child: Row(
@@ -63,22 +119,27 @@ class SaleDetailScreen extends StatelessWidget {
                                   ),
                                 ),
                                 Text('x${item.quantity}', style: const TextStyle(fontSize: 12, color: gray)),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: 8),
                                 PriceText(item.subtotal.toDouble(), maxLength: 14, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: titleColor)),
+                                const SizedBox(width: 4),
+                                GestureDetector(
+                                  onTap: () => _confirmDeleteItem(item),
+                                  child: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
+                                ),
                               ],
                             ),
                           );
                         }).toList()),
                       ] else ...[
                         _buildInfoCard('Ordered Items', [
-                          _infoRow('Product', order.productName),
-                          _infoRow('Description', order.description),
-                          _infoRow('Quantity', 'x${order.quantity}'),
+                          _infoRow('Product', _order.productName),
+                          _infoRow('Description', _order.description),
+                          _infoRow('Quantity', 'x${_order.quantity}'),
                         ]),
                       ],
                       const SizedBox(height: 12),
                       _buildInfoCard('Payment Information', [
-                        _infoRow('Payment Method', order.payMethod.isNotEmpty ? order.payMethod : 'Cash'),
+                        _infoRow('Payment Method', _order.payMethod.isNotEmpty ? _order.payMethod : 'Cash'),
                         _infoRow('Payment Status', isAlreadySale ? 'Paid' : 'Pending'),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -86,16 +147,16 @@ class SaleDetailScreen extends StatelessWidget {
                             const Text('Total Amount', style: TextStyle(fontSize: 13, color: gray)),
                             const SizedBox(width: 12),
                             Flexible(
-                              child: PriceText(order.amount.toDouble(), maxLength: 14, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: titleColor)),
+                              child: PriceText(_order.amount.toDouble(), maxLength: 14, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: titleColor)),
                             ),
                           ],
                         ),
                       ]),
                       const SizedBox(height: 12),
                       _buildInfoCard('Order Status & History', [
-                        _infoRow('Order Date', order.date),
+                        _infoRow('Order Date', _order.date),
                         _infoRow('Order Status', isAlreadySale ? 'Completed' : 'Pending'),
-                        _infoRow('Voucher Ref', order.voucherNo.isNotEmpty ? '#${order.voucherNo}' : '#${order.orderId}'),
+                        _infoRow('Voucher Ref', _order.voucherNo.isNotEmpty ? '#${_order.voucherNo}' : '#${_order.orderId}'),
                       ]),
                       const SizedBox(height: 24),
                     ],
@@ -161,7 +222,7 @@ class SaleDetailScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  order.voucherNo.isNotEmpty ? order.voucherNo : 'Order #${order.orderId}',
+                  _order.voucherNo.isNotEmpty ? _order.voucherNo : 'Order #${_order.orderId}',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -188,16 +249,16 @@ class SaleDetailScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            order.productName,
+            _order.productName,
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: titleColor,
             ),
           ),
-          if (order.description.isNotEmpty) ...[
+          if (_order.description.isNotEmpty) ...[
             const SizedBox(height: 4),
-            Text(order.description, style: const TextStyle(fontSize: 13, color: gray)),
+            Text(_order.description, style: const TextStyle(fontSize: 13, color: gray)),
           ],
           const SizedBox(height: 12),
           const Divider(color: border, height: 1),
@@ -208,7 +269,7 @@ class SaleDetailScreen extends StatelessWidget {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  _formatDate(order.date),
+                  _formatDate(_order.date),
                   style: const TextStyle(fontSize: 13, color: gray),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -217,7 +278,7 @@ class SaleDetailScreen extends StatelessWidget {
               const SizedBox(width: 8),
               Flexible(
                 child: PriceText(
-                  order.amount.toDouble(),
+                  _order.amount.toDouble(),
                   maxLength: 14,
                   style: const TextStyle(
                     fontSize: 15,

@@ -26,6 +26,10 @@ class ProductSearchResult {
   final String supplierContact;
   final String supplierAddress;
   final String imageUrl;
+  final String categoryId;
+  final String packageId;
+  final bool isSet;
+  final String inventoryType;
 
   const ProductSearchResult({
     required this.id,
@@ -41,6 +45,10 @@ class ProductSearchResult {
     this.supplierContact = '',
     this.supplierAddress = '',
     this.imageUrl = '',
+    this.categoryId = '',
+    this.packageId = '',
+    this.isSet = false,
+    this.inventoryType = 'self',
   });
 
   factory ProductSearchResult.fromJson(Map<String, dynamic> json) {
@@ -63,6 +71,10 @@ class ProductSearchResult {
       supplierContact: json['supplierContact'] as String? ?? '',
       supplierAddress: json['supplierAddress'] as String? ?? '',
       imageUrl: json['image'] as String? ?? '',
+      categoryId: (json['categoryId'] ?? '').toString(),
+      packageId: (json['packageId'] ?? '').toString(),
+      isSet: json['isSet'] as bool? ?? false,
+      inventoryType: json['inventoryType'] as String? ?? 'self',
     );
   }
 }

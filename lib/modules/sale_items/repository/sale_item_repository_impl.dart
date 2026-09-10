@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:posfrontend/core/network/api_client.dart';
+import 'package:posfrontend/modules/sale_items/model/sale_item_models.dart';
 import 'package:posfrontend/modules/sale_items/model/sale_list_response.dart';
 import 'package:posfrontend/modules/sale_items/repository/sale_item_repository.dart';
 
@@ -13,6 +14,13 @@ class SaleItemRepositoryImpl implements SaleItemRepository {
     try {
       final response = await _dio.get('/api/sales', queryParameters: {'page': page});
       final payload = response.data;
+      if (payload is List) {
+        final items = payload
+            .whereType<Map<String, dynamic>>()
+            .map((e) => SaleOrder.fromJson(e))
+            .toList();
+        return PaginatedSalesResponse(data: items, lastPage: 1, currentPage: 1, total: items.length);
+      }
       if (payload is Map<String, dynamic>) {
         return PaginatedSalesResponse.fromJson(payload);
       }
@@ -27,6 +35,13 @@ class SaleItemRepositoryImpl implements SaleItemRepository {
     try {
       final response = await _dio.get('/api/orders', queryParameters: {'page': page});
       final payload = response.data;
+      if (payload is List) {
+        final items = payload
+            .whereType<Map<String, dynamic>>()
+            .map((e) => SaleOrder.fromOrderJson(e))
+            .toList();
+        return PaginatedOrdersResponse(data: items, lastPage: 1, currentPage: 1, total: items.length);
+      }
       if (payload is Map<String, dynamic>) {
         return PaginatedOrdersResponse.fromJson(payload);
       }
@@ -63,6 +78,20 @@ class SaleItemRepositoryImpl implements SaleItemRepository {
   Future<void> deleteOrder(String id) async {
     try {
       await _dio.delete('/api/orders/$id');
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  @override
+  Future<SaleOrder> deleteSaleItem(String saleId, String itemId) async {
+    try {
+      final response = await _dio.delete('/api/sales/$saleId/items/$itemId');
+      final payload = response.data;
+      if (payload is Map<String, dynamic>) {
+        return SaleOrder.fromJson(payload);
+      }
+      throw ApiException(message: 'Invalid response format');
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }

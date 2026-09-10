@@ -81,6 +81,9 @@ class AppScreenTopBar extends StatelessWidget {
                   radius: 18,
                   backgroundColor: AppColors.teal,
                   backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
+                  onBackgroundImageError: imageUrl.isNotEmpty ? (_, __) {
+                    ProfileImageNotifier.instance.update('');
+                  } : null,
                   child: imageUrl.isEmpty
                       ? Text(
                           user != null && user!.fullName.trim().isNotEmpty

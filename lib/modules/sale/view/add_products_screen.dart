@@ -51,8 +51,10 @@ class _AddProductsScreenState extends State<AddProductsScreen> {
         _categories = ['All', ...cats];
         for (final p in _viewModel.products) {
           _quantities.putIfAbsent(p.id, () => 0);
-          _selectedSizes.putIfAbsent(p.id, () => 'Regular');
-          _selectedColors.putIfAbsent(p.id, () => '');
+          final firstSize = p.sizes.isNotEmpty ? p.sizes.first : '';
+          final firstColor = p.colors.isNotEmpty ? p.colors.first : '';
+          _selectedSizes.putIfAbsent(p.id, () => firstSize);
+          _selectedColors.putIfAbsent(p.id, () => firstColor);
           _notesCtrls.putIfAbsent(p.id, () => TextEditingController());
           _qtyCtrls.putIfAbsent(p.id, () => TextEditingController(text: '0'));
         }
@@ -91,10 +93,16 @@ class _AddProductsScreenState extends State<AddProductsScreen> {
     for (final id in _selectedIds) {
       final p = _viewModel.products.firstWhere((x) => x.id == id);
       final qty = _quantities[id] ?? 0;
+      final size = _selectedSizes[id] ?? '';
+      final color = _selectedColors[id] ?? '';
       double price = p.price;
-      final size = _selectedSizes[id];
-      if (size == 'Large') price += 2;
-      if (size == 'XL') price += 4;
+      for (final v in p.variants) {
+        if ((size.isEmpty || v.size == size) &&
+            (color.isEmpty || v.color == color)) {
+          price = v.price;
+          break;
+        }
+      }
       total += price * qty;
     }
     return total;
@@ -157,18 +165,35 @@ class _AddProductsScreenState extends State<AddProductsScreen> {
       final p = _viewModel.products.firstWhere((x) => x.id == id);
       final qty = _quantities[id] ?? 0;
       if (qty <= 0) continue;
+      final size = _selectedSizes[id] ?? '';
+      final color = _selectedColors[id] ?? '';
       double price = p.price;
-      final size = _selectedSizes[id];
-      if (size == 'Large') price += 2;
-      if (size == 'XL') price += 4;
+      int available = 0;
+      for (final v in p.variants) {
+        if ((size.isEmpty || v.size == size) &&
+            (color.isEmpty || v.color == color)) {
+          price = v.price;
+          available = v.quantity;
+          break;
+        }
+      }
+      if (qty > available) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${p.name}${size.isNotEmpty ? ' ($size)' : ''}${color.isNotEmpty ? ' ($color)' : ''} has only $available in stock'),
+            backgroundColor: const Color(0xFFEF4444),
+          ),
+        );
+        return;
+      }
       items.add(SaleItem(
         productId: p.id,
         productName: p.name,
         imageUrl: p.imageUrl,
         unitPrice: price,
         quantity: qty,
-        size: size,
-        color: _selectedColors[p.id],
+        size: size.isNotEmpty ? size : null,
+        color: color.isNotEmpty ? color : null,
         notes: _notesCtrls[p.id]?.text,
         category: p.category,
       ));
@@ -546,8 +571,87 @@ class _AddProductsScreenState extends State<AddProductsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Divider(color: kBorder),
-          if (sizes.isNotEmpty) ...[
+          if (p.variants.isNotEmpty) ...[
             const SizedBox(height: 8),
+            const Text('Variants',
+                style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: kTitle)),
+            const SizedBox(height: 8),
+            ...p.variants.map((v) {
+              final matchSize = currentSize.isEmpty || v.size == currentSize;
+              final matchColor = currentColor.isEmpty || v.color == currentColor;
+              final active = matchSize && matchColor;
+              final outOfStock = v.quantity <= 0;
+              return GestureDetector(
+                onTap: outOfStock ? null : () {
+                  setState(() {
+                    _selectedSizes[p.id] = v.size;
+                    if (v.color.isNotEmpty) _selectedColors[p.id] = v.color;
+                  });
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: outOfStock
+                        ? const Color(0xFFF9FAFB)
+                        : active
+                            ? const Color(0xFFF0FDF4)
+                            : Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: outOfStock
+                          ? const Color(0xFFE5E7EB)
+                          : active
+                              ? const Color(0xFF16A34A)
+                              : kBorder,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${v.size}${v.color.isNotEmpty ? ' | ${v.color}' : ''}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: outOfStock
+                                ? const Color(0xFF9CA3AF)
+                                : active
+                                    ? const Color(0xFF16A34A)
+                                    : kGray,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        outOfStock ? 'Out of Stock' : 'Qty: ${v.quantity}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: outOfStock
+                              ? const Color(0xFFEF4444)
+                              : const Color(0xFF16A34A),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      PriceText(
+                        v.price,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: outOfStock ? const Color(0xFF9CA3AF) : kTitle,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ],
+          if (sizes.isNotEmpty) ...[
+            const SizedBox(height: 12),
             const Text('Size',
                 style: TextStyle(
                     fontSize: 13,
@@ -559,22 +663,35 @@ class _AddProductsScreenState extends State<AddProductsScreen> {
               runSpacing: 8,
               children: sizes.map((s) {
                 final active = currentSize == s;
+                final hasStock = p.variants.any((v) => v.size == s && v.quantity > 0);
                 return GestureDetector(
-                  onTap: () => setState(() => _selectedSizes[p.id] = s),
+                  onTap: hasStock ? () => setState(() => _selectedSizes[p.id] = s) : null,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: active ? const Color(0xFFEFF6FF) : Colors.white,
+                      color: !hasStock
+                          ? const Color(0xFFF9FAFB)
+                          : active
+                              ? const Color(0xFFEFF6FF)
+                              : Colors.white,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: active ? const Color(0xFF2563EB) : kBorder,
+                        color: !hasStock
+                            ? const Color(0xFFE5E7EB)
+                            : active
+                                ? const Color(0xFF2563EB)
+                                : kBorder,
                       ),
                     ),
                     child: Text(s,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: active ? const Color(0xFF2563EB) : kGray,
+                          color: !hasStock
+                              ? const Color(0xFF9CA3AF)
+                              : active
+                                  ? const Color(0xFF2563EB)
+                                  : kGray,
                         )),
                   ),
                 );
@@ -582,7 +699,7 @@ class _AddProductsScreenState extends State<AddProductsScreen> {
             ),
           ],
           if (colors.isNotEmpty) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             const Text('Color',
                 style: TextStyle(
                     fontSize: 13,
@@ -594,29 +711,42 @@ class _AddProductsScreenState extends State<AddProductsScreen> {
               runSpacing: 8,
               children: colors.map((c) {
                 final active = currentColor == c;
+                final hasStock = p.variants.any((v) => v.color == c && v.quantity > 0);
                 return GestureDetector(
-                  onTap: () => setState(() => _selectedColors[p.id] = c),
+                  onTap: hasStock ? () => setState(() => _selectedColors[p.id] = c) : null,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: active ? const Color(0xFFEFF6FF) : Colors.white,
+                      color: !hasStock
+                          ? const Color(0xFFF9FAFB)
+                          : active
+                              ? const Color(0xFFEFF6FF)
+                              : Colors.white,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: active ? const Color(0xFF2563EB) : kBorder,
+                        color: !hasStock
+                            ? const Color(0xFFE5E7EB)
+                            : active
+                                ? const Color(0xFF2563EB)
+                                : kBorder,
                       ),
                     ),
                     child: Text(c,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: active ? const Color(0xFF2563EB) : kGray,
+                          color: !hasStock
+                              ? const Color(0xFF9CA3AF)
+                              : active
+                                  ? const Color(0xFF2563EB)
+                                  : kGray,
                         )),
                   ),
                 );
               }).toList(),
             ),
           ],
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           const Text('Notes (Optional)',
               style: TextStyle(
                   fontSize: 13,

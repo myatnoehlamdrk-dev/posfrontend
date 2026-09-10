@@ -366,33 +366,7 @@ class _PackageScreenState extends State<PackageScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 90,
-              height: 90,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                gradient: LinearGradient(
-                  colors: [
-                    c.iconColor.withValues(alpha: 0.85),
-                    c.iconColor.withValues(alpha: 0.55),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: c.imageUrl != null
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.network(c.imageUrl!, fit: BoxFit.cover),
-                    )
-                  : Center(
-                      child: Icon(
-                        c.icon,
-                        color: Colors.white.withValues(alpha: 0.9),
-                        size: 38,
-                      ),
-                    ),
-            ),
+            _packageImage(p),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -502,6 +476,117 @@ class _PackageScreenState extends State<PackageScreen> {
           fontWeight: FontWeight.w600,
           color: stockFg(s),
         ),
+      ),
+    );
+  }
+
+  Widget _packageImage(Package p) {
+    final c = widget.category;
+    final images = p.productImages;
+
+    if (images.isEmpty) {
+      return Container(
+        width: 90,
+        height: 90,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: LinearGradient(
+            colors: [
+              c.iconColor.withValues(alpha: 0.85),
+              c.iconColor.withValues(alpha: 0.55),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Center(
+          child: Icon(c.icon, color: Colors.white.withValues(alpha: 0.9), size: 38),
+        ),
+      );
+    }
+
+    return SizedBox(
+      width: 90,
+      height: 90,
+      child: images.length == 1
+          ? _pkgSingleImage(images[0])
+          : images.length == 2
+              ? _pkgTwoImageMosaic(images)
+              : _pkgThreeImageMosaic(images),
+    );
+  }
+
+  Widget _pkgSingleImage(String url) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Image.network(url, fit: BoxFit.cover, width: 90, height: 90,
+        errorBuilder: (_, __, ___) => Container(
+          width: 90, height: 90,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF3F4F6),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(Icons.image_not_supported_outlined, color: gray, size: 28),
+        ),
+      ),
+    );
+  }
+
+  Widget _pkgTwoImageMosaic(List<String> urls) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Column(
+        children: [
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(child: _pkgMosaicTile(urls[0])),
+                const SizedBox(width: 2),
+                Expanded(child: _pkgMosaicTile(urls.length > 1 ? urls[1] : '')),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _pkgThreeImageMosaic(List<String> urls) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Column(
+        children: [
+          Expanded(
+            flex: 3,
+            child: Row(
+              children: [
+                Expanded(child: _pkgMosaicTile(urls[0])),
+                const SizedBox(width: 2),
+                Expanded(child: _pkgMosaicTile(urls[1])),
+              ],
+            ),
+          ),
+          const SizedBox(height: 2),
+          Expanded(
+            flex: 2,
+            child: _pkgMosaicTile(urls[2]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _pkgMosaicTile(String url) {
+    if (url.isEmpty) {
+      return Container(
+        color: const Color(0xFFF3F4F6),
+        child: const Icon(Icons.image_outlined, color: gray, size: 16),
+      );
+    }
+    return Image.network(url, fit: BoxFit.cover, width: double.infinity,
+      errorBuilder: (_, __, ___) => Container(
+        color: const Color(0xFFF3F4F6),
+        child: const Icon(Icons.image_not_supported_outlined, color: gray, size: 16),
       ),
     );
   }

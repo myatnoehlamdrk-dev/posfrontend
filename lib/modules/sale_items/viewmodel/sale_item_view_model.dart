@@ -77,4 +77,24 @@ class SaleItemViewModel extends BaseViewModel {
       return false;
     }
   }
+
+  Future<SaleOrder?> deleteSaleItem(String saleId, String itemId) async {
+    try {
+      final updatedOrder = await _repository.deleteSaleItem(saleId, itemId);
+      final index = _sales.indexWhere((o) => o.orderId == saleId);
+      if (index != -1) {
+        _sales[index] = updatedOrder;
+      }
+      notifyListeners();
+      return updatedOrder;
+    } on ApiException catch (e) {
+      _error = e.message;
+      notifyListeners();
+      return null;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return null;
+    }
+  }
 }

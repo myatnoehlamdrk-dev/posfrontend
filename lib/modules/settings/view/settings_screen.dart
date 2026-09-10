@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart' hide ThemeMode;
 import 'package:image_picker/image_picker.dart';
+import 'package:posfrontend/core/auth/token_storage.dart';
+import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/login/view/login_screen.dart';
 import 'package:posfrontend/modules/settings/model/settings_models.dart';
@@ -919,12 +921,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: const Text('Cancel', style: TextStyle(color: gray)),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pop(ctx);
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  (route) => false,
-                );
+                try {
+                  final dio = ApiClient.create();
+                  await dio.post('/api/auth/logout');
+                } catch (_) {}
+                await TokenStorage.clearToken();
+                if (context.mounted) {
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    (route) => false,
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: red,

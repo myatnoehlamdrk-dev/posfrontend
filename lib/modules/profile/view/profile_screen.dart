@@ -445,13 +445,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                                 const SizedBox(height: 16),
                                 _buildTextField(
-                                  controller: _statusController,
-                                  label: 'Status',
-                                  icon: Icons.flag_outlined,
-                                  onChanged: _viewModel.setStatus,
-                                ),
-                                const SizedBox(height: 16),
-                                _buildTextField(
                                   controller: _nrcNoController,
                                   label: 'NRC No',
                                   icon: Icons.badge_outlined,
@@ -625,6 +618,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   backgroundColor: const Color(0xFFE9D5FF),
                   backgroundImage:
                       image.isNotEmpty ? NetworkImage(image) : null,
+                  onBackgroundImageError: image.isNotEmpty ? (_, __) {
+                    _viewModel.setImageUrl('');
+                    ProfileImageNotifier.instance.update('');
+                  } : null,
                   child: image.isEmpty
                       ? const Icon(Icons.person, size: 50, color: primary)
                       : null,

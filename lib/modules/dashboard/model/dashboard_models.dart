@@ -29,8 +29,9 @@ class ProductItem {
   final String name;
   final String sold;
   final IconData icon;
+  final String image;
 
-  const ProductItem(this.name, this.sold, this.icon);
+  const ProductItem(this.name, this.sold, this.icon, {this.image = ''});
 }
 
 class DashboardData {

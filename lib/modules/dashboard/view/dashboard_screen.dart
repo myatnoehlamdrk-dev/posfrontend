@@ -136,12 +136,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         _selectedPeriod,
                         (period) {
                           setState(() => _selectedPeriod = period);
-                          final days = period == 'This Week'
-                              ? 7
-                              : period == 'This Month'
-                                  ? 30
-                                  : 365;
-                          _viewModel.load(days: days);
+                          final days = period == 'This Month'
+                              ? 30
+                              : period == 'This Year'
+                                  ? 365
+                                  : 36500;
+                          _viewModel.loadTrend(days: days);
                         },
                       ),
                       const SizedBox(height: 24),
@@ -198,12 +198,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
             style: const TextStyle(fontSize: 13, color: grayText),
           ),
           const SizedBox(height: 6),
-          Text(
-            m.value,
-            style: const TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.w700,
-              color: titleColor,
+          GestureDetector(
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (_) => AlertDialog(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  title: Text(m.label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: grayText)),
+                  content: Text(m.value, textAlign: TextAlign.center, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: titleColor)),
+                ),
+              );
+            },
+            child: Text(
+              m.value.length > 12 ? '${m.value.substring(0, 12)}...' : m.value,
+              style: const TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.w700,
+                color: titleColor,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.clip,
             ),
           ),
           const SizedBox(height: 8),
@@ -273,7 +287,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   ) {
     final chartH = (MediaQuery.of(context).size.height * 0.32).clamp(200.0, 300.0);
 
-    final allDates = series.isNotEmpty ? series.first.dates : <String>[];
     final maxVal = series.fold<double>(0, (max, s) {
       final seriesMax = s.values.fold<double>(0, (m, v) => v > m ? v : m);
       return seriesMax > max ? seriesMax : max;
@@ -298,22 +311,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       );
     }).toList();
-
-    String formatShortDate(String dateStr) {
-      try {
-        final parts = dateStr.split('-');
-        if (parts.length == 3) {
-          return '${parts[1]}/${parts[2]}';
-        }
-        return dateStr;
-      } catch (_) {
-        return dateStr;
-      }
-    }
-
-    final bottomInterval = allDates.length > 7
-        ? (allDates.length / 7).ceilToDouble()
-        : 1.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -382,28 +379,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       topTitles: const AxisTitles(
                         sideTitles: SideTitles(showTitles: false),
                       ),
-                      bottomTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          reservedSize: 30,
-                          interval: bottomInterval,
-                          getTitlesWidget: (value, _) {
-                            final idx = value.toInt();
-                            if (idx < 0 || idx >= allDates.length) {
-                              return const SizedBox.shrink();
-                            }
-                            return Padding(
-                              padding: const EdgeInsets.only(top: 8),
-                              child: Transform.rotate(
-                                angle: -0.5,
-                                child: Text(
-                                  formatShortDate(allDates[idx]),
-                                  style: const TextStyle(fontSize: 9, color: grayText),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
+                      bottomTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
                       ),
                     ),
                     borderData: FlBorderData(show: false),
@@ -531,7 +508,14 @@ class _ProductListCard extends StatelessWidget {
                             color: const Color(0xFFF3F4F6),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Icon(p.icon, color: const Color(0xFF6B7280)),
+                          clipBehavior: Clip.antiAlias,
+                          child: p.image.isNotEmpty
+                              ? Image.network(
+                                  p.image,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Icon(p.icon, color: const Color(0xFF6B7280)),
+                                )
+                              : Icon(p.icon, color: const Color(0xFF6B7280)),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -545,6 +529,8 @@ class _ProductListCard extends StatelessWidget {
                                   fontWeight: FontWeight.w600,
                                   color: Color(0xFF0F172A),
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                               const SizedBox(height: 2),
                               Text(
@@ -557,7 +543,6 @@ class _ProductListCard extends StatelessWidget {
                             ],
                           ),
                         ),
-                        const Icon(Icons.more_vert, color: Color(0xFF9CA3AF)),
                       ],
                     ),
                   ),
@@ -578,7 +563,7 @@ class _PeriodDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final options = ['This Week', 'This Month', 'This Year'];
+    final options = ['This Month', 'This Year', 'All Time'];
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

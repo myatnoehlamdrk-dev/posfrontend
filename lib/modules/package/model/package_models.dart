@@ -52,6 +52,7 @@ class Package {
   final String location;
   final StockStatus status;
   final String? imageUrl;
+  final List<String> productImages;
 
   const Package({
     required this.id,
@@ -64,10 +65,15 @@ class Package {
       required this.location,
     required this.status,
     this.imageUrl,
+    this.productImages = const [],
   });
 
   factory Package.fromJson(Map<String, dynamic> json) {
     final id = json['id']?.toString() ?? '';
+    final rawImages = json['productImages'];
+    final productImages = (rawImages is List)
+        ? rawImages.whereType<String>().where((s) => s.isNotEmpty).toList()
+        : <String>[];
     return Package(
       id: id,
       categoryId: json['categoryId']?.toString() ?? '',
@@ -82,6 +88,7 @@ class Package {
           : int.tryParse(json['productLimit']?.toString() ?? '') ?? 0,
       location: json['location'] ?? '',
       status: stockStatusFromString(json['stockStatus']),
+      productImages: productImages,
     );
   }
 }

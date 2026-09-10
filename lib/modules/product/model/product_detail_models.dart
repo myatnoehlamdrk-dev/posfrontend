@@ -132,7 +132,7 @@ class ProductDetail {
       supplierId: (json['supplierId'] as String?)?.trim() ?? '—',
       supplierName: (json['supplierName'] as String?)?.trim() ?? '—',
       supplierContact: (json['supplierContact'] as String?)?.trim() ?? '—',
-      contractNumber: '—',
+      contractNumber: (json['contractNumber'] as String?)?.trim() ?? '—',
       supplierSince: (json['supplierSince'] as String?)?.trim() ?? '—',
       supplierAddress: (json['supplierAddress'] as String?)?.trim() ?? '—',
       imageUrl: image != null && image.isNotEmpty ? image : null,

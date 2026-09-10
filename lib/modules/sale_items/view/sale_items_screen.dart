@@ -146,7 +146,7 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
     return GestureDetector(
       onTap: () {
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => SaleDetailScreen(order: order, user: widget.user)),
+          MaterialPageRoute(builder: (_) => SaleDetailScreen(order: order, viewModel: _viewModel, user: widget.user)),
         );
       },
       child: Container(
@@ -301,7 +301,11 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
               Navigator.pop(ctx);
               final success = await _viewModel.deleteItem(order);
               if (mounted) {
-                showSuccessSnackBar(context, success ? 'Item deleted' : 'Failed to delete');
+                if (success) {
+                  showSuccessSnackBar(context, 'Item deleted');
+                } else {
+                  showErrorSnackBar(context, 'Failed to delete');
+                }
               }
             },
             style: ElevatedButton.styleFrom(

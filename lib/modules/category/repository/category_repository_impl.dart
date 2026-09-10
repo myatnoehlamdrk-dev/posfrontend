@@ -27,6 +27,10 @@ class CategoryRepositoryImpl implements CategoryRepository {
 
   Category _mapCategory(Map<String, dynamic> json) {
     final createdAt = json['createdAt'] as String?;
+    final rawImages = json['productImages'];
+    final productImages = (rawImages is List)
+        ? rawImages.whereType<String>().where((s) => s.isNotEmpty).toList()
+        : <String>[];
     return Category(
       id: json['id']?.toString() ?? '',
       inventoryId: json['inventoryId']?.toString() ?? '',
@@ -42,6 +46,7 @@ class CategoryRepositoryImpl implements CategoryRepository {
       active: true,
       iconColor: const Color(0xFF6D28D9),
       icon: Icons.category,
+      productImages: productImages,
     );
   }
 

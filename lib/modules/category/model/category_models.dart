@@ -14,6 +14,7 @@ class Category {
   final Color iconColor;
   final IconData icon;
   final String? imageUrl;
+  final List<String> productImages;
 
   const Category({
     required this.id,
@@ -29,5 +30,6 @@ class Category {
     required this.iconColor,
     required this.icon,
     this.imageUrl,
+    this.productImages = const [],
   });
 }
