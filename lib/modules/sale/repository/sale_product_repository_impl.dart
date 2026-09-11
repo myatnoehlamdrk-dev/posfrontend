@@ -1,3 +1,4 @@
+import 'package:posfrontend/core/extensions/api_response_extensions.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/product/model/catalog_product.dart';
 import 'package:posfrontend/modules/sale/repository/sale_product_repository.dart';
@@ -7,14 +8,7 @@ class SaleProductRepositoryImpl implements SaleProductRepository {
   Future<List<CatalogProduct>> getProducts() async {
     final dio = ApiClient.create();
     final response = await dio.get('/api/products');
-    final items = _asList(response.data);
-    return items.map((e) => _map(e as Map<String, dynamic>)).toList();
-  }
-
-  List<dynamic> _asList(dynamic data) {
-    if (data is List) return data;
-    if (data is Map && data['data'] is List) return data['data'];
-    return [];
+    return parseTypedList(response.data, _map);
   }
 
   CatalogProduct _map(Map<String, dynamic> item) {

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:posfrontend/core/base/base_view_model.dart';
+import 'package:posfrontend/core/base/form_validation_mixin.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/register/model/register_request.dart';
 import 'package:posfrontend/modules/register/model/user_model.dart';
@@ -10,7 +11,7 @@ import 'package:posfrontend/modules/shop/repository/shop_api_repository.dart';
 import 'package:posfrontend/modules/shop/repository/shop_local_repository.dart';
 import 'package:posfrontend/shared/repositories/imgbb_repository.dart';
 
-class RegisterViewModel extends BaseViewModel {
+class RegisterViewModel extends BaseViewModel with FormValidationMixin {
   final ShopLocalRepository _shopRepository;
   final ShopApiRepository _shopApiRepository;
   final ImgbbRepository _imgbbRepository;
@@ -60,70 +61,60 @@ class RegisterViewModel extends BaseViewModel {
   String get dob => _dob;
   String? get gender => _gender;
 
-  final Map<String, String?> _fieldErrors = {};
-  Map<String, String?> get fieldErrors => Map.unmodifiable(_fieldErrors);
-
   void setName(String value) {
     _name = value;
-    _clearError('name');
+    clearFieldError('name');
   }
 
   void setEmail(String value) {
     _email = value;
-    _clearError('email');
+    clearFieldError('email');
   }
 
   void setPassword(String value) {
     _password = value;
-    _clearError('password');
+    clearFieldError('password');
   }
 
   void setPhone(String value) {
     _phone = value;
-    _clearError('phone');
+    clearFieldError('phone');
   }
 
   void setSocial(String value) {
     _social = value;
-    _clearError('social');
+    clearFieldError('social');
   }
 
   void setRole(String value) {
     _role = value;
-    _clearError('role');
+    clearFieldError('role');
   }
 
   void setAddress(String value) {
     _address = value;
-    _clearError('address');
+    clearFieldError('address');
   }
 
   void setNrc(String value) {
     _nrc = value;
-    _clearError('nrc');
+    clearFieldError('nrc');
   }
 
   void setBillingWay(String value) {
     _billingWay = value;
-    _clearError('billingWay');
+    clearFieldError('billingWay');
   }
 
   void setDob(String value) {
     _dob = value;
-    _clearError('dob');
+    clearFieldError('dob');
   }
 
   void setGender(String? value) {
     _gender = value;
-    _clearError('gender');
+    clearFieldError('gender');
     notifyListeners();
-  }
-
-  void _clearError(String key) {
-    if (_fieldErrors.containsKey(key)) {
-      _fieldErrors.remove(key);
-      notifyListeners();
-    }
   }
 
   Future<void> loadShop() async {
@@ -138,31 +129,27 @@ class RegisterViewModel extends BaseViewModel {
     }
   }
 
-  bool _isValidEmail(String email) {
-    return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email.trim());
-  }
-
   /// Required: full name, email, password, billing way. All others may be null.
   bool validate() {
-    _fieldErrors.clear();
+    clearAllFieldErrors();
 
     if (_name.trim().isEmpty) {
-      _fieldErrors['name'] = 'Full name is required';
+      setFieldError('name', 'Full name is required');
     }
     if (_email.trim().isEmpty) {
-      _fieldErrors['email'] = 'Email is required';
-    } else if (!_isValidEmail(_email)) {
-      _fieldErrors['email'] = 'Enter a valid email';
+      setFieldError('email', 'Email is required');
+    } else if (!isValidEmail(_email)) {
+      setFieldError('email', 'Enter a valid email');
     }
     if (_password.isEmpty) {
-      _fieldErrors['password'] = 'Password is required';
+      setFieldError('password', 'Password is required');
     }
     if (_billingWay.trim().isEmpty) {
-      _fieldErrors['billingWay'] = 'Billing way is required';
+      setFieldError('billingWay', 'Billing way is required');
     }
 
     notifyListeners();
-    return _fieldErrors.isEmpty;
+    return fieldErrors.isEmpty;
   }
 
   Future<bool> register() async {
@@ -184,7 +171,7 @@ class RegisterViewModel extends BaseViewModel {
       // An existing shop (selected from the database) already has an id,
       // so we must NOT create a new one — just reuse its id.
       final bool isExistingShop =
-          localShop.id != null && localShop.id!.isNotEmpty;
+          localShop.id?.isNotEmpty == true;
       String shopId;
 
       if (isExistingShop) {
@@ -192,7 +179,7 @@ class RegisterViewModel extends BaseViewModel {
       } else {
         // 1) Upload the picked logo to ImgBB (only if an image was selected).
         var shop = localShop;
-        if (shop.logoData != null && shop.logoData!.isNotEmpty) {
+        if (shop.logoData?.isNotEmpty == true) {
           final bytes = base64Decode(shop.logoData!);
           final result = await _imgbbRepository.uploadImage(
             bytes,

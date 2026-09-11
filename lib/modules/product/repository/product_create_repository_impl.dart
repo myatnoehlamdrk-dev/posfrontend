@@ -1,31 +1,26 @@
 import 'package:dio/dio.dart';
+import 'package:posfrontend/core/extensions/api_response_extensions.dart';
 import 'package:posfrontend/core/network/api_client.dart';
+import 'package:posfrontend/modules/package/repository/package_repository.dart';
 import 'package:posfrontend/modules/package/repository/package_repository_impl.dart';
 import 'package:posfrontend/modules/product/model/product_create_models.dart';
 import 'product_create_repository.dart';
 
 class ProductCreateRepositoryImpl implements ProductCreateRepository {
-  List<dynamic> _asList(dynamic data) {
-    if (data is List) return data;
-    if (data is Map<String, dynamic>) {
-      final inner = data['data'];
-      return inner is List ? inner : [];
-    }
-    return [];
-  }
+  final PackageRepository _packageRepository;
+
+  ProductCreateRepositoryImpl({PackageRepository? packageRepository})
+      : _packageRepository = packageRepository ?? PackageRepositoryImpl();
 
   @override
   Future<List<SupplierOption>> getSuppliers() async {
     try {
       final dio = ApiClient.create();
       final resp = await dio.get('/api/suppliers');
-      final data = _asList(resp.data);
-      return data
-          .map((e) => SupplierOption(
-                id: (e['id'] ?? '').toString(),
-                name: e['name'] ?? '',
-              ))
-          .toList();
+      return parseTypedList(resp.data, (e) => SupplierOption(
+            id: (e['id'] ?? '').toString(),
+            name: e['name'] ?? '',
+          ));
     } on DioException {
       return [];
     }
@@ -34,7 +29,7 @@ class ProductCreateRepositoryImpl implements ProductCreateRepository {
   @override
   Future<List<PackageOption>> getPackages(String categoryId) async {
     try {
-      final packages = await PackageRepositoryImpl().getPackages(categoryId);
+      final packages = await _packageRepository.getPackages(categoryId);
       return packages
           .map((p) => PackageOption(id: p.id, name: p.name))
           .toList();
@@ -68,10 +63,7 @@ class ProductCreateRepositoryImpl implements ProductCreateRepository {
     try {
       final dio = ApiClient.create();
       final resp = await dio.get('/api/products/search', queryParameters: {'q': query});
-      final data = _asList(resp.data);
-      return data
-          .map((e) => ProductSearchResult.fromJson(e as Map<String, dynamic>))
-          .toList();
+      return parseTypedList(resp.data, ProductSearchResult.fromJson);
     } on DioException {
       return [];
     }
@@ -82,10 +74,7 @@ class ProductCreateRepositoryImpl implements ProductCreateRepository {
     try {
       final dio = ApiClient.create();
       final resp = await dio.get('/api/purchase-items', queryParameters: {'status': 'pending'});
-      final data = _asList(resp.data);
-      return data
-          .map((e) => PendingPurchaseItem.fromJson(e as Map<String, dynamic>))
-          .toList();
+      return parseTypedList(resp.data, PendingPurchaseItem.fromJson);
     } on DioException {
       return [];
     }

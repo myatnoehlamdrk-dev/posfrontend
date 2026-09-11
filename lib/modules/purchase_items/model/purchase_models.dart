@@ -1,3 +1,5 @@
+import 'package:posfrontend/core/extensions/map_json_extensions.dart';
+
 enum PurchaseStatus { completed, pending }
 
 class Supplier {
@@ -16,9 +18,9 @@ class Supplier {
   factory Supplier.fromJson(Map<String, dynamic> json) {
     return Supplier(
       id: json['id']?.toString() ?? '',
-      name: json['name'] as String? ?? '',
-      phone: json['contact'] as String? ?? '',
-      address: json['address'] as String? ?? '',
+      name: json.str('name'),
+      phone: json.str('contact'),
+      address: json.str('address'),
     );
   }
 }
@@ -48,26 +50,19 @@ class PurchaseOrder {
 
   int get totalAmount => quantity * unitPrice;
 
-  static int _parseInt(dynamic value) {
-    if (value is int) return value;
-    if (value is String) return int.tryParse(value) ?? 0;
-    if (value is double) return value.toInt();
-    return 0;
-  }
-
   factory PurchaseOrder.fromJson(Map<String, dynamic> json) {
     return PurchaseOrder(
       orderId: json['id']?.toString() ?? '',
       supplierId: json['supplierId']?.toString() ?? '',
-      supplierName: json['supplierName'] as String? ?? '',
-      productName: json['productName'] as String? ?? '',
-      quantity: _parseInt(json['quantity']),
-      unitPrice: _parseInt(json['unitPrice']),
-      date: json['date'] as String? ?? '',
+      supplierName: json.str('supplierName'),
+      productName: json.str('productName'),
+      quantity: json.integer('quantity'),
+      unitPrice: json.integer('unitPrice'),
+      date: json.str('date'),
       status: json['status'] == 'completed'
           ? PurchaseStatus.completed
           : PurchaseStatus.pending,
-      notes: json['notes'] as String? ?? '',
+      notes: json.str('notes'),
     );
   }
 }

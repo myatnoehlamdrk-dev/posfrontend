@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/category/model/category_models.dart';
@@ -5,8 +6,9 @@ import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/package/model/package_models.dart';
-import 'package:posfrontend/modules/product/model/catalog_product.dart';
+import 'package:posfrontend/modules/product/model/catalog_product.dart' hide ProductVariant;
 import 'package:posfrontend/modules/product/repository/catalog_product_repository_impl.dart';
+import 'package:posfrontend/modules/package/view/assign_product_to_package_screen.dart';
 import 'package:posfrontend/modules/product/view/product_detail_screen.dart';
 import 'package:posfrontend/modules/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
@@ -77,6 +79,68 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
     }
   }
 
+  Future<void> _openAddProduct() async {
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => AssignProductToPackageScreen(
+          user: widget.user,
+          package: widget.package,
+          category: widget.category,
+        ),
+      ),
+    );
+    if (result == true) {
+      _load();
+    }
+  }
+
+  Future<void> _removeProductFromPackage(CatalogProduct product) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Remove Product'),
+        content: Text(
+          'Remove "${product.name}" from this package? The product will not be deleted.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Remove', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    try {
+      final dio = ApiClient.create();
+      await dio.put(
+        '/api/products/${product.id}',
+        data: {'packageId': null},
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Product removed from package')),
+      );
+      _load();
+    } on DioException catch (e) {
+      final msg = ApiException.fromDio(e).message;
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg)),
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
+    }
+  }
+
   @override
   void dispose() {
     _search.dispose();
@@ -105,6 +169,12 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
         if (isWide) {
           return Scaffold(
             backgroundColor: Colors.white,
+            floatingActionButton: FloatingActionButton.extended(
+              onPressed: _openAddProduct,
+              backgroundColor: const Color(0xFF4FD1D9),
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: const Text('Add Product', style: TextStyle(color: Colors.white)),
+            ),
             body: SafeArea(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -122,6 +192,12 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
         return Scaffold(
           key: _scaffoldKey,
           backgroundColor: Colors.white,
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: _openAddProduct,
+            backgroundColor: const Color(0xFF4FD1D9),
+            icon: const Icon(Icons.add, color: Colors.white),
+            label: const Text('Add Product', style: TextStyle(color: Colors.white)),
+          ),
           drawer: AppDrawer(user: widget.user, activeItem: 'Inventory'),
           body: SafeArea(child: body),
         );
@@ -617,7 +693,27 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Icon(Icons.chevron_right, color: kGray),
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert, color: kGray, size: 20),
+                  tooltip: 'Actions',
+                  onSelected: (value) {
+                    if (value == 'remove') {
+                      _removeProductFromPackage(pr);
+                    }
+                  },
+                  itemBuilder: (ctx) => [
+                    const PopupMenuItem(
+                      value: 'remove',
+                      child: Row(
+                        children: [
+                          Icon(Icons.remove_circle_outline, color: Colors.red, size: 18),
+                          SizedBox(width: 8),
+                          Text('Remove from package'),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ],

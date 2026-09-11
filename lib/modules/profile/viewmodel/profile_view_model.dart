@@ -1,9 +1,10 @@
 import 'package:posfrontend/core/base/base_view_model.dart';
+import 'package:posfrontend/core/base/form_validation_mixin.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/profile/model/profile_response.dart';
 import 'package:posfrontend/modules/profile/repository/profile_repository.dart';
 
-class ProfileViewModel extends BaseViewModel {
+class ProfileViewModel extends BaseViewModel with FormValidationMixin {
   final ProfileRepository _repository;
 
   ProfileViewModel({required ProfileRepository repository})
@@ -49,9 +50,6 @@ class ProfileViewModel extends BaseViewModel {
   String _successMessage = '';
   String get successMessage => _successMessage;
 
-  final Map<String, String?> _fieldErrors = {};
-  Map<String, String?> get fieldErrors => Map.unmodifiable(_fieldErrors);
-
   void setName(String v) => _name = v;
   void setEmail(String v) => _email = v;
   void setPhone(String v) => _phone = v;
@@ -65,13 +63,6 @@ class ProfileViewModel extends BaseViewModel {
   void setGender(String v) => _gender = v;
   void setType(String v) => _type = v;
   void setImageUrl(String v) => _imageUrl = v;
-
-  void _clearError(String key) {
-    if (_fieldErrors.containsKey(key)) {
-      _fieldErrors.remove(key);
-      notifyListeners();
-    }
-  }
 
   void clearSuccess() {
     _successMessage = '';
@@ -112,18 +103,18 @@ class ProfileViewModel extends BaseViewModel {
   }
 
   Future<bool> saveProfile() async {
-    _fieldErrors.clear();
+    clearAllFieldErrors();
     if (_name.trim().isEmpty) {
-      _fieldErrors['name'] = 'Name is required';
+      setFieldError('name', 'Name is required');
     }
     if (_email.trim().isEmpty) {
-      _fieldErrors['email'] = 'Email is required';
-    } else if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(_email.trim())) {
-      _fieldErrors['email'] = 'Enter a valid email';
+      setFieldError('email', 'Email is required');
+    } else if (!isValidEmail(_email)) {
+      setFieldError('email', 'Enter a valid email');
     }
     notifyListeners();
 
-    if (_fieldErrors.isNotEmpty) return false;
+    if (fieldErrors.isNotEmpty) return false;
 
     _isSaving = true;
     _successMessage = '';
@@ -165,18 +156,18 @@ class ProfileViewModel extends BaseViewModel {
     required String currentPassword,
     required String newPassword,
   }) async {
-    _fieldErrors.clear();
+    clearAllFieldErrors();
     if (currentPassword.isEmpty) {
-      _fieldErrors['currentPassword'] = 'Current password is required';
+      setFieldError('currentPassword', 'Current password is required');
     }
     if (newPassword.isEmpty) {
-      _fieldErrors['newPassword'] = 'New password is required';
+      setFieldError('newPassword', 'New password is required');
     } else if (newPassword.length < 6) {
-      _fieldErrors['newPassword'] = 'Password must be at least 6 characters';
+      setFieldError('newPassword', 'Password must be at least 6 characters');
     }
     notifyListeners();
 
-    if (_fieldErrors.isNotEmpty) return false;
+    if (fieldErrors.isNotEmpty) return false;
 
     _isChangingPassword = true;
     _successMessage = '';

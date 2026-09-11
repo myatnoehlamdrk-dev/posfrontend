@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/core/extensions/datetime_extensions.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/sale_items/model/sale_item_models.dart';
 import 'package:posfrontend/modules/sale_items/view/sale_detail_screen.dart';
@@ -69,14 +70,14 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
     if (_viewModel.isLoading && _viewModel.sales.isEmpty) {
       return const Center(child: CircularProgressIndicator(color: AppColors.teal));
     }
-    if (_viewModel.error != null && _viewModel.sales.isEmpty) {
+    if (_viewModel.errorMessage != null && _viewModel.sales.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.error_outline, color: Colors.red, size: 48),
             const SizedBox(height: 12),
-            Text(_viewModel.error!, style: const TextStyle(color: AppColors.gray)),
+            Text(_viewModel.errorMessage!, style: const TextStyle(color: AppColors.gray)),
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: () => _viewModel.loadSales(refresh: true),
@@ -275,7 +276,7 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
     if (dateStr.isEmpty) return '-';
     try {
       final dt = DateTime.parse(dateStr);
-      return '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
+      return dt.toFormattedDateTime();
     } catch (_) {
       return dateStr;
     }

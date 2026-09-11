@@ -1,15 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/core/extensions/number_extensions.dart';
 
-String formatPrice(double value) {
-  final whole = value.round();
-  final neg = whole < 0;
-  final digits = whole.abs().toString();
-  final withCommas = digits.replaceAllMapped(
-    RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-    (m) => '${m[1]},',
-  );
-  return 'MMK ${neg ? '-' : ''}$withCommas';
-}
+String formatPrice(double value) => value.asCurrency('MMK');
 
 class PriceText extends StatelessWidget {
   final double price;

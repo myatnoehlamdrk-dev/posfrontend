@@ -76,14 +76,14 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
     if (_viewModel.isLoading && _viewModel.purchaseItems.isEmpty) {
       return const Center(child: CircularProgressIndicator(color: AppColors.teal));
     }
-    if (_viewModel.error != null && _viewModel.purchaseItems.isEmpty) {
+    if (_viewModel.errorMessage != null && _viewModel.purchaseItems.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.error_outline, color: Colors.red, size: 48),
             const SizedBox(height: 12),
-            Text(_viewModel.error!, style: const TextStyle(color: AppColors.gray)),
+            Text(_viewModel.errorMessage!, style: const TextStyle(color: AppColors.gray)),
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: () => _viewModel.loadPurchaseItems(refresh: true),

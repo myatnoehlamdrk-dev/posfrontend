@@ -64,6 +64,21 @@ class _CategoryScreenState extends State<CategoryScreen> {
     }
   }
 
+  Future<void> _openEditCategory(Category category) async {
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => AddCategoryScreen(
+          user: widget.user,
+          inventoryType: widget.inventoryType,
+          existingCategory: category,
+        ),
+      ),
+    );
+    if (result is Category) {
+      _viewModel.updateCategory(result);
+    }
+  }
+
   @override
   void dispose() {
     _viewModel.dispose();
@@ -414,10 +429,20 @@ class _CategoryScreenState extends State<CategoryScreen> {
                     const SizedBox(height: 8),
                     Text(
                       c.description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontSize: 13, color: gray),
                     ),
                   ],
                 ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                icon: const Icon(Icons.edit, size: 18, color: purple),
+                tooltip: 'Edit category',
+                onPressed: () => _openEditCategory(c),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
               ),
             ],
           ),

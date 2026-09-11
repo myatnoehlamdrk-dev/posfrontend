@@ -5,7 +5,6 @@ import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/product/model/catalog_product.dart';
 import 'package:posfrontend/modules/product/model/product_detail_models.dart';
-import 'package:posfrontend/modules/product/repository/product_detail_repository.dart';
 import 'package:posfrontend/modules/product/repository/product_detail_repository_impl.dart';
 import 'package:posfrontend/modules/product/view/add_product_screen.dart';
 import 'package:posfrontend/modules/shared/widgets/inventory_form_widgets.dart';

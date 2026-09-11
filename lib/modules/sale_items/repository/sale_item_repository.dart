@@ -5,6 +5,7 @@ abstract class SaleItemRepository {
   Future<PaginatedSalesResponse> getSales({int page = 1});
   Future<PaginatedOrdersResponse> getOrders({int page = 1});
   Future<SaleDetailResponse> getSaleById(String id);
+  Future<SaleOrder> getOrderById(String id);
   Future<void> deleteSale(String id);
   Future<void> deleteOrder(String id);
   Future<SaleOrder> deleteSaleItem(String saleId, String itemId);

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/core/extensions/datetime_extensions.dart';
 import 'package:posfrontend/core/network/api_client.dart';
+import 'package:posfrontend/core/utils/error_handler.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/product/model/catalog_product.dart';
 import 'package:posfrontend/modules/product/repository/catalog_product_repository_impl.dart';
@@ -81,7 +83,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
 
   List<CatalogProduct> get _hotProducts {
     final list = List<CatalogProduct>.from(_all);
-    return list.length > 4 ? list.sublist(list.length - 4) : list;
+    return list.length > 4 ? list.sublist(0, 4) : list;
   }
 
   Future<void> _load() async {
@@ -175,10 +177,16 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                     const SnackBar(content: Text('Product deleted')),
                   );
                 }
+              } on ApiException catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(e.message)),
+                  );
+                }
               } catch (e) {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Delete failed: $e')),
+                    SnackBar(content: Text(formatApiError(e))),
                   );
                 }
               }
@@ -986,11 +994,5 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
     );
   }
 
-  String _formatDate(DateTime d) {
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-    return '${months[d.month - 1]} ${d.day}';
-  }
+  String _formatDate(DateTime d) => d.toShortDate();
 }

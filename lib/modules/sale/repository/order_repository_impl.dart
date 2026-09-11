@@ -27,9 +27,9 @@ class OrderRepositoryImpl implements OrderRepository {
               'unitPrice': item.unitPrice,
               'subtotal': item.subtotal,
               if (item.size != null) 'size': item.size,
-              if (item.color != null && item.color!.isNotEmpty)
+              if (item.color?.isNotEmpty == true)
                 'color': item.color,
-              if (item.notes != null && item.notes!.isNotEmpty)
+              if (item.notes?.isNotEmpty == true)
                 'notes': item.notes,
             })
         .toList();
@@ -53,6 +53,30 @@ class OrderRepositoryImpl implements OrderRepository {
       throw ApiException(
         statusCode: resp.statusCode,
         message: 'Failed to save order',
+      );
+    }
+  }
+
+  @override
+  Future<void> updateOrderStatus({required String orderId, required String status}) async {
+    final dio = ApiClient.create();
+    final resp = await dio.put('/api/orders/$orderId', data: {'status': status});
+    if (resp.statusCode != 200) {
+      throw ApiException(
+        statusCode: resp.statusCode,
+        message: 'Failed to update order status',
+      );
+    }
+  }
+
+  @override
+  Future<void> deleteOrder(String orderId) async {
+    final dio = ApiClient.create();
+    final resp = await dio.delete('/api/orders/$orderId');
+    if (resp.statusCode != 200) {
+      throw ApiException(
+        statusCode: resp.statusCode,
+        message: 'Failed to delete order',
       );
     }
   }

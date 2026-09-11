@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:posfrontend/core/extensions/api_response_extensions.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/inventory/model/inventory_models.dart';
 import 'package:posfrontend/modules/inventory/repository/inventory_repository.dart';
@@ -28,9 +29,9 @@ class InventoryRepositoryImpl implements InventoryRepository {
         queryParameters: {'type': type},
       );
 
-      final List<dynamic> data = _asList(resp.data);
+      final data = parseTypedList(resp.data, Inventory.fromJson);
       if (data.isNotEmpty) {
-        return Inventory.fromJson(data.first as Map<String, dynamic>);
+        return data.first;
       }
 
       // No inventory row yet: create-or-get it (backend uses firstOrCreate
@@ -39,22 +40,14 @@ class InventoryRepositoryImpl implements InventoryRepository {
         '/api/inventories',
         data: {'type': type},
       );
-      final createdData = _asList(created.data);
-      final Map<String, dynamic> createdJson = createdData.isNotEmpty
-          ? createdData.first as Map<String, dynamic>
-          : created.data as Map<String, dynamic>;
+      final createdData = parseTypedList(created.data, Inventory.fromJson);
+      if (createdData.isNotEmpty) {
+        return createdData.first;
+      }
+      final Map<String, dynamic> createdJson = created.data as Map<String, dynamic>;
       return Inventory.fromJson(createdJson);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
-  }
-
-  List<dynamic> _asList(dynamic data) {
-    if (data is List) return data;
-    if (data is Map<String, dynamic>) {
-      final inner = data['data'];
-      return inner is List ? inner : [];
-    }
-    return [];
   }
 }

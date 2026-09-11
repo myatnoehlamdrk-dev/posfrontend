@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:posfrontend/core/utils/error_handler.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/profile/repository/profile_repository_impl.dart';
 import 'package:posfrontend/modules/profile/viewmodel/profile_view_model.dart';
@@ -49,7 +50,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   static const Color borderColor = Color(0xFFE0E0E0);
   static const Color labelColor = Color(0xFF1A1A1A);
   static const Color hintColor = Color(0xFF9E9E9E);
-  static const Color cardBg = Color(0xFFF9FAFB);
 
   @override
   void initState() {
@@ -127,15 +127,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  bool _saving = false;
+
   Future<void> _save() async {
-    final success = await _viewModel.saveProfile();
-    if (success && mounted) {
+    if (_saving) return;
+    setState(() => _saving = true);
+    try {
+      final success = await _viewModel.saveProfile();
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_viewModel.successMessage),
+            backgroundColor: primary,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_viewModel.successMessage),
-          backgroundColor: primary,
-        ),
+        SnackBar(content: Text(formatApiError(e))),
       );
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 

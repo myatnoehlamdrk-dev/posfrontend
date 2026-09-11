@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:posfrontend/core/extensions/api_response_extensions.dart';
+import 'package:posfrontend/core/extensions/datetime_extensions.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/category/model/category_models.dart';
 import 'package:posfrontend/modules/category/repository/category_repository.dart';
@@ -16,10 +18,7 @@ class CategoryRepositoryImpl implements CategoryRepository {
         '/api/categories',
         queryParameters: queryParameters.isNotEmpty ? queryParameters : null,
       );
-      final data = _asList(resp.data);
-      return data
-          .map((e) => _mapCategory(e as Map<String, dynamic>))
-          .toList();
+      return parseTypedList(resp.data, _mapCategory);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
@@ -53,23 +52,10 @@ class CategoryRepositoryImpl implements CategoryRepository {
   String _formatDate(String iso) {
     try {
       final d = DateTime.parse(iso);
-      const months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-      ];
-      return '${months[d.month - 1]} ${d.day}, ${d.year}';
+      return d.toShortDate();
     } catch (_) {
       return iso;
     }
-  }
-
-  List<dynamic> _asList(dynamic data) {
-    if (data is List) return data;
-    if (data is Map<String, dynamic>) {
-      final inner = data['data'];
-      return inner is List ? inner : [];
-    }
-    return [];
   }
 
   @override
@@ -91,6 +77,32 @@ class CategoryRepositoryImpl implements CategoryRepository {
         },
       );
       final json = resp.data as Map<String, dynamic>;
+      return _mapCategory(json);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  @override
+  Future<Category> updateCategory({
+    required String id,
+    required String name,
+    String? description,
+    int? packageLimit,
+  }) async {
+    try {
+      final dio = ApiClient.create();
+      final resp = await dio.put(
+        '/api/categories/$id',
+        data: {
+          'name': name,
+          'description': description,
+          'packageLimit': packageLimit,
+        },
+      );
+      final data = resp.data;
+      final Map<String, dynamic> json =
+          data is Map<String, dynamic> ? data : data['data'] as Map<String, dynamic>;
       return _mapCategory(json);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);

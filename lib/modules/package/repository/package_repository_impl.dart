@@ -1,18 +1,10 @@
 import 'package:dio/dio.dart';
+import 'package:posfrontend/core/extensions/api_response_extensions.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/package/model/package_models.dart';
 import 'package:posfrontend/modules/package/repository/package_repository.dart';
 
 class PackageRepositoryImpl implements PackageRepository {
-  List<dynamic> _asList(dynamic data) {
-    if (data is List) return data;
-    if (data is Map<String, dynamic>) {
-      final inner = data['data'];
-      return inner is List ? inner : [];
-    }
-    return [];
-  }
-
   @override
   Future<List<Package>> getPackages(String categoryId) async {
     try {
@@ -21,10 +13,7 @@ class PackageRepositoryImpl implements PackageRepository {
         '/api/packages',
         queryParameters: {'categoryId': categoryId},
       );
-      final data = _asList(resp.data);
-      return data
-          .map((e) => Package.fromJson(e as Map<String, dynamic>))
-          .toList();
+      return parseTypedList(resp.data, Package.fromJson);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
@@ -52,10 +41,42 @@ class PackageRepositoryImpl implements PackageRepository {
           'stockStatus': stockStatus,
         },
       );
-      final data = _asList(resp.data);
+      final data = parseApiList(resp.data);
       final Map<String, dynamic> json = data.isNotEmpty
           ? data.first as Map<String, dynamic>
           : resp.data as Map<String, dynamic>;
+      return Package.fromJson(json);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  @override
+  Future<Package> updatePackage({
+    required String id,
+    required String categoryId,
+    required String name,
+    int? productLimit,
+    String? description,
+    String? location,
+    String? stockStatus,
+  }) async {
+    try {
+      final dio = ApiClient.create();
+      final resp = await dio.put(
+        '/api/packages/$id',
+        data: {
+          'categoryId': int.tryParse(categoryId),
+          'name': name,
+          'productLimit': productLimit,
+          'description': description,
+          'location': location,
+          'stockStatus': stockStatus,
+        },
+      );
+      final data = resp.data;
+      final Map<String, dynamic> json =
+          data is Map<String, dynamic> ? data : data['data'] as Map<String, dynamic>;
       return Package.fromJson(json);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);

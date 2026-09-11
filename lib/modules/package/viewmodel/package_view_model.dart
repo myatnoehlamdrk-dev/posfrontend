@@ -78,4 +78,12 @@ class PackageViewModel extends BaseViewModel {
     _packages.add(package);
     notifyListeners();
   }
+
+  void updatePackage(Package updated) {
+    final idx = _packages.indexWhere((p) => p.id == updated.id);
+    if (idx != -1) {
+      _packages[idx] = updated;
+      notifyListeners();
+    }
+  }
 }

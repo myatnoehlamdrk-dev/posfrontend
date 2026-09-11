@@ -2,7 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:posfrontend/core/extensions/number_extensions.dart';
 import 'package:posfrontend/core/network/api_client.dart';
+import 'package:posfrontend/core/utils/error_handler.dart';
 import 'package:posfrontend/modules/category/model/category_models.dart';
 import 'package:posfrontend/modules/category/repository/category_repository_impl.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
@@ -99,10 +101,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
       _name.text = p.name;
       _brand.text = p.brand;
       _sku.text = p.sku;
-      _selectedSupplierId = p.supplierId;
+      _selectedSupplierId = (p.supplierId == '—' || p.supplierId.isEmpty) ? null : p.supplierId;
       _imageUrl = p.imageUrl;
       _imageDeleteUrl = p.imageDeleteUrl;
-      _inventoryType = p.inventoryType.isNotEmpty ? p.inventoryType : 'self';
+      _inventoryType = (p.inventoryType.isNotEmpty && p.inventoryType != '—') ? p.inventoryType : 'self';
       _isSet = p.isBundle == 'Yes';
       _variants.clear();
       for (final v in p.variants) {
@@ -277,7 +279,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       _snack('Failed to load categories: ${e.message}');
     } catch (e) {
       if (!mounted) return;
-      _snack('Failed to load categories: $e');
+      _snack('Failed to load categories: ${formatApiError(e)}');
     }
   }
 
@@ -398,8 +400,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
     );
 
     try {
-      if (widget.existingProduct != null) {
-        await _repository.updateProduct(widget.existingProduct!.id, req);
+      final existingProduct = widget.existingProduct;
+      if (existingProduct != null) {
+        await _repository.updateProduct(existingProduct.id, req);
         if (!mounted) return;
         _snack('Product updated');
       } else {
@@ -411,6 +414,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
     } on ApiException catch (e) {
       if (!mounted) return;
       _snack(e.message);
+    } catch (e) {
+      if (!mounted) return;
+      _snack(formatApiError(e));
     }
   }
 
@@ -555,7 +561,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
             value: _selectedPurchaseItemId,
             hint: const Text('Select a pending purchase item...', style: TextStyle(color: kGray, fontSize: 14)),
             items: _pendingPurchaseItems.map((item) {
-              final price = item.unitPrice.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+              final price = item.unitPrice.withCommas();
               return DropdownMenuItem(
                 value: item.id,
                 child: Text(

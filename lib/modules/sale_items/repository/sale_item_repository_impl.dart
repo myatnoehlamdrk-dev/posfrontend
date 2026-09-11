@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:posfrontend/core/models/paginated_response.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/sale_items/model/sale_item_models.dart';
 import 'package:posfrontend/modules/sale_items/model/sale_list_response.dart';
@@ -19,12 +20,12 @@ class SaleItemRepositoryImpl implements SaleItemRepository {
             .whereType<Map<String, dynamic>>()
             .map((e) => SaleOrder.fromJson(e))
             .toList();
-        return PaginatedSalesResponse(data: items, lastPage: 1, currentPage: 1, total: items.length);
+        return PaginatedResponse(data: items, lastPage: 1, currentPage: 1, total: items.length);
       }
       if (payload is Map<String, dynamic>) {
-        return PaginatedSalesResponse.fromJson(payload);
+        return PaginatedResponse.fromJson(payload, SaleOrder.fromJson);
       }
-      return const PaginatedSalesResponse(data: [], lastPage: 1, currentPage: 1, total: 0);
+      return const PaginatedResponse(data: [], lastPage: 1, currentPage: 1, total: 0);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
@@ -40,12 +41,12 @@ class SaleItemRepositoryImpl implements SaleItemRepository {
             .whereType<Map<String, dynamic>>()
             .map((e) => SaleOrder.fromOrderJson(e))
             .toList();
-        return PaginatedOrdersResponse(data: items, lastPage: 1, currentPage: 1, total: items.length);
+        return PaginatedResponse(data: items, lastPage: 1, currentPage: 1, total: items.length);
       }
       if (payload is Map<String, dynamic>) {
-        return PaginatedOrdersResponse.fromJson(payload);
+        return PaginatedResponse.fromJson(payload, SaleOrder.fromOrderJson);
       }
-      return const PaginatedOrdersResponse(data: [], lastPage: 1, currentPage: 1, total: 0);
+      return const PaginatedResponse(data: [], lastPage: 1, currentPage: 1, total: 0);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
@@ -58,6 +59,20 @@ class SaleItemRepositoryImpl implements SaleItemRepository {
       final payload = response.data;
       if (payload is Map<String, dynamic>) {
         return SaleDetailResponse.fromJson(payload);
+      }
+      throw ApiException(message: 'Invalid response format');
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  @override
+  Future<SaleOrder> getOrderById(String id) async {
+    try {
+      final response = await _dio.get('/api/orders/$id');
+      final payload = response.data;
+      if (payload is Map<String, dynamic>) {
+        return SaleOrder.fromOrderJson(payload);
       }
       throw ApiException(message: 'Invalid response format');
     } on DioException catch (e) {

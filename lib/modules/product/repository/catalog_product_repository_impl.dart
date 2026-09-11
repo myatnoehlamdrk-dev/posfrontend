@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:posfrontend/core/extensions/api_response_extensions.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/product/model/catalog_product.dart';
 import 'package:posfrontend/modules/product/repository/catalog_product_repository.dart';
@@ -13,17 +14,10 @@ class CatalogProductRepositoryImpl implements CatalogProductRepository {
         query['packageId'] = packageId;
       }
       final resp = await dio.get('/api/products', queryParameters: query);
-      final list = _asList(resp.data);
-      return [for (final item in list) _map(item)];
+      return parseTypedList(resp.data, _map);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
-  }
-
-  List<dynamic> _asList(dynamic data) {
-    if (data is List) return data;
-    if (data is Map && data['data'] is List) return data['data'] as List;
-    return const [];
   }
 
   CatalogProduct _map(Map<String, dynamic> item) {

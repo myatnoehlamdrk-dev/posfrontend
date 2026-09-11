@@ -26,9 +26,9 @@ class SaleRepositoryImpl implements SaleRepository {
               'unitPrice': item.unitPrice,
               'subtotal': item.subtotal,
               if (item.size != null) 'size': item.size,
-              if (item.color != null && item.color!.isNotEmpty)
+              if (item.color?.isNotEmpty == true)
                 'color': item.color,
-              if (item.notes != null && item.notes!.isNotEmpty)
+              if (item.notes?.isNotEmpty == true)
                 'notes': item.notes,
             })
         .toList();

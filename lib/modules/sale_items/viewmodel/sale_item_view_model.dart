@@ -10,12 +10,6 @@ class SaleItemViewModel extends BaseViewModel {
   List<SaleOrder> _sales = [];
   List<SaleOrder> get sales => _sales;
 
-  bool _isLoading = false;
-  bool get isLoading => _isLoading;
-
-  String? _error;
-  String? get error => _error;
-
   int _currentPage = 1;
   int _lastPage = 1;
   bool get hasMore => _currentPage <= _lastPage;
@@ -28,11 +22,10 @@ class SaleItemViewModel extends BaseViewModel {
       _currentPage = 1;
       _sales = [];
     }
-    if (_isLoading) return;
+    if (isLoading) return;
 
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
+    setLoading(true);
+    resetError();
 
     try {
       final salesResponse = await _repository.getSales(page: _currentPage);
@@ -48,12 +41,11 @@ class SaleItemViewModel extends BaseViewModel {
       _lastPage = salesLastPage > ordersLastPage ? salesLastPage : ordersLastPage;
       _currentPage++;
     } on ApiException catch (e) {
-      _error = e.message;
+      setError(e.message);
     } catch (e) {
-      _error = e.toString();
+      setError(e.toString());
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      setLoading(false);
     }
   }
 
@@ -68,11 +60,11 @@ class SaleItemViewModel extends BaseViewModel {
       notifyListeners();
       return true;
     } on ApiException catch (e) {
-      _error = e.message;
+      setError(e.message);
       notifyListeners();
       return false;
     } catch (e) {
-      _error = e.toString();
+      setError(e.toString());
       notifyListeners();
       return false;
     }
@@ -88,11 +80,25 @@ class SaleItemViewModel extends BaseViewModel {
       notifyListeners();
       return updatedOrder;
     } on ApiException catch (e) {
-      _error = e.message;
+      setError(e.message);
       notifyListeners();
       return null;
     } catch (e) {
-      _error = e.toString();
+      setError(e.toString());
+      notifyListeners();
+      return null;
+    }
+  }
+
+  Future<SaleOrder?> getOrderById(String id) async {
+    try {
+      return await _repository.getOrderById(id);
+    } on ApiException catch (e) {
+      setError(e.message);
+      notifyListeners();
+      return null;
+    } catch (e) {
+      setError(e.toString());
       notifyListeners();
       return null;
     }

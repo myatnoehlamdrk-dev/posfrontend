@@ -3,6 +3,11 @@ import 'package:posfrontend/modules/login/repository/login_repository_impl.dart'
 import 'package:posfrontend/modules/login/viewmodel/login_view_model.dart';
 import 'package:posfrontend/modules/dashboard/view/dashboard_screen.dart';
 import 'package:posfrontend/modules/shop/view/shop_screen.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/widgets/app_input_decoration.dart';
+import 'package:posfrontend/shared/widgets/gradient_button.dart';
+import 'package:posfrontend/shared/widgets/required_label.dart';
+import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,12 +23,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   late final LoginViewModel _viewModel;
   bool _obscurePassword = true;
-
-  static const Color primary = Color(0xFF7B2CBF);
-  static const Color primaryLight = Color(0xFF9D4EDD);
-  static const Color borderColor = Color(0xFFE0E0E0);
-  static const Color labelColor = Color(0xFF1A1A1A);
-  static const Color hintColor = Color(0xFF9E9E9E);
 
   @override
   void initState() {
@@ -43,49 +42,10 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  InputDecoration _inputDecoration({
-    required IconData icon,
-    required String hint,
-    String? errorText,
-    Widget? suffixIcon,
-  }) {
-    return InputDecoration(
-      hintText: hint,
-      errorText: errorText,
-      hintStyle: const TextStyle(color: hintColor, fontSize: 14),
-      prefixIcon: Icon(icon, color: primary, size: 20),
-      suffixIcon: suffixIcon,
-      filled: true,
-      fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: borderColor),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: borderColor),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: primary, width: 1.5),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.red, width: 1.5),
-      ),
-    );
-  }
-
   Future<void> _submit() async {
     final response = await _viewModel.login();
     if (response != null && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Login successful'),
-          backgroundColor: primary,
-        ),
-      );
+      showSuccessSnackBar(context, 'Login successful');
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => DashboardScreen(user: response)),
@@ -115,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const Text(
                       'Welcome Back!',
                       style: TextStyle(
-                        color: labelColor,
+                        color: AppColors.labelColor,
                         fontSize: 26,
                         fontWeight: FontWeight.bold,
                       ),
@@ -124,20 +84,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     const Text(
                       'Please login to your account',
                       style: TextStyle(
-                        color: hintColor,
+                        color: AppColors.hintColor,
                         fontSize: 14,
                       ),
                     ),
                     const SizedBox(height: 36),
                     Align(
                       alignment: Alignment.centerLeft,
-                      child: _requiredLabel('Email'),
+                      child: RequiredLabel('Email'),
                     ),
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
-                      decoration: _inputDecoration(
+                      decoration: appInputDecoration(
                         icon: Icons.email_outlined,
                         hint: 'Enter your email',
                         errorText: errors['email'],
@@ -146,14 +106,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 20),
                     Align(
                       alignment: Alignment.centerLeft,
-                      child: _requiredLabel('Password'),
+                      child: RequiredLabel('Password'),
                     ),
                     TextFormField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       textInputAction: TextInputAction.done,
                       onFieldSubmitted: (_) => _submit(),
-                      decoration: _inputDecoration(
+                      decoration: appInputDecoration(
                         icon: Icons.lock_outline,
                         hint: 'Enter your password',
                         errorText: errors['password'],
@@ -167,7 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             _obscurePassword
                                 ? Icons.visibility_outlined
                                 : Icons.visibility_off_outlined,
-                            color: hintColor,
+                            color: AppColors.hintColor,
                           ),
                         ),
                       ),
@@ -178,16 +138,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: GestureDetector(
                         onTap: () {
                           // TODO: wire up forgot-password flow.
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Forgot password is not implemented yet.'),
-                            ),
-                          );
+                          showErrorSnackBar(context, 'Forgot password is not implemented yet.');
                         },
                         child: const Text(
                           'Forgot Password?',
                           style: TextStyle(
-                            color: primary,
+                            color: AppColors.primary,
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
                           ),
@@ -195,7 +151,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    _buildLoginButton(loading),
+                    GradientButton(
+                      label: 'Login',
+                      loading: loading,
+                      onPressed: _submit,
+                    ),
                     if (_viewModel.errorMessage != null)
                       Padding(
                         padding: const EdgeInsets.only(top: 12),
@@ -230,85 +190,18 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _requiredLabel(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: RichText(
-        text: TextSpan(
-          text: text,
-          style: const TextStyle(
-            color: labelColor,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-          children: const [
-            TextSpan(
-              text: ' *',
-              style: TextStyle(color: Colors.red),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLoginButton(bool loading) {
-    return Container(
-      width: double.infinity,
-      height: 52,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [primary, primaryLight],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: primary.withValues(alpha: 0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: loading ? null : _submit,
-        child: Center(
-          child: loading
-              ? const SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2.5,
-                  ),
-                )
-              : const Text(
-                  'Login',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildDivider() {
     return Row(
       children: const [
-        Expanded(child: Divider(color: borderColor)),
+        Expanded(child: Divider(color: AppColors.borderColor)),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 12),
           child: Text(
             'OR',
-            style: TextStyle(color: hintColor, fontSize: 13),
+            style: TextStyle(color: AppColors.hintColor, fontSize: 13),
           ),
         ),
-        Expanded(child: Divider(color: borderColor)),
+        Expanded(child: Divider(color: AppColors.borderColor)),
       ],
     );
   }
@@ -319,7 +212,7 @@ class _LoginScreenState extends State<LoginScreen> {
       children: [
         const Text(
           "Don't have an account?",
-          style: TextStyle(color: hintColor, fontSize: 14),
+          style: TextStyle(color: AppColors.hintColor, fontSize: 14),
         ),
         const SizedBox(width: 6),
         GestureDetector(
@@ -332,7 +225,7 @@ class _LoginScreenState extends State<LoginScreen> {
           child: const Text(
             'Register',
             style: TextStyle(
-              color: primary,
+              color: AppColors.primary,
               fontSize: 14,
               fontWeight: FontWeight.w600,
             ),

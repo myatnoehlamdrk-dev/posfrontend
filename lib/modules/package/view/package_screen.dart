@@ -60,6 +60,21 @@ class _PackageScreenState extends State<PackageScreen> {
     }
   }
 
+  Future<void> _openEditPackage(Package package) async {
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => AddPackageScreen(
+          user: widget.user,
+          category: widget.category,
+          existingPackage: package,
+        ),
+      ),
+    );
+    if (result is Package) {
+      _viewModel.updatePackage(result);
+    }
+  }
+
   @override
   void dispose() {
     _viewModel.dispose();
@@ -374,21 +389,27 @@ class _PackageScreenState extends State<PackageScreen> {
                 children: [
                   Row(
                     children: [
-                      Text(
-                        p.code,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: title,
+                      Flexible(
+                        child: Text(
+                          p.code,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: title,
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       _catBadge(),
                     ],
                   ),
                   const SizedBox(height: 6),
                   Text(
                     p.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -398,26 +419,34 @@ class _PackageScreenState extends State<PackageScreen> {
                   const SizedBox(height: 4),
                   Text(
                     p.spec,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontSize: 13, color: gray),
                   ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      Text(
-                        'Qty: ${p.quantity} in ${p.productLimit}',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: title,
+                      Flexible(
+                        child: Text(
+                          'Qty: ${p.quantity} in ${p.productLimit}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: title,
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 8),
                       const Icon(Icons.location_on_outlined,
                           size: 14, color: gray),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           p.location,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(fontSize: 13, color: gray),
                         ),
                       ),
@@ -427,6 +456,14 @@ class _PackageScreenState extends State<PackageScreen> {
                   _statusBadge(_computedStatus(p)),
                 ],
               ),
+            ),
+            const SizedBox(width: 4),
+            IconButton(
+              icon: const Icon(Icons.edit, size: 18, color: purple),
+              tooltip: 'Edit package',
+              onPressed: () => _openEditPackage(p),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
             ),
           ],
         ),
@@ -445,18 +482,22 @@ class _PackageScreenState extends State<PackageScreen> {
   }
 
   Widget _catBadge() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF3E8FF),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        _badgeCode,
-        style: const TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: purple,
+    return Flexible(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF3E8FF),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          _badgeCode,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: purple,
+          ),
         ),
       ),
     );

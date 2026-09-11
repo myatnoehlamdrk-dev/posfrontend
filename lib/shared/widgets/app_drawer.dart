@@ -29,7 +29,7 @@ class AppDrawer extends StatelessWidget {
   static const Color border = Color(0xFFE5E7EB);
 
   String get _userName =>
-      user != null && user!.fullName.trim().isNotEmpty ? user!.fullName : 'John Doe';
+      user?.fullName.trim().isNotEmpty == true ? user!.fullName : 'John Doe';
 
   String get _email => user?.email ?? '';
 

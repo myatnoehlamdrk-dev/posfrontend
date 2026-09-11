@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/core/extensions/datetime_extensions.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
+import 'package:posfrontend/modules/sale/model/sale_models.dart';
+import 'package:posfrontend/modules/sale/view/new_sale_screen.dart';
 import 'package:posfrontend/modules/sale_items/model/sale_item_models.dart';
 import 'package:posfrontend/modules/sale_items/viewmodel/sale_item_view_model.dart';
 import 'package:posfrontend/modules/shared/widgets/price_text.dart';
-import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
+
 
 class SaleDetailScreen extends StatefulWidget {
   final SaleOrder order;
@@ -32,46 +35,6 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
   void initState() {
     super.initState();
     _order = widget.order;
-  }
-
-  void _confirmDeleteItem(SaleItemDetail item) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Delete Item', style: TextStyle(fontWeight: FontWeight.w600, color: titleColor)),
-        content: Text(
-          'Are you sure you want to delete "${item.productName}"?',
-          style: const TextStyle(color: gray),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: gray)),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              final updatedOrder = await widget.viewModel.deleteSaleItem(_order.orderId, item.id);
-              if (mounted) {
-                if (updatedOrder != null) {
-                  setState(() => _order = updatedOrder);
-                  showSuccessSnackBar(context, 'Item deleted');
-                } else {
-                  showErrorSnackBar(context, 'Failed to delete item');
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -121,11 +84,6 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                                 Text('x${item.quantity}', style: const TextStyle(fontSize: 12, color: gray)),
                                 const SizedBox(width: 8),
                                 PriceText(item.subtotal.toDouble(), maxLength: 14, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: titleColor)),
-                                const SizedBox(width: 4),
-                                GestureDetector(
-                                  onTap: () => _confirmDeleteItem(item),
-                                  child: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
-                                ),
                               ],
                             ),
                           );
@@ -154,10 +112,27 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                       ]),
                       const SizedBox(height: 12),
                       _buildInfoCard('Order Status & History', [
-                        _infoRow('Order Date', _order.date),
+                        _infoRow('Order Date', _formatDate(_order.date)),
                         _infoRow('Order Status', isAlreadySale ? 'Completed' : 'Pending'),
                         _infoRow('Voucher Ref', _order.voucherNo.isNotEmpty ? '#${_order.voucherNo}' : '#${_order.orderId}'),
                       ]),
+                      if (!isAlreadySale) ...[
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: _upToSale,
+                            icon: const Icon(Icons.shopping_cart_outlined, size: 18),
+                            label: const Text('Up to Sale'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF6D28D9),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 24),
                     ],
                   ),
@@ -351,11 +326,42 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
     );
   }
 
+  void _upToSale() {
+    final saleItems = _order.saleItems
+        .where((item) => item.productId.isNotEmpty)
+        .map((item) => SaleItem(
+              productId: item.productId,
+              productName: item.productName,
+              unitPrice: item.unitPrice.toDouble(),
+              quantity: item.quantity,
+              size: item.size.isNotEmpty ? item.size : null,
+              color: item.color.isNotEmpty ? item.color : null,
+            ))
+        .toList();
+
+    Navigator.of(context)
+        .push(
+      MaterialPageRoute(
+        builder: (_) => NewSaleScreen(
+          user: widget.user,
+          initialItems: saleItems,
+          initialCustomerName: _order.customerName,
+          initialCustomerPhone: _order.customerPhone,
+          initialPaymentMethod: _order.payMethod,
+          existingOrderId: _order.orderId,
+        ),
+      ),
+    )
+        .then((_) {
+      if (mounted) Navigator.of(context).pop();
+    });
+  }
+
   String _formatDate(String dateStr) {
     if (dateStr.isEmpty) return '-';
     try {
       final dt = DateTime.parse(dateStr);
-      return '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
+      return dt.toFormattedDateTime();
     } catch (_) {
       return dateStr;
     }

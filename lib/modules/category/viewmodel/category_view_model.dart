@@ -107,4 +107,12 @@ class CategoryViewModel extends BaseViewModel {
     _categories.add(category);
     notifyListeners();
   }
+
+  void updateCategory(Category updated) {
+    final idx = _categories.indexWhere((c) => c.id == updated.id);
+    if (idx != -1) {
+      _categories[idx] = updated;
+      notifyListeners();
+    }
+  }
 }

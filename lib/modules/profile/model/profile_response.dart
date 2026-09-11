@@ -1,3 +1,5 @@
+import 'package:posfrontend/core/extensions/map_json_extensions.dart';
+
 class ProfileResponse {
   final String id;
   final String fullName;
@@ -43,20 +45,20 @@ class ProfileResponse {
     final shop = json['shop'] as Map<String, dynamic>?;
     return ProfileResponse(
       id: json['id']?.toString() ?? '',
-      fullName: json['fullName'] as String? ?? '',
-      email: json['email'] as String? ?? '',
-      type: json['type'] as String? ?? '',
-      phone: json['phone'] as String? ?? '',
-      social: json['social'] as String? ?? '',
-      image: json['image'] as String? ?? '',
-      imageDeleteUrl: json['imageDeleteUrl'] as String? ?? '',
-      role: json['role'] as String? ?? '',
-      address: json['address'] as String? ?? '',
-      status: json['status'] as String? ?? '',
-      nrcNo: json['nrcNo'] as String? ?? '',
-      billingWay: json['billingWay'] as String? ?? '',
-      dateOfBirth: json['dateOfBirth'] as String? ?? '',
-      gender: json['gender'] as String? ?? '',
+      fullName: json.str('fullName'),
+      email: json.str('email'),
+      type: json.str('type'),
+      phone: json.str('phone'),
+      social: json.str('social'),
+      image: json.str('image'),
+      imageDeleteUrl: json.str('imageDeleteUrl'),
+      role: json.str('role'),
+      address: json.str('address'),
+      status: json.str('status'),
+      nrcNo: json.str('nrcNo'),
+      billingWay: json.str('billingWay'),
+      dateOfBirth: json.str('dateOfBirth'),
+      gender: json.str('gender'),
       activeStatus: json['activeStatus'] as bool? ?? true,
       shopId: json['shopId']?.toString() ?? '',
       shopName: shop?['name'] as String? ?? '',

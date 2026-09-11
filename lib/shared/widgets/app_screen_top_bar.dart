@@ -86,7 +86,7 @@ class AppScreenTopBar extends StatelessWidget {
                   } : null,
                   child: imageUrl.isEmpty
                       ? Text(
-                          user != null && user!.fullName.trim().isNotEmpty
+                          user?.fullName.trim().isNotEmpty == true
                               ? user!.fullName.trim()[0].toUpperCase()
                               : 'A',
                           style: const TextStyle(

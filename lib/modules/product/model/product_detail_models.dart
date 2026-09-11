@@ -1,3 +1,5 @@
+import 'package:posfrontend/core/extensions/map_json_extensions.dart';
+
 class ProductVariant {
   final String id;
   final String size;
@@ -16,10 +18,10 @@ class ProductVariant {
   factory ProductVariant.fromJson(Map<String, dynamic> json) {
     return ProductVariant(
       id: json['id']?.toString() ?? '',
-      size: (json['size'] as String?) ?? '',
-      color: (json['color'] as String?) ?? '',
-      price: (json['price'] ?? 0).toDouble(),
-      quantity: (json['quantity'] as num?)?.toInt() ?? 0,
+      size: json.str('size'),
+      color: json.str('color'),
+      price: json.decimal('price'),
+      quantity: json.integer('quantity'),
     );
   }
 }
@@ -96,7 +98,7 @@ class ProductDetail {
     final parsedVariants = variantList
         .map((v) => ProductVariant.fromJson(v as Map<String, dynamic>))
         .toList();
-    final stock = (json['stock'] as num?)?.toInt() ?? 0;
+    final stock = json.integer('stock');
     final size = (json['size'] as String?)?.isNotEmpty == true
         ? json['size'] as String
         : (variantList.isNotEmpty ? (variantList.first['size'] ?? '') : '');
@@ -111,16 +113,16 @@ class ProductDetail {
     return ProductDetail(
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? 'Unnamed',
-      categoryName: (json['category'] as String?)?.trim() ?? '',
-      sku: (json['sku'] as String?)?.trim() ?? '—',
-      isBundle: (json['isSet'] as bool? ?? false) ? 'Yes' : 'No',
-      brand: (json['brand'] as String?)?.trim() ?? '—',
-      color: (json['color'] as String?)?.trim() ?? '—',
+      categoryName: json.str('category'),
+      sku: json.str('sku', '—'),
+      isBundle: json.boolean('isSet') ? 'Yes' : 'No',
+      brand: json.str('brand', '—'),
+      color: json.str('color', '—'),
       size: size?.toString() ?? '—',
-      packageId: (json['packageId'] as String?)?.trim() ?? '—',
-      packageName: (json['packageName'] as String?)?.trim() ?? '—',
+      packageId: json.str('packageId', '—'),
+      packageName: json.str('packageName', '—'),
       inventoryId: '—',
-      inventoryType: (json['inventoryType'] as String?)?.trim() ?? '—',
+      inventoryType: json.str('inventoryType', '—'),
       status: 'Active',
       price: price,
       stockAvailable: stock,
@@ -129,12 +131,12 @@ class ProductDetail {
       minStock: stock,
       maxCapacity: stock > 0 ? stock : 100,
       stockStatus: stockStatus,
-      supplierId: (json['supplierId'] as String?)?.trim() ?? '—',
-      supplierName: (json['supplierName'] as String?)?.trim() ?? '—',
-      supplierContact: (json['supplierContact'] as String?)?.trim() ?? '—',
-      contractNumber: (json['contractNumber'] as String?)?.trim() ?? '—',
-      supplierSince: (json['supplierSince'] as String?)?.trim() ?? '—',
-      supplierAddress: (json['supplierAddress'] as String?)?.trim() ?? '—',
+      supplierId: json.str('supplierId', '—'),
+      supplierName: json.str('supplierName', '—'),
+      supplierContact: json.str('supplierContact', '—'),
+      contractNumber: json.str('contractNumber', '—'),
+      supplierSince: json.str('supplierSince', '—'),
+      supplierAddress: json.str('supplierAddress', '—'),
       imageUrl: image != null && image.isNotEmpty ? image : null,
       imageDeleteUrl: (json['imageDeleteUrl'] as String?)?.trim(),
       variants: parsedVariants,

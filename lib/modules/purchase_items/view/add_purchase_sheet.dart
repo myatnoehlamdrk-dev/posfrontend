@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:posfrontend/modules/purchase_items/model/purchase_models.dart';
 import 'package:posfrontend/modules/purchase_items/viewmodel/purchase_item_view_model.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 

@@ -1,7 +1,10 @@
+import 'package:posfrontend/core/extensions/map_json_extensions.dart';
+
 enum OrderStatus { alreadySale, willBeSale }
 
 class SaleItemDetail {
   final String id;
+  final String productId;
   final String productName;
   final int quantity;
   final int unitPrice;
@@ -11,6 +14,7 @@ class SaleItemDetail {
 
   const SaleItemDetail({
     required this.id,
+    this.productId = '',
     required this.productName,
     required this.quantity,
     required this.unitPrice,
@@ -19,22 +23,16 @@ class SaleItemDetail {
     this.color = '',
   });
 
-  static int _parseInt(dynamic value) {
-    if (value is int) return value;
-    if (value is String) return int.tryParse(value) ?? 0;
-    if (value is double) return value.toInt();
-    return 0;
-  }
-
   factory SaleItemDetail.fromJson(Map<String, dynamic> json) {
     return SaleItemDetail(
       id: json['id']?.toString() ?? '',
-      productName: json['productName'] as String? ?? '',
-      quantity: _parseInt(json['quantity']),
-      unitPrice: _parseInt(json['unitPrice']),
-      subtotal: _parseInt(json['subtotal']),
-      size: json['size'] as String? ?? '',
-      color: json['color'] as String? ?? '',
+      productId: json['productId']?.toString() ?? '',
+      productName: json.str('productName'),
+      quantity: json.integer('quantity'),
+      unitPrice: json.integer('unitPrice'),
+      subtotal: json.integer('subtotal'),
+      size: json.str('size'),
+      color: json.str('color'),
     );
   }
 }
@@ -68,13 +66,6 @@ class SaleOrder {
     this.saleItems = const [],
   });
 
-  static int _parseInt(dynamic value) {
-    if (value is int) return value;
-    if (value is String) return int.tryParse(value) ?? 0;
-    if (value is double) return value.toInt();
-    return 0;
-  }
-
   static int _parseQuantitySold(dynamic value) {
     if (value is int) return value;
     if (value is String) {
@@ -103,16 +94,16 @@ class SaleOrder {
 
     return SaleOrder(
       orderId: json['id']?.toString() ?? '',
-      voucherNo: json['voucherNo'] as String? ?? '',
+      voucherNo: json.str('voucherNo'),
       productName: productName,
       description: saleItemsList.map((e) => e.productName).join(', '),
       quantity: totalQty,
-      date: json['createdAt'] as String? ?? '',
+      date: json.str('createdAt'),
       status: OrderStatus.alreadySale,
-      amount: _parseInt(json['totalPrice']),
-      customerName: json['customerName'] as String? ?? '',
-      customerPhone: json['customerPhone'] as String? ?? '',
-      payMethod: json['payMethod'] as String? ?? 'Cash',
+      amount: json.integer('totalPrice'),
+      customerName: json.str('customerName'),
+      customerPhone: json.str('customerPhone'),
+      payMethod: json.str('payMethod', 'Cash'),
       saleItems: saleItemsList,
     );
   }
@@ -131,18 +122,23 @@ class SaleOrder {
     final totalQty = _parseQuantitySold(json['quantitySold']);
     final productName = json['productName'] as String? ?? 'Draft Order';
 
+    final rawStatus = json['status'] as String? ?? 'draft';
+    final status = rawStatus == 'finished' || rawStatus == 'completed'
+        ? OrderStatus.alreadySale
+        : OrderStatus.willBeSale;
+
     return SaleOrder(
       orderId: json['id']?.toString() ?? '',
-      voucherNo: json['voucherNo'] as String? ?? '',
+      voucherNo: json.str('voucherNo'),
       productName: productName,
       description: saleItemsList.map((e) => e.productName).join(', '),
       quantity: totalQty,
-      date: json['createdAt'] as String? ?? '',
-      status: OrderStatus.willBeSale,
-      amount: _parseInt(json['totalPrice'] ?? json['grandTotal']),
-      customerName: json['customerName'] as String? ?? '',
-      customerPhone: json['customerPhone'] as String? ?? '',
-      payMethod: json['payMethod'] as String? ?? 'Cash',
+      date: json.str('createdAt'),
+      status: status,
+      amount: json.integer('totalPrice') + json.integer('grandTotal'),
+      customerName: json.str('customerName'),
+      customerPhone: json.str('customerPhone'),
+      payMethod: json.str('payMethod', 'Cash'),
       saleItems: saleItemsList,
     );
   }

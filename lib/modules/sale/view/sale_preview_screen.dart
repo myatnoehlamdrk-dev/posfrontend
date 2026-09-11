@@ -1,19 +1,12 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:posfrontend/core/extensions/number_extensions.dart';
+import 'package:posfrontend/core/extensions/datetime_extensions.dart';
 import 'package:posfrontend/modules/sale/model/sale_models.dart';
 import 'package:posfrontend/modules/shared/widgets/inventory_form_widgets.dart';
 
-String _fmtPrice(double value) {
-  final v = value.round();
-  final neg = v < 0;
-  final digits = v.abs().toString();
-  final withCommas = digits.replaceAllMapped(
-    RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-    (m) => '${m[1]},',
-  );
-  return '${neg ? '-' : ''}$withCommas';
-}
+String _fmtPrice(double value) => value.withCommas();
 
 class SalePreviewScreen extends StatelessWidget {
   final String customerName;
@@ -103,7 +96,7 @@ class SalePreviewScreen extends StatelessWidget {
                   _itemsList(),
                   _divider(),
                   _summarySection(),
-                  if (notes != null && notes!.isNotEmpty) _notesSection(),
+                  if (notes?.isNotEmpty == true) _notesSection(),
                   _footer(),
                 ],
               ),
@@ -131,7 +124,7 @@ class SalePreviewScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          if (shopImage != null && shopImage!.isNotEmpty)
+          if (shopImage?.isNotEmpty == true)
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: shopImage!.startsWith('http')
@@ -147,7 +140,7 @@ class SalePreviewScreen extends StatelessWidget {
           else
             _shopPlaceholder(),
           const SizedBox(height: 10),
-          if (shopName != null && shopName!.isNotEmpty)
+          if (shopName?.isNotEmpty == true)
             Text(
               shopName!,
               style: const TextStyle(
@@ -156,8 +149,8 @@ class SalePreviewScreen extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
-          if (shopName != null && shopName!.isNotEmpty) const SizedBox(height: 4),
-          if (shopAddress != null && shopAddress!.isNotEmpty)
+          if (shopName?.isNotEmpty == true) const SizedBox(height: 4),
+          if (shopAddress?.isNotEmpty == true)
             Text(
               shopAddress!,
               style: const TextStyle(
@@ -165,7 +158,7 @@ class SalePreviewScreen extends StatelessWidget {
                 fontSize: 11,
               ),
             ),
-          if (shopPhone != null && shopPhone!.isNotEmpty)
+          if (shopPhone?.isNotEmpty == true)
             Padding(
               padding: const EdgeInsets.only(top: 2),
               child: Text(
@@ -176,7 +169,7 @@ class SalePreviewScreen extends StatelessWidget {
                 ),
               ),
             ),
-          if (shopEmail != null && shopEmail!.isNotEmpty)
+          if (shopEmail?.isNotEmpty == true)
             Padding(
               padding: const EdgeInsets.only(top: 2),
               child: Text(
@@ -219,11 +212,8 @@ class SalePreviewScreen extends StatelessWidget {
   }
 
   Widget _invoiceInfo() {
-    final dateStr = '${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.year}';
-    final h = dateTime.hour > 12 ? dateTime.hour - 12 : (dateTime.hour == 0 ? 12 : dateTime.hour);
-    final m = dateTime.minute.toString().padLeft(2, '0');
-    final ampm = dateTime.hour >= 12 ? 'PM' : 'AM';
-    final timeStr = '$h:$m $ampm';
+    final dateStr = dateTime.toShortDate();
+    final timeStr = dateTime.toFormattedDateTime().split(' ').skip(1).join(' ');
 
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -276,7 +266,7 @@ class SalePreviewScreen extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(customerName,
                     style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: kTitle)),
-                if (customerPhone != null && customerPhone!.isNotEmpty) ...[
+                if (customerPhone?.isNotEmpty == true) ...[
                   const SizedBox(height: 2),
                   Text(customerPhone!,
                       style: const TextStyle(fontSize: 12, color: kGray)),
@@ -326,7 +316,7 @@ class SalePreviewScreen extends StatelessWidget {
           final item = items[i];
           final variant = [
             if (item.size != null && item.size != 'Regular') item.size,
-            if (item.color != null && item.color!.isNotEmpty) item.color,
+            if (item.color?.isNotEmpty == true) item.color,
           ].where((e) => e != null && e.isNotEmpty).join(', ');
 
           return Container(

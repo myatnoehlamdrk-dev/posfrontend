@@ -1,17 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/core/network/api_client.dart';
+import 'package:posfrontend/core/utils/error_handler.dart';
 import 'package:posfrontend/modules/category/model/category_models.dart';
 import 'package:posfrontend/modules/category/repository/category_repository_impl.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
+import 'package:posfrontend/modules/package/model/package_models.dart';
 import 'package:posfrontend/modules/package/repository/package_repository_impl.dart';
 import 'package:posfrontend/modules/shared/widgets/inventory_form_widgets.dart';
 
 class AddPackageScreen extends StatefulWidget {
   final LoginResponse? user;
   final Category? category;
-  const AddPackageScreen({super.key, this.user, this.category});
+  final Package? existingPackage;
+  const AddPackageScreen({
+    super.key,
+    this.user,
+    this.category,
+    this.existingPackage,
+  });
+
+  bool get isEditing => existingPackage != null;
 
   @override
   State<AddPackageScreen> createState() => _AddPackageScreenState();
@@ -31,7 +41,24 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
   String _labelOf(Category c) =>
       c.type.isNotEmpty ? '${c.name} (${c.type})' : c.name;
 
+  @override
+  void initState() {
+    super.initState();
+    if (widget.existingPackage != null) {
+      final p = widget.existingPackage!;
+      _nameController.text = p.name;
+      _amountController.text = p.productLimit > 0 ? p.productLimit.toString() : '0';
+      _descController.text = p.spec;
+      _locationController.text = p.location;
+    }
+    _selectedCategory = widget.category;
+    _loadCategories();
+  }
+
+  bool _saving = false;
+
   Future<void> _save() async {
+    if (_saving) return;
     final name = _nameController.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -46,35 +73,57 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
       return;
     }
 
+    setState(() => _saving = true);
     try {
       final amountText = _amountController.text.trim();
       final amount = int.tryParse(amountText);
-      final created = await PackageRepositoryImpl().createPackage(
-        categoryId: _selectedCategory!.id,
-        name: name,
-        productLimit: amount,
-        description: _descController.text.trim(),
-        location: _locationController.text.trim(),
-        stockStatus: null,
-      );
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Package saved')),
-      );
-      Navigator.of(context).pop(created);
+
+      if (widget.isEditing) {
+        final existing = widget.existingPackage;
+        final cat = _selectedCategory;
+        if (existing == null || cat == null) return;
+        final updated = await PackageRepositoryImpl().updatePackage(
+          id: existing.id,
+          categoryId: cat.id,
+          name: name,
+          productLimit: amount,
+          description: _descController.text.trim(),
+          location: _locationController.text.trim(),
+          stockStatus: null,
+        );
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Package updated')),
+        );
+        Navigator.of(context).pop(updated);
+      } else {
+        final created = await PackageRepositoryImpl().createPackage(
+          categoryId: _selectedCategory!.id,
+          name: name,
+          productLimit: amount,
+          description: _descController.text.trim(),
+          location: _locationController.text.trim(),
+          stockStatus: null,
+        );
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Package saved')),
+        );
+        Navigator.of(context).pop(created);
+      }
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.message)),
       );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(formatApiError(e))),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedCategory = widget.category;
-    _loadCategories();
   }
 
   Future<void> _loadCategories() async {
@@ -87,6 +136,11 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
           _selectedCategory = cats.firstWhere(
             (c) => c.id == widget.category!.id,
             orElse: () => widget.category!,
+          );
+        } else if (widget.existingPackage != null && cats.isNotEmpty) {
+          _selectedCategory = cats.firstWhere(
+            (c) => c.id == widget.existingPackage!.categoryId,
+            orElse: () => cats.first,
           );
         }
       });
@@ -141,6 +195,7 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
   }
 
   Widget _content(List<String> categoryLabels, String? selectedLabel) {
+    final isEdit = widget.isEditing;
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -148,27 +203,29 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             AppTopBar(
-              title: 'Add Package',
+              title: isEdit ? 'Edit Package' : 'Add Package',
               showMenuButton: false,
               showBackButton: true,
               user: widget.user,
             ),
             const SizedBox(height: 20),
-            const Breadcrumb([
-              BreadcrumbItem('Dashboard', false),
-              BreadcrumbItem('Inventory', false),
-              BreadcrumbItem('Packages', false),
-              BreadcrumbItem('Add Package', true),
+            Breadcrumb([
+              const BreadcrumbItem('Dashboard', false),
+              const BreadcrumbItem('Inventory', false),
+              const BreadcrumbItem('Packages', false),
+              BreadcrumbItem(isEdit ? 'Edit Package' : 'Add Package', true),
             ]),
             const SizedBox(height: 24),
-            const Text(
-              'Package Information',
-              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: kTitle),
+            Text(
+              isEdit ? 'Edit Package' : 'Package Information',
+              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: kTitle),
             ),
             const SizedBox(height: 6),
-            const Text(
-              'Provide the details for your new inventory package.',
-              style: TextStyle(fontSize: 16, color: kGray),
+            Text(
+              isEdit
+                  ? 'Update the details for this package.'
+                  : 'Provide the details for your new inventory package.',
+              style: const TextStyle(fontSize: 16, color: kGray),
             ),
             const SizedBox(height: 24),
             FormCard(
@@ -235,7 +292,7 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
             FormActions(
               onCancel: () => Navigator.of(context).pop(),
               onSave: _save,
-              saveLabel: 'Save Package',
+              saveLabel: isEdit ? 'Update Package' : 'Save Package',
             ),
             const SizedBox(height: 16),
           ],

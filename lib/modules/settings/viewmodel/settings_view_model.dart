@@ -1,10 +1,9 @@
-import 'dart:convert';
 import 'dart:typed_data';
 import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/modules/settings/model/settings_models.dart';
 import 'package:posfrontend/modules/settings/repository/setting_repository.dart';
 import 'package:posfrontend/modules/settings/repository/setting_repository_impl.dart';
-import 'package:posfrontend/modules/shop/model/shop.dart';
+import 'package:posfrontend/modules/shop/repository/shop_local_repository.dart';
 import 'package:posfrontend/modules/shop/repository/shop_local_repository_impl.dart';
 import 'package:posfrontend/shared/repositories/imgbb_repository.dart';
 import 'package:posfrontend/shared/repositories/imgbb_repository_impl.dart';
@@ -12,10 +11,12 @@ import 'package:posfrontend/shared/repositories/imgbb_repository_impl.dart';
 class SettingsViewModel extends BaseViewModel {
   final SettingRepository _repository;
   final ImgbbRepository _imgbbRepository;
+  final ShopLocalRepository _shopLocalRepository;
 
-  SettingsViewModel({SettingRepository? repository, ImgbbRepository? imgbbRepository})
+  SettingsViewModel({SettingRepository? repository, ImgbbRepository? imgbbRepository, ShopLocalRepository? shopLocalRepository})
       : _repository = repository ?? SettingRepositoryImpl(),
-        _imgbbRepository = imgbbRepository ?? ImgbbRepositoryImpl();
+        _imgbbRepository = imgbbRepository ?? ImgbbRepositoryImpl(),
+        _shopLocalRepository = shopLocalRepository ?? ShopLocalRepositoryImpl();
 
   SettingsData _settings = const SettingsData();
 
@@ -119,10 +120,9 @@ class SettingsViewModel extends BaseViewModel {
       notifyListeners();
       _settings = await _repository.updateSettings(shopImage: result.url);
 
-      final shopRepo = ShopLocalRepositoryImpl();
-      final shop = await shopRepo.getShop();
+      final shop = await _shopLocalRepository.getShop();
       if (shop != null) {
-        await shopRepo.saveShop(shop.copyWith(logoData: '', logoUrl: result.url));
+        await _shopLocalRepository.saveShop(shop.copyWith(logoData: '', logoUrl: result.url));
       }
     } catch (e) {
       setError('Failed to upload image');

@@ -4,18 +4,12 @@ import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:posfrontend/core/extensions/number_extensions.dart';
+import 'package:posfrontend/core/extensions/datetime_extensions.dart';
 import 'package:posfrontend/modules/sale/model/sale_models.dart';
 
 class VoucherPdfService {
-  static String _fmt(double value) {
-    final v = value.round();
-    final digits = v.abs().toString();
-    final withCommas = digits.replaceAllMapped(
-      RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-      (m) => '${m[1]},',
-    );
-    return withCommas;
-  }
+  static String _fmt(double value) => value.withCommas();
 
   static Future<void> generateAndPrint({
     required String customerName,
@@ -38,18 +32,14 @@ class VoucherPdfService {
   }) async {
     final pdf = pw.Document();
 
-    final dateStr = '${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.year}';
-    final h = dateTime.hour > 12 ? dateTime.hour - 12 : (dateTime.hour == 0 ? 12 : dateTime.hour);
-    final m = dateTime.minute.toString().padLeft(2, '0');
-    final ampm = dateTime.hour >= 12 ? 'PM' : 'AM';
-    final timeStr = '$h:$m $ampm';
+    final dateStr = dateTime.toShortDate();
+    final timeStr = dateTime.toFormattedDateTime().split(' ').skip(1).join(' ');
 
     final purple = PdfColor.fromHex('#7C3AED');
     final darkPurple = PdfColor.fromHex('#5B21B6');
     final titleColor = PdfColor.fromHex('#111827');
     final grayColor = PdfColor.fromHex('#6B7280');
     final borderColor = PdfColor.fromHex('#E5E7EB');
-    final greenColor = PdfColor.fromHex('#16A34A');
     final lightBg = PdfColor.fromHex('#F9FAFB');
     final lightPurple = PdfColor.fromHex('#F5F0FF');
     final whiteAlpha = PdfColor.fromHex('#B3FFFFFF');
@@ -186,7 +176,7 @@ class VoucherPdfService {
               final item = items[i];
               final variant = [
                 if (item.size != null && item.size != 'Regular') item.size,
-                if (item.color != null && item.color!.isNotEmpty) item.color,
+                if (item.color?.isNotEmpty == true) item.color,
               ].where((e) => e != null && e.isNotEmpty).join(', ');
 
               return pw.Container(

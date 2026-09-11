@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/material.dart' hide ThemeMode;
 import 'package:image_picker/image_picker.dart';
 import 'package:posfrontend/core/auth/token_storage.dart';
@@ -30,7 +28,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   static const Color red = Color(0xFFEF4444);
 
   String get _userName =>
-      widget.user != null && widget.user!.fullName.trim().isNotEmpty
+      widget.user?.fullName.trim().isNotEmpty == true
           ? widget.user!.fullName
           : 'Aung Ko Ko';
 

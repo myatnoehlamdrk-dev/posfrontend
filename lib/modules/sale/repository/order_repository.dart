@@ -14,4 +14,8 @@ abstract class OrderRepository {
     String? notes,
     String status,
   });
+
+  Future<void> updateOrderStatus({required String orderId, required String status});
+
+  Future<void> deleteOrder(String orderId);
 }

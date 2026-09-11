@@ -4,6 +4,11 @@ import 'package:posfrontend/modules/register/viewmodel/register_view_model.dart'
 import 'package:posfrontend/modules/shop/repository/shop_api_repository_impl.dart';
 import 'package:posfrontend/modules/shop/repository/shop_local_repository_impl.dart';
 import 'package:posfrontend/shared/repositories/imgbb_repository_impl.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/widgets/app_input_decoration.dart';
+import 'package:posfrontend/shared/widgets/gradient_button.dart';
+import 'package:posfrontend/shared/widgets/required_label.dart';
+import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -27,12 +32,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   late final RegisterViewModel _viewModel;
   bool _obscurePassword = true;
-
-  static const Color primary = Color(0xFF7B2CBF);
-  static const Color primaryLight = Color(0xFF9D4EDD);
-  static const Color borderColor = Color(0xFFE0E0E0);
-  static const Color labelColor = Color(0xFF1A1A1A);
-  static const Color hintColor = Color(0xFF9E9E9E);
 
   static const List<String> _genders = [
     'Male',
@@ -82,69 +81,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  InputDecoration _inputDecoration({
-    required IconData icon,
-    required String hint,
-    String? errorText,
-    Widget? suffixIcon,
-  }) {
-    return InputDecoration(
-      hintText: hint,
-      errorText: errorText,
-      hintStyle: const TextStyle(color: hintColor, fontSize: 14),
-      prefixIcon: Icon(icon, color: primary, size: 20),
-      suffixIcon: suffixIcon,
-      filled: true,
-      fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: borderColor),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: borderColor),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: primary, width: 1.5),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.red, width: 1.5),
-      ),
-    );
-  }
-
-  Widget _requiredLabel(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: RichText(
-        text: TextSpan(
-          text: text,
-          style: const TextStyle(
-            color: labelColor,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-          children: const [
-            TextSpan(
-              text: ' *',
-              style: TextStyle(color: Colors.red),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _optionalLabel(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         text,
-        style: const TextStyle(
-          color: labelColor,
+        style: TextStyle(
+          color: AppColors.labelColor,
           fontSize: 14,
           fontWeight: FontWeight.w500,
         ),
@@ -157,7 +100,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       padding: const EdgeInsets.only(top: 6),
       child: Text(
         text,
-        style: const TextStyle(color: hintColor, fontSize: 12),
+        style: TextStyle(color: AppColors.hintColor, fontSize: 12),
       ),
     );
   }
@@ -167,8 +110,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       padding: const EdgeInsets.only(bottom: 16),
       child: Text(
         text,
-        style: const TextStyle(
-          color: primary,
+        style: TextStyle(
+          color: AppColors.primary,
           fontSize: 16,
           fontWeight: FontWeight.w600,
         ),
@@ -196,34 +139,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _requiredLabel('Full Name'),
+                          RequiredLabel('Full Name'),
                           TextFormField(
                             controller: _nameController,
                             textInputAction: TextInputAction.next,
-                            decoration: _inputDecoration(
+                            decoration: appInputDecoration(
                               icon: Icons.person_outline,
                               hint: 'Enter full name',
                               errorText: errors['name'],
                             ),
                           ),
                           const SizedBox(height: 20),
-                          _requiredLabel('Email'),
+                          RequiredLabel('Email'),
                           TextFormField(
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
-                            decoration: _inputDecoration(
+                            decoration: appInputDecoration(
                               icon: Icons.email_outlined,
                               hint: 'Enter email address',
                               errorText: errors['email'],
                             ),
                           ),
                           const SizedBox(height: 20),
-                          _requiredLabel('Password'),
+                          RequiredLabel('Password'),
                           TextFormField(
                             controller: _passwordController,
                             obscureText: _obscurePassword,
-                            decoration: _inputDecoration(
+                            decoration: appInputDecoration(
                               icon: Icons.lock_outline,
                               hint: 'Enter password',
                               errorText: errors['password'],
@@ -237,7 +180,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   _obscurePassword
                                       ? Icons.visibility_outlined
                                       : Icons.visibility_off_outlined,
-                                  color: hintColor,
+                                  color: AppColors.hintColor,
                                 ),
                               ),
                             ),
@@ -255,7 +198,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     TextFormField(
                                       controller: _phoneController,
                                       keyboardType: TextInputType.phone,
-                                      decoration: _inputDecoration(
+                                      decoration: appInputDecoration(
                                         icon: Icons.phone_outlined,
                                         hint: 'Phone number',
                                       ),
@@ -271,7 +214,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     _optionalLabel('Social'),
                                     TextFormField(
                                       controller: _socialController,
-                                      decoration: _inputDecoration(
+                                      decoration: appInputDecoration(
                                         icon: Icons.chat_outlined,
                                         hint: 'Social (e.g. Telegram, Viber)',
                                       ),
@@ -285,7 +228,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           _optionalLabel('User Role'),
                           TextFormField(
                             controller: _roleController,
-                            decoration: _inputDecoration(
+                            decoration: appInputDecoration(
                               icon: Icons.supervisor_account_outlined,
                               hint: 'Enter user role',
                             ),
@@ -298,13 +241,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           TextFormField(
                             controller: _addressController,
                             maxLines: 3,
-                            decoration: _inputDecoration(
+                            decoration: appInputDecoration(
                               icon: Icons.location_on_outlined,
                               hint: 'Enter user address',
                             ),
                           ),
                           const SizedBox(height: 20),
-                          _requiredLabel('Current Shop'),
+                          RequiredLabel('Current Shop'),
                           Container(
                             width: double.infinity,
                             padding: const EdgeInsets.symmetric(
@@ -313,14 +256,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              border: Border.all(color: borderColor),
+                              border: Border.all(color: AppColors.borderColor),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.store_outlined,
-                                  color: primary,
+                                  color: AppColors.primary,
                                   size: 20,
                                 ),
                                 const SizedBox(width: 12),
@@ -329,8 +272,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     _viewModel.shopName ?? 'No shop created yet',
                                     style: TextStyle(
                                       color: _viewModel.shopName != null
-                                          ? labelColor
-                                          : hintColor,
+                                          ? AppColors.labelColor
+                                          : AppColors.hintColor,
                                       fontSize: 14,
                                     ),
                                   ),
@@ -347,8 +290,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     ),
                                     child: Text(
                                       _viewModel.shopType!,
-                                      style: const TextStyle(
-                                        color: primary,
+                                      style: TextStyle(
+                                        color: AppColors.primary,
                                         fontSize: 12,
                                       ),
                                     ),
@@ -360,16 +303,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           _optionalLabel('NRC No.'),
                           TextFormField(
                             controller: _nrcController,
-                            decoration: _inputDecoration(
+                            decoration: appInputDecoration(
                               icon: Icons.credit_card_outlined,
                               hint: 'Enter NRC number',
                             ),
                           ),
                           const SizedBox(height: 20),
-                          _requiredLabel('Billing Way'),
+                          RequiredLabel('Billing Way'),
                           TextFormField(
                             controller: _billingController,
-                            decoration: _inputDecoration(
+                            decoration: appInputDecoration(
                               icon: Icons.payment_outlined,
                               hint: 'Enter billing way',
                               errorText: errors['billingWay'],
@@ -404,7 +347,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           _viewModel.setDob(formatted);
                                         }
                                       },
-                                      decoration: _inputDecoration(
+                                      decoration: appInputDecoration(
                                         icon: Icons.calendar_today_outlined,
                                         hint: 'Select date of birth',
                                       ),
@@ -421,7 +364,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     DropdownButtonFormField<String>(
                                       initialValue: _viewModel.gender,
                                       isExpanded: true,
-                                      decoration: _inputDecoration(
+                                      decoration: appInputDecoration(
                                         icon: Icons.wc_outlined,
                                         hint: 'Select gender',
                                       ),
@@ -442,7 +385,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ],
                           ),
                           const SizedBox(height: 32),
-                          _buildSubmitButton(),
+                          GradientButton(
+                            label: 'Register',
+                            icon: Icons.save_outlined,
+                            loading: _viewModel.isLoading,
+                            onPressed: () async {
+                              final success = await _viewModel.register();
+                              if (success && mounted) {
+                                showSuccessSnackBar(context, 'Registration successful');
+                              }
+                            },
+                          ),
                           if (_viewModel.errorMessage != null)
                             Padding(
                               padding: const EdgeInsets.only(top: 12),
@@ -471,10 +424,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: Colors.white,
         border: Border(
-          bottom: BorderSide(color: borderColor, width: 1),
+          bottom: BorderSide(color: AppColors.borderColor, width: 1),
         ),
       ),
       child: Row(
@@ -485,14 +438,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Navigator.pop(context);
               }
             },
-            icon: const Icon(Icons.arrow_back, color: primary),
+            icon: Icon(Icons.arrow_back, color: AppColors.primary),
           ),
-          const Expanded(
+          Expanded(
             child: Center(
               child: Text(
                 'Register',
                 style: TextStyle(
-                  color: labelColor,
+                  color: AppColors.labelColor,
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                 ),
@@ -501,71 +454,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
           const SizedBox(width: 48),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSubmitButton() {
-    final loading = _viewModel.isLoading;
-    return Container(
-      width: double.infinity,
-      height: 52,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [primary, primaryLight],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: primary.withValues(alpha: 0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: loading
-            ? null
-            : () async {
-                final success = await _viewModel.register();
-                if (success && mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Registration successful'),
-                      backgroundColor: primary,
-                    ),
-                  );
-                }
-              },
-        child: Center(
-          child: loading
-              ? const SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2.5,
-                  ),
-                )
-              : const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.save_outlined, color: Colors.white, size: 20),
-                    SizedBox(width: 8),
-                    Text(
-                      'Register',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-        ),
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/core/extensions/map_json_extensions.dart';
 
 class ProductColorOption {
   final String label;
@@ -58,23 +59,23 @@ class ProductSearchResult {
       variantList = rawVariants.whereType<Map<String, dynamic>>().toList();
     }
     return ProductSearchResult(
-      id: (json['id'] ?? '').toString(),
-      name: json['name'] as String? ?? '',
-      brand: json['brand'] as String? ?? '',
-      sku: json['sku'] as String? ?? '',
-      size: json['size'] as String? ?? '',
-      color: json['color'] as String? ?? '',
-      stock: json['stock'] as int? ?? 0,
+      id: json.str('id'),
+      name: json.str('name'),
+      brand: json.str('brand'),
+      sku: json.str('sku'),
+      size: json.str('size'),
+      color: json.str('color'),
+      stock: json.integer('stock'),
       variants: variantList,
-      supplierId: (json['supplierId'] ?? '').toString(),
-      supplierName: json['supplierName'] as String? ?? '',
-      supplierContact: json['supplierContact'] as String? ?? '',
-      supplierAddress: json['supplierAddress'] as String? ?? '',
-      imageUrl: json['image'] as String? ?? '',
-      categoryId: (json['categoryId'] ?? '').toString(),
-      packageId: (json['packageId'] ?? '').toString(),
-      isSet: json['isSet'] as bool? ?? false,
-      inventoryType: json['inventoryType'] as String? ?? 'self',
+      supplierId: json.str('supplierId'),
+      supplierName: json.str('supplierName'),
+      supplierContact: json.str('supplierContact'),
+      supplierAddress: json.str('supplierAddress'),
+      imageUrl: json.str('image'),
+      categoryId: json.str('categoryId'),
+      packageId: json.str('packageId'),
+      isSet: json.boolean('isSet'),
+      inventoryType: json.str('inventoryType', 'self'),
     );
   }
 }
@@ -104,15 +105,15 @@ class PendingPurchaseItem {
 
   factory PendingPurchaseItem.fromJson(Map<String, dynamic> json) {
     return PendingPurchaseItem(
-      id: (json['id'] ?? '').toString(),
-      productName: json['productName'] as String? ?? '',
-      quantity: json['quantity'] as int? ?? 0,
-      unitPrice: json['unitPrice'] as int? ?? 0,
-      totalPrice: json['totalPrice'] as int? ?? 0,
-      date: json['date'] as String? ?? '',
-      supplierId: (json['supplierId'] ?? '').toString(),
-      supplierName: json['supplierName'] as String? ?? '',
-      notes: json['notes'] as String? ?? '',
+      id: json.str('id'),
+      productName: json.str('productName'),
+      quantity: json.integer('quantity'),
+      unitPrice: json.integer('unitPrice'),
+      totalPrice: json.integer('totalPrice'),
+      date: json.str('date'),
+      supplierId: json.str('supplierId'),
+      supplierName: json.str('supplierName'),
+      notes: json.str('notes'),
     );
   }
 }

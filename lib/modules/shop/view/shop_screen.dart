@@ -7,6 +7,10 @@ import 'package:posfrontend/modules/shop/model/shop_types.dart';
 import 'package:posfrontend/modules/shop/repository/shop_api_repository_impl.dart';
 import 'package:posfrontend/modules/shop/repository/shop_local_repository_impl.dart';
 import 'package:posfrontend/modules/shop/viewmodel/shop_view_model.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/widgets/app_input_decoration.dart';
+import 'package:posfrontend/shared/widgets/gradient_button.dart';
+import 'package:posfrontend/shared/widgets/required_label.dart';
 
 class ShopScreen extends StatefulWidget {
   const ShopScreen({super.key});
@@ -25,12 +29,6 @@ class _ShopScreenState extends State<ShopScreen> {
   final _ownerNameController = TextEditingController();
   final _ownerEmailController = TextEditingController();
   final _ownerPhoneController = TextEditingController();
-
-  static const Color primary = Color(0xFF7B2CBF);
-  static const Color primaryLight = Color(0xFF9D4EDD);
-  static const Color borderColor = Color(0xFFE0E0E0);
-  static const Color labelColor = Color(0xFF1A1A1A);
-  static const Color hintColor = Color(0xFF9E9E9E);
 
   @override
   void initState() {
@@ -87,66 +85,12 @@ class _ShopScreenState extends State<ShopScreen> {
     }
   }
 
-  InputDecoration _inputDecoration({
-    required IconData icon,
-    required String hint,
-    String? errorText,
-  }) {
-    return InputDecoration(
-      hintText: hint,
-      errorText: errorText,
-      hintStyle: const TextStyle(color: hintColor, fontSize: 14),
-      prefixIcon: Icon(icon, color: primary, size: 20),
-      filled: true,
-      fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: borderColor),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: borderColor),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: primary, width: 1.5),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.red, width: 1.5),
-      ),
-    );
-  }
-
-  Widget _requiredLabel(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: RichText(
-        text: TextSpan(
-          text: text,
-          style: const TextStyle(
-            color: labelColor,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-          children: const [
-            TextSpan(
-              text: ' *',
-              style: TextStyle(color: Colors.red),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _helperText(String text) {
     return Padding(
       padding: const EdgeInsets.only(top: 6),
       child: Text(
         text,
-        style: const TextStyle(color: hintColor, fontSize: 12),
+        style: TextStyle(color: AppColors.hintColor, fontSize: 12),
       ),
     );
   }
@@ -176,31 +120,36 @@ class _ShopScreenState extends State<ShopScreen> {
                           if (_viewModel.mode == 'existing') ...[
                             _buildExistingShopPicker(),
                             const SizedBox(height: 32),
-                            _buildActionButton(),
+                            GradientButton(
+                              label: 'Continue',
+                              icon: Icons.arrow_forward,
+                              loading: _viewModel.isLoading || _viewModel.isLoadingShops,
+                              onPressed: _onUseExistingShop,
+                            ),
                           ] else ...[
                             _buildImageUpload(),
                             const SizedBox(height: 20),
-                            _requiredLabel('Shop Name'),
+                            RequiredLabel('Shop Name'),
                             TextFormField(
                               controller: _shopNameController,
-                              decoration: _inputDecoration(
+                              decoration: appInputDecoration(
                                 icon: Icons.store_outlined,
                                 hint: 'Enter shop name',
                                 errorText: errors['name'],
                               ),
                             ),
                             const SizedBox(height: 20),
-                            _requiredLabel('Type'),
+                            RequiredLabel('Type'),
                             DropdownButtonFormField<String>(
                               initialValue: _viewModel.type,
-                              decoration: _inputDecoration(
+                              decoration: appInputDecoration(
                                 icon: Icons.category_outlined,
                                 hint: 'Select type',
                                 errorText: errors['type'],
                               ).copyWith(
-                                suffixIcon: const Icon(
+                                suffixIcon: Icon(
                                   Icons.arrow_drop_down,
-                                  color: primary,
+                                  color: AppColors.primary,
                                 ),
                               ),
                               items: ShopTypes.values
@@ -217,59 +166,64 @@ class _ShopScreenState extends State<ShopScreen> {
                               'Allowed types: Shop, Services Center, Store, and Restaurants',
                             ),
                             const SizedBox(height: 20),
-                            _requiredLabel('Physical Address'),
+                            RequiredLabel('Physical Address'),
                             TextFormField(
                               controller: _addressController,
                               maxLines: 3,
-                              decoration: _inputDecoration(
+                              decoration: appInputDecoration(
                                 icon: Icons.location_on_outlined,
                                 hint: 'Enter physical address',
                                 errorText: errors['physicalAddress'],
                               ),
                             ),
                             const SizedBox(height: 28),
-                            const Text(
+                            Text(
                               'Owner Information',
                               style: TextStyle(
-                                color: primary,
+                                color: AppColors.primary,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                             const SizedBox(height: 16),
-                            _requiredLabel("Owner's Name"),
+                            RequiredLabel("Owner's Name"),
                             TextFormField(
                               controller: _ownerNameController,
-                              decoration: _inputDecoration(
+                              decoration: appInputDecoration(
                                 icon: Icons.person_outline,
                                 hint: "Enter owner's name",
                                 errorText: errors['ownerName'],
                               ),
                             ),
                             const SizedBox(height: 20),
-                            _requiredLabel("Owner's Email"),
+                            RequiredLabel("Owner's Email"),
                             TextFormField(
                               controller: _ownerEmailController,
                               keyboardType: TextInputType.emailAddress,
-                              decoration: _inputDecoration(
+                              decoration: appInputDecoration(
                                 icon: Icons.email_outlined,
                                 hint: "Enter owner's email",
                                 errorText: errors['ownerEmail'],
                               ),
                             ),
                             const SizedBox(height: 20),
-                            _requiredLabel("Owner's Phone"),
+                            RequiredLabel("Owner's Phone"),
                             TextFormField(
                               controller: _ownerPhoneController,
                               keyboardType: TextInputType.phone,
-                              decoration: _inputDecoration(
+                              decoration: appInputDecoration(
                                 icon: Icons.phone_outlined,
                                 hint: "Enter owner's phone number",
                                 errorText: errors['ownerPhone'],
                               ),
                             ),
                             const SizedBox(height: 32),
-                            _buildActionButton(),
+                            GradientButton(
+                              label: 'Create Shop',
+                              icon: Icons.save_outlined,
+                              loading: _viewModel.isLoading || _viewModel.isLoadingShops,
+                              onPressed: _onCreateShop,
+                            ),
                           ],
                           if (_viewModel.errorMessage != null)
                             Padding(
@@ -298,10 +252,10 @@ class _ShopScreenState extends State<ShopScreen> {
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: Colors.white,
         border: Border(
-          bottom: BorderSide(color: borderColor, width: 1),
+          bottom: BorderSide(color: AppColors.borderColor, width: 1),
         ),
       ),
       child: Row(
@@ -309,16 +263,16 @@ class _ShopScreenState extends State<ShopScreen> {
           if (Navigator.canPop(context))
             IconButton(
               onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.arrow_back, color: primary),
+              icon: Icon(Icons.arrow_back, color: AppColors.primary),
             )
           else
             const SizedBox(width: 48),
-          const Expanded(
+          Expanded(
             child: Center(
               child: Text(
                 'Create Shop',
                 style: TextStyle(
-                  color: labelColor,
+                  color: AppColors.labelColor,
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                 ),
@@ -339,7 +293,7 @@ class _ShopScreenState extends State<ShopScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _requiredLabel('Shop Image (optional)'),
+        RequiredLabel('Shop Image (optional)'),
         GestureDetector(
           onTap: _pickImage,
           child: Container(
@@ -353,7 +307,7 @@ class _ShopScreenState extends State<ShopScreen> {
               borderRadius: BorderRadius.circular(16),
               child: CustomPaint(
                 painter: _DashedBorderPainter(
-                  color: primary,
+                  color: AppColors.primary,
                   radius: 16,
                   strokeWidth: 1.5,
                   dashWidth: 8,
@@ -377,24 +331,24 @@ class _ShopScreenState extends State<ShopScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.add_a_photo_outlined,
-                              color: primary,
+                              color: AppColors.primary,
                               size: 40,
                             ),
                             const SizedBox(height: 10),
-                            const Text(
+                            Text(
                               'Tap to upload shop image',
                               style: TextStyle(
-                                color: primary,
+                                color: AppColors.primary,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                             const SizedBox(height: 6),
-                            const Text(
+                            Text(
                               'JPG, PNG up to 5MB',
-                              style: TextStyle(color: hintColor, fontSize: 12),
+                              style: TextStyle(color: AppColors.hintColor, fontSize: 12),
                             ),
                           ],
                         ),
@@ -404,74 +358,6 @@ class _ShopScreenState extends State<ShopScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildActionButton() {
-    final isExisting = _viewModel.mode == 'existing';
-    final loading = _viewModel.isLoading || _viewModel.isLoadingShops;
-    return _gradientButton(
-      label: isExisting ? 'Continue' : 'Create Shop',
-      icon: isExisting ? Icons.arrow_forward : Icons.save_outlined,
-      loading: loading,
-      onTap: isExisting ? _onUseExistingShop : _onCreateShop,
-    );
-  }
-
-  Widget _gradientButton({
-    required String label,
-    required IconData icon,
-    required bool loading,
-    required VoidCallback? onTap,
-  }) {
-    return Container(
-      width: double.infinity,
-      height: 52,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [primary, primaryLight],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: primary.withValues(alpha: 0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: loading ? null : onTap,
-        child: Center(
-          child: loading
-              ? const SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2.5,
-                  ),
-                )
-              : Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(icon, color: Colors.white, size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      label,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-        ),
-      ),
     );
   }
 
@@ -505,21 +391,21 @@ class _ShopScreenState extends State<ShopScreen> {
       );
     }
     if (_viewModel.shops.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 8),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
         child: Text(
           'No shops found in the database.',
-          style: TextStyle(color: hintColor, fontSize: 14),
+          style: TextStyle(color: AppColors.hintColor, fontSize: 14),
         ),
       );
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _requiredLabel('Select Shop'),
+        RequiredLabel('Select Shop'),
         DropdownButtonFormField<Shop>(
           initialValue: _viewModel.selectedShop,
-          decoration: _inputDecoration(
+          decoration: appInputDecoration(
             icon: Icons.store_outlined,
             hint: 'Choose your shop',
           ),

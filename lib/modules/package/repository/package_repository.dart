@@ -10,4 +10,13 @@ abstract class PackageRepository {
     String? location,
     String? stockStatus,
   });
+  Future<Package> updatePackage({
+    required String id,
+    required String categoryId,
+    required String name,
+    int? productLimit,
+    String? description,
+    String? location,
+    String? stockStatus,
+  });
 }

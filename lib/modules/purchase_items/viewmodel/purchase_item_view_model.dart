@@ -1,5 +1,5 @@
-import 'dart:convert';
 import 'package:posfrontend/core/base/base_view_model.dart';
+import 'package:posfrontend/core/models/paginated_response.dart';
 import 'package:dio/dio.dart';
 import '../model/purchase_models.dart';
 import '../repository/purchase_item_repository.dart';
@@ -13,12 +13,6 @@ class PurchaseItemViewModel extends BaseViewModel {
   List<Supplier> _suppliers = [];
   List<Supplier> get suppliers => _suppliers;
 
-  bool _isLoading = false;
-  bool get isLoading => _isLoading;
-
-  String? _error;
-  String? get error => _error;
-
   int _currentPage = 1;
   int _lastPage = 1;
   bool get hasMore => _currentPage <= _lastPage;
@@ -31,42 +25,25 @@ class PurchaseItemViewModel extends BaseViewModel {
       _currentPage = 1;
       _purchaseItems = [];
     }
-    if (_isLoading) return;
+    if (isLoading) return;
 
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
+    setLoading(true);
+    resetError();
 
     try {
       final response = await _repository.getPurchaseItems(page: _currentPage);
-      final dynamic rawData = response['data'];
-      List<dynamic> itemsList;
-      if (rawData is List) {
-        itemsList = rawData;
-      } else if (rawData is String) {
-        itemsList = jsonDecode(rawData) as List<dynamic>;
-      } else {
-        itemsList = [];
-      }
-      final items = itemsList.map((e) {
-        if (e is Map<String, dynamic>) return PurchaseOrder.fromJson(e);
-        return null;
-      }).whereType<PurchaseOrder>().toList();
-      _purchaseItems = _currentPage == 1 ? items : [..._purchaseItems, ...items];
-      final meta = response['meta'];
-      if (meta is Map) {
-        _lastPage = meta['last_page'] ?? 1;
-      } else {
-        _lastPage = response['last_page'] ?? 1;
-      }
+      final paginated = PaginatedResponse.fromJson(response, PurchaseOrder.fromJson);
+      _purchaseItems = _currentPage == 1
+          ? paginated.data
+          : [..._purchaseItems, ...paginated.data];
+      _lastPage = paginated.lastPage;
       _currentPage++;
     } on DioException catch (e) {
-      _error = e.message ?? 'Failed to load purchase items';
+      setError(e.message ?? 'Failed to load purchase items');
     } catch (e) {
-      _error = e.toString();
+      setError(e.toString());
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      setLoading(false);
     }
   }
 
@@ -75,7 +52,7 @@ class PurchaseItemViewModel extends BaseViewModel {
       _suppliers = await _repository.getSuppliers();
       notifyListeners();
     } catch (e) {
-      _error = e.toString();
+      setError(e.toString());
       notifyListeners();
     }
   }
@@ -95,11 +72,11 @@ class PurchaseItemViewModel extends BaseViewModel {
       notifyListeners();
       return supplier;
     } on DioException catch (e) {
-      _error = e.message ?? 'Failed to create supplier';
+      setError(e.message ?? 'Failed to create supplier');
       notifyListeners();
       return null;
     } catch (e) {
-      _error = e.toString();
+      setError(e.toString());
       notifyListeners();
       return null;
     }
@@ -133,11 +110,11 @@ class PurchaseItemViewModel extends BaseViewModel {
       await loadPurchaseItems(refresh: true);
       return true;
     } on DioException catch (e) {
-      _error = e.message ?? 'Failed to create purchase item';
+      setError(e.message ?? 'Failed to create purchase item');
       notifyListeners();
       return false;
     } catch (e) {
-      _error = e.toString();
+      setError(e.toString());
       notifyListeners();
       return false;
     }
@@ -149,11 +126,11 @@ class PurchaseItemViewModel extends BaseViewModel {
       await loadPurchaseItems(refresh: true);
       return true;
     } on DioException catch (e) {
-      _error = e.message ?? 'Failed to update status';
+      setError(e.message ?? 'Failed to update status');
       notifyListeners();
       return false;
     } catch (e) {
-      _error = e.toString();
+      setError(e.toString());
       notifyListeners();
       return false;
     }
@@ -166,11 +143,11 @@ class PurchaseItemViewModel extends BaseViewModel {
       notifyListeners();
       return true;
     } on DioException catch (e) {
-      _error = e.message ?? 'Failed to delete purchase item';
+      setError(e.message ?? 'Failed to delete purchase item');
       notifyListeners();
       return false;
     } catch (e) {
-      _error = e.toString();
+      setError(e.toString());
       notifyListeners();
       return false;
     }

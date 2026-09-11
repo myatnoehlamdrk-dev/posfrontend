@@ -1,5 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:posfrontend/core/extensions/datetime_extensions.dart';
+import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/sale/model/sale_models.dart';
 import 'package:posfrontend/modules/sale/repository/order_repository_impl.dart';
@@ -20,7 +22,20 @@ import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 
 class NewSaleScreen extends StatefulWidget {
   final LoginResponse? user;
-  const NewSaleScreen({super.key, this.user});
+  final List<SaleItem>? initialItems;
+  final String? initialCustomerName;
+  final String? initialCustomerPhone;
+  final String? initialPaymentMethod;
+  final String? existingOrderId;
+  const NewSaleScreen({
+    super.key,
+    this.user,
+    this.initialItems,
+    this.initialCustomerName,
+    this.initialCustomerPhone,
+    this.initialPaymentMethod,
+    this.existingOrderId,
+  });
 
   @override
   State<NewSaleScreen> createState() => _NewSaleScreenState();
@@ -57,6 +72,18 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     super.initState();
     _voucherRandom = _generateRandom5();
     _orderRandom = _generateRandom5();
+    if (widget.initialItems != null) {
+      _items.addAll(widget.initialItems!);
+    }
+    if (widget.initialCustomerName?.isNotEmpty == true) {
+      _customerNameCtrl.text = widget.initialCustomerName!;
+    }
+    if (widget.initialCustomerPhone != null) {
+      _customerPhoneCtrl.text = widget.initialCustomerPhone!;
+    }
+    if (widget.initialPaymentMethod != null) {
+      _paymentMethod = widget.initialPaymentMethod!;
+    }
     _loadShop();
   }
 
@@ -95,7 +122,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       final notes = _notesCtrl.text.isNotEmpty ? _notesCtrl.text : null;
       final staffName = widget.user?.fullName ?? 'Staff';
       final voucherNo = 'INV-$_voucherRandom';
-      final orderId = 'ORD-$_orderRandom';
+      final orderId = widget.existingOrderId ?? 'ORD-$_orderRandom';
 
       await _viewModel.submitSale(
         userName: staffName,
@@ -109,6 +136,13 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         discount: discountPct.toInt(),
         notes: notes,
       );
+
+      if (widget.existingOrderId != null) {
+        try {
+          await OrderRepositoryImpl().deleteOrder(widget.existingOrderId!);
+        } catch (_) {}
+      }
+
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Sale saved successfully!'), backgroundColor: Color(0xFF16A34A)),
@@ -144,10 +178,15 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         _notesCtrl.clear();
         _refreshRandoms();
       });
-    } catch (e) {
+    } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: const Color(0xFFDC2626)),
+        SnackBar(content: Text(e.message), backgroundColor: const Color(0xFFDC2626)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('An unexpected error occurred'), backgroundColor: Color(0xFFDC2626)),
       );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -183,10 +222,15 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         _notesCtrl.clear();
         _refreshRandoms();
       });
-    } catch (e) {
+    } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: const Color(0xFFDC2626)),
+        SnackBar(content: Text(e.message), backgroundColor: const Color(0xFFDC2626)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('An unexpected error occurred'), backgroundColor: Color(0xFFDC2626)),
       );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -445,10 +489,8 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   }
 
   String _formatTime(DateTime dt) {
-    final h = dt.hour > 12 ? dt.hour - 12 : (dt.hour == 0 ? 12 : dt.hour);
-    final m = dt.minute.toString().padLeft(2, '0');
-    final ampm = dt.hour >= 12 ? 'PM' : 'AM';
-    return '$h:$m $ampm';
+    final parts = dt.toFormattedDateTime().split(' ');
+    return '${parts[parts.length - 2]} ${parts.last}';
   }
 
   Widget _itemsSection() {
@@ -554,12 +596,12 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                         style: const TextStyle(fontSize: 11, color: kGray),
                       ),
                     ],
-                    if (item.size != null || (item.color != null && item.color!.isNotEmpty)) ...[
+                    if (item.size != null || (item.color?.isNotEmpty == true)) ...[
                       const SizedBox(height: 2),
                       Text(
                         [
                           if (item.size != null && item.size != 'Regular') item.size,
-                          if (item.color != null && item.color!.isNotEmpty) item.color,
+                          if (item.color?.isNotEmpty == true) item.color,
                         ].where((e) => e != null && e.isNotEmpty).join(' | '),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
