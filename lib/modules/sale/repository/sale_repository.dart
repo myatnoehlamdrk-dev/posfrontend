@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:posfrontend/modules/sale/model/sale_models.dart';
 
 abstract class SaleRepository {
@@ -12,5 +13,6 @@ abstract class SaleRepository {
     required double grandTotal,
     int? discount,
     String? notes,
+    CancelToken? cancelToken,
   });
 }

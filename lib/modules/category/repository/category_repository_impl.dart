@@ -8,7 +8,7 @@ import 'package:posfrontend/modules/category/repository/category_repository.dart
 
 class CategoryRepositoryImpl implements CategoryRepository {
   @override
-  Future<List<Category>> getCategories({String? type, String? inventoryId}) async {
+  Future<List<Category>> getCategories({String? type, String? inventoryId, CancelToken? cancelToken}) async {
     try {
       final dio = ApiClient.create();
       final queryParameters = <String, dynamic>{};
@@ -17,6 +17,7 @@ class CategoryRepositoryImpl implements CategoryRepository {
       final resp = await dio.get(
         '/api/categories',
         queryParameters: queryParameters.isNotEmpty ? queryParameters : null,
+        cancelToken: cancelToken,
       );
       return parseTypedList(resp.data, _mapCategory);
     } on DioException catch (e) {
@@ -64,6 +65,7 @@ class CategoryRepositoryImpl implements CategoryRepository {
     required String name,
     String? description,
     int? packageLimit,
+    CancelToken? cancelToken,
   }) async {
     try {
       final dio = ApiClient.create();
@@ -75,6 +77,7 @@ class CategoryRepositoryImpl implements CategoryRepository {
           'description': description,
           'packageLimit': packageLimit,
         },
+        cancelToken: cancelToken,
       );
       final json = resp.data as Map<String, dynamic>;
       return _mapCategory(json);
@@ -89,6 +92,7 @@ class CategoryRepositoryImpl implements CategoryRepository {
     required String name,
     String? description,
     int? packageLimit,
+    CancelToken? cancelToken,
   }) async {
     try {
       final dio = ApiClient.create();
@@ -99,6 +103,7 @@ class CategoryRepositoryImpl implements CategoryRepository {
           'description': description,
           'packageLimit': packageLimit,
         },
+        cancelToken: cancelToken,
       );
       final data = resp.data;
       final Map<String, dynamic> json =

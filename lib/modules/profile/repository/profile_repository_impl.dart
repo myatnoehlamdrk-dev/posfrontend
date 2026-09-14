@@ -9,9 +9,9 @@ class ProfileRepositoryImpl implements ProfileRepository {
   ProfileRepositoryImpl([Dio? dio]) : _dio = dio ?? ApiClient.create();
 
   @override
-  Future<ProfileResponse> getProfile() async {
+  Future<ProfileResponse> getProfile({CancelToken? cancelToken}) async {
     try {
-      final response = await _dio.get('/api/auth/profile');
+      final response = await _dio.get('/api/auth/profile', cancelToken: cancelToken);
       return ProfileResponse.fromJson(
           response.data as Map<String, dynamic>);
     } on DioException catch (e) {
@@ -20,9 +20,9 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
-  Future<ProfileResponse> updateProfile(Map<String, dynamic> data) async {
+  Future<ProfileResponse> updateProfile(Map<String, dynamic> data, {CancelToken? cancelToken}) async {
     try {
-      final response = await _dio.put('/api/auth/profile', data: data);
+      final response = await _dio.put('/api/auth/profile', data: data, cancelToken: cancelToken);
       return ProfileResponse.fromJson(
           response.data as Map<String, dynamic>);
     } on DioException catch (e) {
@@ -34,13 +34,14 @@ class ProfileRepositoryImpl implements ProfileRepository {
   Future<void> changePassword({
     required String currentPassword,
     required String newPassword,
+    CancelToken? cancelToken,
   }) async {
     try {
       await _dio.put('/api/auth/profile/password', data: {
         'current_password': currentPassword,
         'new_password': newPassword,
         'new_password_confirmation': newPassword,
-      });
+      }, cancelToken: cancelToken);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }

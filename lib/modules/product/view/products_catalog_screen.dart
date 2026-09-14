@@ -1,7 +1,7 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:posfrontend/core/extensions/datetime_extensions.dart';
 import 'package:posfrontend/core/network/api_client.dart';
-import 'package:posfrontend/core/utils/error_handler.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/product/model/catalog_product.dart';
 import 'package:posfrontend/modules/product/repository/catalog_product_repository_impl.dart';
@@ -10,6 +10,7 @@ import 'package:posfrontend/modules/product/view/product_detail_screen.dart';
 import 'package:posfrontend/modules/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
+import 'package:posfrontend/shared/widgets/error_snackbar.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 
 class ProductsCatalogScreen extends StatefulWidget {
@@ -32,6 +33,7 @@ enum ProductSort {
 class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _search = TextEditingController();
+  final CancelToken _cancelToken = CancelToken();
   List<CatalogProduct> _all = [];
   bool _isGrid = true;
   bool _loading = true;
@@ -41,6 +43,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
   late final PageController _hotPageController;
   int _hotIndex = 0;
   bool _hotPaused = false;
+  bool _disposed = false;
   static const Color bg = Color(0xFFF8F9FC);
   static const Color gray = Color(0xFF6B7280);
   static const Color purple = Color(0xFF6D28D9);
@@ -65,6 +68,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
 
   void _startAutoScroll() {
     Future.delayed(const Duration(seconds: 3), () {
+      if (_disposed) return;
       if (!mounted || _hotPaused) {
         _startAutoScroll();
         return;
@@ -110,6 +114,8 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
 
   @override
   void dispose() {
+    _disposed = true;
+    if (!_cancelToken.isCancelled) _cancelToken.cancel();
     _search.dispose();
     _hotPageController.dispose();
     super.dispose();
@@ -170,24 +176,15 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
               Navigator.pop(ctx);
               try {
                 final dio = ApiClient.create();
-                await dio.delete('/api/products/${p.id}');
-                setState(() => _all.removeWhere((item) => item.id == p.id));
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Product deleted')),
-                  );
-                }
+                await dio.delete('/api/products/${p.id}', cancelToken: _cancelToken);
+                if (mounted) setState(() => _all.removeWhere((item) => item.id == p.id));
               } on ApiException catch (e) {
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(e.message)),
-                  );
+                  showErrorSnackBar(context, e);
                 }
               } catch (e) {
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(formatApiError(e))),
-                  );
+                  showErrorSnackBar(context, e);
                 }
               }
             },

@@ -11,9 +11,9 @@ class SaleItemRepositoryImpl implements SaleItemRepository {
   SaleItemRepositoryImpl({Dio? dio}) : _dio = dio ?? ApiClient.create();
 
   @override
-  Future<PaginatedSalesResponse> getSales({int page = 1}) async {
+  Future<PaginatedSalesResponse> getSales({int page = 1, CancelToken? cancelToken}) async {
     try {
-      final response = await _dio.get('/api/sales', queryParameters: {'page': page});
+      final response = await _dio.get('/api/sales', queryParameters: {'page': page}, cancelToken: cancelToken);
       final payload = response.data;
       if (payload is List) {
         final items = payload
@@ -32,9 +32,9 @@ class SaleItemRepositoryImpl implements SaleItemRepository {
   }
 
   @override
-  Future<PaginatedOrdersResponse> getOrders({int page = 1}) async {
+  Future<PaginatedOrdersResponse> getOrders({int page = 1, CancelToken? cancelToken}) async {
     try {
-      final response = await _dio.get('/api/orders', queryParameters: {'page': page});
+      final response = await _dio.get('/api/orders', queryParameters: {'page': page}, cancelToken: cancelToken);
       final payload = response.data;
       if (payload is List) {
         final items = payload
@@ -53,9 +53,9 @@ class SaleItemRepositoryImpl implements SaleItemRepository {
   }
 
   @override
-  Future<SaleDetailResponse> getSaleById(String id) async {
+  Future<SaleDetailResponse> getSaleById(String id, {CancelToken? cancelToken}) async {
     try {
-      final response = await _dio.get('/api/sales/$id');
+      final response = await _dio.get('/api/sales/$id', cancelToken: cancelToken);
       final payload = response.data;
       if (payload is Map<String, dynamic>) {
         return SaleDetailResponse.fromJson(payload);
@@ -67,9 +67,9 @@ class SaleItemRepositoryImpl implements SaleItemRepository {
   }
 
   @override
-  Future<SaleOrder> getOrderById(String id) async {
+  Future<SaleOrder> getOrderById(String id, {CancelToken? cancelToken}) async {
     try {
-      final response = await _dio.get('/api/orders/$id');
+      final response = await _dio.get('/api/orders/$id', cancelToken: cancelToken);
       final payload = response.data;
       if (payload is Map<String, dynamic>) {
         return SaleOrder.fromOrderJson(payload);
@@ -81,27 +81,27 @@ class SaleItemRepositoryImpl implements SaleItemRepository {
   }
 
   @override
-  Future<void> deleteSale(String id) async {
+  Future<void> deleteSale(String id, {CancelToken? cancelToken}) async {
     try {
-      await _dio.delete('/api/sales/$id');
+      await _dio.delete('/api/sales/$id', cancelToken: cancelToken);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
   }
 
   @override
-  Future<void> deleteOrder(String id) async {
+  Future<void> deleteOrder(String id, {CancelToken? cancelToken}) async {
     try {
-      await _dio.delete('/api/orders/$id');
+      await _dio.delete('/api/orders/$id', cancelToken: cancelToken);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
   }
 
   @override
-  Future<SaleOrder> deleteSaleItem(String saleId, String itemId) async {
+  Future<SaleOrder> deleteSaleItem(String saleId, String itemId, {CancelToken? cancelToken}) async {
     try {
-      final response = await _dio.delete('/api/sales/$saleId/items/$itemId');
+      final response = await _dio.delete('/api/sales/$saleId/items/$itemId', cancelToken: cancelToken);
       final payload = response.data;
       if (payload is Map<String, dynamic>) {
         return SaleOrder.fromJson(payload);

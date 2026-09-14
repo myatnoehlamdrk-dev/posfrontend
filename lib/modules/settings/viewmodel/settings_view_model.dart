@@ -36,7 +36,7 @@ class SettingsViewModel extends BaseViewModel {
     setLoading(true);
     resetError();
     try {
-      _settings = await _repository.getSettings();
+      _settings = await _repository.getSettings(cancelToken: cancelToken);
       _isInitialized = true;
     } catch (e) {
       setError('Failed to load settings');
@@ -54,6 +54,7 @@ class SettingsViewModel extends BaseViewModel {
     try {
       _settings = await _repository.updateSettings(
         themeMode: newMode == ThemeMode.dark ? 'dark' : 'light',
+        cancelToken: cancelToken,
       );
     } catch (e) {
       setError('Failed to update theme');
@@ -64,7 +65,7 @@ class SettingsViewModel extends BaseViewModel {
     _settings = _settings.copyWith(language: lang);
     notifyListeners();
     try {
-      _settings = await _repository.updateSettings(language: lang);
+      _settings = await _repository.updateSettings(language: lang, cancelToken: cancelToken);
     } catch (e) {
       setError('Failed to update language');
     }
@@ -76,6 +77,7 @@ class SettingsViewModel extends BaseViewModel {
     try {
       _settings = await _repository.updateSettings(
         shopType: shopTypeValue(type),
+        cancelToken: cancelToken,
       );
     } catch (e) {
       setError('Failed to update shop type');

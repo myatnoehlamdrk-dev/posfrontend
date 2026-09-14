@@ -18,7 +18,7 @@ class DashboardViewModel extends BaseViewModel {
   Future<void> load({int? days}) async {
     if (days != null) _days = days;
     final result = await runAsync(
-      () => _repository.getDashboardData(days: _days),
+      (token) => _repository.getDashboardData(days: _days, cancelToken: token),
       errorPrefix: 'Failed to load dashboard',
     );
     if (result != null) _data = result;
@@ -37,7 +37,9 @@ class DashboardViewModel extends BaseViewModel {
           leastBought: _data!.leastBought,
         );
       }
-    } catch (_) {}
+    } catch (_) {
+      // Trend load failure is non-critical; keep existing data
+    }
     _isLoadingTrend = false;
     notifyListeners();
   }

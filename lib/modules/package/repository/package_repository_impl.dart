@@ -6,12 +6,13 @@ import 'package:posfrontend/modules/package/repository/package_repository.dart';
 
 class PackageRepositoryImpl implements PackageRepository {
   @override
-  Future<List<Package>> getPackages(String categoryId) async {
+  Future<List<Package>> getPackages(String categoryId, {CancelToken? cancelToken}) async {
     try {
       final dio = ApiClient.create();
       final resp = await dio.get(
         '/api/packages',
         queryParameters: {'categoryId': categoryId},
+        cancelToken: cancelToken,
       );
       return parseTypedList(resp.data, Package.fromJson);
     } on DioException catch (e) {
@@ -27,6 +28,7 @@ class PackageRepositoryImpl implements PackageRepository {
     String? description,
     String? location,
     String? stockStatus,
+    CancelToken? cancelToken,
   }) async {
     try {
       final dio = ApiClient.create();
@@ -40,6 +42,7 @@ class PackageRepositoryImpl implements PackageRepository {
           'location': location,
           'stockStatus': stockStatus,
         },
+        cancelToken: cancelToken,
       );
       final data = parseApiList(resp.data);
       final Map<String, dynamic> json = data.isNotEmpty
@@ -60,6 +63,7 @@ class PackageRepositoryImpl implements PackageRepository {
     String? description,
     String? location,
     String? stockStatus,
+    CancelToken? cancelToken,
   }) async {
     try {
       final dio = ApiClient.create();
@@ -73,6 +77,7 @@ class PackageRepositoryImpl implements PackageRepository {
           'location': location,
           'stockStatus': stockStatus,
         },
+        cancelToken: cancelToken,
       );
       final data = resp.data;
       final Map<String, dynamic> json =

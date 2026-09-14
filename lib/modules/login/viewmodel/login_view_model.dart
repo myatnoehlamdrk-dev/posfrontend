@@ -58,6 +58,7 @@ class LoginViewModel extends BaseViewModel with FormValidationMixin {
           email: _email.trim(),
           password: _password,
         ),
+        cancelToken: cancelToken,
       );
       await TokenStorage.saveToken(response.accessToken);
       return response;

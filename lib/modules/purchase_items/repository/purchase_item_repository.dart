@@ -3,7 +3,7 @@ import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/purchase_items/model/purchase_models.dart';
 
 abstract class PurchaseItemRepository {
-  Future<Map<String, dynamic>> getPurchaseItems({int page = 1, String? status});
+  Future<Map<String, dynamic>> getPurchaseItems({int page = 1, String? status, CancelToken? cancelToken});
   Future<Map<String, dynamic>> createPurchaseItem({
     required String productName,
     required int quantity,
@@ -15,17 +15,20 @@ abstract class PurchaseItemRepository {
     String? color,
     String? brand,
     String? sku,
+    CancelToken? cancelToken,
   });
   Future<Map<String, dynamic>> updatePurchaseItemStatus({
     required String id,
     required String status,
+    CancelToken? cancelToken,
   });
-  Future<void> deletePurchaseItem(String id);
-  Future<List<Supplier>> getSuppliers();
+  Future<void> deletePurchaseItem(String id, {CancelToken? cancelToken});
+  Future<List<Supplier>> getSuppliers({CancelToken? cancelToken});
   Future<Supplier> createSupplier({
     required String name,
     String? contact,
     String? address,
+    CancelToken? cancelToken,
   });
 }
 
@@ -35,10 +38,10 @@ class PurchaseItemRepositoryImpl implements PurchaseItemRepository {
   PurchaseItemRepositoryImpl({Dio? dio}) : _dio = dio ?? ApiClient.create();
 
   @override
-  Future<Map<String, dynamic>> getPurchaseItems({int page = 1, String? status}) async {
+  Future<Map<String, dynamic>> getPurchaseItems({int page = 1, String? status, CancelToken? cancelToken}) async {
     final params = <String, dynamic>{'page': page};
     if (status != null) params['status'] = status;
-    final response = await _dio.get('/api/purchase-items', queryParameters: params);
+    final response = await _dio.get('/api/purchase-items', queryParameters: params, cancelToken: cancelToken);
     final payload = response.data;
     if (payload is Map<String, dynamic>) {
       return payload;
@@ -58,6 +61,7 @@ class PurchaseItemRepositoryImpl implements PurchaseItemRepository {
     String? color,
     String? brand,
     String? sku,
+    CancelToken? cancelToken,
   }) async {
     final data = <String, dynamic>{
       'productName': productName,
@@ -83,7 +87,7 @@ class PurchaseItemRepositoryImpl implements PurchaseItemRepository {
     if (sku != null && sku.isNotEmpty) {
       data['sku'] = sku;
     }
-    final response = await _dio.post('/api/purchase-items', data: data);
+    final response = await _dio.post('/api/purchase-items', data: data, cancelToken: cancelToken);
     final payload = response.data;
     if (payload is Map<String, dynamic>) {
       return payload;
@@ -95,8 +99,9 @@ class PurchaseItemRepositoryImpl implements PurchaseItemRepository {
   Future<Map<String, dynamic>> updatePurchaseItemStatus({
     required String id,
     required String status,
+    CancelToken? cancelToken,
   }) async {
-    final response = await _dio.put('/api/purchase-items/$id', data: {'status': status});
+    final response = await _dio.put('/api/purchase-items/$id', data: {'status': status}, cancelToken: cancelToken);
     final payload = response.data;
     if (payload is Map<String, dynamic>) {
       return payload;
@@ -105,13 +110,13 @@ class PurchaseItemRepositoryImpl implements PurchaseItemRepository {
   }
 
   @override
-  Future<void> deletePurchaseItem(String id) async {
-    await _dio.delete('/api/purchase-items/$id');
+  Future<void> deletePurchaseItem(String id, {CancelToken? cancelToken}) async {
+    await _dio.delete('/api/purchase-items/$id', cancelToken: cancelToken);
   }
 
   @override
-  Future<List<Supplier>> getSuppliers() async {
-    final response = await _dio.get('/api/suppliers');
+  Future<List<Supplier>> getSuppliers({CancelToken? cancelToken}) async {
+    final response = await _dio.get('/api/suppliers', cancelToken: cancelToken);
     final payload = response.data;
     List<dynamic> itemsList;
     if (payload is Map<String, dynamic>) {
@@ -132,6 +137,7 @@ class PurchaseItemRepositoryImpl implements PurchaseItemRepository {
     required String name,
     String? contact,
     String? address,
+    CancelToken? cancelToken,
   }) async {
     final data = <String, dynamic>{
       'name': name,
@@ -142,7 +148,7 @@ class PurchaseItemRepositoryImpl implements PurchaseItemRepository {
     if (address != null && address.isNotEmpty) {
       data['address'] = address;
     }
-    final response = await _dio.post('/api/suppliers', data: data);
+    final response = await _dio.post('/api/suppliers', data: data, cancelToken: cancelToken);
     final payload = response.data;
     if (payload is Map<String, dynamic>) {
       return Supplier.fromJson(payload);

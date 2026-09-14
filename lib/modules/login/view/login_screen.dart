@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/modules/forgot_password/view/forgot_password_screen.dart';
 import 'package:posfrontend/modules/login/repository/login_repository_impl.dart';
 import 'package:posfrontend/modules/login/viewmodel/login_view_model.dart';
 import 'package:posfrontend/modules/dashboard/view/dashboard_screen.dart';
 import 'package:posfrontend/modules/shop/view/shop_screen.dart';
+import 'package:posfrontend/modules/verify_account/view/verify_account_screen.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/widgets/app_input_decoration.dart';
 import 'package:posfrontend/shared/widgets/gradient_button.dart';
@@ -137,8 +139,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       alignment: Alignment.centerRight,
                       child: GestureDetector(
                         onTap: () {
-                          // TODO: wire up forgot-password flow.
-                          showErrorSnackBar(context, 'Forgot password is not implemented yet.');
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const ForgotPasswordScreen(),
+                            ),
+                          );
                         },
                         child: const Text(
                           'Forgot Password?',
@@ -159,12 +165,41 @@ class _LoginScreenState extends State<LoginScreen> {
                     if (_viewModel.errorMessage != null)
                       Padding(
                         padding: const EdgeInsets.only(top: 12),
-                        child: Text(
-                          _viewModel.errorMessage!,
-                          style: const TextStyle(
-                            color: Colors.red,
-                            fontSize: 13,
-                          ),
+                        child: Column(
+                          children: [
+                            Text(
+                              _viewModel.errorMessage!,
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontSize: 13,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            if (_viewModel.errorMessage!.contains('verify'))
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => VerifyAccountScreen(
+                                          email: _emailController.text,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: const Text(
+                                    'Verify Email',
+                                    style: TextStyle(
+                                      color: AppColors.primary,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                     const SizedBox(height: 24),

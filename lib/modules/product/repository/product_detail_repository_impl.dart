@@ -5,10 +5,10 @@ import 'package:posfrontend/modules/product/repository/product_detail_repository
 
 class ProductDetailRepositoryImpl implements ProductDetailRepository {
   @override
-  Future<ProductDetail> getDetail(String productId) async {
+  Future<ProductDetail> getDetail(String productId, {CancelToken? cancelToken}) async {
     try {
       final dio = ApiClient.create();
-      final resp = await dio.get('/api/products/$productId');
+      final resp = await dio.get('/api/products/$productId', cancelToken: cancelToken);
       final data = resp.data;
       final json =
           data is Map && data['data'] is Map ? data['data'] as Map<String, dynamic> : data as Map<String, dynamic>;

@@ -6,14 +6,14 @@ import 'package:posfrontend/modules/product/repository/catalog_product_repositor
 
 class CatalogProductRepositoryImpl implements CatalogProductRepository {
   @override
-  Future<List<CatalogProduct>> getProducts({String? packageId}) async {
+  Future<List<CatalogProduct>> getProducts({String? packageId, CancelToken? cancelToken}) async {
     try {
       final dio = ApiClient.create();
       final query = <String, dynamic>{};
       if (packageId != null && packageId.isNotEmpty) {
         query['packageId'] = packageId;
       }
-      final resp = await dio.get('/api/products', queryParameters: query);
+      final resp = await dio.get('/api/products', queryParameters: query, cancelToken: cancelToken);
       return parseTypedList(resp.data, _map);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);

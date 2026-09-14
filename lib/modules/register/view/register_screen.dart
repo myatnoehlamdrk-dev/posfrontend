@@ -3,12 +3,12 @@ import 'package:posfrontend/modules/register/repository/auth_repository_impl.dar
 import 'package:posfrontend/modules/register/viewmodel/register_view_model.dart';
 import 'package:posfrontend/modules/shop/repository/shop_api_repository_impl.dart';
 import 'package:posfrontend/modules/shop/repository/shop_local_repository_impl.dart';
+import 'package:posfrontend/modules/verify_account/view/verify_account_screen.dart';
 import 'package:posfrontend/shared/repositories/imgbb_repository_impl.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/widgets/app_input_decoration.dart';
 import 'package:posfrontend/shared/widgets/gradient_button.dart';
 import 'package:posfrontend/shared/widgets/required_label.dart';
-import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -392,7 +392,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             onPressed: () async {
                               final success = await _viewModel.register();
                               if (success && mounted) {
-                                showSuccessSnackBar(context, 'Registration successful');
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => VerifyAccountScreen(
+                                      email: _viewModel.email,
+                                    ),
+                                  ),
+                                );
                               }
                             },
                           ),

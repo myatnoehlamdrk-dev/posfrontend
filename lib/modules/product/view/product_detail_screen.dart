@@ -30,7 +30,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   ProductDetail? _detail;
   bool _loading = true;
   String? _error;
-  bool _isWide = false;
   int _tabIndex = 0;
 
   @override
@@ -62,8 +61,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return LayoutBuilder(
       builder: (ctx, constraints) {
         final isWide = constraints.maxWidth >= 768;
-        _isWide = isWide;
-        final body = _content();
+        final body = _content(isWide: isWide);
 
         if (isWide) {
           return Scaffold(
@@ -76,7 +74,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     width: 240,
                     child: AppDrawer(user: widget.user, activeItem: 'Inventory'),
                   ),
-                  Expanded(child: _content()),
+                  Expanded(child: _content(isWide: isWide)),
                 ],
               ),
             ),
@@ -92,7 +90,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget _content() {
+  Widget _content({required bool isWide}) {
     return Column(
       children: [
         Padding(
@@ -102,7 +100,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             children: [
               AppTopBar(
                 title: 'Product Detail',
-                showMenuButton: !_isWide,
+                showMenuButton: !isWide,
                 showBackButton: false,
                 onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
                 user: widget.user,

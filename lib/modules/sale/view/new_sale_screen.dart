@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:posfrontend/core/extensions/datetime_extensions.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
@@ -19,6 +20,8 @@ import 'package:posfrontend/modules/shop/repository/shop_api_repository_impl.dar
 import 'package:posfrontend/modules/shop/repository/shop_local_repository_impl.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
+import 'package:posfrontend/shared/widgets/error_snackbar.dart';
+import 'package:printing/printing.dart';
 
 class NewSaleScreen extends StatefulWidget {
   final LoginResponse? user;
@@ -57,8 +60,13 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   late String _orderRandom;
   bool _isSubmitting = false;
   bool _pdfExportEnabled = true;
-  bool _voucherPaperEnabled = true;
+  bool _printVoucherEnabled = false;
+  String _printFormat = 'thermal';
   Shop? _shop;
+
+  static const _keyPdfExport = 'print_pdf_export';
+  static const _keyPrintVoucher = 'print_voucher_enabled';
+  static const _keyPrintFormat = 'print_format';
 
   final List<SaleItem> _items = [];
 
@@ -85,6 +93,24 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       _paymentMethod = widget.initialPaymentMethod!;
     }
     _loadShop();
+    _loadPrintSettings();
+  }
+
+  Future<void> _loadPrintSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _pdfExportEnabled = prefs.getBool(_keyPdfExport) ?? true;
+      _printVoucherEnabled = prefs.getBool(_keyPrintVoucher) ?? false;
+      _printFormat = prefs.getString(_keyPrintFormat) ?? 'thermal';
+    });
+  }
+
+  Future<void> _savePrintSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyPdfExport, _pdfExportEnabled);
+    await prefs.setBool(_keyPrintVoucher, _printVoucherEnabled);
+    await prefs.setString(_keyPrintFormat, _printFormat);
   }
 
   Future<void> _loadShop() async {
@@ -95,7 +121,9 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         if (mounted) setState(() => _shop = shop);
         return;
       }
-    } catch (_) {}
+    } catch (_) {
+      // Shop API fetch failed; fall back to local
+    }
     final shop = await ShopLocalRepositoryImpl().getShop();
     if (mounted && shop != null) setState(() => _shop = shop);
   }
@@ -112,8 +140,6 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     setState(() => _isSubmitting = true);
     try {
       final discountPct = _discountPct;
-      final subtotal = _subtotal;
-      final discountAmt = _discountAmt;
       final totalPayable = _totalPayable;
       final items = List<SaleItem>.from(_items);
       final customerName = _customerNameCtrl.text;
@@ -140,35 +166,15 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       if (widget.existingOrderId != null) {
         try {
           await OrderRepositoryImpl().deleteOrder(widget.existingOrderId!);
-        } catch (_) {}
+        } catch (_) {
+          // Original order deletion failure is non-critical after sale
+        }
       }
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Sale saved successfully!'), backgroundColor: Color(0xFF16A34A)),
       );
-
-      if (_pdfExportEnabled) {
-        await VoucherPdfService.generateAndPrint(
-          customerName: customerName,
-          customerPhone: customerPhone,
-          staffName: staffName,
-          voucherNo: voucherNo,
-          orderId: orderId,
-          dateTime: DateTime.now(),
-          items: items,
-          discountPct: discountPct,
-          subtotal: subtotal,
-          discountAmt: discountAmt,
-          totalPayable: totalPayable,
-          paymentMethod: paymentMethod,
-          notes: notes,
-          shopName: _shop?.name,
-          shopAddress: _shop?.physicalAddress,
-          shopPhone: _shop?.ownerInformation.phone,
-          shopImage: _shop?.logoUrl ?? _shop?.logoData,
-        );
-      }
 
       setState(() {
         _items.clear();
@@ -178,16 +184,22 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         _notesCtrl.clear();
         _refreshRandoms();
       });
+
+      if (_pdfExportEnabled || _printVoucherEnabled) {
+        final saleArgs = _buildSaleArgs(customerName, customerPhone, staffName, voucherNo, orderId, items, discountPct, totalPayable, paymentMethod, notes);
+        if (_pdfExportEnabled) {
+          _autoExportPdf(saleArgs);
+        }
+        if (_printVoucherEnabled) {
+          _autoPrintVoucher(saleArgs);
+        }
+      }
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message), backgroundColor: const Color(0xFFDC2626)),
-      );
+      showErrorSnackBar(context, e);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('An unexpected error occurred'), backgroundColor: Color(0xFFDC2626)),
-      );
+      showErrorSnackBar(context, Exception('An unexpected error occurred'));
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -224,14 +236,10 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       });
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message), backgroundColor: const Color(0xFFDC2626)),
-      );
+      showErrorSnackBar(context, e);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('An unexpected error occurred'), backgroundColor: Color(0xFFDC2626)),
-      );
+      showErrorSnackBar(context, Exception('An unexpected error occurred'));
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -239,6 +247,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
 
   @override
   void dispose() {
+    _viewModel.dispose();
     _discountCtrl.dispose();
     _notesCtrl.dispose();
     _customerNameCtrl.dispose();
@@ -982,7 +991,106 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     );
   }
 
-  void _showPrintVoucherSettings() {
+  Map<String, dynamic> _buildSaleArgs(String customerName, String? customerPhone, String staffName, String voucherNo, String orderId, List<SaleItem> items, double discountPct, double totalPayable, String paymentMethod, String? notes) {
+    return {
+      'customerName': customerName,
+      'customerPhone': customerPhone,
+      'staffName': staffName,
+      'voucherNo': voucherNo,
+      'orderId': orderId,
+      'dateTime': DateTime.now(),
+      'items': items,
+      'discountPct': discountPct,
+      'subtotal': _subtotal,
+      'discountAmt': _discountAmt,
+      'totalPayable': totalPayable,
+      'paymentMethod': paymentMethod,
+      'notes': notes,
+      'shopName': _shop?.name,
+      'shopAddress': _shop?.physicalAddress,
+      'shopPhone': _shop?.ownerInformation.phone,
+      'shopImage': _shop?.logoUrl ?? _shop?.logoData,
+    };
+  }
+
+  void _autoExportPdf(Map<String, dynamic> args) async {
+    try {
+      final pdfBytes = await VoucherPdfService.exportA4Pdf(
+        customerName: args['customerName'],
+        customerPhone: args['customerPhone'],
+        staffName: args['staffName'],
+        voucherNo: args['voucherNo'],
+        orderId: args['orderId'],
+        dateTime: args['dateTime'],
+        items: args['items'],
+        discountPct: args['discountPct'],
+        subtotal: args['subtotal'],
+        discountAmt: args['discountAmt'],
+        totalPayable: args['totalPayable'],
+        paymentMethod: args['paymentMethod'],
+        notes: args['notes'],
+        shopName: args['shopName'],
+        shopAddress: args['shopAddress'],
+        shopPhone: args['shopPhone'],
+        shopImage: args['shopImage'],
+      );
+      if (mounted) {
+        await Printing.sharePdf(bytes: pdfBytes, filename: 'Voucher_${args['voucherNo']}.pdf');
+      }
+    } catch (_) {
+      // PDF export failure is non-critical
+    }
+  }
+
+  void _autoPrintVoucher(Map<String, dynamic> args) async {
+    try {
+      if (_printFormat == 'thermal') {
+        await VoucherPdfService.generateAndPrintReceipt(
+          customerName: args['customerName'],
+          customerPhone: args['customerPhone'],
+          staffName: args['staffName'],
+          voucherNo: args['voucherNo'],
+          orderId: args['orderId'],
+          dateTime: args['dateTime'],
+          items: args['items'],
+          discountPct: args['discountPct'],
+          subtotal: args['subtotal'],
+          discountAmt: args['discountAmt'],
+          totalPayable: args['totalPayable'],
+          paymentMethod: args['paymentMethod'],
+          notes: args['notes'],
+          shopName: args['shopName'],
+          shopAddress: args['shopAddress'],
+          shopPhone: args['shopPhone'],
+          shopImage: args['shopImage'],
+        );
+      } else {
+        await VoucherPdfService.generateAndPrint(
+          customerName: args['customerName'],
+          customerPhone: args['customerPhone'],
+          staffName: args['staffName'],
+          voucherNo: args['voucherNo'],
+          orderId: args['orderId'],
+          dateTime: args['dateTime'],
+          items: args['items'],
+          discountPct: args['discountPct'],
+          subtotal: args['subtotal'],
+          discountAmt: args['discountAmt'],
+          totalPayable: args['totalPayable'],
+          paymentMethod: args['paymentMethod'],
+          notes: args['notes'],
+          shopName: args['shopName'],
+          shopAddress: args['shopAddress'],
+          shopPhone: args['shopPhone'],
+          shopImage: args['shopImage'],
+        );
+      }
+    } catch (_) {
+      // Print voucher failure is non-critical
+    }
+  }
+
+  void _showPrintSettings() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1005,52 +1113,49 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                         child: Container(
                           width: 40,
                           height: 4,
-                          decoration: BoxDecoration(
-                            color: kBorder,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
+                          decoration: BoxDecoration(color: kBorder, borderRadius: BorderRadius.circular(2)),
                         ),
                       ),
                       const SizedBox(height: 16),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'Print Voucher Settings',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: kTitle,
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () => Navigator.pop(ctx),
-                            child: const Icon(Icons.close, color: kGray),
-                          ),
+                          const Text('Print Settings', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: kTitle)),
+                          GestureDetector(onTap: () => Navigator.pop(ctx), child: const Icon(Icons.close, color: kGray)),
                         ],
                       ),
                       const SizedBox(height: 24),
                       _toggleRow(
                         icon: Icons.picture_as_pdf,
-                        title: 'PDF Export',
-                        subtitle: 'Export voucher as PDF file',
+                        title: 'Export PDF',
+                        subtitle: 'Save PDF file after sale',
                         value: _pdfExportEnabled,
                         onChanged: (v) {
                           setSheetState(() => _pdfExportEnabled = v);
                           setState(() => _pdfExportEnabled = v);
+                          _savePrintSettings();
                         },
                       ),
                       const SizedBox(height: 16),
                       _toggleRow(
-                        icon: Icons.receipt_long,
-                        title: 'Voucher Paper',
-                        subtitle: 'Print on voucher paper',
-                        value: _voucherPaperEnabled,
+                        icon: Icons.print_outlined,
+                        title: 'Print Voucher',
+                        subtitle: 'Auto-print after sale',
+                        value: _printVoucherEnabled,
                         onChanged: (v) {
-                          setSheetState(() => _voucherPaperEnabled = v);
-                          setState(() => _voucherPaperEnabled = v);
+                          setSheetState(() => _printVoucherEnabled = v);
+                          setState(() => _printVoucherEnabled = v);
+                          _savePrintSettings();
                         },
                       ),
+                      if (_printVoucherEnabled) ...[
+                        const SizedBox(height: 20),
+                        const Text('Print Format', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: kTitle)),
+                        const SizedBox(height: 10),
+                        _formatOption(ctx, setSheetState, 'Thermal Paper', 'thermal', Icons.receipt_long),
+                        const SizedBox(height: 8),
+                        _formatOption(ctx, setSheetState, 'A4 Paper', 'a4', Icons.description_outlined),
+                      ],
                       const SizedBox(height: 24),
                     ],
                   ),
@@ -1060,6 +1165,33 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           },
         );
       },
+    );
+  }
+
+  Widget _formatOption(BuildContext ctx, StateSetter setSheetState, String label, String value, IconData icon) {
+    final isSelected = _printFormat == value;
+    return GestureDetector(
+      onTap: () {
+        setSheetState(() => _printFormat = value);
+        setState(() => _printFormat = value);
+        _savePrintSettings();
+      },
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFF5F0FF) : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: isSelected ? kPurple : kBorder),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: isSelected ? kPurple : kGray, size: 20),
+            const SizedBox(width: 10),
+            Expanded(child: Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: isSelected ? kPurple : kTitle))),
+            if (isSelected) const Icon(Icons.check_circle, color: kPurple, size: 20),
+          ],
+        ),
+      ),
     );
   }
 
@@ -1082,10 +1214,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           Container(
             width: 40,
             height: 40,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF3F4F6),
-              borderRadius: BorderRadius.circular(10),
-            ),
+            decoration: BoxDecoration(color: const Color(0xFFF3F4F6), borderRadius: BorderRadius.circular(10)),
             child: Icon(icon, color: kGray, size: 20),
           ),
           const SizedBox(width: 12),
@@ -1093,19 +1222,9 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: kTitle,
-                  ),
-                ),
+                Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: kTitle)),
                 const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: const TextStyle(fontSize: 12, color: kGray),
-                ),
+                Text(subtitle, style: const TextStyle(fontSize: 12, color: kGray)),
               ],
             ),
           ),
@@ -1127,8 +1246,8 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         GestureDetector(
-          onTap: _showPrintVoucherSettings,
-          child: _footerBtn(Icons.print_outlined, 'Print Voucher'),
+          onTap: _showPrintSettings,
+          child: _footerBtn(Icons.settings_outlined, 'Print Settings'),
         ),
         Container(
           width: 1,

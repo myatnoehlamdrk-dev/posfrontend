@@ -10,12 +10,12 @@ class LoginRepositoryImpl implements LoginRepository {
   LoginRepositoryImpl([Dio? dio]) : _dio = dio ?? ApiClient.create();
 
   @override
-  Future<LoginResponse> login(LoginRequest request) async {
+  Future<LoginResponse> login(LoginRequest request, {CancelToken? cancelToken}) async {
     try {
-      // Auth controller: POST {BASE_URL}/api/auth/login
       final response = await _dio.post(
         '/api/auth/login',
         data: request.toJson(),
+        cancelToken: cancelToken,
       );
       return LoginResponse.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {

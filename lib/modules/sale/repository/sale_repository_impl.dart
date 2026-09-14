@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/sale/model/sale_models.dart';
 import 'package:posfrontend/modules/sale/repository/sale_repository.dart';
@@ -15,6 +16,7 @@ class SaleRepositoryImpl implements SaleRepository {
     required double grandTotal,
     int? discount,
     String? notes,
+    CancelToken? cancelToken,
   }) async {
     final dio = ApiClient.create();
 
@@ -46,7 +48,7 @@ class SaleRepositoryImpl implements SaleRepository {
       if (notes != null && notes.isNotEmpty) 'notes': notes,
     };
 
-    final resp = await dio.post('/api/sales', data: payload);
+    final resp = await dio.post('/api/sales', data: payload, cancelToken: cancelToken);
     if (resp.statusCode != 201) {
       throw ApiException(
         statusCode: resp.statusCode,

@@ -10,12 +10,12 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl([Dio? dio]) : _dio = dio ?? ApiClient.create();
 
   @override
-  Future<User> register(RegisterRequest request) async {
+  Future<User> register(RegisterRequest request, {CancelToken? cancelToken}) async {
     try {
-      // Auth controller: POST {BASE_URL}/api/auth/register
       final response = await _dio.post(
         '/api/auth/register',
         data: request.toJson(),
+        cancelToken: cancelToken,
       );
       return User.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {

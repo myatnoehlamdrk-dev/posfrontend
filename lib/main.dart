@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:posfrontend/core/auth/auth_redirect.dart';
 import 'package:posfrontend/modules/dashboard/view/dashboard_screen.dart';
 import 'package:posfrontend/modules/inventory/view/inventory_screen.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
@@ -32,6 +33,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'POS Frontend',
+      navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
@@ -43,6 +45,7 @@ class MyApp extends StatelessWidget {
       ),
       home: const LoginScreen(),
       routes: {
+        '/login': (ctx) => const LoginScreen(),
         '/dashboard': (ctx) => DashboardScreen(user: _userArg(ctx)),
         '/inventory': (ctx) => InventoryScreen(user: _userArg(ctx)),
         '/products': (ctx) => ProductsCatalogScreen(user: _userArg(ctx)),

@@ -190,7 +190,7 @@ class RegisterViewModel extends BaseViewModel with FormValidationMixin {
         }
 
         // 2) Shop controller: persist the shop (with logo URL) on the backend.
-        final createdShop = await _shopApiRepository.createShop(shop);
+        final createdShop = await _shopApiRepository.createShop(shop, cancelToken: cancelToken);
         await _shopRepository.saveShop(createdShop);
         _shop = createdShop;
         notifyListeners();
@@ -213,6 +213,7 @@ class RegisterViewModel extends BaseViewModel with FormValidationMixin {
           gender: _gender,
           shopId: shopId,
         ),
+        cancelToken: cancelToken,
       );
       _user = user;
       return true;

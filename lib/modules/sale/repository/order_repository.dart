@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:posfrontend/modules/sale/model/sale_models.dart';
 
 abstract class OrderRepository {
@@ -13,9 +14,10 @@ abstract class OrderRepository {
     int? discount,
     String? notes,
     String status,
+    CancelToken? cancelToken,
   });
 
-  Future<void> updateOrderStatus({required String orderId, required String status});
+  Future<void> updateOrderStatus({required String orderId, required String status, CancelToken? cancelToken});
 
-  Future<void> deleteOrder(String orderId);
+  Future<void> deleteOrder(String orderId, {CancelToken? cancelToken});
 }

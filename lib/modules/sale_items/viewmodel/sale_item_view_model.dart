@@ -28,8 +28,8 @@ class SaleItemViewModel extends BaseViewModel {
     resetError();
 
     try {
-      final salesResponse = await _repository.getSales(page: _currentPage);
-      final ordersResponse = await _repository.getOrders(page: _currentPage);
+      final salesResponse = await _repository.getSales(page: _currentPage, cancelToken: cancelToken);
+      final ordersResponse = await _repository.getOrders(page: _currentPage, cancelToken: cancelToken);
 
       final allItems = [...salesResponse.data, ...ordersResponse.data];
       allItems.sort((a, b) => b.date.compareTo(a.date));
@@ -52,9 +52,9 @@ class SaleItemViewModel extends BaseViewModel {
   Future<bool> deleteItem(SaleOrder order) async {
     try {
       if (order.status == OrderStatus.alreadySale) {
-        await _repository.deleteSale(order.orderId);
+        await _repository.deleteSale(order.orderId, cancelToken: cancelToken);
       } else {
-        await _repository.deleteOrder(order.orderId);
+        await _repository.deleteOrder(order.orderId, cancelToken: cancelToken);
       }
       _sales.removeWhere((o) => o.orderId == order.orderId);
       notifyListeners();
@@ -72,7 +72,7 @@ class SaleItemViewModel extends BaseViewModel {
 
   Future<SaleOrder?> deleteSaleItem(String saleId, String itemId) async {
     try {
-      final updatedOrder = await _repository.deleteSaleItem(saleId, itemId);
+      final updatedOrder = await _repository.deleteSaleItem(saleId, itemId, cancelToken: cancelToken);
       final index = _sales.indexWhere((o) => o.orderId == saleId);
       if (index != -1) {
         _sales[index] = updatedOrder;
@@ -92,7 +92,7 @@ class SaleItemViewModel extends BaseViewModel {
 
   Future<SaleOrder?> getOrderById(String id) async {
     try {
-      return await _repository.getOrderById(id);
+      return await _repository.getOrderById(id, cancelToken: cancelToken);
     } on ApiException catch (e) {
       setError(e.message);
       notifyListeners();

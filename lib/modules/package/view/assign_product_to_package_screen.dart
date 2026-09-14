@@ -28,6 +28,7 @@ class AssignProductToPackageScreen extends StatefulWidget {
 class _AssignProductToPackageScreenState
     extends State<AssignProductToPackageScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
+  final CancelToken _cancelToken = CancelToken();
   String _searchQuery = '';
   String _selectedCategory = 'All';
   List<String> _categories = ['All'];
@@ -124,6 +125,7 @@ class _AssignProductToPackageScreenState
           await dio.put(
             '/api/products/$productId',
             data: {'packageId': int.tryParse(widget.package.id)},
+            cancelToken: _cancelToken,
           );
           successCount++;
         } on DioException {
@@ -152,6 +154,7 @@ class _AssignProductToPackageScreenState
 
   @override
   void dispose() {
+    if (!_cancelToken.isCancelled) _cancelToken.cancel();
     _searchCtrl.dispose();
     super.dispose();
   }

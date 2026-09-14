@@ -32,6 +32,7 @@ class PackageDetailsScreen extends StatefulWidget {
 class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _search = TextEditingController();
+  final CancelToken _cancelToken = CancelToken();
   List<CatalogProduct> _products = [];
   bool _loading = true;
   String? _error;
@@ -121,6 +122,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
       await dio.put(
         '/api/products/${product.id}',
         data: {'packageId': null},
+        cancelToken: _cancelToken,
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -143,6 +145,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
 
   @override
   void dispose() {
+    if (!_cancelToken.isCancelled) _cancelToken.cancel();
     _search.dispose();
     super.dispose();
   }

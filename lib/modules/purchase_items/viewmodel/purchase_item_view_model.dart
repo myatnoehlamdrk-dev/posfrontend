@@ -31,7 +31,7 @@ class PurchaseItemViewModel extends BaseViewModel {
     resetError();
 
     try {
-      final response = await _repository.getPurchaseItems(page: _currentPage);
+      final response = await _repository.getPurchaseItems(page: _currentPage, cancelToken: cancelToken);
       final paginated = PaginatedResponse.fromJson(response, PurchaseOrder.fromJson);
       _purchaseItems = _currentPage == 1
           ? paginated.data
@@ -49,7 +49,7 @@ class PurchaseItemViewModel extends BaseViewModel {
 
   Future<void> loadSuppliers() async {
     try {
-      _suppliers = await _repository.getSuppliers();
+      _suppliers = await _repository.getSuppliers(cancelToken: cancelToken);
       notifyListeners();
     } catch (e) {
       setError(e.toString());
@@ -67,6 +67,7 @@ class PurchaseItemViewModel extends BaseViewModel {
         name: name,
         contact: contact,
         address: address,
+        cancelToken: cancelToken,
       );
       _suppliers.insert(0, supplier);
       notifyListeners();
@@ -106,6 +107,7 @@ class PurchaseItemViewModel extends BaseViewModel {
         color: color,
         brand: brand,
         sku: sku,
+        cancelToken: cancelToken,
       );
       await loadPurchaseItems(refresh: true);
       return true;
@@ -122,7 +124,7 @@ class PurchaseItemViewModel extends BaseViewModel {
 
   Future<bool> updateStatus(String id, String status) async {
     try {
-      await _repository.updatePurchaseItemStatus(id: id, status: status);
+      await _repository.updatePurchaseItemStatus(id: id, status: status, cancelToken: cancelToken);
       await loadPurchaseItems(refresh: true);
       return true;
     } on DioException catch (e) {
@@ -138,7 +140,7 @@ class PurchaseItemViewModel extends BaseViewModel {
 
   Future<bool> deletePurchaseItem(String id) async {
     try {
-      await _repository.deletePurchaseItem(id);
+      await _repository.deletePurchaseItem(id, cancelToken: cancelToken);
       _purchaseItems.removeWhere((item) => item.orderId == id);
       notifyListeners();
       return true;

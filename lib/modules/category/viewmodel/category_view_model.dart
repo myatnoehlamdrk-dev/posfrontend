@@ -36,7 +36,7 @@ class CategoryViewModel extends BaseViewModel {
     try {
       String? inventoryId;
       try {
-        final inventory = await _inventoryRepository.getInventoryByType(type);
+        final inventory = await _inventoryRepository.getInventoryByType(type, cancelToken: cancelToken);
         inventoryId = inventory.id;
       } on ApiException {
         inventoryId = null;
@@ -45,6 +45,7 @@ class CategoryViewModel extends BaseViewModel {
       _categories = await _repository.getCategories(
         inventoryId: inventoryId,
         type: type,
+        cancelToken: cancelToken,
       );
     } on ApiException catch (e) {
       setError(e.message);

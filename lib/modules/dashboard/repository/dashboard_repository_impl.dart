@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:posfrontend/core/extensions/number_extensions.dart';
 import 'package:posfrontend/core/extensions/map_json_extensions.dart';
@@ -7,9 +8,9 @@ import 'package:posfrontend/modules/dashboard/repository/dashboard_repository.da
 
 class DashboardRepositoryImpl implements DashboardRepository {
   @override
-  Future<DashboardData> getDashboardData({int days = 30}) async {
+  Future<DashboardData> getDashboardData({int days = 30, CancelToken? cancelToken}) async {
     final dio = ApiClient.create();
-    final resp = await dio.get('/api/dashboard/all', queryParameters: {'days': days});
+    final resp = await dio.get('/api/dashboard/all', queryParameters: {'days': days}, cancelToken: cancelToken);
     final data = resp.data as Map<String, dynamic>;
 
     final stats = data['stats'] as Map<String, dynamic>? ?? {};

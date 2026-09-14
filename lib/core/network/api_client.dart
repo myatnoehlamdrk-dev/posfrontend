@@ -1,26 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:posfrontend/core/auth/token_storage.dart';
-
-class ApiException implements Exception {
-  final int? statusCode;
-  final String message;
-
-  ApiException({this.statusCode, required this.message});
-
-  @override
-  String toString() => 'ApiException($statusCode): $message';
-
-  static ApiException fromDio(DioException e) {
-    final data = e.response?.data;
-    var message = e.message ?? 'Network error';
-    if (data is Map<String, dynamic> && data['message'] != null) {
-      message = data['message'].toString();
-    } else if (data is Map<String, dynamic> && data['error'] != null) {
-      message = data['error'].toString();
-    }
-    return ApiException(statusCode: e.response?.statusCode, message: message);
-  }
-}
+export 'package:posfrontend/core/network/app_exceptions.dart';
 
 class ApiClient {
   static const String baseUrl = String.fromEnvironment('BASE_URL');
@@ -57,6 +37,12 @@ class ApiClient {
             options.headers['Authorization'] = 'Bearer $token';
           }
           handler.next(options);
+        },
+        onError: (error, handler) async {
+          if (error.response?.statusCode == 401) {
+            await TokenStorage.clearToken();
+          }
+          handler.next(error);
         },
       ),
     );

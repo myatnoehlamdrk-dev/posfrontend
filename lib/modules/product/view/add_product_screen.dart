@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:posfrontend/core/extensions/number_extensions.dart';
@@ -8,6 +9,7 @@ import 'package:posfrontend/core/utils/error_handler.dart';
 import 'package:posfrontend/modules/category/model/category_models.dart';
 import 'package:posfrontend/modules/category/repository/category_repository_impl.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/error_snackbar.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/product/model/product_create_models.dart';
 import 'package:posfrontend/modules/product/model/product_detail_models.dart' hide ProductVariant;
@@ -33,6 +35,7 @@ class AddProductScreen extends StatefulWidget {
 class _AddProductScreenState extends State<AddProductScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ProductCreateRepositoryImpl _repository = ProductCreateRepositoryImpl();
+  final CancelToken _cancelToken = CancelToken();
 
   final TextEditingController _name = TextEditingController();
   final TextEditingController _brand = TextEditingController();
@@ -142,6 +145,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   @override
   void dispose() {
+    if (!_cancelToken.isCancelled) _cancelToken.cancel();
     _name.dispose();
     _brand.dispose();
     _sku.dispose();
@@ -212,7 +216,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
         _searchResults = results;
         _showSearchResults = results.isNotEmpty;
       });
-    } catch (_) {}
+    } catch (_) {
+      // Search failure is non-critical; show empty results
+    }
   }
 
   void _selectProduct(ProductSearchResult product) {
@@ -332,9 +338,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       }
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      showErrorSnackBar(context, e);
     } finally {
       if (mounted) setState(() => _uploading = false);
     }
@@ -1011,7 +1015,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               'name': nameController.text.trim(),
                               'contact': phoneController.text.trim(),
                               'address': addressController.text.trim(),
-                            });
+                            }, cancelToken: _cancelToken);
                             final data = resp.data;
                             if (data is Map<String, dynamic>) {
                               final newSupplier = SupplierOption(
@@ -1193,6 +1197,17 @@ class _VariantTileState extends State<_VariantTile> {
     _color = widget.variant.color;
     _qty = TextEditingController(text: widget.variant.quantity.toString());
     _price = TextEditingController(text: widget.variant.price.toString());
+  }
+
+  @override
+  void didUpdateWidget(covariant _VariantTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.variant != oldWidget.variant) {
+      _size = widget.variant.size;
+      _color = widget.variant.color;
+      _qty.text = widget.variant.quantity.toString();
+      _price.text = widget.variant.price.toString();
+    }
   }
 
   @override

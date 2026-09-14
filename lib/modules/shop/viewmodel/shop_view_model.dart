@@ -75,7 +75,7 @@ class ShopViewModel extends BaseViewModel with FormValidationMixin {
     _isLoadingShops = true;
     notifyListeners();
     try {
-      _shops = await _apiRepository.getShops();
+      _shops = await _apiRepository.getShops(cancelToken: cancelToken);
     } on ApiException catch (e) {
       setError(e.message);
     } catch (e) {

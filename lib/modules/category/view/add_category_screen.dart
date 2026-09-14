@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/core/network/api_client.dart';
-import 'package:posfrontend/core/utils/error_handler.dart';
 import 'package:posfrontend/modules/category/model/category_models.dart';
 import 'package:posfrontend/modules/category/repository/category_repository_impl.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
+import 'package:posfrontend/shared/widgets/error_snackbar.dart';
 import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/shared/widgets/inventory_form_widgets.dart';
 
@@ -88,14 +88,10 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
       }
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      showErrorSnackBar(context, e);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(formatApiError(e))),
-      );
+      showErrorSnackBar(context, e);
     } finally {
       if (mounted) setState(() => _saving = false);
     }

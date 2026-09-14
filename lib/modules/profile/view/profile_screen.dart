@@ -66,7 +66,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       final shop = await ShopApiRepositoryImpl().getShopById(shopId);
       if (mounted) setState(() => _shop = shop);
-    } catch (_) {}
+    } catch (_) {
+      // Shop load failure is non-critical
+    }
   }
 
   void _onViewModelChange() {
@@ -114,17 +116,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _pickImage() async {
     final xfile = await _picker.pickImage(source: ImageSource.gallery);
-    if (xfile != null) {
-      final bytes = await xfile.readAsBytes();
-      final result = await ImgbbRepositoryImpl().uploadImage(
-        bytes,
-        fileName: xfile.name,
-      );
-      final url = result.url;
-      _viewModel.setImageUrl(url);
-      ProfileImageNotifier.instance.update(url);
-      await _viewModel.saveProfile();
-    }
+    if (xfile == null) return;
+    final bytes = await xfile.readAsBytes();
+    if (!mounted) return;
+    final result = await ImgbbRepositoryImpl().uploadImage(
+      bytes,
+      fileName: xfile.name,
+    );
+    if (!mounted) return;
+    final url = result.url;
+    _viewModel.setImageUrl(url);
+    ProfileImageNotifier.instance.update(url);
+    await _viewModel.saveProfile();
   }
 
   bool _saving = false;

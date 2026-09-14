@@ -9,9 +9,9 @@ class SettingRepositoryImpl implements SettingRepository {
   SettingRepositoryImpl([Dio? dio]) : _dio = dio ?? ApiClient.create();
 
   @override
-  Future<SettingsData> getSettings() async {
+  Future<SettingsData> getSettings({CancelToken? cancelToken}) async {
     try {
-      final response = await _dio.get('/api/settings');
+      final response = await _dio.get('/api/settings', cancelToken: cancelToken);
       final data = response.data as Map<String, dynamic>;
       return SettingsData(
         themeMode: data['themeMode'] == 'dark' ? ThemeMode.dark : ThemeMode.light,
@@ -25,7 +25,7 @@ class SettingRepositoryImpl implements SettingRepository {
   }
 
   @override
-  Future<SettingsData> updateSettings({String? themeMode, String? language, String? shopType, String? shopImage}) async {
+  Future<SettingsData> updateSettings({String? themeMode, String? language, String? shopType, String? shopImage, CancelToken? cancelToken}) async {
     try {
       final body = <String, dynamic>{};
       if (themeMode != null) body['theme_mode'] = themeMode;
@@ -33,7 +33,7 @@ class SettingRepositoryImpl implements SettingRepository {
       if (shopType != null) body['shop_type'] = shopType;
       if (shopImage != null) body['shop_image'] = shopImage;
 
-      final response = await _dio.put('/api/settings', data: body);
+      final response = await _dio.put('/api/settings', data: body, cancelToken: cancelToken);
       final data = response.data as Map<String, dynamic>;
       return SettingsData(
         themeMode: data['themeMode'] == 'dark' ? ThemeMode.dark : ThemeMode.light,

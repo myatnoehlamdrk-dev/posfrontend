@@ -73,7 +73,7 @@ class ProfileViewModel extends BaseViewModel with FormValidationMixin {
     setLoading(true);
     resetError();
     try {
-      _profile = await _repository.getProfile();
+      _profile = await _repository.getProfile(cancelToken: cancelToken);
       _populateFields();
     } on ApiException catch (e) {
       setError(e.message);

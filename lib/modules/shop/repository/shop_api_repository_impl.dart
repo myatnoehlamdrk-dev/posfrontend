@@ -9,10 +9,9 @@ class ShopApiRepositoryImpl implements ShopApiRepository {
   ShopApiRepositoryImpl([Dio? dio]) : _dio = dio ?? ApiClient.create();
 
   @override
-  Future<Shop> createShop(Shop shop) async {
+  Future<Shop> createShop(Shop shop, {CancelToken? cancelToken}) async {
     try {
-      // Shop controller: POST {BASE_URL}/api/shops
-      final response = await _dio.post('/api/shops', data: shop.toApiJson());
+      final response = await _dio.post('/api/shops', data: shop.toApiJson(), cancelToken: cancelToken);
       return Shop.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
@@ -20,10 +19,9 @@ class ShopApiRepositoryImpl implements ShopApiRepository {
   }
 
   @override
-  Future<List<Shop>> getShops() async {
+  Future<List<Shop>> getShops({CancelToken? cancelToken}) async {
     try {
-      // Shop controller: GET {BASE_URL}/api/shops (public, paginated).
-      final response = await _dio.get('/api/shops');
+      final response = await _dio.get('/api/shops', cancelToken: cancelToken);
       final payload = response.data;
       final list = payload is Map<String, dynamic>
           ? (payload['data'] as List? ?? const [])
@@ -37,9 +35,9 @@ class ShopApiRepositoryImpl implements ShopApiRepository {
   }
 
   @override
-  Future<Shop> getShopById(String id) async {
+  Future<Shop> getShopById(String id, {CancelToken? cancelToken}) async {
     try {
-      final response = await _dio.get('/api/shops/$id');
+      final response = await _dio.get('/api/shops/$id', cancelToken: cancelToken);
       return Shop.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);

@@ -20,13 +20,14 @@ class InventoryRepositoryImpl implements InventoryRepository {
       ];
 
   @override
-  Future<Inventory> getInventoryByType(String type) async {
+  Future<Inventory> getInventoryByType(String type, {CancelToken? cancelToken}) async {
     try {
       final dio = ApiClient.create();
 
       final resp = await dio.get(
         '/api/inventories',
         queryParameters: {'type': type},
+        cancelToken: cancelToken,
       );
 
       final data = parseTypedList(resp.data, Inventory.fromJson);
@@ -39,6 +40,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
       final created = await dio.post(
         '/api/inventories',
         data: {'type': type},
+        cancelToken: cancelToken,
       );
       final createdData = parseTypedList(created.data, Inventory.fromJson);
       if (createdData.isNotEmpty) {

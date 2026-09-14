@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/sale/model/sale_models.dart';
 import 'package:posfrontend/modules/sale/repository/order_repository.dart';
@@ -16,6 +17,7 @@ class OrderRepositoryImpl implements OrderRepository {
     int? discount,
     String? notes,
     String status = 'draft',
+    CancelToken? cancelToken,
   }) async {
     final dio = ApiClient.create();
 
@@ -48,7 +50,7 @@ class OrderRepositoryImpl implements OrderRepository {
       'status': status,
     };
 
-    final resp = await dio.post('/api/orders', data: payload);
+    final resp = await dio.post('/api/orders', data: payload, cancelToken: cancelToken);
     if (resp.statusCode != 201) {
       throw ApiException(
         statusCode: resp.statusCode,
@@ -58,9 +60,9 @@ class OrderRepositoryImpl implements OrderRepository {
   }
 
   @override
-  Future<void> updateOrderStatus({required String orderId, required String status}) async {
+  Future<void> updateOrderStatus({required String orderId, required String status, CancelToken? cancelToken}) async {
     final dio = ApiClient.create();
-    final resp = await dio.put('/api/orders/$orderId', data: {'status': status});
+    final resp = await dio.put('/api/orders/$orderId', data: {'status': status}, cancelToken: cancelToken);
     if (resp.statusCode != 200) {
       throw ApiException(
         statusCode: resp.statusCode,
@@ -70,9 +72,9 @@ class OrderRepositoryImpl implements OrderRepository {
   }
 
   @override
-  Future<void> deleteOrder(String orderId) async {
+  Future<void> deleteOrder(String orderId, {CancelToken? cancelToken}) async {
     final dio = ApiClient.create();
-    final resp = await dio.delete('/api/orders/$orderId');
+    final resp = await dio.delete('/api/orders/$orderId', cancelToken: cancelToken);
     if (resp.statusCode != 200) {
       throw ApiException(
         statusCode: resp.statusCode,

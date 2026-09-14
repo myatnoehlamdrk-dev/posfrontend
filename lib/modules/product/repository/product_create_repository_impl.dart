@@ -13,10 +13,10 @@ class ProductCreateRepositoryImpl implements ProductCreateRepository {
       : _packageRepository = packageRepository ?? PackageRepositoryImpl();
 
   @override
-  Future<List<SupplierOption>> getSuppliers() async {
+  Future<List<SupplierOption>> getSuppliers({CancelToken? cancelToken}) async {
     try {
       final dio = ApiClient.create();
-      final resp = await dio.get('/api/suppliers');
+      final resp = await dio.get('/api/suppliers', cancelToken: cancelToken);
       return parseTypedList(resp.data, (e) => SupplierOption(
             id: (e['id'] ?? '').toString(),
             name: e['name'] ?? '',
@@ -27,9 +27,9 @@ class ProductCreateRepositoryImpl implements ProductCreateRepository {
   }
 
   @override
-  Future<List<PackageOption>> getPackages(String categoryId) async {
+  Future<List<PackageOption>> getPackages(String categoryId, {CancelToken? cancelToken}) async {
     try {
-      final packages = await _packageRepository.getPackages(categoryId);
+      final packages = await _packageRepository.getPackages(categoryId, cancelToken: cancelToken);
       return packages
           .map((p) => PackageOption(id: p.id, name: p.name))
           .toList();
@@ -39,30 +39,30 @@ class ProductCreateRepositoryImpl implements ProductCreateRepository {
   }
 
   @override
-  Future<void> createProduct(ProductCreateRequest request) async {
+  Future<void> createProduct(ProductCreateRequest request, {CancelToken? cancelToken}) async {
     try {
       final dio = ApiClient.create();
-      await dio.post('/api/products', data: request.toJson());
+      await dio.post('/api/products', data: request.toJson(), cancelToken: cancelToken);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
   }
 
   @override
-  Future<void> updateProduct(String id, ProductCreateRequest request) async {
+  Future<void> updateProduct(String id, ProductCreateRequest request, {CancelToken? cancelToken}) async {
     try {
       final dio = ApiClient.create();
-      await dio.put('/api/products/$id', data: request.toJson());
+      await dio.put('/api/products/$id', data: request.toJson(), cancelToken: cancelToken);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
   }
 
   @override
-  Future<List<ProductSearchResult>> searchProducts(String query) async {
+  Future<List<ProductSearchResult>> searchProducts(String query, {CancelToken? cancelToken}) async {
     try {
       final dio = ApiClient.create();
-      final resp = await dio.get('/api/products/search', queryParameters: {'q': query});
+      final resp = await dio.get('/api/products/search', queryParameters: {'q': query}, cancelToken: cancelToken);
       return parseTypedList(resp.data, ProductSearchResult.fromJson);
     } on DioException {
       return [];
@@ -70,10 +70,10 @@ class ProductCreateRepositoryImpl implements ProductCreateRepository {
   }
 
   @override
-  Future<List<PendingPurchaseItem>> getPendingPurchaseItems() async {
+  Future<List<PendingPurchaseItem>> getPendingPurchaseItems({CancelToken? cancelToken}) async {
     try {
       final dio = ApiClient.create();
-      final resp = await dio.get('/api/purchase-items', queryParameters: {'status': 'pending'});
+      final resp = await dio.get('/api/purchase-items', queryParameters: {'status': 'pending'}, cancelToken: cancelToken);
       return parseTypedList(resp.data, PendingPurchaseItem.fromJson);
     } on DioException {
       return [];
@@ -81,10 +81,10 @@ class ProductCreateRepositoryImpl implements ProductCreateRepository {
   }
 
   @override
-  Future<void> completePurchaseItem(String id) async {
+  Future<void> completePurchaseItem(String id, {CancelToken? cancelToken}) async {
     try {
       final dio = ApiClient.create();
-      await dio.put('/api/purchase-items/$id', data: {'status': 'completed'});
+      await dio.put('/api/purchase-items/$id', data: {'status': 'completed'}, cancelToken: cancelToken);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }

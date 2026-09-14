@@ -21,7 +21,7 @@ class SaleViewModel extends BaseViewModel {
     setLoading(true);
     resetError();
     try {
-      _products = await _productRepository.getProducts();
+      _products = await _productRepository.getProducts(cancelToken: cancelToken);
       setLoading(false);
     } catch (e) {
       setError(e.toString());
@@ -55,6 +55,7 @@ class SaleViewModel extends BaseViewModel {
         grandTotal: grandTotal,
         discount: discount,
         notes: notes,
+        cancelToken: cancelToken,
       );
       setLoading(false);
     } catch (e) {

@@ -135,7 +135,7 @@ class SaleOrder {
       quantity: totalQty,
       date: json.str('createdAt'),
       status: status,
-      amount: json.integer('totalPrice') + json.integer('grandTotal'),
+      amount: json.integer('grandTotal'),
       customerName: json.str('customerName'),
       customerPhone: json.str('customerPhone'),
       payMethod: json.str('payMethod', 'Cash'),

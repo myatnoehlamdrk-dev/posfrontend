@@ -924,7 +924,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 try {
                   final dio = ApiClient.create();
                   await dio.post('/api/auth/logout');
-                } catch (_) {}
+                } catch (_) {
+                  // Logout API failure is non-critical; proceed with local cleanup
+                }
                 await TokenStorage.clearToken();
                 if (context.mounted) {
                   Navigator.of(context).pushAndRemoveUntil(

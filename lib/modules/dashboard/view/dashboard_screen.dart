@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:posfrontend/core/network/api_client.dart';
@@ -22,6 +23,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late final DashboardViewModel _viewModel;
+  final CancelToken _cancelToken = CancelToken();
   String _selectedPeriod = 'This Year';
 
   static const Color bg = Color(0xFFF8F9FC);
@@ -42,17 +44,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _loadProfileImage() async {
     try {
       final dio = ApiClient.create();
-      final resp = await dio.get('/api/auth/profile');
+      final resp = await dio.get('/api/auth/profile', cancelToken: _cancelToken);
       final data = resp.data;
       final image = (data is Map<String, dynamic>) ? (data['image'] ?? '') : '';
       if (image is String && image.isNotEmpty && mounted) {
         ProfileImageNotifier.instance.update(image);
       }
-    } catch (_) {}
+    } catch (_) {
+      // Profile image fetch failure is non-critical
+    }
   }
 
   @override
   void dispose() {
+    if (!_cancelToken.isCancelled) _cancelToken.cancel();
     _viewModel.dispose();
     super.dispose();
   }

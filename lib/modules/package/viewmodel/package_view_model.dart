@@ -29,7 +29,7 @@ class PackageViewModel extends BaseViewModel {
     setLoading(true);
     resetError();
     try {
-      _packages = await _repository.getPackages(categoryId);
+      _packages = await _repository.getPackages(categoryId, cancelToken: cancelToken);
     } on ApiException catch (e) {
       setError(e.message);
     } finally {

@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:posfrontend/core/extensions/api_response_extensions.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/product/model/catalog_product.dart';
@@ -5,9 +6,9 @@ import 'package:posfrontend/modules/sale/repository/sale_product_repository.dart
 
 class SaleProductRepositoryImpl implements SaleProductRepository {
   @override
-  Future<List<CatalogProduct>> getProducts() async {
+  Future<List<CatalogProduct>> getProducts({CancelToken? cancelToken}) async {
     final dio = ApiClient.create();
-    final response = await dio.get('/api/products');
+    final response = await dio.get('/api/products', cancelToken: cancelToken);
     return parseTypedList(response.data, _map);
   }
 

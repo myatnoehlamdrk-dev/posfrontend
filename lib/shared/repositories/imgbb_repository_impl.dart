@@ -11,7 +11,7 @@ class ImgbbRepositoryImpl implements ImgbbRepository {
   ImgbbRepositoryImpl([Dio? dio]) : _dio = dio ?? ApiClient.create();
 
   @override
-  Future<ImgbbUploadResult> uploadImage(Uint8List bytes, {String? fileName}) async {
+  Future<ImgbbUploadResult> uploadImage(Uint8List bytes, {String? fileName, CancelToken? cancelToken}) async {
     try {
       final name = fileName ??
           'upload_${DateTime.now().millisecondsSinceEpoch}.jpg';
@@ -42,6 +42,7 @@ class ImgbbRepositoryImpl implements ImgbbRepository {
       final response = await _dio.post(
         '/api/images',
         data: form,
+        cancelToken: cancelToken,
       );
 
       final data = response.data;

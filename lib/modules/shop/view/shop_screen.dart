@@ -69,10 +69,10 @@ class _ShopScreenState extends State<ShopScreen> {
 
   Future<void> _pickImage() async {
     final xfile = await _picker.pickImage(source: ImageSource.gallery);
-    if (xfile != null) {
-      final bytes = await xfile.readAsBytes();
-      _viewModel.setLogo(base64Encode(bytes));
-    }
+    if (xfile == null) return;
+    final bytes = await xfile.readAsBytes();
+    if (!mounted) return;
+    _viewModel.setLogo(base64Encode(bytes));
   }
 
   Future<void> _onCreateShop() async {
