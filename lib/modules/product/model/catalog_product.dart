@@ -37,6 +37,7 @@ class CatalogProduct {
   final Color color;
   final String? imageUrl;
   final List<ProductVariant> variants;
+  final String createdBy;
 
   const CatalogProduct({
     required this.id,
@@ -52,6 +53,7 @@ class CatalogProduct {
     required this.color,
     this.imageUrl,
     this.variants = const [],
+    this.createdBy = '',
   });
 
   List<String> get sizes => variants

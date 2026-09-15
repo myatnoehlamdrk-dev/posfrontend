@@ -41,6 +41,7 @@ class CatalogProductRepositoryImpl implements CatalogProductRepository {
       icon: CatalogProduct.iconFor(category),
       color: CatalogProduct.colorFor(category),
       imageUrl: image != null && image.isNotEmpty ? image : null,
+      createdBy: (item['createdBy'] as String?) ?? '',
     );
   }
 }

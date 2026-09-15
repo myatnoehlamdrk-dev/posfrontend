@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:posfrontend/core/utils/error_handler.dart';
-import 'package:posfrontend/modules/login/model/login_response.dart';
+import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/modules/profile/repository/profile_repository_impl.dart';
 import 'package:posfrontend/modules/profile/viewmodel/profile_view_model.dart';
 import 'package:posfrontend/modules/shop/model/shop.dart';
@@ -10,9 +10,7 @@ import 'package:posfrontend/shared/repositories/imgbb_repository_impl.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
 
 class ProfileScreen extends StatefulWidget {
-  final LoginResponse? user;
-
-  const ProfileScreen({super.key, this.user});
+  const ProfileScreen({super.key});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -61,7 +59,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadShop() async {
-    final shopId = widget.user?.shopId ?? '';
+    final shopId = AuthScope.userOf(context)?.shopId ?? '';
     if (shopId.isEmpty) return;
     try {
       final shop = await ShopApiRepositoryImpl().getShopById(shopId);

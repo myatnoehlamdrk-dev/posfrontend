@@ -2,20 +2,17 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/category/model/category_models.dart';
-import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/package/model/package_models.dart';
 import 'package:posfrontend/modules/product/model/catalog_product.dart';
 import 'package:posfrontend/modules/product/repository/catalog_product_repository_impl.dart';
 import 'package:posfrontend/modules/shared/widgets/inventory_form_widgets.dart';
 
 class AssignProductToPackageScreen extends StatefulWidget {
-  final LoginResponse? user;
   final Package package;
   final Category category;
 
   const AssignProductToPackageScreen({
     super.key,
-    this.user,
     required this.package,
     required this.category,
   });
@@ -342,7 +339,10 @@ class _AssignProductToPackageScreenState
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       itemCount: items.length,
-      itemBuilder: (_, i) => _productCard(items[i]),
+      itemBuilder: (_, i) => KeyedSubtree(
+        key: ValueKey(items[i].id),
+        child: _productCard(items[i]),
+      ),
     );
   }
 

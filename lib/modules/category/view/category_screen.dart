@@ -5,16 +5,14 @@ import 'package:posfrontend/modules/category/view/add_category_screen.dart';
 import 'package:posfrontend/modules/package/view/package_screen.dart';
 import 'package:posfrontend/modules/category/viewmodel/category_view_model.dart';
 import 'package:posfrontend/modules/inventory/repository/inventory_repository_impl.dart';
-import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 
 class CategoryScreen extends StatefulWidget {
-  final LoginResponse? user;
   final String inventoryType;
 
-  const CategoryScreen({super.key, this.user, this.inventoryType = 'self'});
+  const CategoryScreen({super.key, this.inventoryType = 'self'});
 
   @override
   State<CategoryScreen> createState() => _CategoryScreenState();
@@ -54,7 +52,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
     final result = await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => AddCategoryScreen(
-          user: widget.user,
           inventoryType: widget.inventoryType,
         ),
       ),
@@ -68,7 +65,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
     final result = await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => AddCategoryScreen(
-          user: widget.user,
           inventoryType: widget.inventoryType,
           existingCategory: category,
         ),
@@ -102,9 +98,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
               ),
               body: Row(
                 children: [
-                  SizedBox(
+                  const SizedBox(
                     width: 240,
-                    child: AppDrawer(user: widget.user, activeItem: 'Inventory'),
+                    child: AppDrawer(activeItem: 'Inventory'),
                   ),
                   Expanded(child: body),
                 ],
@@ -115,7 +111,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
           return Scaffold(
             key: _scaffoldKey,
             backgroundColor: bg,
-            drawer: AppDrawer(user: widget.user, activeItem: 'Inventory'),
+            drawer: const AppDrawer(activeItem: 'Inventory'),
             floatingActionButton: FloatingActionButton(
               onPressed: _openAddCategory,
               backgroundColor: const Color(0xFF4FD1D9),
@@ -145,7 +141,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
                     title: _inventoryLabel,
                     showMenuButton: !isWide,
                     onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
-                    user: widget.user,
                   ),
                   const SizedBox(height: 20),
                   _breadcrumb(),
@@ -335,6 +330,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
       return Column(
         children: items
             .map((c) => Padding(
+                  key: ValueKey(c.id),
                   padding: const EdgeInsets.only(bottom: 20),
                   child: _categoryCard(c),
                 ))
@@ -366,7 +362,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
     return GestureDetector(
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (_) => PackageScreen(user: widget.user, category: c),
+          builder: (_) => PackageScreen(category: c),
         ),
       ),
       child: Container(
@@ -453,6 +449,13 @@ class _CategoryScreenState extends State<CategoryScreen> {
                 'Created: ${c.createdDate}',
                 style: const TextStyle(fontSize: 12, color: gray),
               ),
+              if (c.createdBy.isNotEmpty) ...[
+                const SizedBox(width: 8),
+                Text(
+                  'by ${c.createdBy}',
+                  style: const TextStyle(fontSize: 11, color: gray, fontStyle: FontStyle.italic),
+                ),
+              ],
               const SizedBox(width: 8),
               _statusBadge(c.active),
               const Spacer(),

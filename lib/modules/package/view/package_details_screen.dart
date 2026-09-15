@@ -4,7 +4,6 @@ import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/category/model/category_models.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
-import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/package/model/package_models.dart';
 import 'package:posfrontend/modules/product/model/catalog_product.dart' hide ProductVariant;
 import 'package:posfrontend/modules/product/repository/catalog_product_repository_impl.dart';
@@ -14,13 +13,11 @@ import 'package:posfrontend/modules/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 
 class PackageDetailsScreen extends StatefulWidget {
-  final LoginResponse? user;
   final Package package;
   final Category category;
 
   const PackageDetailsScreen({
     super.key,
-    this.user,
     required this.package,
     required this.category,
   });
@@ -84,7 +81,6 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
     final result = await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => AssignProductToPackageScreen(
-          user: widget.user,
           package: widget.package,
           category: widget.category,
         ),
@@ -184,7 +180,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                 children: [
                   SizedBox(
                     width: 240,
-                    child: AppDrawer(user: widget.user, activeItem: 'Inventory'),
+                    child: AppDrawer(activeItem: 'Inventory'),
                   ),
                   Expanded(child: _content()),
                 ],
@@ -201,7 +197,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
             icon: const Icon(Icons.add, color: Colors.white),
             label: const Text('Add Product', style: TextStyle(color: Colors.white)),
           ),
-          drawer: AppDrawer(user: widget.user, activeItem: 'Inventory'),
+          drawer: AppDrawer(activeItem: 'Inventory'),
           body: SafeArea(child: body),
         );
       },
@@ -248,7 +244,6 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                     title: 'Package Details',
                     showMenuButton: false,
                     showBackButton: true,
-                    user: widget.user,
                   ),
                   const SizedBox(height: 20),
                   Breadcrumb([
@@ -451,6 +446,10 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
       _infoBlock(Icons.monitor, 'Category', c.name),
       _infoBlock(Icons.location_on_outlined, 'Location', p.location),
       _infoBlock(Icons.inventory_2, 'Amount of Products', '${p.quantity} Units'),
+      if (p.createdBy.isNotEmpty)
+        _infoBlock(Icons.person_add, 'Created By', p.createdBy),
+      if (p.updatedBy.isNotEmpty)
+        _infoBlock(Icons.edit, 'Updated By', p.updatedBy),
     ];
     return LayoutBuilder(
       builder: (ctx, constraints) {
@@ -609,7 +608,6 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => ProductDetailScreen(
-            user: widget.user,
             productId: pr.id,
           ),
         ),

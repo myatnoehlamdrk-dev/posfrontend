@@ -3,23 +3,22 @@ import 'package:posfrontend/core/auth/token_storage.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/dashboard/view/dashboard_screen.dart';
 import 'package:posfrontend/modules/inventory/view/inventory_screen.dart';
-import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/login/view/login_screen.dart';
 import 'package:posfrontend/modules/product/view/products_catalog_screen.dart';
 import 'package:posfrontend/modules/purchase_items/view/purchase_items_screen.dart';
 import 'package:posfrontend/modules/sale/view/new_sale_screen.dart';
 import 'package:posfrontend/modules/sale_items/view/sale_items_screen.dart';
 import 'package:posfrontend/modules/settings/view/settings_screen.dart';
+import 'package:posfrontend/modules/customer/view/customer_screen.dart';
 
+import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
 
 class AppDrawer extends StatelessWidget {
-  final LoginResponse? user;
   final String activeItem;
 
   const AppDrawer({
     super.key,
-    this.user,
     this.activeItem = 'Dashboard',
   });
 
@@ -28,21 +27,13 @@ class AppDrawer extends StatelessWidget {
   static const Color gray = Color(0xFF6B7280);
   static const Color border = Color(0xFFE5E7EB);
 
-  String get _userName =>
-      user?.fullName.trim().isNotEmpty == true ? user!.fullName : 'John Doe';
-
-  String get _email => user?.email ?? '';
-
-  String _initials(String name) {
-    final parts = name.trim().split(RegExp(r'\s+'));
-    if (parts.isEmpty || parts[0].isEmpty) return '?';
-    if (parts.length == 1) return parts[0][0].toUpperCase();
-    return (parts[0][0] + parts[1][0]).toUpperCase();
-  }
-
   @override
   Widget build(BuildContext context) {
-    final initials = _initials(_userName);
+    final user = AuthScope.userOf(context);
+    final userName = user?.fullName.trim().isNotEmpty == true ? user!.fullName : 'John Doe';
+    final email = user?.email ?? '';
+    final initials = _initials(userName);
+
     return Drawer(
       child: Container(
         color: Colors.white,
@@ -90,7 +81,7 @@ class AppDrawer extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          _userName,
+                          userName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
@@ -101,7 +92,7 @@ class AppDrawer extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          _email,
+                          email,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
@@ -127,6 +118,7 @@ class AppDrawer extends StatelessWidget {
                     _navItem(context, 'Sale Item', Icons.receipt_long_outlined),
                     
                     _navItem(context, 'Purchase Item', Icons.local_shipping_outlined),
+                    _navItem(context, 'Customers', Icons.people_outlined),
                     _navItem(context, 'Setting', Icons.settings_outlined)
                     ],
                 ),
@@ -139,6 +131,13 @@ class AppDrawer extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _initials(String name) {
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty || parts[0].isEmpty) return '?';
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 
   Widget _navItem(BuildContext context, String label, IconData icon) {
@@ -194,6 +193,7 @@ class AppDrawer extends StatelessWidget {
           }
           await TokenStorage.clearToken();
           if (context.mounted) {
+            AuthScope.updateUserOf(context, null);
             Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(builder: (_) => const LoginScreen()),
               (route) => false,
@@ -214,31 +214,34 @@ class AppDrawer extends StatelessWidget {
     Widget destination;
     switch (label) {
       case 'Dashboard':
-        destination = DashboardScreen(user: user);
+        destination = const DashboardScreen();
         break;
       case 'Inventory':
-        destination = InventoryScreen(user: user);
+        destination = const InventoryScreen();
         break;
       case 'Product':
-        destination = ProductsCatalogScreen(user: user);
+        destination = const ProductsCatalogScreen();
         break;
       case 'Sale':
-        destination = NewSaleScreen(user: user);
+        destination = const NewSaleScreen();
         break;
       case 'Sale Item':
-        destination = SaleItemScreen(user: user);
+        destination = const SaleItemScreen();
         break;
       case 'Purchase Item':
-        destination = PurchaseItemsScreen(user: user);
+        destination = const PurchaseItemsScreen();
+        break;
+      case 'Customers':
+        destination = const CustomerScreen();
         break;
       case 'Setting':
-        destination = SettingsScreen(user: user);
+        destination = const SettingsScreen();
         break;
 
       default:
         return;
     }
-    if (label == 'Setting' || label == 'Sale' || label == 'Sale Item' || label == 'Purchase Item') {
+    if (label == 'Setting' || label == 'Sale' || label == 'Sale Item' || label == 'Purchase Item' || label == 'Customers') {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => destination),
       );

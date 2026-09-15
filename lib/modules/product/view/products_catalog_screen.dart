@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:posfrontend/core/extensions/datetime_extensions.dart';
 import 'package:posfrontend/core/network/api_client.dart';
-import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/product/model/catalog_product.dart';
 import 'package:posfrontend/modules/product/repository/catalog_product_repository_impl.dart';
 import 'package:posfrontend/modules/product/view/add_product_screen.dart';
@@ -14,8 +13,7 @@ import 'package:posfrontend/shared/widgets/error_snackbar.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 
 class ProductsCatalogScreen extends StatefulWidget {
-  final LoginResponse? user;
-  const ProductsCatalogScreen({super.key, this.user});
+  const ProductsCatalogScreen({super.key});
 
   @override
   State<ProductsCatalogScreen> createState() => _ProductsCatalogScreenState();
@@ -153,7 +151,6 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => ProductDetailScreen(
-          user: widget.user,
           productId: p.id,
         ),
       ),
@@ -201,7 +198,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) {
-          navigateToDashboard(context, user: widget.user);
+          navigateToDashboard(context);
         }
       },
       child: LayoutBuilder(
@@ -216,9 +213,9 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    SizedBox(
+                    const SizedBox(
                       width: 240,
-                      child: AppDrawer(user: widget.user, activeItem: 'Product'),
+                      child: AppDrawer(activeItem: 'Product'),
                     ),
                     Expanded(child: _content()),
                   ],
@@ -229,7 +226,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
           return Scaffold(
             key: _scaffoldKey,
             backgroundColor: bg,
-            drawer: AppDrawer(user: widget.user, activeItem: 'Product'),
+            drawer: const AppDrawer(activeItem: 'Product'),
             body: SafeArea(child: body),
           );
         },
@@ -255,7 +252,6 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                     title: 'Products',
                     showMenuButton: true,
                     onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
-                    user: widget.user,
                   ),
                   const SizedBox(height: 16),
                   const Text(
@@ -458,7 +454,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
           onTap: () async {
             await Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (_) => AddProductScreen(user: widget.user),
+                builder: (_) => AddProductScreen(),
               ),
             );
             if (mounted) _load();
@@ -540,41 +536,44 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
 
   Widget _hotCarousel(List<CatalogProduct> items) {
     final loopCount = 10000;
-    return GestureDetector(
-      onPanDown: (_) => setState(() => _hotPaused = true),
-      onPanEnd: (_) {
-        Future.delayed(const Duration(seconds: 3), () {
-          if (mounted) setState(() => _hotPaused = false);
-        });
-      },
-      child: Column(
-        children: [
-          SizedBox(
-            height: 190,
-            child: PageView.builder(
-              controller: _hotPageController,
-              itemCount: loopCount,
-              onPageChanged: (i) => setState(() => _hotIndex = i % items.length),
-              itemBuilder: (ctx, i) => _hotBanner(items[i % items.length]),
+    return RepaintBoundary(
+      child: GestureDetector(
+        onPanDown: (_) => setState(() => _hotPaused = true),
+        onPanEnd: (_) {
+          Future.delayed(const Duration(seconds: 3), () {
+            if (mounted) setState(() => _hotPaused = false);
+          });
+        },
+        child: Column(
+          children: [
+            SizedBox(
+              height: 190,
+              child: PageView.builder(
+                key: const PageStorageKey('hotCarousel'),
+                controller: _hotPageController,
+                itemCount: loopCount,
+                onPageChanged: (i) => setState(() => _hotIndex = i % items.length),
+                itemBuilder: (ctx, i) => _hotBanner(items[i % items.length]),
+              ),
             ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              items.length,
-              (i) => Container(
-                margin: const EdgeInsets.symmetric(horizontal: 3),
-                width: i == _hotIndex ? 20 : 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: i == _hotIndex ? purple : const Color(0xFFD1D5DB),
-                  borderRadius: BorderRadius.circular(3),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                items.length,
+                (i) => Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: i == _hotIndex ? 20 : 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: i == _hotIndex ? purple : const Color(0xFFD1D5DB),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -733,14 +732,19 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
         } else if (w >= 820) {
           cross = 3;
         }
-        return GridView.count(
-          crossAxisCount: cross,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 0.62,
-          children: products.map(_gridCard).toList(),
+        return RepaintBoundary(
+          child: GridView.count(
+            crossAxisCount: cross,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 0.62,
+            children: products.map((p) => KeyedSubtree(
+            key: ValueKey(p.id),
+            child: _gridCard(p),
+          )).toList(),
+          ),
         );
       },
     );
@@ -845,6 +849,15 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontSize: 12, color: gray),
                     ),
+                    if (p.createdBy.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        'by ${p.createdBy}',
+                        style: const TextStyle(fontSize: 11, color: gray, fontStyle: FontStyle.italic),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                     const Spacer(),
                     PriceText(
                       p.price,
@@ -868,6 +881,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
     return Column(
       children: products
           .map((p) => Padding(
+                key: ValueKey(p.id),
                 padding: const EdgeInsets.only(bottom: 12),
                 child: _listCard(p),
               ))

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
-import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/product/model/catalog_product.dart';
 import 'package:posfrontend/modules/product/model/product_detail_models.dart';
 import 'package:posfrontend/modules/product/repository/product_detail_repository_impl.dart';
@@ -12,12 +11,10 @@ import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 import 'package:posfrontend/modules/shared/widgets/price_text.dart';
 
 class ProductDetailScreen extends StatefulWidget {
-  final LoginResponse? user;
   final String productId;
 
   const ProductDetailScreen({
     super.key,
-    this.user,
     required this.productId,
   });
 
@@ -63,28 +60,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         final isWide = constraints.maxWidth >= 768;
         final body = _content(isWide: isWide);
 
-        if (isWide) {
-          return Scaffold(
-            backgroundColor: Colors.white,
-            body: SafeArea(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  SizedBox(
-                    width: 240,
-                    child: AppDrawer(user: widget.user, activeItem: 'Inventory'),
-                  ),
-                  Expanded(child: _content(isWide: isWide)),
-                ],
-              ),
-            ),
-          );
-        }
         return Scaffold(
           key: _scaffoldKey,
           backgroundColor: Colors.white,
-          drawer: AppDrawer(user: widget.user, activeItem: 'Inventory'),
-          body: SafeArea(child: body),
+          drawer: isWide ? null : AppDrawer(activeItem: 'Inventory'),
+          body: SafeArea(
+            child: isWide
+                ? Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SizedBox(
+                        width: 240,
+                        child: AppDrawer(activeItem: 'Inventory'),
+                      ),
+                      Expanded(child: _content(isWide: isWide)),
+                    ],
+                  )
+                : body,
+          ),
         );
       },
     );
@@ -103,7 +96,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 showMenuButton: !isWide,
                 showBackButton: false,
                 onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
-                user: widget.user,
               ),
               const SizedBox(height: 20),
               const Breadcrumb([
@@ -222,7 +214,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               await Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => AddProductScreen(
-                    user: widget.user,
                     existingProduct: _detail,
                   ),
                 ),
@@ -416,6 +407,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           _row(Icons.store, 'Inventory', _detail!.inventoryType),
           _row(Icons.check_circle, 'Product Status', _detail!.status),
         ]),
+        if (_detail!.createdBy.isNotEmpty || _detail!.updatedBy.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          const Text(
+            'Audit Information',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: kTitle),
+          ),
+          const SizedBox(height: 12),
+          _card([
+            if (_detail!.createdBy.isNotEmpty)
+              _row(Icons.person_add, 'Created By', _detail!.createdBy),
+            if (_detail!.createdAt.isNotEmpty)
+              _row(Icons.access_time, 'Created At', _detail!.createdAt),
+            if (_detail!.updatedBy.isNotEmpty)
+              _row(Icons.edit, 'Updated By', _detail!.updatedBy),
+            if (_detail!.updatedAt.isNotEmpty)
+              _row(Icons.update, 'Updated At', _detail!.updatedAt),
+          ]),
+        ],
         if (variants.isNotEmpty) ...[
           const SizedBox(height: 24),
           const Text(

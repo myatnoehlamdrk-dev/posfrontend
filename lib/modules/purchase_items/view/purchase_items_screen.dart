@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/purchase_items/model/purchase_models.dart';
 import 'package:posfrontend/modules/purchase_items/view/add_purchase_sheet.dart';
 import 'package:posfrontend/modules/purchase_items/view/add_supplier_sheet.dart';
@@ -12,9 +11,7 @@ import 'package:posfrontend/shared/widgets/search_input_bar.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 
 class PurchaseItemsScreen extends StatefulWidget {
-  final LoginResponse? user;
-
-  const PurchaseItemsScreen({super.key, this.user});
+  const PurchaseItemsScreen({super.key});
 
   @override
   State<PurchaseItemsScreen> createState() => _PurchaseItemsScreenState();
@@ -29,20 +26,14 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
   void initState() {
     super.initState();
     _viewModel = PurchaseItemViewModel();
-    _viewModel.addListener(_onViewModelChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _viewModel.loadPurchaseItems(refresh: true);
       _viewModel.loadSuppliers();
     });
   }
 
-  void _onViewModelChanged() {
-    if (mounted) setState(() {});
-  }
-
   @override
   void dispose() {
-    _viewModel.removeListener(_onViewModelChanged);
     _viewModel.dispose();
     _searchController.dispose();
     super.dispose();
@@ -52,7 +43,7 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FC),
-      drawer: AppDrawer(user: widget.user, activeItem: 'Purchase Item'),
+      drawer: const AppDrawer(activeItem: 'Purchase Item'),
       floatingActionButton: FloatingActionButton(
         onPressed: _showNewPurchaseSheet,
         backgroundColor: AppColors.teal,
@@ -62,9 +53,12 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            AppScreenTopBar(title: 'Purchase Items', user: widget.user),
+            AppScreenTopBar(title: 'Purchase Items'),
             Expanded(
-              child: _buildBody(),
+              child: ListenableBuilder(
+                listenable: _viewModel,
+                builder: (context, _) => _buildBody(),
+              ),
             ),
           ],
         ),
@@ -120,7 +114,7 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
             SearchInputBar(
               controller: _searchController,
               hintText: 'Search item, order ID, supplier...',
-              onChanged: (_) => setState(() {}),
+              onChanged: (_) {},
             ),
             const SizedBox(height: 16),
             ..._filteredOrders.map((order) => _buildOrderCard(order)),
@@ -207,6 +201,14 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
           const SizedBox(height: 10),
           const Divider(color: AppColors.border, height: 1),
           const SizedBox(height: 10),
+          if (order.createdBy.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Text(
+                'by ${order.createdBy}',
+                style: const TextStyle(fontSize: 11, color: AppColors.gray, fontStyle: FontStyle.italic),
+              ),
+            ),
           Row(
             children: [
               const Icon(Icons.business_outlined, size: 14, color: AppColors.gray),

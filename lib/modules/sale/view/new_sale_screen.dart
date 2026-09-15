@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:posfrontend/core/extensions/datetime_extensions.dart';
 import 'package:posfrontend/core/network/api_client.dart';
-import 'package:posfrontend/modules/login/model/login_response.dart';
+import 'package:posfrontend/shared/widgets/auth_scope.dart';
+import 'package:posfrontend/shared/widgets/shop_scope.dart';
 import 'package:posfrontend/modules/sale/model/sale_models.dart';
 import 'package:posfrontend/modules/sale/repository/order_repository_impl.dart';
 import 'package:posfrontend/modules/sale/repository/sale_product_repository_impl.dart';
@@ -15,16 +16,13 @@ import 'package:posfrontend/modules/sale/service/voucher_pdf_service.dart';
 import 'package:posfrontend/modules/sale_items/view/sale_items_screen.dart';
 import 'package:posfrontend/modules/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/modules/shared/widgets/price_text.dart';
-import 'package:posfrontend/modules/shop/model/shop.dart';
-import 'package:posfrontend/modules/shop/repository/shop_api_repository_impl.dart';
-import 'package:posfrontend/modules/shop/repository/shop_local_repository_impl.dart';
+import 'package:posfrontend/modules/customer/repository/customer_repository_impl.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/shared/widgets/error_snackbar.dart';
 import 'package:printing/printing.dart';
 
 class NewSaleScreen extends StatefulWidget {
-  final LoginResponse? user;
   final List<SaleItem>? initialItems;
   final String? initialCustomerName;
   final String? initialCustomerPhone;
@@ -32,7 +30,6 @@ class NewSaleScreen extends StatefulWidget {
   final String? existingOrderId;
   const NewSaleScreen({
     super.key,
-    this.user,
     this.initialItems,
     this.initialCustomerName,
     this.initialCustomerPhone,
@@ -50,10 +47,14 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   final TextEditingController _notesCtrl = TextEditingController();
   final TextEditingController _customerNameCtrl = TextEditingController(text: 'Customer');
   final TextEditingController _customerPhoneCtrl = TextEditingController();
+  final TextEditingController _customerLocationCtrl = TextEditingController();
   final SaleViewModel _viewModel = SaleViewModel(
     productRepository: SaleProductRepositoryImpl(),
     saleRepository: SaleRepositoryImpl(),
   );
+  final CustomerRepositoryImpl _customerRepo = CustomerRepositoryImpl();
+  List<Map<String, dynamic>> _customerSuggestions = [];
+  bool _showSuggestions = false;
 
   String _paymentMethod = 'Cash';
   late String _voucherRandom;
@@ -62,8 +63,6 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   bool _pdfExportEnabled = true;
   bool _printVoucherEnabled = false;
   String _printFormat = 'thermal';
-  Shop? _shop;
-
   static const _keyPdfExport = 'print_pdf_export';
   static const _keyPrintVoucher = 'print_voucher_enabled';
   static const _keyPrintFormat = 'print_format';
@@ -92,7 +91,6 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     if (widget.initialPaymentMethod != null) {
       _paymentMethod = widget.initialPaymentMethod!;
     }
-    _loadShop();
     _loadPrintSettings();
   }
 
@@ -113,25 +111,43 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     await prefs.setString(_keyPrintFormat, _printFormat);
   }
 
-  Future<void> _loadShop() async {
-    try {
-      final shopId = widget.user?.shopId ?? '';
-      if (shopId.isNotEmpty) {
-        final shop = await ShopApiRepositoryImpl().getShopById(shopId);
-        if (mounted) setState(() => _shop = shop);
-        return;
-      }
-    } catch (_) {
-      // Shop API fetch failed; fall back to local
-    }
-    final shop = await ShopLocalRepositoryImpl().getShop();
-    if (mounted && shop != null) setState(() => _shop = shop);
-  }
-
   void _refreshRandoms() {
     setState(() {
       _voucherRandom = _generateRandom5();
       _orderRandom = _generateRandom5();
+    });
+  }
+
+  Future<void> _searchCustomers(String query) async {
+    if (query.length < 2) {
+      setState(() {
+        _customerSuggestions = [];
+        _showSuggestions = false;
+      });
+      return;
+    }
+    try {
+      final results = await _customerRepo.searchCustomers(query: query);
+      setState(() {
+        _customerSuggestions = results;
+        _showSuggestions = results.isNotEmpty;
+      });
+    } catch (_) {
+      setState(() {
+        _customerSuggestions = [];
+        _showSuggestions = false;
+      });
+    }
+  }
+
+  void _selectCustomer(Map<String, dynamic> customer) {
+    setState(() {
+      _customerNameCtrl.text = customer['name'] ?? '';
+      if (customer['phone'] != null && (customer['phone'] as String).isNotEmpty) {
+        _customerPhoneCtrl.text = customer['phone'];
+      }
+      _showSuggestions = false;
+      _customerSuggestions = [];
     });
   }
 
@@ -144,9 +160,10 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       final items = List<SaleItem>.from(_items);
       final customerName = _customerNameCtrl.text;
       final customerPhone = _customerPhoneCtrl.text.isNotEmpty ? _customerPhoneCtrl.text : null;
+      final customerLocation = _customerLocationCtrl.text.isNotEmpty ? _customerLocationCtrl.text : null;
       final paymentMethod = _paymentMethod;
       final notes = _notesCtrl.text.isNotEmpty ? _notesCtrl.text : null;
-      final staffName = widget.user?.fullName ?? 'Staff';
+      final staffName = AuthScope.userOf(context)?.fullName ?? 'Staff';
       final voucherNo = 'INV-$_voucherRandom';
       final orderId = widget.existingOrderId ?? 'ORD-$_orderRandom';
 
@@ -154,6 +171,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         userName: staffName,
         customerName: customerName,
         customerPhone: customerPhone,
+        customerLocation: customerLocation,
         payMethod: paymentMethod,
         voucherNo: voucherNo,
         orderId: orderId,
@@ -180,6 +198,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         _items.clear();
         _customerNameCtrl.text = 'Customer';
         _customerPhoneCtrl.clear();
+        _customerLocationCtrl.clear();
         _discountCtrl.text = '0';
         _notesCtrl.clear();
         _refreshRandoms();
@@ -210,7 +229,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     setState(() => _isSubmitting = true);
     try {
       await OrderRepositoryImpl().createOrder(
-        userName: widget.user?.fullName ?? 'Staff',
+        userName: AuthScope.userOf(context)?.fullName ?? 'Staff',
         customerName: _customerNameCtrl.text,
         customerPhone: _customerPhoneCtrl.text.isNotEmpty ? _customerPhoneCtrl.text : null,
         payMethod: _paymentMethod,
@@ -230,6 +249,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         _items.clear();
         _customerNameCtrl.text = 'Customer';
         _customerPhoneCtrl.clear();
+        _customerLocationCtrl.clear();
         _discountCtrl.text = '0';
         _notesCtrl.clear();
         _refreshRandoms();
@@ -252,6 +272,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     _notesCtrl.dispose();
     _customerNameCtrl.dispose();
     _customerPhoneCtrl.dispose();
+    _customerLocationCtrl.dispose();
     super.dispose();
   }
 
@@ -287,25 +308,20 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         final isWide = constraints.maxWidth >= 768;
         final body = _content(isWide);
 
-        if (isWide) {
-          return Scaffold(
-            backgroundColor: kBg,
-            body: Row(
-              children: [
-                SizedBox(
-                    width: 240,
-                    child: AppDrawer(user: widget.user, activeItem: 'Sale')),
-                Expanded(child: body),
-              ],
-            ),
-          );
-        }
-
         return Scaffold(
           key: _scaffoldKey,
           backgroundColor: kBg,
-          drawer: AppDrawer(user: widget.user, activeItem: 'Sale'),
-          body: body,
+          drawer: isWide ? null : const AppDrawer(activeItem: 'Sale'),
+          body: isWide
+              ? Row(
+                  children: [
+                    const SizedBox(
+                        width: 240,
+                        child: AppDrawer(activeItem: 'Sale')),
+                    Expanded(child: body),
+                  ],
+                )
+              : body,
         );
       },
     );
@@ -323,7 +339,6 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
               showMenuButton: !isWide,
               showBackButton: isWide,
               onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
-              user: widget.user,
             ),
             const SizedBox(height: 20),
             Breadcrumb([
@@ -372,17 +387,89 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                   style: TextStyle(fontSize: 12, color: kGray)),
               const SizedBox(width: 8),
               Expanded(
-                child: TextField(
-                  controller: _customerNameCtrl,
-                  style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: kTitle),
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: _customerNameCtrl,
+                      style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: kTitle),
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      onChanged: _searchCustomers,
+                      onTap: () {
+                        if (_customerSuggestions.isNotEmpty) {
+                          setState(() => _showSuggestions = true);
+                        }
+                      },
+                    ),
+                    if (_showSuggestions && _customerSuggestions.isNotEmpty)
+                      Container(
+                        constraints: const BoxConstraints(maxHeight: 160),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: kBorder),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x1A000000),
+                              blurRadius: 8,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          padding: EdgeInsets.zero,
+                          itemCount: _customerSuggestions.length,
+                          itemBuilder: (context, index) {
+                            final c = _customerSuggestions[index];
+                            return InkWell(
+                              onTap: () => _selectCustomer(c),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 10),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.person_outline,
+                                        size: 16, color: kGray),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            c['name'] ?? '',
+                                            style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w500,
+                                                color: kTitle),
+                                          ),
+                                          if (c['phone'] != null &&
+                                              (c['phone'] as String)
+                                                  .isNotEmpty)
+                                            Text(
+                                              c['phone'],
+                                              style: const TextStyle(
+                                                  fontSize: 12, color: kGray),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                  ],
                 ),
               ),
               GestureDetector(
@@ -417,6 +504,43 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                 child: TextField(
                   controller: _customerPhoneCtrl,
                   keyboardType: TextInputType.phone,
+                  style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: kTitle),
+                  decoration: InputDecoration(
+                    hintText: 'Optional',
+                    hintStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: Color(0xFFD1D5DB)),
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5F0FF),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.location_on, color: kPurple, size: 22),
+              ),
+              const SizedBox(width: 14),
+              const Text('Location',
+                  style: TextStyle(fontSize: 12, color: kGray)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextField(
+                  controller: _customerLocationCtrl,
                   style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
@@ -544,7 +668,10 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             ),
           )
         else
-          ...List.generate(_items.length, (i) => _itemRow(i)),
+          ...List.generate(_items.length, (i) => KeyedSubtree(
+            key: ValueKey('sale_${_items[i].productId}_${_items[i].size}_${_items[i].color}'),
+            child: _itemRow(i),
+          )),
       ],
     );
   }
@@ -895,14 +1022,17 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         Expanded(
           child: _outlineBtn('Preview', Icons.visibility_outlined, () async {
             if (_items.isEmpty) return;
-            await _loadShop();
+            ShopScope.loadShop(
+              context,
+              shopId: AuthScope.userOf(context)?.shopId ?? '',
+            );
             if (!mounted) return;
             Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (_) => SalePreviewScreen(
                   customerName: _customerNameCtrl.text,
                   customerPhone: _customerPhoneCtrl.text.isNotEmpty ? _customerPhoneCtrl.text : null,
-                  staffName: widget.user?.fullName ?? 'Staff',
+                  staffName: AuthScope.userOf(context)?.fullName ?? 'Staff',
                   voucherNo: 'INV-$_voucherRandom',
                   orderId: 'ORD-$_orderRandom',
                   dateTime: DateTime.now(),
@@ -913,11 +1043,11 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                   totalPayable: _totalPayable,
                   paymentMethod: _paymentMethod,
                   notes: _notesCtrl.text.isNotEmpty ? _notesCtrl.text : null,
-                  shopName: _shop?.name,
-                  shopAddress: _shop?.physicalAddress,
-                  shopPhone: _shop?.ownerInformation.phone,
-                  shopEmail: _shop?.ownerInformation.email,
-                  shopImage: _shop?.logoData ?? _shop?.logoUrl,
+                  shopName: ShopScope.shopOf(context)?.name,
+                  shopAddress: ShopScope.shopOf(context)?.physicalAddress,
+                  shopPhone: ShopScope.shopOf(context)?.ownerInformation.phone,
+                  shopEmail: ShopScope.shopOf(context)?.ownerInformation.email,
+                  shopImage: ShopScope.shopOf(context)?.logoData ?? ShopScope.shopOf(context)?.logoUrl,
                 ),
               ),
             );
@@ -992,6 +1122,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   }
 
   Map<String, dynamic> _buildSaleArgs(String customerName, String? customerPhone, String staffName, String voucherNo, String orderId, List<SaleItem> items, double discountPct, double totalPayable, String paymentMethod, String? notes) {
+    final shop = ShopScope.shopOf(context);
     return {
       'customerName': customerName,
       'customerPhone': customerPhone,
@@ -1006,10 +1137,10 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       'totalPayable': totalPayable,
       'paymentMethod': paymentMethod,
       'notes': notes,
-      'shopName': _shop?.name,
-      'shopAddress': _shop?.physicalAddress,
-      'shopPhone': _shop?.ownerInformation.phone,
-      'shopImage': _shop?.logoUrl ?? _shop?.logoData,
+      'shopName': shop?.name,
+      'shopAddress': shop?.physicalAddress,
+      'shopPhone': shop?.ownerInformation.phone,
+      'shopImage': shop?.logoUrl ?? shop?.logoData,
     };
   }
 
@@ -1259,7 +1390,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           onTap: () {
             Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (_) => SaleItemScreen(user: widget.user),
+                builder: (_) => SaleItemScreen(),
               ),
             );
           },

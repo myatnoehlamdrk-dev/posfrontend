@@ -5,18 +5,15 @@ import 'package:posfrontend/modules/category/model/category_models.dart';
 import 'package:posfrontend/modules/category/repository/category_repository_impl.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
-import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/package/model/package_models.dart';
 import 'package:posfrontend/modules/package/repository/package_repository_impl.dart';
 import 'package:posfrontend/modules/shared/widgets/inventory_form_widgets.dart';
 
 class AddPackageScreen extends StatefulWidget {
-  final LoginResponse? user;
   final Category? category;
   final Package? existingPackage;
   const AddPackageScreen({
     super.key,
-    this.user,
     this.category,
     this.existingPackage,
   });
@@ -177,7 +174,7 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
               children: [
                 SizedBox(
                   width: 240,
-                  child: AppDrawer(user: widget.user, activeItem: 'Inventory'),
+                    child: AppDrawer(activeItem: 'Inventory'),
                 ),
                 Expanded(child: body),
               ],
@@ -187,7 +184,7 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
         return Scaffold(
           key: _scaffoldKey,
           backgroundColor: Colors.white,
-          drawer: AppDrawer(user: widget.user, activeItem: 'Inventory'),
+          drawer: AppDrawer(activeItem: 'Inventory'),
           body: body,
         );
       },
@@ -206,7 +203,6 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
               title: isEdit ? 'Edit Package' : 'Add Package',
               showMenuButton: false,
               showBackButton: true,
-              user: widget.user,
             ),
             const SizedBox(height: 20),
             Breadcrumb([

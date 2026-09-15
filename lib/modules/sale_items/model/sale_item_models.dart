@@ -50,6 +50,10 @@ class SaleOrder {
   final String customerPhone;
   final String payMethod;
   final List<SaleItemDetail> saleItems;
+  final String createdBy;
+  final String updatedBy;
+  final String createdAt;
+  final String updatedAt;
 
   const SaleOrder({
     required this.orderId,
@@ -64,6 +68,10 @@ class SaleOrder {
     this.customerPhone = '',
     this.payMethod = 'Cash',
     this.saleItems = const [],
+    this.createdBy = '',
+    this.updatedBy = '',
+    this.createdAt = '',
+    this.updatedAt = '',
   });
 
   static int _parseQuantitySold(dynamic value) {
@@ -105,6 +113,10 @@ class SaleOrder {
       customerPhone: json.str('customerPhone'),
       payMethod: json.str('payMethod', 'Cash'),
       saleItems: saleItemsList,
+      createdBy: json.str('createdBy'),
+      updatedBy: json.str('updatedBy'),
+      createdAt: json.str('createdAt'),
+      updatedAt: json.str('updatedAt'),
     );
   }
 
@@ -140,6 +152,10 @@ class SaleOrder {
       customerPhone: json.str('customerPhone'),
       payMethod: json.str('payMethod', 'Cash'),
       saleItems: saleItemsList,
+      createdBy: json.str('createdBy'),
+      updatedBy: json.str('updatedBy'),
+      createdAt: json.str('createdAt'),
+      updatedAt: json.str('updatedAt'),
     );
   }
 }

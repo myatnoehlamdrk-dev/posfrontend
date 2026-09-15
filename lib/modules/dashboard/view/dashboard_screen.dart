@@ -5,16 +5,13 @@ import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/dashboard/model/dashboard_models.dart';
 import 'package:posfrontend/modules/dashboard/repository/dashboard_repository_impl.dart';
 import 'package:posfrontend/modules/dashboard/viewmodel/dashboard_view_model.dart';
-import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 
 class DashboardScreen extends StatefulWidget {
-  final LoginResponse? user;
-
-  const DashboardScreen({super.key, this.user});
+  const DashboardScreen({super.key});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -67,7 +64,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: bg,
-      drawer: AppDrawer(user: widget.user, activeItem: 'Dashboard'),
+      drawer: const AppDrawer(activeItem: 'Dashboard'),
       body: SafeArea(
         child: ListenableBuilder(
           listenable: _viewModel,
@@ -83,7 +80,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       title: 'Dashboard',
                       showMenuButton: true,
                       onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
-                      user: widget.user,
                     ),
                     const SizedBox(height: 24),
                     if (_viewModel.isLoading)
@@ -353,43 +349,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               SizedBox(
                 height: chartH,
-                child: LineChart(
-                  LineChartData(
-                    minY: 0,
-                    maxY: maxVal > 0 ? (maxVal * 1.2).ceilToDouble() : 10,
-                    gridData: FlGridData(
-                      show: true,
-                      drawVerticalLine: false,
-                      horizontalInterval: yInterval,
-                      getDrawingHorizontalLine: (value) => FlLine(
-                        color: cardBorder,
-                        strokeWidth: 1,
-                      ),
-                    ),
-                    titlesData: FlTitlesData(
-                      leftTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          reservedSize: 32,
-                          interval: yInterval,
-                          getTitlesWidget: (value, _) => Text(
-                            value.toInt().toString(),
-                            style: const TextStyle(fontSize: 10, color: grayText),
-                          ),
+                child: RepaintBoundary(
+                  child: LineChart(
+                    LineChartData(
+                      minY: 0,
+                      maxY: maxVal > 0 ? (maxVal * 1.2).ceilToDouble() : 10,
+                      gridData: FlGridData(
+                        show: true,
+                        drawVerticalLine: false,
+                        horizontalInterval: yInterval,
+                        getDrawingHorizontalLine: (value) => FlLine(
+                          color: cardBorder,
+                          strokeWidth: 1,
                         ),
                       ),
-                      rightTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
+                      titlesData: FlTitlesData(
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 32,
+                            interval: yInterval,
+                            getTitlesWidget: (value, _) => Text(
+                              value.toInt().toString(),
+                              style: const TextStyle(fontSize: 10, color: grayText),
+                            ),
+                          ),
+                        ),
+                        rightTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        topTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        bottomTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
                       ),
-                      topTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
-                      ),
-                      bottomTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
-                      ),
+                      borderData: FlBorderData(show: false),
+                      lineBarsData: lineBars,
                     ),
-                    borderData: FlBorderData(show: false),
-                    lineBarsData: lineBars,
                   ),
                 ),
               ),
@@ -503,6 +501,7 @@ class _ProductListCard extends StatelessWidget {
             children: items
                 .map(
                   (p) => Padding(
+                    key: ValueKey(p.name),
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Row(
                       children: [

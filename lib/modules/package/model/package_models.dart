@@ -53,6 +53,10 @@ class Package {
   final StockStatus status;
   final String? imageUrl;
   final List<String> productImages;
+  final String createdBy;
+  final String updatedBy;
+  final String createdAt;
+  final String updatedAt;
 
   const Package({
     required this.id,
@@ -66,6 +70,10 @@ class Package {
     required this.status,
     this.imageUrl,
     this.productImages = const [],
+    this.createdBy = '',
+    this.updatedBy = '',
+    this.createdAt = '',
+    this.updatedAt = '',
   });
 
   factory Package.fromJson(Map<String, dynamic> json) {
@@ -89,6 +97,10 @@ class Package {
       location: json['location'] ?? '',
       status: stockStatusFromString(json['stockStatus']),
       productImages: productImages,
+      createdBy: json['createdBy'] ?? '',
+      updatedBy: json['updatedBy'] ?? '',
+      createdAt: json['createdAt'] ?? '',
+      updatedAt: json['updatedAt'] ?? '',
     );
   }
 }

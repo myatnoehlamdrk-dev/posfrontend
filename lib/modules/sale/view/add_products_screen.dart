@@ -288,6 +288,7 @@ class _AddProductsScreenState extends State<AddProductsScreen> {
           final cat = _categories[i];
           final active = _selectedCategory == cat;
           return GestureDetector(
+            key: ValueKey(cat),
             onTap: () => setState(() => _selectedCategory = cat),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -345,7 +346,10 @@ class _AddProductsScreenState extends State<AddProductsScreen> {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       itemCount: items.length,
-      itemBuilder: (_, i) => _productCard(items[i]),
+      itemBuilder: (_, i) => KeyedSubtree(
+        key: ValueKey(items[i].id),
+        child: _productCard(items[i]),
+      ),
     );
   }
 

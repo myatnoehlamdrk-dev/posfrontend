@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/modules/category/model/category_models.dart';
-import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/package/model/package_models.dart';
 import 'package:posfrontend/modules/package/repository/package_repository_impl.dart';
 import 'package:posfrontend/modules/package/view/add_package_screen.dart';
@@ -11,10 +10,9 @@ import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 
 class PackageScreen extends StatefulWidget {
-  final LoginResponse? user;
   final Category category;
 
-  const PackageScreen({super.key, this.user, required this.category});
+  const PackageScreen({super.key, required this.category});
 
   @override
   State<PackageScreen> createState() => _PackageScreenState();
@@ -48,7 +46,6 @@ class _PackageScreenState extends State<PackageScreen> {
     final result = await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => AddPackageScreen(
-          user: widget.user,
           category: widget.category,
         ),
       ),
@@ -64,7 +61,6 @@ class _PackageScreenState extends State<PackageScreen> {
     final result = await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => AddPackageScreen(
-          user: widget.user,
           category: widget.category,
           existingPackage: package,
         ),
@@ -100,7 +96,7 @@ class _PackageScreenState extends State<PackageScreen> {
                 children: [
                   SizedBox(
                     width: 240,
-                    child: AppDrawer(user: widget.user, activeItem: 'Inventory'),
+                    child: AppDrawer(activeItem: 'Inventory'),
                   ),
                   Expanded(child: body),
                 ],
@@ -111,7 +107,7 @@ class _PackageScreenState extends State<PackageScreen> {
           return Scaffold(
             key: _scaffoldKey,
             backgroundColor: bg,
-            drawer: AppDrawer(user: widget.user, activeItem: 'Inventory'),
+            drawer: AppDrawer(activeItem: 'Inventory'),
             floatingActionButton: FloatingActionButton(
               onPressed: _openAddPackage,
               backgroundColor: const Color(0xFF4FD1D9),
@@ -142,7 +138,6 @@ class _PackageScreenState extends State<PackageScreen> {
                     showMenuButton: !isWide,
                     showBackButton: true,
                     onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
-                    user: widget.user,
                   ),
                   const SizedBox(height: 20),
                   _breadcrumb(),
@@ -358,7 +353,6 @@ class _PackageScreenState extends State<PackageScreen> {
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => PackageDetailsScreen(
-            user: widget.user,
             package: p,
             category: c,
           ),
@@ -454,6 +448,15 @@ class _PackageScreenState extends State<PackageScreen> {
                   ),
                   const SizedBox(height: 8),
                   _statusBadge(_computedStatus(p)),
+                  if (p.createdBy.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      'by ${p.createdBy}',
+                      style: const TextStyle(fontSize: 11, color: gray, fontStyle: FontStyle.italic),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ],
               ),
             ),

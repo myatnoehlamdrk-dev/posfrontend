@@ -35,6 +35,10 @@ class PurchaseOrder {
   final String date;
   final PurchaseStatus status;
   final String notes;
+  final String createdBy;
+  final String updatedBy;
+  final String createdAt;
+  final String updatedAt;
 
   const PurchaseOrder({
     required this.orderId,
@@ -46,6 +50,10 @@ class PurchaseOrder {
     required this.date,
     required this.status,
     this.notes = '',
+    this.createdBy = '',
+    this.updatedBy = '',
+    this.createdAt = '',
+    this.updatedAt = '',
   });
 
   int get totalAmount => quantity * unitPrice;
@@ -63,6 +71,10 @@ class PurchaseOrder {
           ? PurchaseStatus.completed
           : PurchaseStatus.pending,
       notes: json.str('notes'),
+      createdBy: json.str('createdBy'),
+      updatedBy: json.str('updatedBy'),
+      createdAt: json.str('createdAt'),
+      updatedAt: json.str('updatedAt'),
     );
   }
 }

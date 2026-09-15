@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/modules/dashboard/view/dashboard_screen.dart';
-import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/profile/view/profile_screen.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
 
-void navigateToDashboard(BuildContext context, {LoginResponse? user}) {
+void navigateToDashboard(BuildContext context) {
   Navigator.of(context).pushAndRemoveUntil(
-    MaterialPageRoute(builder: (_) => DashboardScreen(user: user)),
+    MaterialPageRoute(builder: (_) => const DashboardScreen()),
     (route) => false,
   );
 }
@@ -17,7 +16,6 @@ class AppTopBar extends StatelessWidget {
   final VoidCallback? onBackTap;
   final bool showMenuButton;
   final bool showBackButton;
-  final LoginResponse? user;
 
   const AppTopBar({
     super.key,
@@ -26,7 +24,6 @@ class AppTopBar extends StatelessWidget {
     this.onBackTap,
     this.showMenuButton = true,
     this.showBackButton = false,
-    this.user,
   });
 
   @override
@@ -46,7 +43,7 @@ class AppTopBar extends StatelessWidget {
               if (Navigator.of(context).canPop()) {
                 Navigator.of(context).pop();
               } else {
-                navigateToDashboard(context, user: user);
+                navigateToDashboard(context);
               }
             },
           ),
@@ -86,9 +83,7 @@ class AppTopBar extends StatelessWidget {
         GestureDetector(
           onTap: () {
             Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => ProfileScreen(user: user),
-              ),
+              MaterialPageRoute(builder: (_) => const ProfileScreen()),
             );
           },
           child: ValueListenableBuilder<String>(

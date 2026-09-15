@@ -7,6 +7,8 @@ import 'package:posfrontend/modules/shop/view/shop_screen.dart';
 import 'package:posfrontend/modules/verify_account/view/verify_account_screen.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/widgets/app_input_decoration.dart';
+import 'package:posfrontend/shared/widgets/auth_scope.dart';
+import 'package:posfrontend/shared/widgets/shop_scope.dart';
 import 'package:posfrontend/shared/widgets/gradient_button.dart';
 import 'package:posfrontend/shared/widgets/required_label.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
@@ -47,10 +49,12 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _submit() async {
     final response = await _viewModel.login();
     if (response != null && mounted) {
+      AuthScope.updateUserOf(context, response);
+      ShopScope.loadShop(context, shopId: response.shopId);
       showSuccessSnackBar(context, 'Login successful');
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => DashboardScreen(user: response)),
+        MaterialPageRoute(builder: (_) => const DashboardScreen()),
       );
     }
   }

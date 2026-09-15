@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/core/extensions/datetime_extensions.dart';
-import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/sale_items/model/sale_item_models.dart';
 import 'package:posfrontend/modules/sale_items/view/sale_detail_screen.dart';
 import 'package:posfrontend/modules/sale_items/viewmodel/sale_item_view_model.dart';
@@ -13,9 +12,7 @@ import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 
 class SaleItemScreen extends StatefulWidget {
-  final LoginResponse? user;
-
-  const SaleItemScreen({super.key, this.user});
+  const SaleItemScreen({super.key});
 
   @override
   State<SaleItemScreen> createState() => _SaleItemScreenState();
@@ -30,19 +27,13 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
   void initState() {
     super.initState();
     _viewModel = SaleItemViewModel();
-    _viewModel.addListener(_onViewModelChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _viewModel.loadSales(refresh: true);
     });
   }
 
-  void _onViewModelChanged() {
-    if (mounted) setState(() {});
-  }
-
   @override
   void dispose() {
-    _viewModel.removeListener(_onViewModelChanged);
     _viewModel.dispose();
     _searchController.dispose();
     super.dispose();
@@ -52,13 +43,16 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FC),
-      drawer: AppDrawer(user: widget.user, activeItem: 'Sale Item'),
+      drawer: const AppDrawer(activeItem: 'Sale Item'),
       body: SafeArea(
         child: Column(
           children: [
-            AppScreenTopBar(title: 'Sales Items', user: widget.user),
+            AppScreenTopBar(title: 'Sales Items'),
             Expanded(
-              child: _buildBody(),
+              child: ListenableBuilder(
+                listenable: _viewModel,
+                builder: (context, _) => _buildBody(),
+              ),
             ),
           ],
         ),
@@ -114,10 +108,13 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
             SearchInputBar(
               controller: _searchController,
               hintText: 'Search products, order ID, customer...',
-              onChanged: (_) => setState(() {}),
+              onChanged: (_) {},
             ),
             const SizedBox(height: 16),
-            ..._filteredOrders.map((order) => _buildOrderCard(order)),
+            ..._filteredOrders.asMap().entries.map((entry) => KeyedSubtree(
+              key: ValueKey('${entry.value.orderId}_${entry.key}'),
+              child: _buildOrderCard(entry.value),
+            )),
             const SizedBox(height: 24),
           ],
         ),
@@ -147,7 +144,7 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
     return GestureDetector(
       onTap: () {
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => SaleDetailScreen(order: order, viewModel: _viewModel, user: widget.user)),
+          MaterialPageRoute(builder: (_) => SaleDetailScreen(order: order, viewModel: _viewModel)),
         );
       },
       child: Container(
@@ -228,6 +225,15 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                     Text(
                       order.customerName,
                       style: const TextStyle(fontSize: 12, color: AppColors.gray),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                  if (order.createdBy.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      'by ${order.createdBy}',
+                      style: const TextStyle(fontSize: 11, color: AppColors.gray, fontStyle: FontStyle.italic),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),

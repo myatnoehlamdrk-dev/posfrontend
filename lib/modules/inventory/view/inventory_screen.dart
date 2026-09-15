@@ -4,15 +4,12 @@ import 'package:posfrontend/modules/dashboard/view/dashboard_screen.dart';
 import 'package:posfrontend/modules/inventory/model/inventory_models.dart';
 import 'package:posfrontend/modules/inventory/repository/inventory_repository_impl.dart';
 import 'package:posfrontend/modules/inventory/viewmodel/inventory_view_model.dart';
-import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 
 class InventoryScreen extends StatefulWidget {
-  final LoginResponse? user;
-
-  const InventoryScreen({super.key, this.user});
+  const InventoryScreen({super.key});
 
   @override
   State<InventoryScreen> createState() => _InventoryScreenState();
@@ -45,7 +42,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) {
-          navigateToDashboard(context, user: widget.user);
+          navigateToDashboard(context);
         }
       },
       child: LayoutBuilder(
@@ -58,7 +55,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 children: [
                   SizedBox(
                     width: 240,
-                    child: AppDrawer(user: widget.user, activeItem: 'Inventory'),
+                    child: AppDrawer(activeItem: 'Inventory'),
                   ),
                   Expanded(child: _buildContent(isWide: true)),
                 ],
@@ -68,7 +65,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
           return Scaffold(
             key: _scaffoldKey,
             backgroundColor: bg,
-            drawer: AppDrawer(user: widget.user, activeItem: 'Inventory'),
+            drawer: AppDrawer(activeItem: 'Inventory'),
             body: _buildContent(isWide: false),
           );
         },
@@ -90,7 +87,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 title: 'Inventory',
                 showMenuButton: !isWide,
                 onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
-                user: widget.user,
               ),
               const SizedBox(height: 24),
               _breadcrumb(),
@@ -124,7 +120,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       children: [
         GestureDetector(
           onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => DashboardScreen(user: widget.user)),
+            MaterialPageRoute(builder: (_) => DashboardScreen()),
           ),
           child: const Text(
             'Dashboard',
@@ -221,7 +217,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => CategoryScreen(
-                    user: widget.user,
                     inventoryType: option.key,
                   ),
                 ),

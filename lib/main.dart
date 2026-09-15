@@ -2,17 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:posfrontend/core/auth/auth_redirect.dart';
-import 'package:posfrontend/modules/dashboard/view/dashboard_screen.dart';
-import 'package:posfrontend/modules/inventory/view/inventory_screen.dart';
-import 'package:posfrontend/modules/login/model/login_response.dart';
-import 'package:posfrontend/modules/login/view/login_screen.dart';
-import 'package:posfrontend/modules/product/view/products_catalog_screen.dart';
-import 'package:posfrontend/modules/profile/view/profile_screen.dart';
-
-LoginResponse? _userArg(BuildContext context) {
-  final args = ModalRoute.of(context)?.settings.arguments;
-  return args is LoginResponse? ? args : null;
-}
+import 'package:posfrontend/modules/onboarding/view/get_started_screen.dart';
+import 'package:posfrontend/shared/widgets/auth_scope.dart';
+import 'package:posfrontend/shared/widgets/shop_scope.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,26 +23,23 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'POS Frontend',
-      navigatorKey: navigatorKey,
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF7B2CBF),
+    return AuthScope(
+      child: ShopScope(
+        child: MaterialApp(
+          title: 'Inventory',
+          navigatorKey: navigatorKey,
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF7B2CBF),
+            ),
+            useMaterial3: true,
+            textTheme: GoogleFonts.poppinsTextTheme(),
+            fontFamily: GoogleFonts.poppins().fontFamily,
+          ),
+          home: const GetStartedScreen(),
         ),
-        useMaterial3: true,
-        textTheme: GoogleFonts.poppinsTextTheme(),
-        fontFamily: GoogleFonts.poppins().fontFamily,
       ),
-      home: const LoginScreen(),
-      routes: {
-        '/login': (ctx) => const LoginScreen(),
-        '/dashboard': (ctx) => DashboardScreen(user: _userArg(ctx)),
-        '/inventory': (ctx) => InventoryScreen(user: _userArg(ctx)),
-        '/products': (ctx) => ProductsCatalogScreen(user: _userArg(ctx)),
-        '/profile': (ctx) => ProfileScreen(user: _userArg(ctx)),
-      },
     );
   }
 }

@@ -15,6 +15,9 @@ class Category {
   final IconData icon;
   final String? imageUrl;
   final List<String> productImages;
+  final String createdBy;
+  final String updatedBy;
+  final String updatedAt;
 
   const Category({
     required this.id,
@@ -31,5 +34,8 @@ class Category {
     required this.icon,
     this.imageUrl,
     this.productImages = const [],
+    this.createdBy = '',
+    this.updatedBy = '',
+    this.updatedAt = '',
   });
 }

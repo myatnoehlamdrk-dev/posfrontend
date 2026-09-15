@@ -2,15 +2,13 @@ import 'package:flutter/material.dart' hide ThemeMode;
 import 'package:image_picker/image_picker.dart';
 import 'package:posfrontend/core/auth/token_storage.dart';
 import 'package:posfrontend/core/network/api_client.dart';
-import 'package:posfrontend/modules/login/model/login_response.dart';
+import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/modules/login/view/login_screen.dart';
 import 'package:posfrontend/modules/settings/model/settings_models.dart';
 import 'package:posfrontend/modules/settings/viewmodel/settings_view_model.dart';
 
 class SettingsScreen extends StatefulWidget {
-  final LoginResponse? user;
-
-  const SettingsScreen({super.key, this.user});
+  const SettingsScreen({super.key});
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -27,12 +25,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   static const Color cardBg = Color(0xFFF3F4F6);
   static const Color red = Color(0xFFEF4444);
 
-  String get _userName =>
-      widget.user?.fullName.trim().isNotEmpty == true
-          ? widget.user!.fullName
-          : 'Aung Ko Ko';
+  String _userName(BuildContext context) {
+    final user = AuthScope.userOf(context);
+    final name = user?.fullName.trim() ?? '';
+    return name.isNotEmpty ? name : 'Aung Ko Ko';
+  }
 
-  String get _email => widget.user?.email ?? 'aungkoko@example.com';
+  String _email(BuildContext context) => AuthScope.userOf(context)?.email ?? 'aungkoko@example.com';
 
   String _initial(String name) {
     if (name.trim().isEmpty) return 'A';
@@ -188,7 +187,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               radius: 24,
               backgroundColor: orange,
               child: Text(
-                _initial(_userName),
+                _initial(_userName(context)),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -202,7 +201,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _userName,
+                    _userName(context),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -213,7 +212,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    _email,
+                    _email(context),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(

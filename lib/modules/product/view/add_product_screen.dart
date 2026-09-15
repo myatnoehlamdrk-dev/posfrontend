@@ -1,21 +1,11 @@
-import 'dart:io';
-
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:posfrontend/core/extensions/number_extensions.dart';
 import 'package:posfrontend/core/network/api_client.dart';
-import 'package:posfrontend/core/utils/error_handler.dart';
-import 'package:posfrontend/modules/category/model/category_models.dart';
-import 'package:posfrontend/modules/category/repository/category_repository_impl.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
-import 'package:posfrontend/shared/widgets/error_snackbar.dart';
-import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/product/model/product_create_models.dart';
 import 'package:posfrontend/modules/product/model/product_detail_models.dart' hide ProductVariant;
-import 'package:posfrontend/modules/product/repository/product_create_repository_impl.dart';
+import 'package:posfrontend/modules/product/viewmodel/add_product_view_model.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
-import 'package:posfrontend/shared/repositories/imgbb_repository_impl.dart';
 import 'package:posfrontend/modules/shared/widgets/inventory_form_widgets.dart';
 
 const Color kPurple700 = Color(0xFF7C3AED);
@@ -24,9 +14,8 @@ const Color kPurple900 = Color(0xFF5B21B6);
 const Color kLightPurple = Color(0xFFF5F0FF);
 
 class AddProductScreen extends StatefulWidget {
-  final LoginResponse? user;
   final ProductDetail? existingProduct;
-  const AddProductScreen({super.key, this.user, this.existingProduct});
+  const AddProductScreen({super.key, this.existingProduct});
 
   @override
   State<AddProductScreen> createState() => _AddProductScreenState();
@@ -34,432 +23,66 @@ class AddProductScreen extends StatefulWidget {
 
 class _AddProductScreenState extends State<AddProductScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  final ProductCreateRepositoryImpl _repository = ProductCreateRepositoryImpl();
-  final CancelToken _cancelToken = CancelToken();
-
-  final TextEditingController _name = TextEditingController();
-  final TextEditingController _brand = TextEditingController();
-  final TextEditingController _sku = TextEditingController();
-
-  final TextEditingController _productSearch = TextEditingController();
-  final FocusNode _imageFocus = FocusNode();
-
-  bool _isSet = false;
-  String _inventoryType = 'self';
-  String? _selectedSupplierId;
-  List<ProductSearchResult> _searchResults = [];
-  bool _showSearchResults = false;
-  String? _selectedPurchaseItemId;
-
-  List<Category> _categories = [];
-  Category? _selectedCategory;
-  List<PackageOption> _packages = [];
-  PackageOption? _selectedPackage;
-  List<SupplierOption> _suppliers = [];
-  List<PendingPurchaseItem> _pendingPurchaseItems = [];
-  bool _loadingPurchaseItems = false;
-
-  File? _imageFile;
-  String? _imageUrl;
-  String? _imageDeleteUrl;
-  bool _uploading = false;
-  Key _imageKey = UniqueKey();
-
-  final List<ProductVariant> _variants = [
-    ProductVariant(size: 'Small', color: 'Black'),
-  ];
-
-  static const List<String> _sizeOptions = [
-    'Individual',
-    'Family Pack',
-    'Small',
-    'Medium',
-    'Large',
-    'XL',
-    'Standard',
-    'Premium',
-    'Enterprise',
-  ];
-
-  static const List<ProductColorOption> _colorOptions = [
-    ProductColorOption('Black', Color(0xFF000000)),
-    ProductColorOption('White', Color(0xFFFFFFFF)),
-    ProductColorOption('Gray', Color(0xFF808080)),
-    ProductColorOption('Navy Blue', Color(0xFF000080)),
-    ProductColorOption('Royal Blue', Color(0xFF4169E1)),
-    ProductColorOption('Red', Color(0xFFE53935)),
-    ProductColorOption('Green', Color(0xFF43A047)),
-    ProductColorOption('Yellow', Color(0xFFFDD835)),
-    ProductColorOption('Orange', Color(0xFFFB8C00)),
-    ProductColorOption('Brown', Color(0xFF795548)),
-  ];
+  late final AddProductViewModel _vm;
 
   @override
   void initState() {
     super.initState();
-    _loadSuppliers();
-    _loadPendingPurchaseItems();
-    if (widget.existingProduct != null) {
-      final p = widget.existingProduct!;
-      _name.text = p.name;
-      _brand.text = p.brand;
-      _sku.text = p.sku;
-      _selectedSupplierId = (p.supplierId == '—' || p.supplierId.isEmpty) ? null : p.supplierId;
-      _imageUrl = p.imageUrl;
-      _imageDeleteUrl = p.imageDeleteUrl;
-      _inventoryType = (p.inventoryType.isNotEmpty && p.inventoryType != '—') ? p.inventoryType : 'self';
-      _isSet = p.isBundle == 'Yes';
-      _variants.clear();
-      for (final v in p.variants) {
-        _variants.add(ProductVariant(
-          size: v.size,
-          color: v.color,
-          quantity: v.quantity,
-          price: v.price,
-        ));
-      }
-      if (_variants.isEmpty) {
-        _variants.add(ProductVariant(size: 'Small', color: 'Black'));
-      }
-      _loadCategories().then((_) {
-        if (!mounted) return;
-        if (p.categoryName.isNotEmpty) {
-          final cat = _categories.where((c) => c.name == p.categoryName).firstOrNull;
-          if (cat != null) {
-            _onCategoryChanged(cat).then((_) {
-              if (!mounted) return;
-              if (p.packageId.isNotEmpty && p.packageId != '—') {
-                final pkg = _packages.where((pk) => pk.id == p.packageId).firstOrNull;
-                if (pkg != null) {
-                  setState(() => _selectedPackage = pkg);
-                }
-              }
-            });
-          }
-        }
-      });
-    } else {
-      _loadCategories();
-    }
+    _vm = AddProductViewModel();
+    _vm.loadInitialData(existingProduct: widget.existingProduct);
   }
 
   @override
   void dispose() {
-    if (!_cancelToken.isCancelled) _cancelToken.cancel();
-    _name.dispose();
-    _brand.dispose();
-    _sku.dispose();
-    _productSearch.dispose();
-    _imageFocus.dispose();
+    _vm.dispose();
     super.dispose();
   }
 
-  Future<void> _loadSuppliers() async {
-    try {
-      final list = await _repository.getSuppliers();
-      if (!mounted) return;
-      setState(() => _suppliers = list);
-    } catch (e) {
-      if (!mounted) return;
-      _snack('Failed to load suppliers');
-    }
-  }
-
-  Future<void> _loadPendingPurchaseItems() async {
-    setState(() => _loadingPurchaseItems = true);
-    try {
-      final list = await _repository.getPendingPurchaseItems();
-      if (!mounted) return;
-      setState(() {
-        _pendingPurchaseItems = list;
-        _loadingPurchaseItems = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _loadingPurchaseItems = false);
-      _snack('Failed to load pending purchases');
-    }
-  }
-
-  void _selectPurchaseItem(PendingPurchaseItem item) {
-    setState(() {
-      _selectedPurchaseItemId = item.id;
-      _name.text = item.productName;
-      if (item.supplierId.isNotEmpty) {
-        _selectedSupplierId = item.supplierId;
-      }
-      _variants.clear();
-      _variants.add(ProductVariant(
-        size: 'Regular',
-        color: '',
-        quantity: item.quantity,
-        price: item.unitPrice.toDouble(),
-      ));
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Loaded: ${item.productName} (${item.quantity} units)')),
-    );
-  }
-
-  Future<void> _searchProducts(String query) async {
-    if (query.length < 2) {
-      setState(() {
-        _searchResults = [];
-        _showSearchResults = false;
-      });
-      return;
-    }
-    try {
-      final results = await _repository.searchProducts(query);
-      if (!mounted) return;
-      setState(() {
-        _searchResults = results;
-        _showSearchResults = results.isNotEmpty;
-      });
-    } catch (_) {
-      // Search failure is non-critical; show empty results
-    }
-  }
-
-  void _selectProduct(ProductSearchResult product) {
-    setState(() {
-      _name.text = product.name;
-      _brand.text = product.brand;
-      _sku.text = product.sku;
-      _selectedSupplierId = product.supplierId;
-      _imageUrl = product.imageUrl;
-      _isSet = product.isSet;
-      _inventoryType = product.inventoryType.isNotEmpty ? product.inventoryType : 'self';
-      _showSearchResults = false;
-      _searchResults = [];
-      _productSearch.clear();
-      _variants.clear();
-      if (product.variants.isNotEmpty) {
-        for (final v in product.variants) {
-          _variants.add(ProductVariant(
-            size: (v['size'] ?? '').toString(),
-            color: (v['color'] ?? '').toString(),
-            quantity: v['quantity'] as int? ?? 0,
-            price: (v['price'] as num?)?.toDouble() ?? 0.0,
-          ));
-        }
-      } else {
-        _variants.add(ProductVariant(
-          size: product.size.isNotEmpty ? product.size : 'Small',
-          color: product.color.isNotEmpty ? product.color : 'Black',
-        ));
-      }
-    });
-
-    _loadCategories().then((_) {
-      if (!mounted) return;
-      if (product.categoryId.isNotEmpty) {
-        final cat = _categories.where((c) => c.id == product.categoryId).firstOrNull;
-        if (cat != null) {
-          _onCategoryChanged(cat).then((_) {
-            if (!mounted) return;
-            if (product.packageId.isNotEmpty) {
-              final pkg = _packages.where((p) => p.id == product.packageId).firstOrNull;
-              if (pkg != null) {
-                setState(() => _selectedPackage = pkg);
-              }
-            }
-          });
-        }
-      }
-    });
-  }
-
-  Future<void> _loadCategories() async {
-    try {
-      final cats = await CategoryRepositoryImpl().getCategories(type: _inventoryType);
-      if (!mounted) return;
-      setState(() {
-        _categories = cats;
-        _selectedCategory = null;
-        _packages = [];
-        _selectedPackage = null;
-      });
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      _snack('Failed to load categories: ${e.message}');
-    } catch (e) {
-      if (!mounted) return;
-      _snack('Failed to load categories: ${formatApiError(e)}');
-    }
-  }
-
-  Future<void> _onCategoryChanged(Category? cat) async {
-    setState(() => _selectedCategory = cat);
-    if (cat == null) {
-      setState(() {
-        _packages = [];
-        _selectedPackage = null;
-      });
-      return;
-    }
-    try {
-      final pkgs = await _repository.getPackages(cat.id);
-      if (!mounted) return;
-      setState(() {
-        _packages = pkgs;
-        _selectedPackage = null;
-      });
-    } on ApiException {
-      // Leave packages empty on failure.
-    }
-  }
-
-  Future<void> _pickAndUpload() async {
-    final picker = ImagePicker();
-    final xfile = await picker.pickImage(source: ImageSource.gallery);
-    if (xfile == null) return;
-    final bytes = await xfile.readAsBytes();
-    setState(() {
-      _imageFile = File(xfile.path);
-      _imageKey = UniqueKey();
-      _uploading = true;
-    });
-    try {
-      final result = await ImgbbRepositoryImpl().uploadImage(
-        bytes,
-        fileName: xfile.name,
-      );
-      if (!mounted) return;
-      setState(() {
-        _imageUrl = result.url;
-        _imageDeleteUrl = result.deleteUrl;
-        _imageKey = UniqueKey();
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Image uploaded')),
-        );
-      }
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      showErrorSnackBar(context, e);
-    } finally {
-      if (mounted) setState(() => _uploading = false);
-    }
-  }
-
-  void _onVariantChanged(int index, ProductVariant v) {
-    setState(() {
-      _variants[index] = v;
-    });
-  }
-
-  void _addVariant() {
-    setState(() => _variants.add(ProductVariant(size: 'Small', color: 'Black')));
-  }
-
-  void _removeVariant(int index) {
-    setState(() => _variants.removeAt(index));
-  }
-
-  Future<void> _save() async {
-    if (_uploading) {
-      _snack('Please wait for image upload to finish');
-      return;
-    }
-    final name = _name.text.trim();
-    if (name.isEmpty) {
-      _snack('Product name is required');
-      return;
-    }
-    final valid = _variants
-        .where((v) => v.size.isNotEmpty && v.quantity > 0 && v.price > 0)
-        .toList();
-    if (valid.isEmpty) {
-      _snack('Add at least one variant with a size, quantity and price');
-      return;
-    }
-    if (_selectedCategory == null) {
-      _snack('Category is required');
-      return;
-    }
-    if (_selectedPackage == null) {
-      _snack('Package is required');
-      return;
-    }
-
-    final req = ProductCreateRequest(
-      isSet: _isSet,
-      name: name,
-      imageUrl: _imageUrl ?? '',
-      brand: _brand.text.trim(),
-      inventoryType: _inventoryType,
-      categoryId: _selectedCategory?.id ?? '',
-      packageId: _selectedPackage?.id ?? '',
-      variants: valid,
-      sku: _sku.text.trim(),
-      supplierId: _selectedSupplierId ?? '',
-      supplierName: _suppliers.firstWhere((s) => s.id == (_selectedSupplierId ?? ''), orElse: () => const SupplierOption(id: '', name: '')).name,
-      supplierContact: '',
-      supplierSince: '',
-      supplierAddress: '',
-      imageDeleteUrl: _imageDeleteUrl ?? '',
-      purchaseItemId: _selectedPurchaseItemId ?? '',
-    );
-
-    try {
-      final existingProduct = widget.existingProduct;
-      if (existingProduct != null) {
-        await _repository.updateProduct(existingProduct.id, req);
-        if (!mounted) return;
-        _snack('Product updated');
-      } else {
-        await _repository.createProduct(req);
-        if (!mounted) return;
-        _snack('Product created');
-      }
-      Navigator.of(context).pop(true);
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      _snack(e.message);
-    } catch (e) {
-      if (!mounted) return;
-      _snack(formatApiError(e));
-    }
-  }
+  int get _totalStock =>
+      _vm.variants.fold(0, (s, v) => s + (v.quantity > 0 ? v.quantity : 0));
 
   void _snack(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  int get _totalStock =>
-      _variants.fold(0, (s, v) => s + (v.quantity > 0 ? v.quantity : 0));
+  void _showError() {
+    if (_vm.errorMessage != null) _snack(_vm.errorMessage!);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (ctx, constraints) {
-        final isWide = constraints.maxWidth >= 768;
-        final body = _content();
-        final scaffold = isWide
-            ? Scaffold(
-                backgroundColor: Colors.white,
-                body: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    SizedBox(
-                      width: 240,
-                      child: AppDrawer(user: widget.user, activeItem: 'Product'),
+    return ListenableBuilder(
+      listenable: _vm,
+      builder: (context, _) {
+        return LayoutBuilder(
+          builder: (ctx, constraints) {
+            final isWide = constraints.maxWidth >= 768;
+            final body = _content();
+            final scaffold = isWide
+                ? Scaffold(
+                    backgroundColor: Colors.white,
+                    body: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(
+                          width: 240,
+                          child: AppDrawer(activeItem: 'Product'),
+                        ),
+                        Expanded(child: body),
+                      ],
                     ),
-                    Expanded(child: body),
-                  ],
-                ),
-                bottomNavigationBar: _createButton(),
-              )
-            : Scaffold(
-                key: _scaffoldKey,
-                backgroundColor: Colors.white,
-                drawer: AppDrawer(user: widget.user, activeItem: 'Product'),
-                body: body,
-                bottomNavigationBar: _createButton(),
-              );
-        return scaffold;
+                    bottomNavigationBar: _createButton(),
+                  )
+                : Scaffold(
+                    key: _scaffoldKey,
+                    backgroundColor: Colors.white,
+                    drawer: const AppDrawer(activeItem: 'Product'),
+                    body: body,
+                    bottomNavigationBar: _createButton(),
+                  );
+            return scaffold;
+          },
+        );
       },
     );
   }
@@ -475,13 +98,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
               title: widget.existingProduct != null ? 'Update Product' : 'Create Product',
               showMenuButton: false,
               showBackButton: true,
-              user: widget.user,
             ),
             const SizedBox(height: 20),
             FormCard(
               label: 'Use from Purchase',
               helper: 'Select a pending purchase item to auto-fill product details.',
-              child: _loadingPurchaseItems
+              child: _vm.loadingPurchaseItems
                   ? const SizedBox(
                       height: 48,
                       child: Center(
@@ -495,7 +117,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                         ),
                       ),
                     )
-                  : _pendingPurchaseItems.isEmpty
+                  : _vm.pendingPurchaseItems.isEmpty
                       ? const SizedBox(
                           height: 48,
                           child: Center(
@@ -562,9 +184,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
         DropdownButtonHideUnderline(
           child: DropdownButton<String>(
             isExpanded: true,
-            value: _selectedPurchaseItemId,
+            value: _vm.selectedPurchaseItemId,
             hint: const Text('Select a pending purchase item...', style: TextStyle(color: kGray, fontSize: 14)),
-            items: _pendingPurchaseItems.map((item) {
+            items: _vm.pendingPurchaseItems.map((item) {
               final price = item.unitPrice.withCommas();
               return DropdownMenuItem(
                 value: item.id,
@@ -577,8 +199,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
             }).toList(),
             onChanged: (val) {
               if (val == null) return;
-              final item = _pendingPurchaseItems.firstWhere((i) => i.id == val);
-              _selectPurchaseItem(item);
+              final item = _vm.pendingPurchaseItems.firstWhere((i) => i.id == val);
+              _vm.selectPurchaseItem(item);
+              _snack('Loaded: ${item.productName} (${item.quantity} units)');
             },
           ),
         ),
@@ -591,21 +214,18 @@ class _AddProductScreenState extends State<AddProductScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TextField(
-          controller: _productSearch,
-          onChanged: _searchProducts,
+          controller: _vm.productSearch,
+          onChanged: _vm.searchProducts,
           decoration: InputDecoration(
             hintText: 'Search product name...',
             hintStyle: const TextStyle(color: kGray, fontSize: 14),
             prefixIcon: const Icon(Icons.search, color: kGray, size: 22),
-            suffixIcon: _productSearch.text.isNotEmpty
+            suffixIcon: _vm.productSearch.text.isNotEmpty
                 ? IconButton(
                     icon: const Icon(Icons.close, color: kGray, size: 20),
                     onPressed: () {
-                      _productSearch.clear();
-                      setState(() {
-                        _searchResults = [];
-                        _showSearchResults = false;
-                      });
+                      _vm.productSearch.clear();
+                      _vm.dismissSearch();
                     },
                   )
                 : null,
@@ -626,7 +246,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
             ),
           ),
         ),
-        if (_showSearchResults && _searchResults.isNotEmpty) ...[
+        if (_vm.showSearchResults && _vm.searchResults.isNotEmpty) ...[
           const SizedBox(height: 8),
           Container(
             constraints: const BoxConstraints(maxHeight: 200),
@@ -638,10 +258,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
             child: ListView.builder(
               shrinkWrap: true,
               padding: const EdgeInsets.all(8),
-              itemCount: _searchResults.length,
+              itemCount: _vm.searchResults.length,
               itemBuilder: (ctx, i) {
-                final p = _searchResults[i];
+                final p = _vm.searchResults[i];
                 return ListTile(
+                  key: ValueKey(p.id),
                   dense: true,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   leading: Container(
@@ -659,7 +280,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     style: const TextStyle(fontSize: 12, color: kGray),
                   ),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: kGray),
-                  onTap: () => _selectProduct(p),
+                  onTap: () {
+                    _vm.selectProduct(p);
+                    _vm.setSearchCategoryAndPackage(p);
+                  },
                 );
               },
             ),
@@ -686,13 +310,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   Widget _toggleOption(String value, String label) {
-    final selected = _inventoryType == value;
+    final selected = _vm.inventoryType == value;
     return Expanded(
       child: GestureDetector(
         onTap: () {
-          if (_inventoryType == value) return;
-          setState(() => _inventoryType = value);
-          _loadCategories();
+          if (_vm.inventoryType == value) return;
+          _vm.setInventoryType(value);
         },
         child: Container(
           height: 42,
@@ -716,38 +339,49 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   Widget _imageSection() {
-    final hasPreview = _imageFile != null || (_imageUrl?.isNotEmpty ?? false);
+    final hasPreview = _vm.imageFile != null || (_vm.imageUrl?.isNotEmpty ?? false);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         GestureDetector(
-          onTap: _uploading ? null : _pickAndUpload,
-            child: _DashedBox(
-              child: hasPreview
-                  ? ClipRRect(
+          onTap: _vm.uploading ? null : () async {
+            await _vm.pickAndUpload();
+            if (!mounted) return;
+            if (_vm.errorMessage == null) {
+              _snack('Image uploaded');
+            } else {
+              _showError();
+              _vm.resetError();
+            }
+          },
+          child: _DashedBox(
+            child: hasPreview
+                ? RepaintBoundary(
+                    child: ClipRRect(
                       borderRadius: BorderRadius.circular(12),
-                  child: _imageFile != null
-                      ? Image.file(_imageFile!, key: _imageKey, height: 160, fit: BoxFit.cover)
-                      : Image.network(
-                          _imageUrl!,
-                          key: _imageKey,
-                          height: 160,
-                          fit: BoxFit.cover,
-                          loadingBuilder: (_, child, progress) =>
-                              progress == null
-                                  ? child
-                                  : const Center(
-                                      child: CircularProgressIndicator(
-                                        color: kPurple700,
-                                      ),
-                                    ),
-                          errorBuilder: (_, _, _) => const Center(
-                            child: Icon(Icons.broken_image_outlined,
-                                size: 42, color: kPurple700),
-                          ),
-                        ),
-                    )
-                : _uploading
+                      child: _vm.imageFile != null
+                          ? Image.file(_vm.imageFile!, key: _vm.imageKey, height: 160, fit: BoxFit.cover)
+                          : Image.network(
+                              _vm.imageUrl!,
+                              key: _vm.imageKey,
+                              height: 160,
+                              fit: BoxFit.cover,
+                              loadingBuilder: (_, child, progress) =>
+                                  progress == null
+                                      ? child
+                                      : const Center(
+                                          child: CircularProgressIndicator(
+                                            color: kPurple700,
+                                          ),
+                                        ),
+                              errorBuilder: (_, _, _) => const Center(
+                                child: Icon(Icons.broken_image_outlined,
+                                    size: 42, color: kPurple700),
+                              ),
+                            ),
+                    ),
+                  )
+                : _vm.uploading
                     ? const CircularProgressIndicator(color: kPurple700)
                     : Column(
                         children: const [
@@ -761,11 +395,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       ),
           ),
         ),
-        if (_imageUrl?.isNotEmpty ?? false)
+        if (_vm.imageUrl?.isNotEmpty ?? false)
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Text(
-              _imageUrl!,
+              _vm.imageUrl!,
               style: const TextStyle(fontSize: 12, color: kGray),
               overflow: TextOverflow.ellipsis,
             ),
@@ -778,11 +412,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _field('Product Name', _name, 'e.g. Wireless Headphones Pro', req: true),
+        _field('Product Name', _vm.name, 'e.g. Wireless Headphones Pro', req: true),
         const SizedBox(height: 16),
-        _field('Brand', _brand, 'e.g. SoundMax', req: true),
+        _field('Brand', _vm.brand, 'e.g. SoundMax', req: true),
         const SizedBox(height: 16),
-        _field('SKU', _sku, 'e.g. SM-WHP-001', req: true),
+        _field('SKU', _vm.sku, 'e.g. SM-WHP-001', req: true),
         const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -792,8 +426,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: kTitle),
             ),
             Switch(
-              value: _isSet,
-              onChanged: (v) => setState(() => _isSet = v),
+              value: _vm.isSet,
+              onChanged: _vm.setIsSet,
               activeThumbColor: kPurple700,
               activeTrackColor: const Color(0xFFC4B5FD),
             ),
@@ -804,10 +438,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   Widget _categoryPackage() {
-    final categoryLabels = _categories.map((c) => c.name).toList();
-    final selectedCategoryLabel = _selectedCategory?.name;
-    final packageLabels = _packages.map((p) => p.name).toList();
-    final selectedPackageLabel = _selectedPackage?.name;
+    final categoryLabels = _vm.categories.map((c) => c.name).toList();
+    final selectedCategoryLabel = _vm.selectedCategory?.name;
+    final packageLabels = _vm.packages.map((p) => p.name).toList();
+    final selectedPackageLabel = _vm.selectedPackage?.name;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -816,10 +450,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
           'Category *',
           selectedCategoryLabel,
           categoryLabels,
-          _categories.isEmpty
+          _vm.categories.isEmpty
               ? null
-              : (v) => _onCategoryChanged(
-                  _categories.firstWhere((c) => c.name == v),
+              : (v) => _vm.onCategoryChanged(
+                  _vm.categories.firstWhere((c) => c.name == v),
                 ),
         ),
         const SizedBox(height: 16),
@@ -827,11 +461,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
           'Package *',
           selectedPackageLabel,
           packageLabels,
-          _packages.isEmpty || _selectedCategory == null
+          _vm.packages.isEmpty || _vm.selectedCategory == null
               ? null
-              : (v) => setState(() {
-                  _selectedPackage = _packages.firstWhere((p) => p.name == v);
-                }),
+              : (v) => _vm.setSelectedPackage(
+                  _vm.packages.firstWhere((p) => p.name == v),
+                ),
         ),
       ],
     );
@@ -841,22 +475,22 @@ class _AddProductScreenState extends State<AddProductScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ..._variants.asMap().entries.map((e) {
+        ..._vm.variants.asMap().entries.map((e) {
           final i = e.key;
           final v = e.value;
           return _VariantTile(
             key: ValueKey('variant_${i}_${v.size}_${v.color}_${v.quantity}_${v.price}'),
             index: i,
             variant: v,
-            sizeOptions: _sizeOptions,
-            colorOptions: _colorOptions,
-            onChanged: (nv) => _onVariantChanged(i, nv),
-            onRemove: _variants.length > 1 ? () => _removeVariant(i) : null,
+            sizeOptions: AddProductViewModel.sizeOptions,
+            colorOptions: AddProductViewModel.colorOptions,
+            onChanged: (nv) => _vm.onVariantChanged(i, nv),
+            onRemove: _vm.variants.length > 1 ? () => _vm.removeVariant(i) : null,
           );
         }),
         const SizedBox(height: 12),
         GestureDetector(
-          onTap: _addVariant,
+          onTap: _vm.addVariant,
           child: Container(
             width: double.infinity,
             height: 44,
@@ -915,15 +549,13 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       isExpanded: true,
-                      value: _selectedSupplierId,
+                      value: _vm.selectedSupplierId,
                       hint: const Text('Select a supplier...', style: TextStyle(color: kGray, fontSize: 14)),
-                      items: _suppliers.map((s) => DropdownMenuItem(
+                      items: _vm.suppliers.map((s) => DropdownMenuItem(
                         value: s.id,
                         child: Text(s.name, style: const TextStyle(fontSize: 14)),
                       )).toList(),
-                      onChanged: (val) {
-                        setState(() => _selectedSupplierId = val);
-                      },
+                      onChanged: _vm.setSelectedSupplier,
                     ),
                   ),
                 ],
@@ -1015,17 +647,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               'name': nameController.text.trim(),
                               'contact': phoneController.text.trim(),
                               'address': addressController.text.trim(),
-                            }, cancelToken: _cancelToken);
+                            });
                             final data = resp.data;
                             if (data is Map<String, dynamic>) {
                               final newSupplier = SupplierOption(
                                 id: (data['id'] ?? '').toString(),
                                 name: data['name'] ?? nameController.text.trim(),
                               );
-                              setState(() {
-                                _suppliers.insert(0, newSupplier);
-                                _selectedSupplierId = newSupplier.id;
-                              });
+                              _vm.addSupplier(newSupplier);
                             }
                             if (ctx.mounted) Navigator.pop(ctx);
                           } on ApiException catch (e) {
@@ -1144,7 +773,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
           color: Colors.transparent,
           child: InkWell(
             borderRadius: BorderRadius.circular(12),
-            onTap: _save,
+            onTap: () async {
+              final success = await _vm.save(existingProduct: widget.existingProduct);
+              if (!mounted) return;
+              if (success) {
+                Navigator.of(context).pop(true);
+              } else {
+                _showError();
+              }
+            },
             child: Center(
               child: Text(
                 widget.existingProduct != null ? 'Update Product' : 'Create Product',

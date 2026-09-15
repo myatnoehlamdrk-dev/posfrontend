@@ -5,16 +5,13 @@ import 'package:posfrontend/modules/category/repository/category_repository_impl
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/shared/widgets/error_snackbar.dart';
-import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/shared/widgets/inventory_form_widgets.dart';
 
 class AddCategoryScreen extends StatefulWidget {
-  final LoginResponse? user;
   final String inventoryType;
   final Category? existingCategory;
   const AddCategoryScreen({
     super.key,
-    this.user,
     this.inventoryType = 'self',
     this.existingCategory,
   });
@@ -120,7 +117,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
               children: [
                 SizedBox(
                   width: 240,
-                  child: AppDrawer(user: widget.user, activeItem: 'Inventory'),
+                    child: AppDrawer(activeItem: 'Inventory'),
                 ),
                 Expanded(child: body),
               ],
@@ -130,7 +127,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
         return Scaffold(
           key: _scaffoldKey,
           backgroundColor: Colors.white,
-          drawer: AppDrawer(user: widget.user, activeItem: 'Inventory'),
+          drawer: AppDrawer(activeItem: 'Inventory'),
           body: body,
         );
       },
@@ -149,7 +146,6 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
               title: isEdit ? 'Edit Category' : 'Add Category',
               showMenuButton: false,
               showBackButton: true,
-              user: widget.user,
             ),
             const SizedBox(height: 20),
             Breadcrumb([

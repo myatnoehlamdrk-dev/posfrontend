@@ -47,6 +47,9 @@ class CategoryRepositoryImpl implements CategoryRepository {
       iconColor: const Color(0xFF6D28D9),
       icon: Icons.category,
       productImages: productImages,
+      createdBy: json['createdBy'] ?? '',
+      updatedBy: json['updatedBy'] ?? '',
+      updatedAt: json['updatedAt'] ?? '',
     );
   }
 

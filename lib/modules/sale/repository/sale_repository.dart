@@ -8,6 +8,7 @@ abstract class SaleRepository {
     required String orderId,
     String? customerName,
     String? customerPhone,
+    String? customerLocation,
     String? payMethod,
     required List<SaleItem> items,
     required double grandTotal,

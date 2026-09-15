@@ -1,25 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/profile/view/profile_screen.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
 
 class AppScreenTopBar extends StatelessWidget {
   final String title;
-  final LoginResponse? user;
   final bool showMenuButton;
   final VoidCallback? onMenuTap;
 
   const AppScreenTopBar({
     super.key,
     required this.title,
-    this.user,
     this.showMenuButton = true,
     this.onMenuTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final user = AuthScope.userOf(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       decoration: const BoxDecoration(
@@ -71,7 +70,7 @@ class AppScreenTopBar extends StatelessWidget {
           GestureDetector(
             onTap: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => ProfileScreen(user: user)),
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
               );
             },
             child: ValueListenableBuilder<String>(

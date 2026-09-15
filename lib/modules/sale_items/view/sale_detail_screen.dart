@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/core/extensions/datetime_extensions.dart';
-import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/sale/model/sale_models.dart';
 import 'package:posfrontend/modules/sale/view/new_sale_screen.dart';
 import 'package:posfrontend/modules/sale_items/model/sale_item_models.dart';
@@ -10,10 +9,9 @@ import 'package:posfrontend/modules/shared/widgets/price_text.dart';
 
 class SaleDetailScreen extends StatefulWidget {
   final SaleOrder order;
-  final LoginResponse? user;
   final SaleItemViewModel viewModel;
 
-  const SaleDetailScreen({super.key, required this.order, required this.viewModel, this.user});
+  const SaleDetailScreen({super.key, required this.order, required this.viewModel});
 
   @override
   State<SaleDetailScreen> createState() => _SaleDetailScreenState();
@@ -116,6 +114,19 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                         _infoRow('Order Status', isAlreadySale ? 'Completed' : 'Pending'),
                         _infoRow('Voucher Ref', _order.voucherNo.isNotEmpty ? '#${_order.voucherNo}' : '#${_order.orderId}'),
                       ]),
+                      if (_order.createdBy.isNotEmpty || _order.updatedBy.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        _buildInfoCard('Audit Information', [
+                          if (_order.createdBy.isNotEmpty)
+                            _infoRow('Created By', _order.createdBy),
+                          if (_order.createdAt.isNotEmpty)
+                            _infoRow('Created At', _formatDate(_order.createdAt)),
+                          if (_order.updatedBy.isNotEmpty)
+                            _infoRow('Updated By', _order.updatedBy),
+                          if (_order.updatedAt.isNotEmpty)
+                            _infoRow('Updated At', _formatDate(_order.updatedAt)),
+                        ]),
+                      ],
                       if (!isAlreadySale) ...[
                         const SizedBox(height: 12),
                         SizedBox(
@@ -343,7 +354,6 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
         .push(
       MaterialPageRoute(
         builder: (_) => NewSaleScreen(
-          user: widget.user,
           initialItems: saleItems,
           initialCustomerName: _order.customerName,
           initialCustomerPhone: _order.customerPhone,

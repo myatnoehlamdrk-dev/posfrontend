@@ -56,6 +56,10 @@ class ProductDetail {
   final String? imageUrl;
   final String? imageDeleteUrl;
   final List<ProductVariant> variants;
+  final String createdBy;
+  final String updatedBy;
+  final String createdAt;
+  final String updatedAt;
 
   const ProductDetail({
     required this.id,
@@ -87,6 +91,10 @@ class ProductDetail {
     this.imageUrl,
     this.imageDeleteUrl,
     this.variants = const [],
+    this.createdBy = '',
+    this.updatedBy = '',
+    this.createdAt = '',
+    this.updatedAt = '',
   });
 
   factory ProductDetail.fromJson(Map<String, dynamic> json) {
@@ -140,6 +148,10 @@ class ProductDetail {
       imageUrl: image != null && image.isNotEmpty ? image : null,
       imageDeleteUrl: (json['imageDeleteUrl'] as String?)?.trim(),
       variants: parsedVariants,
+      createdBy: json.str('createdBy'),
+      updatedBy: json.str('updatedBy'),
+      createdAt: json.str('createdAt'),
+      updatedAt: json.str('updatedAt'),
     );
   }
 }
