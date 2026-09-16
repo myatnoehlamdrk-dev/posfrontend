@@ -1,10 +1,9 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/category/model/category_models.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/modules/package/model/package_models.dart';
+import 'package:posfrontend/modules/package/viewmodel/package_detail_view_model.dart';
 import 'package:posfrontend/modules/product/model/catalog_product.dart' hide ProductVariant;
 import 'package:posfrontend/modules/product/repository/catalog_product_repository_impl.dart';
 import 'package:posfrontend/modules/package/view/assign_product_to_package_screen.dart';
@@ -29,52 +28,22 @@ class PackageDetailsScreen extends StatefulWidget {
 class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _search = TextEditingController();
-  final CancelToken _cancelToken = CancelToken();
-  List<CatalogProduct> _products = [];
-  bool _loading = true;
-  String? _error;
-
-  StockStatus get _computedStatus {
-    final limit = widget.package.productLimit;
-    final qty = widget.package.quantity;
-    if (limit <= 0 || qty == 0) return StockStatus.outOfStock;
-    final pct = (qty / limit) * 100;
-    if (pct >= 70) return StockStatus.highStock;
-    if (pct >= 30) return StockStatus.midStock;
-    return StockStatus.lowStock;
-  }
-
-  String get _stockLabel => stockLabel(_computedStatus);
-
-  int get _stockPct {
-    final limit = widget.package.productLimit;
-    if (limit <= 0) return 0;
-    return ((widget.package.quantity / limit) * 100).round().clamp(0, 100);
-  }
+  late final PackageDetailViewModel _viewModel;
 
   @override
   void initState() {
     super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    try {
-      _products = await CatalogProductRepositoryImpl()
-          .getProducts(packageId: widget.package.id);
-      if (!mounted) return;
-      setState(() => _loading = false);
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _error = e.message;
-        _loading = false;
-      });
-    }
+    _viewModel = PackageDetailViewModel(
+      productRepository: CatalogProductRepositoryImpl(),
+      package: widget.package,
+      category: CategoryInfo(
+        name: widget.category.name,
+        iconColor: widget.category.iconColor,
+        icon: widget.category.icon,
+        imageUrl: widget.category.imageUrl,
+      ),
+    );
+    _viewModel.load();
   }
 
   Future<void> _openAddProduct() async {
@@ -87,7 +56,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
       ),
     );
     if (result == true) {
-      _load();
+      _viewModel.load();
     }
   }
 
@@ -113,92 +82,81 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
     );
     if (confirmed != true) return;
 
-    try {
-      final dio = ApiClient.create();
-      await dio.put(
-        '/api/products/${product.id}',
-        data: {'packageId': null},
-        cancelToken: _cancelToken,
-      );
-      if (!mounted) return;
+    final success = await _viewModel.removeProduct(product);
+    if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Product removed from package')),
       );
-      _load();
-    } on DioException catch (e) {
-      final msg = ApiException.fromDio(e).message;
-      if (!mounted) return;
+    } else if (_viewModel.hasError && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(msg)),
-      );
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
+        SnackBar(content: Text(_viewModel.errorMessage!)),
       );
     }
   }
 
   @override
   void dispose() {
-    if (!_cancelToken.isCancelled) _cancelToken.cancel();
+    _viewModel.dispose();
     _search.dispose();
     super.dispose();
   }
 
   List<CatalogProduct> get _filtered {
     final q = _search.text.toLowerCase();
-    if (q.isEmpty) return _products;
-    return _products
+    if (q.isEmpty) return _viewModel.products;
+    return _viewModel.products
         .where((p) =>
             p.name.toLowerCase().contains(q) ||
             p.brand.toLowerCase().contains(q))
         .toList();
   }
 
-  int get _totalUnits => _products.fold(0, (sum, p) => sum + p.stock);
-
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (ctx, constraints) {
-        final isWide = constraints.maxWidth >= 768;
-        final body = _content();
+    return ListenableBuilder(
+      listenable: _viewModel,
+      builder: (context, _) {
+        return LayoutBuilder(
+          builder: (ctx, constraints) {
+            final isWide = constraints.maxWidth >= 768;
+            final body = _content();
 
-        if (isWide) {
-          return Scaffold(
-            backgroundColor: Colors.white,
-            floatingActionButton: FloatingActionButton.extended(
-              onPressed: _openAddProduct,
-              backgroundColor: const Color(0xFF4FD1D9),
-              icon: const Icon(Icons.add, color: Colors.white),
-              label: const Text('Add Product', style: TextStyle(color: Colors.white)),
-            ),
-            body: SafeArea(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  SizedBox(
-                    width: 240,
-                    child: AppDrawer(activeItem: 'Inventory'),
+            if (isWide) {
+              return Scaffold(
+                backgroundColor: Colors.white,
+                floatingActionButton: FloatingActionButton.extended(
+                  onPressed: _openAddProduct,
+                  backgroundColor: const Color(0xFF4FD1D9),
+                  icon: const Icon(Icons.add, color: Colors.white),
+                  label: const Text('Add Product', style: TextStyle(color: Colors.white)),
+                ),
+                body: SafeArea(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SizedBox(
+                        width: 240,
+                        child: AppDrawer(activeItem: 'Inventory'),
+                      ),
+                      Expanded(child: _content()),
+                    ],
                   ),
-                  Expanded(child: _content()),
-                ],
+                ),
+              );
+            }
+            return Scaffold(
+              key: _scaffoldKey,
+              backgroundColor: Colors.white,
+              floatingActionButton: FloatingActionButton.extended(
+                onPressed: _openAddProduct,
+                backgroundColor: const Color(0xFF4FD1D9),
+                icon: const Icon(Icons.add, color: Colors.white),
+                label: const Text('Add Product', style: TextStyle(color: Colors.white)),
               ),
-            ),
-          );
-        }
-        return Scaffold(
-          key: _scaffoldKey,
-          backgroundColor: Colors.white,
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: _openAddProduct,
-            backgroundColor: const Color(0xFF4FD1D9),
-            icon: const Icon(Icons.add, color: Colors.white),
-            label: const Text('Add Product', style: TextStyle(color: Colors.white)),
-          ),
-          drawer: AppDrawer(activeItem: 'Inventory'),
-          body: SafeArea(child: body),
+              drawer: AppDrawer(activeItem: 'Inventory'),
+              body: SafeArea(child: body),
+            );
+          },
         );
       },
     );
@@ -208,20 +166,20 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
     final p = widget.package;
     final c = widget.category;
 
-    if (_loading) {
+    if (_viewModel.isLoading) {
       return const Center(
         child: CircularProgressIndicator(color: Color(0xFF6D28D9)),
       );
     }
-    if (_error != null) {
+    if (_viewModel.hasError) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(_error!, style: const TextStyle(color: Colors.red)),
+            Text(_viewModel.errorMessage!, style: const TextStyle(color: Colors.red)),
             const SizedBox(height: 12),
             ElevatedButton(
-              onPressed: _load,
+              onPressed: _viewModel.load,
               child: const Text('Retry'),
             ),
           ],
@@ -234,7 +192,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
         builder: (context, _) {
           final products = _filtered;
           return RefreshableBody(
-            onRefresh: _load,
+            onRefresh: _viewModel.load,
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
@@ -511,7 +469,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  _stockLabel,
+                  _viewModel.stockLabel,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -526,7 +484,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
             children: [
               Expanded(
                 child: LinearProgressIndicator(
-                  value: _stockPct / 100,
+                  value: _viewModel.stockPct / 100,
                   minHeight: 8,
                   backgroundColor: const Color(0xFFE5E7EB),
                   valueColor: AlwaysStoppedAnimation(color),
@@ -534,7 +492,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
               ),
               const SizedBox(width: 12),
               Text(
-                '$_stockPct%',
+                '${_viewModel.stockPct}%',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -556,7 +514,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
           children: [
             Expanded(
               child: Text(
-                'Products in this Package ($_totalUnits)',
+                'Products in this Package (${_viewModel.totalUnits})',
                 style: const TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:posfrontend/core/extensions/datetime_extensions.dart';
-import 'package:posfrontend/modules/sale_items/model/sale_item_models.dart';
+import 'package:posfrontend/features/sale/domain/entities/sale.dart';
+import 'package:posfrontend/features/sale/presentation/viewmodels/sale_history_view_model.dart';
 import 'package:posfrontend/modules/sale_items/view/sale_detail_screen.dart';
-import 'package:posfrontend/modules/sale_items/viewmodel/sale_item_view_model.dart';
 import 'package:posfrontend/modules/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
@@ -19,22 +20,20 @@ class SaleItemScreen extends StatefulWidget {
 }
 
 class _SaleItemScreenState extends State<SaleItemScreen> {
-  int _selectedTab = 0;
   final _searchController = TextEditingController();
-  late final SaleItemViewModel _viewModel;
+  late final SaleHistoryViewModel _viewModel;
 
   @override
   void initState() {
     super.initState();
-    _viewModel = SaleItemViewModel();
+    _viewModel = GetIt.instance<SaleHistoryViewModel>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _viewModel.loadSales(refresh: true);
+      _viewModel.loadAll(refresh: true);
     });
   }
 
   @override
   void dispose() {
-    _viewModel.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -47,7 +46,7 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            AppScreenTopBar(title: 'Sales Items'),
+            const AppScreenTopBar(title: 'Sales Items'),
             Expanded(
               child: ListenableBuilder(
                 listenable: _viewModel,
@@ -61,10 +60,10 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
   }
 
   Widget _buildBody() {
-    if (_viewModel.isLoading && _viewModel.sales.isEmpty) {
+    if (_viewModel.isLoading && _viewModel.filteredOrders.isEmpty) {
       return const Center(child: CircularProgressIndicator(color: AppColors.teal));
     }
-    if (_viewModel.errorMessage != null && _viewModel.sales.isEmpty) {
+    if (_viewModel.errorMessage != null && _viewModel.filteredOrders.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -74,7 +73,7 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
             Text(_viewModel.errorMessage!, style: const TextStyle(color: AppColors.gray)),
             const SizedBox(height: 12),
             ElevatedButton(
-              onPressed: () => _viewModel.loadSales(refresh: true),
+              onPressed: () => _viewModel.loadAll(refresh: true),
               child: const Text('Retry'),
             ),
           ],
@@ -82,7 +81,7 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
       );
     }
     return RefreshIndicator(
-      onRefresh: () => _viewModel.loadSales(refresh: true),
+      onRefresh: () => _viewModel.loadAll(refresh: true),
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -97,21 +96,23 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
             const SizedBox(height: 16),
             FilterTabs(
               tabs: [
-                ('All', _viewModel.sales.length),
-                ('Sold', _viewModel.sales.where((o) => o.status == OrderStatus.alreadySale).length),
-                ('Order', _viewModel.sales.where((o) => o.status == OrderStatus.willBeSale).length),
+                ('All', _viewModel.filteredOrders.length),
+                ('Sold', _viewModel.totalSalesCount),
+                ('Order', _viewModel.totalOrdersCount),
               ],
-              selectedIndex: _selectedTab,
-              onTabChanged: (i) => setState(() => _selectedTab = i),
+              selectedIndex: _selectedTabIndex,
+              onTabChanged: (i) {
+                _viewModel.setTab(['All', 'Sold', 'Order'][i]);
+              },
             ),
             const SizedBox(height: 16),
             SearchInputBar(
               controller: _searchController,
               hintText: 'Search products, order ID, customer...',
-              onChanged: (_) {},
+              onChanged: _viewModel.setSearchQuery,
             ),
             const SizedBox(height: 16),
-            ..._filteredOrders.asMap().entries.map((entry) => KeyedSubtree(
+            ..._viewModel.filteredOrders.asMap().entries.map((entry) => KeyedSubtree(
               key: ValueKey('${entry.value.orderId}_${entry.key}'),
               child: _buildOrderCard(entry.value),
             )),
@@ -122,29 +123,23 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
     );
   }
 
-  List<SaleOrder> get _filteredOrders {
-    var list = _viewModel.sales;
-    if (_selectedTab == 1) {
-      list = list.where((o) => o.status == OrderStatus.alreadySale).toList();
-    } else if (_selectedTab == 2) {
-      list = list.where((o) => o.status == OrderStatus.willBeSale).toList();
+  int get _selectedTabIndex {
+    switch (_viewModel.selectedTab) {
+      case 'Sold':
+        return 1;
+      case 'Order':
+        return 2;
+      default:
+        return 0;
     }
-    final query = _searchController.text.toLowerCase();
-    if (query.isNotEmpty) {
-      list = list.where((o) =>
-          o.orderId.toLowerCase().contains(query) ||
-          o.productName.toLowerCase().contains(query) ||
-          o.customerName.toLowerCase().contains(query)).toList();
-    }
-    return list;
   }
 
-  Widget _buildOrderCard(SaleOrder order) {
+  Widget _buildOrderCard(SaleOrderEntity order) {
     final isAlreadySale = order.status == OrderStatus.alreadySale;
     return GestureDetector(
       onTap: () {
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => SaleDetailScreen(order: order, viewModel: _viewModel)),
+          MaterialPageRoute(builder: (_) => SaleDetailScreen(order: order)),
         );
       },
       child: Container(
@@ -288,7 +283,7 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
     }
   }
 
-  void _confirmDelete(SaleOrder order) {
+  void _confirmDelete(SaleOrderEntity order) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -306,7 +301,12 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              final success = await _viewModel.deleteItem(order);
+              bool success;
+              if (order.status == OrderStatus.alreadySale) {
+                success = await _viewModel.deleteSale(order.orderId);
+              } else {
+                success = await _viewModel.deleteOrder(order.orderId);
+              }
               if (mounted) {
                 if (success) {
                   showSuccessSnackBar(context, 'Item deleted');

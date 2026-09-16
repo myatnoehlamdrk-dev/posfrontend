@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/modules/product/model/catalog_product.dart';
 import 'package:posfrontend/modules/sale/model/sale_models.dart';
+import 'package:posfrontend/modules/customer/repository/customer_repository_impl.dart';
+import 'package:posfrontend/modules/sale/repository/order_repository_impl.dart';
 import 'package:posfrontend/modules/sale/repository/sale_product_repository_impl.dart';
 import 'package:posfrontend/modules/sale/repository/sale_repository_impl.dart';
 import 'package:posfrontend/modules/sale/viewmodel/sale_view_model.dart';
@@ -19,6 +21,8 @@ class _AddProductsScreenState extends State<AddProductsScreen> {
   final SaleViewModel _viewModel = SaleViewModel(
     productRepository: SaleProductRepositoryImpl(),
     saleRepository: SaleRepositoryImpl(),
+    orderRepository: OrderRepositoryImpl(),
+    customerRepository: CustomerRepositoryImpl(),
   );
   String _selectedCategory = 'All';
   String _searchQuery = '';
@@ -32,39 +36,37 @@ class _AddProductsScreenState extends State<AddProductsScreen> {
   final Map<String, String> _selectedColors = {};
   final Map<String, TextEditingController> _notesCtrls = {};
   final Map<String, TextEditingController> _qtyCtrls = {};
+  bool _categoriesInitialized = false;
 
   @override
   void initState() {
     super.initState();
     _viewModel.loadProducts();
-    _viewModel.addListener(_onDataLoaded);
   }
 
-  void _onDataLoaded() {
-    if (!_viewModel.isLoading && _viewModel.errorMessage == null) {
-      final cats = _viewModel.products
-          .map((p) => p.category)
-          .where((c) => c.isNotEmpty)
-          .toSet()
-          .toList();
-      setState(() {
-        _categories = ['All', ...cats];
-        for (final p in _viewModel.products) {
-          _quantities.putIfAbsent(p.id, () => 0);
-          final firstSize = p.sizes.isNotEmpty ? p.sizes.first : '';
-          final firstColor = p.colors.isNotEmpty ? p.colors.first : '';
-          _selectedSizes.putIfAbsent(p.id, () => firstSize);
-          _selectedColors.putIfAbsent(p.id, () => firstColor);
-          _notesCtrls.putIfAbsent(p.id, () => TextEditingController());
-          _qtyCtrls.putIfAbsent(p.id, () => TextEditingController(text: '0'));
-        }
-      });
+  void _syncDerivedState() {
+    if (_viewModel.isLoading || _viewModel.errorMessage != null) return;
+    if (_categoriesInitialized) return;
+    _categoriesInitialized = true;
+    final cats = _viewModel.products
+        .map((p) => p.category)
+        .where((c) => c.isNotEmpty)
+        .toSet()
+        .toList();
+    _categories = ['All', ...cats];
+    for (final p in _viewModel.products) {
+      _quantities.putIfAbsent(p.id, () => 0);
+      final firstSize = p.sizes.isNotEmpty ? p.sizes.first : '';
+      final firstColor = p.colors.isNotEmpty ? p.colors.first : '';
+      _selectedSizes.putIfAbsent(p.id, () => firstSize);
+      _selectedColors.putIfAbsent(p.id, () => firstColor);
+      _notesCtrls.putIfAbsent(p.id, () => TextEditingController());
+      _qtyCtrls.putIfAbsent(p.id, () => TextEditingController(text: '0'));
     }
   }
 
   @override
   void dispose() {
-    _viewModel.removeListener(_onDataLoaded);
     _viewModel.dispose();
     _searchCtrl.dispose();
     for (final c in _notesCtrls.values) {
@@ -203,17 +205,23 @@ class _AddProductsScreenState extends State<AddProductsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: kBg,
-      body: Column(
-        children: [
-          _header(),
-          _searchBar(),
-          _categoryChips(),
-          Expanded(child: _productList()),
-          _bottomBar(),
-        ],
-      ),
+    return ListenableBuilder(
+      listenable: _viewModel,
+      builder: (context, _) {
+        _syncDerivedState();
+        return Scaffold(
+          backgroundColor: kBg,
+          body: Column(
+            children: [
+              _header(),
+              _searchBar(),
+              _categoryChips(),
+              Expanded(child: _productList()),
+              _bottomBar(),
+            ],
+          ),
+        );
+      },
     );
   }
 

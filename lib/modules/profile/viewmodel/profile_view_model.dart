@@ -3,12 +3,18 @@ import 'package:posfrontend/core/base/form_validation_mixin.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/profile/model/profile_response.dart';
 import 'package:posfrontend/modules/profile/repository/profile_repository.dart';
+import 'package:posfrontend/modules/shop/model/shop.dart';
+import 'package:posfrontend/modules/shop/repository/shop_api_repository.dart';
 
 class ProfileViewModel extends BaseViewModel with FormValidationMixin {
   final ProfileRepository _repository;
+  final ShopApiRepository _shopRepository;
 
-  ProfileViewModel({required ProfileRepository repository})
-      : _repository = repository;
+  ProfileViewModel({
+    required ProfileRepository repository,
+    required ShopApiRepository shopRepository,
+  })  : _repository = repository,
+        _shopRepository = shopRepository;
 
   ProfileResponse? _profile;
   ProfileResponse? get profile => _profile;
@@ -50,6 +56,9 @@ class ProfileViewModel extends BaseViewModel with FormValidationMixin {
   String _successMessage = '';
   String get successMessage => _successMessage;
 
+  Shop? _shop;
+  Shop? get shop => _shop;
+
   void setName(String v) => _name = v;
   void setEmail(String v) => _email = v;
   void setPhone(String v) => _phone = v;
@@ -67,6 +76,16 @@ class ProfileViewModel extends BaseViewModel with FormValidationMixin {
   void clearSuccess() {
     _successMessage = '';
     notifyListeners();
+  }
+
+  Future<void> loadShop(String shopId) async {
+    if (shopId.isEmpty) return;
+    try {
+      _shop = await _shopRepository.getShopById(shopId);
+      notifyListeners();
+    } catch (_) {
+      // Shop load failure is non-critical
+    }
   }
 
   Future<void> loadProfile() async {

@@ -275,6 +275,7 @@ class CounterTextField extends StatelessWidget {
   final int max;
   final int maxLines;
   final TextInputType? keyboardType;
+  final ValueChanged<String>? onChanged;
 
   const CounterTextField({
     super.key,
@@ -283,6 +284,7 @@ class CounterTextField extends StatelessWidget {
     required this.max,
     this.maxLines = 1,
     this.keyboardType,
+    this.onChanged,
   });
 
   @override
@@ -294,7 +296,7 @@ class CounterTextField extends StatelessWidget {
           controller: controller,
           maxLines: maxLines,
           keyboardType: keyboardType,
-          onChanged: (_) {},
+          onChanged: onChanged,
           decoration: fieldDecoration(hint),
         ),
         const SizedBox(height: 4),
@@ -354,13 +356,13 @@ class DropdownField extends StatelessWidget {
 
 class FormActions extends StatelessWidget {
   final VoidCallback onCancel;
-  final VoidCallback onSave;
+  final VoidCallback? onSave;
   final String saveLabel;
 
   const FormActions({
     super.key,
     required this.onCancel,
-    required this.onSave,
+    this.onSave,
     this.saveLabel = 'Save',
   });
 

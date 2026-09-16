@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/core/di/injection.dart';
+import 'package:posfrontend/features/auth/domain/usecases/login.dart';
+import 'package:posfrontend/features/auth/presentation/viewmodels/login_view_model.dart';
 import 'package:posfrontend/modules/forgot_password/view/forgot_password_screen.dart';
-import 'package:posfrontend/modules/login/repository/login_repository_impl.dart';
-import 'package:posfrontend/modules/login/viewmodel/login_view_model.dart';
 import 'package:posfrontend/modules/dashboard/view/dashboard_screen.dart';
+import 'package:posfrontend/modules/login/model/login_response.dart';
 import 'package:posfrontend/modules/shop/view/shop_screen.dart';
 import 'package:posfrontend/modules/verify_account/view/verify_account_screen.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
@@ -31,7 +33,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    _viewModel = LoginViewModel(loginRepository: LoginRepositoryImpl());
+    _viewModel = LoginViewModel(loginUseCase: getIt<LoginUseCase>());
 
     _emailController.addListener(() => _viewModel.setEmail(_emailController.text));
     _passwordController
@@ -47,10 +49,18 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _submit() async {
-    final response = await _viewModel.login();
-    if (response != null && mounted) {
-      AuthScope.updateUserOf(context, response);
-      ShopScope.loadShop(context, shopId: response.shopId);
+    final result = await _viewModel.login();
+    if (result != null && mounted) {
+      final loginResponse = LoginResponse(
+        id: result.user.id,
+        fullName: result.user.fullName,
+        email: result.user.email,
+        accessToken: result.accessToken,
+        tokenType: 'Bearer',
+        shopId: result.user.shopId,
+      );
+      AuthScope.updateUserOf(context, loginResponse);
+      ShopScope.loadShop(context, shopId: result.user.shopId);
       showSuccessSnackBar(context, 'Login successful');
       Navigator.pushReplacement(
         context,

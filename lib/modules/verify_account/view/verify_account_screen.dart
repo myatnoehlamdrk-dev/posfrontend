@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/core/di/injection.dart';
+import 'package:posfrontend/features/auth/domain/usecases/verify_account.dart';
+import 'package:posfrontend/features/auth/presentation/viewmodels/verify_account_view_model.dart';
 import 'package:posfrontend/modules/login/view/login_screen.dart';
-import 'package:posfrontend/modules/verify_account/repository/verify_account_repository_impl.dart';
-import 'package:posfrontend/modules/verify_account/viewmodel/verify_account_view_model.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/widgets/app_input_decoration.dart';
 import 'package:posfrontend/shared/widgets/gradient_button.dart';
@@ -26,7 +27,8 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
   void initState() {
     super.initState();
     _viewModel = VerifyAccountViewModel(
-      repository: VerifyAccountRepositoryImpl(),
+      sendOtpUseCase: getIt<SendOtpUseCase>(),
+      verifyOtpUseCase: getIt<VerifyOtpUseCase>(),
     );
     _viewModel.setEmail(widget.email);
     _otpController.addListener(() => _viewModel.setOtp(_otpController.text));

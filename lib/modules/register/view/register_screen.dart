@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:posfrontend/modules/register/repository/auth_repository_impl.dart';
-import 'package:posfrontend/modules/register/viewmodel/register_view_model.dart';
-import 'package:posfrontend/modules/shop/repository/shop_api_repository_impl.dart';
-import 'package:posfrontend/modules/shop/repository/shop_local_repository_impl.dart';
+import 'package:posfrontend/core/di/injection.dart';
+import 'package:posfrontend/features/auth/domain/usecases/register.dart';
+import 'package:posfrontend/features/auth/presentation/viewmodels/register_view_model.dart';
 import 'package:posfrontend/modules/verify_account/view/verify_account_screen.dart';
-import 'package:posfrontend/shared/repositories/imgbb_repository_impl.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/widgets/app_input_decoration.dart';
 import 'package:posfrontend/shared/widgets/gradient_button.dart';
@@ -43,10 +41,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void initState() {
     super.initState();
     _viewModel = RegisterViewModel(
-      shopRepository: ShopLocalRepositoryImpl(),
-      shopApiRepository: ShopApiRepositoryImpl(),
-      imgbbRepository: ImgbbRepositoryImpl(),
-      authRepository: AuthRepositoryImpl(),
+      registerUseCase: getIt<RegisterUseCase>(),
+      shopRepository: getIt(),
+      shopApiRepository: getIt(),
+      imgbbRepository: getIt(),
     );
     _viewModel.loadShop();
 

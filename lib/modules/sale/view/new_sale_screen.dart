@@ -1,11 +1,10 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:posfrontend/core/extensions/datetime_extensions.dart';
-import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/shop_scope.dart';
 import 'package:posfrontend/modules/sale/model/sale_models.dart';
+import 'package:posfrontend/modules/customer/repository/customer_repository_impl.dart';
 import 'package:posfrontend/modules/sale/repository/order_repository_impl.dart';
 import 'package:posfrontend/modules/sale/repository/sale_product_repository_impl.dart';
 import 'package:posfrontend/modules/sale/repository/sale_repository_impl.dart';
@@ -16,7 +15,6 @@ import 'package:posfrontend/modules/sale/service/voucher_pdf_service.dart';
 import 'package:posfrontend/modules/sale_items/view/sale_items_screen.dart';
 import 'package:posfrontend/modules/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/modules/shared/widgets/price_text.dart';
-import 'package:posfrontend/modules/customer/repository/customer_repository_impl.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/shared/widgets/error_snackbar.dart';
@@ -48,18 +46,8 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   final TextEditingController _customerNameCtrl = TextEditingController(text: 'Customer');
   final TextEditingController _customerPhoneCtrl = TextEditingController();
   final TextEditingController _customerLocationCtrl = TextEditingController();
-  final SaleViewModel _viewModel = SaleViewModel(
-    productRepository: SaleProductRepositoryImpl(),
-    saleRepository: SaleRepositoryImpl(),
-  );
-  final CustomerRepositoryImpl _customerRepo = CustomerRepositoryImpl();
-  List<Map<String, dynamic>> _customerSuggestions = [];
-  bool _showSuggestions = false;
+  late final SaleViewModel _viewModel;
 
-  String _paymentMethod = 'Cash';
-  late String _voucherRandom;
-  late String _orderRandom;
-  bool _isSubmitting = false;
   bool _pdfExportEnabled = true;
   bool _printVoucherEnabled = false;
   String _printFormat = 'thermal';
@@ -67,29 +55,24 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   static const _keyPrintVoucher = 'print_voucher_enabled';
   static const _keyPrintFormat = 'print_format';
 
-  final List<SaleItem> _items = [];
-
-  String _generateRandom5() {
-    final rand = Random();
-    return (10000 + rand.nextInt(90000)).toString();
-  }
-
   @override
   void initState() {
     super.initState();
-    _voucherRandom = _generateRandom5();
-    _orderRandom = _generateRandom5();
-    if (widget.initialItems != null) {
-      _items.addAll(widget.initialItems!);
-    }
-    if (widget.initialCustomerName?.isNotEmpty == true) {
-      _customerNameCtrl.text = widget.initialCustomerName!;
-    }
+    _viewModel = SaleViewModel(
+      productRepository: SaleProductRepositoryImpl(),
+      saleRepository: SaleRepositoryImpl(),
+      orderRepository: OrderRepositoryImpl(),
+      customerRepository: CustomerRepositoryImpl(),
+    );
+    _viewModel.init(
+      initialItems: widget.initialItems,
+      initialCustomerName: widget.initialCustomerName,
+      initialCustomerPhone: widget.initialCustomerPhone,
+      initialPaymentMethod: widget.initialPaymentMethod,
+    );
+    _customerNameCtrl.text = _viewModel.customerName;
     if (widget.initialCustomerPhone != null) {
       _customerPhoneCtrl.text = widget.initialCustomerPhone!;
-    }
-    if (widget.initialPaymentMethod != null) {
-      _paymentMethod = widget.initialPaymentMethod!;
     }
     _loadPrintSettings();
   }
@@ -111,158 +94,66 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     await prefs.setString(_keyPrintFormat, _printFormat);
   }
 
-  void _refreshRandoms() {
-    setState(() {
-      _voucherRandom = _generateRandom5();
-      _orderRandom = _generateRandom5();
-    });
-  }
-
-  Future<void> _searchCustomers(String query) async {
-    if (query.length < 2) {
-      setState(() {
-        _customerSuggestions = [];
-        _showSuggestions = false;
-      });
+  Future<void> _submitSale() async {
+    final staffName = AuthScope.userOf(context)?.fullName ?? 'Staff';
+    final success = await _viewModel.submitSale(
+      staffName: staffName,
+      existingOrderId: widget.existingOrderId,
+    );
+    if (!success) {
+      if (!mounted) return;
+      showErrorSnackBar(context, Exception(_viewModel.errorMessage ?? 'Failed to save sale'));
       return;
     }
-    try {
-      final results = await _customerRepo.searchCustomers(query: query);
-      setState(() {
-        _customerSuggestions = results;
-        _showSuggestions = results.isNotEmpty;
-      });
-    } catch (_) {
-      setState(() {
-        _customerSuggestions = [];
-        _showSuggestions = false;
-      });
-    }
-  }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Sale saved successfully!'), backgroundColor: Color(0xFF16A34A)),
+    );
 
-  void _selectCustomer(Map<String, dynamic> customer) {
+    final itemsSnapshot = List<SaleItem>.from(_viewModel.items);
+    final customerName = _customerNameCtrl.text;
+    final customerPhone = _customerPhoneCtrl.text.isNotEmpty ? _customerPhoneCtrl.text : null;
+    final paymentMethod = _viewModel.paymentMethod;
+    final notes = _notesCtrl.text.isNotEmpty ? _notesCtrl.text : null;
+    final voucherNo = 'INV-${_viewModel.voucherRandom}';
+    final orderId = widget.existingOrderId ?? 'ORD-${_viewModel.orderRandom}';
+
     setState(() {
-      _customerNameCtrl.text = customer['name'] ?? '';
-      if (customer['phone'] != null && (customer['phone'] as String).isNotEmpty) {
-        _customerPhoneCtrl.text = customer['phone'];
-      }
-      _showSuggestions = false;
-      _customerSuggestions = [];
+      _customerNameCtrl.text = 'Customer';
+      _customerPhoneCtrl.clear();
+      _customerLocationCtrl.clear();
+      _discountCtrl.text = '0';
+      _notesCtrl.clear();
     });
-  }
+    _viewModel.clearCart();
 
-  Future<void> _submitSale() async {
-    if (_items.isEmpty) return;
-    setState(() => _isSubmitting = true);
-    try {
-      final discountPct = _discountPct;
-      final totalPayable = _totalPayable;
-      final items = List<SaleItem>.from(_items);
-      final customerName = _customerNameCtrl.text;
-      final customerPhone = _customerPhoneCtrl.text.isNotEmpty ? _customerPhoneCtrl.text : null;
-      final customerLocation = _customerLocationCtrl.text.isNotEmpty ? _customerLocationCtrl.text : null;
-      final paymentMethod = _paymentMethod;
-      final notes = _notesCtrl.text.isNotEmpty ? _notesCtrl.text : null;
-      final staffName = AuthScope.userOf(context)?.fullName ?? 'Staff';
-      final voucherNo = 'INV-$_voucherRandom';
-      final orderId = widget.existingOrderId ?? 'ORD-$_orderRandom';
-
-      await _viewModel.submitSale(
-        userName: staffName,
-        customerName: customerName,
-        customerPhone: customerPhone,
-        customerLocation: customerLocation,
-        payMethod: paymentMethod,
-        voucherNo: voucherNo,
-        orderId: orderId,
-        items: items,
-        grandTotal: totalPayable,
-        discount: discountPct.toInt(),
-        notes: notes,
-      );
-
-      if (widget.existingOrderId != null) {
-        try {
-          await OrderRepositoryImpl().deleteOrder(widget.existingOrderId!);
-        } catch (_) {
-          // Original order deletion failure is non-critical after sale
-        }
-      }
-
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sale saved successfully!'), backgroundColor: Color(0xFF16A34A)),
-      );
-
-      setState(() {
-        _items.clear();
-        _customerNameCtrl.text = 'Customer';
-        _customerPhoneCtrl.clear();
-        _customerLocationCtrl.clear();
-        _discountCtrl.text = '0';
-        _notesCtrl.clear();
-        _refreshRandoms();
-      });
-
-      if (_pdfExportEnabled || _printVoucherEnabled) {
-        final saleArgs = _buildSaleArgs(customerName, customerPhone, staffName, voucherNo, orderId, items, discountPct, totalPayable, paymentMethod, notes);
-        if (_pdfExportEnabled) {
-          _autoExportPdf(saleArgs);
-        }
-        if (_printVoucherEnabled) {
-          _autoPrintVoucher(saleArgs);
-        }
-      }
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      showErrorSnackBar(context, e);
-    } catch (_) {
-      if (!mounted) return;
-      showErrorSnackBar(context, Exception('An unexpected error occurred'));
-    } finally {
-      if (mounted) setState(() => _isSubmitting = false);
+    if (_pdfExportEnabled || _printVoucherEnabled) {
+      final saleArgs = _buildSaleArgs(customerName, customerPhone, staffName, voucherNo, orderId, itemsSnapshot, _viewModel.discountPercent, _viewModel.totalPayable, paymentMethod, notes);
+      if (_pdfExportEnabled) _autoExportPdf(saleArgs);
+      if (_printVoucherEnabled) _autoPrintVoucher(saleArgs);
     }
   }
 
   Future<void> _submitDraft() async {
-    if (_items.isEmpty) return;
-    setState(() => _isSubmitting = true);
-    try {
-      await OrderRepositoryImpl().createOrder(
-        userName: AuthScope.userOf(context)?.fullName ?? 'Staff',
-        customerName: _customerNameCtrl.text,
-        customerPhone: _customerPhoneCtrl.text.isNotEmpty ? _customerPhoneCtrl.text : null,
-        payMethod: _paymentMethod,
-        voucherNo: 'INV-$_voucherRandom',
-        orderId: 'ORD-$_orderRandom',
-        items: _items,
-        grandTotal: _totalPayable,
-        discount: _discountPct.toInt(),
-        notes: _notesCtrl.text.isNotEmpty ? _notesCtrl.text : null,
-        status: 'draft',
-      );
+    final staffName = AuthScope.userOf(context)?.fullName ?? 'Staff';
+    final success = await _viewModel.submitDraft(staffName: staffName);
+    if (!success) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Draft saved successfully!'), backgroundColor: Color(0xFF2563EB)),
-      );
-      setState(() {
-        _items.clear();
-        _customerNameCtrl.text = 'Customer';
-        _customerPhoneCtrl.clear();
-        _customerLocationCtrl.clear();
-        _discountCtrl.text = '0';
-        _notesCtrl.clear();
-        _refreshRandoms();
-      });
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      showErrorSnackBar(context, e);
-    } catch (_) {
-      if (!mounted) return;
-      showErrorSnackBar(context, Exception('An unexpected error occurred'));
-    } finally {
-      if (mounted) setState(() => _isSubmitting = false);
+      showErrorSnackBar(context, Exception(_viewModel.errorMessage ?? 'Failed to save draft'));
+      return;
     }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Draft saved successfully!'), backgroundColor: Color(0xFF2563EB)),
+    );
+    setState(() {
+      _customerNameCtrl.text = 'Customer';
+      _customerPhoneCtrl.clear();
+      _customerLocationCtrl.clear();
+      _discountCtrl.text = '0';
+      _notesCtrl.clear();
+    });
+    _viewModel.clearCart();
   }
 
   @override
@@ -276,52 +167,32 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     super.dispose();
   }
 
-  double get _subtotal => _items.fold(0, (s, i) => s + i.subtotal);
-  int get _totalItems => _items.fold(0, (s, i) => s + i.quantity);
-  double get _discountPct => double.tryParse(_discountCtrl.text) ?? 0;
-  double get _discountAmt => _subtotal * (_discountPct / 100);
-  double get _totalPayable => _subtotal - _discountAmt;
-
-  void _updateQty(int index, int delta) {
-    setState(() {
-      final newQty = _items[index].quantity + delta;
-      if (newQty <= 0) {
-        _items.removeAt(index);
-      } else {
-        _items[index].quantity = newQty;
-      }
-    });
-  }
-
-  void _removeItem(int index) {
-    setState(() => _items.removeAt(index));
-  }
-
-
-
-
-
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (ctx, constraints) {
-        final isWide = constraints.maxWidth >= 768;
-        final body = _content(isWide);
+    return ListenableBuilder(
+      listenable: _viewModel,
+      builder: (context, _) {
+        return LayoutBuilder(
+          builder: (ctx, constraints) {
+            final isWide = constraints.maxWidth >= 768;
+            final body = _content(isWide);
 
-        return Scaffold(
-          key: _scaffoldKey,
-          backgroundColor: kBg,
-          drawer: isWide ? null : const AppDrawer(activeItem: 'Sale'),
-          body: isWide
-              ? Row(
-                  children: [
-                    const SizedBox(
-                        width: 240,
-                        child: AppDrawer(activeItem: 'Sale')),
-                    Expanded(child: body),
-                  ],
-                )
-              : body,
+            return Scaffold(
+              key: _scaffoldKey,
+              backgroundColor: kBg,
+              drawer: isWide ? null : const AppDrawer(activeItem: 'Sale'),
+              body: isWide
+                  ? Row(
+                      children: [
+                        const SizedBox(
+                            width: 240,
+                            child: AppDrawer(activeItem: 'Sale')),
+                        Expanded(child: body),
+                      ],
+                    )
+                  : body,
+            );
+          },
         );
       },
     );
@@ -401,14 +272,10 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                         isDense: true,
                         contentPadding: EdgeInsets.zero,
                       ),
-                      onChanged: _searchCustomers,
-                      onTap: () {
-                        if (_customerSuggestions.isNotEmpty) {
-                          setState(() => _showSuggestions = true);
-                        }
-                      },
+                      onChanged: (q) => _viewModel.searchCustomers(q),
+                      onTap: () => _viewModel.showCustomerSuggestions(),
                     ),
-                    if (_showSuggestions && _customerSuggestions.isNotEmpty)
+                    if (_viewModel.showSuggestions && _viewModel.customerSuggestions.isNotEmpty)
                       Container(
                         constraints: const BoxConstraints(maxHeight: 160),
                         decoration: BoxDecoration(
@@ -426,11 +293,17 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                         child: ListView.builder(
                           shrinkWrap: true,
                           padding: EdgeInsets.zero,
-                          itemCount: _customerSuggestions.length,
+                          itemCount: _viewModel.customerSuggestions.length,
                           itemBuilder: (context, index) {
-                            final c = _customerSuggestions[index];
+                            final c = _viewModel.customerSuggestions[index];
                             return InkWell(
-                              onTap: () => _selectCustomer(c),
+                              onTap: () {
+                                _viewModel.selectCustomer(c);
+                                _customerNameCtrl.text = _viewModel.customerName;
+                                if (_viewModel.customerPhone.isNotEmpty) {
+                                  _customerPhoneCtrl.text = _viewModel.customerPhone;
+                                }
+                              },
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 12, vertical: 10),
@@ -578,7 +451,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                 const Text('Voucher No.',
                     style: TextStyle(fontSize: 12, color: kGray)),
                 const SizedBox(height: 4),
-                Text('INV-$_voucherRandom',
+                Text('INV-${_viewModel.voucherRandom}',
                     style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
@@ -644,7 +517,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                   MaterialPageRoute(builder: (_) => const AddProductsScreen()),
                 );
                 if (result != null && result.isNotEmpty) {
-                  setState(() => _items.addAll(result));
+                  _viewModel.addItems(result);
                 }
               },
               child: Container(
@@ -659,7 +532,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           ],
         ),
         const SizedBox(height: 12),
-        if (_items.isEmpty)
+        if (_viewModel.items.isEmpty)
           const Center(
             child: Padding(
               padding: EdgeInsets.symmetric(vertical: 32),
@@ -668,8 +541,8 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             ),
           )
         else
-          ...List.generate(_items.length, (i) => KeyedSubtree(
-            key: ValueKey('sale_${_items[i].productId}_${_items[i].size}_${_items[i].color}'),
+          ...List.generate(_viewModel.items.length, (i) => KeyedSubtree(
+            key: ValueKey('sale_${_viewModel.items[i].productId}_${_viewModel.items[i].size}_${_viewModel.items[i].color}'),
             child: _itemRow(i),
           )),
       ],
@@ -677,7 +550,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   }
 
   Widget _itemRow(int index) {
-    final item = _items[index];
+    final item = _viewModel.items[index];
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
@@ -759,7 +632,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                           color: kTitle)),
                   const SizedBox(height: 4),
                   GestureDetector(
-                    onTap: () => _removeItem(index),
+                    onTap: () => _viewModel.removeItem(index),
                     child: const Icon(Icons.delete_outline,
                         color: kRed, size: 18),
                   ),
@@ -789,7 +662,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   }
 
   Widget _qtyControl(int index) {
-    final qty = _items[index].quantity;
+    final qty = _viewModel.items[index].quantity;
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: kBorder),
@@ -797,7 +670,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       ),
       child: Row(
         children: [
-          _qtyBtn(Icons.remove, () => _updateQty(index, -1)),
+          _qtyBtn(Icons.remove, () => _viewModel.updateItemQuantity(index, -1)),
           Container(
             width: 32,
             alignment: Alignment.center,
@@ -807,7 +680,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                     fontWeight: FontWeight.w600,
                     color: kTitle)),
           ),
-          _qtyBtn(Icons.add, () => _updateQty(index, 1)),
+          _qtyBtn(Icons.add, () => _viewModel.updateItemQuantity(index, 1)),
         ],
       ),
     );
@@ -829,9 +702,9 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     return _card(
       child: Column(
         children: [
-          _summaryRow('Total Items', '$_totalItems'),
+          _summaryRow('Total Items', '${_viewModel.totalItems}'),
           const SizedBox(height: 12),
-          _summaryPriceRow('Subtotal', _subtotal),
+          _summaryPriceRow('Subtotal', _viewModel.subtotal),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -844,7 +717,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                   controller: _discountCtrl,
                   keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
-                  onChanged: (_) => setState(() {}),
+                  onChanged: (v) => _viewModel.setDiscountPercent(double.tryParse(v) ?? 0),
                   textAlign: TextAlign.right,
                   style: const TextStyle(
                       fontSize: 14, fontWeight: FontWeight.w500, color: kTitle),
@@ -867,7 +740,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          _summaryPriceRow('Discount Amount', _discountAmt),
+          _summaryPriceRow('Discount Amount', _viewModel.discountAmount),
           const Divider(height: 24, color: kBorder),
           Row(
             children: [
@@ -877,7 +750,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                       fontWeight: FontWeight.w700,
                       color: kTitle)),
               const Spacer(),
-              PriceText(_totalPayable,
+              PriceText(_viewModel.totalPayable,
                   maxLength: 12,
                   style: const TextStyle(
                       fontSize: 16,
@@ -932,7 +805,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
               ),
               Expanded(
                 flex: 2,
-                child: Text('ORD-$_orderRandom',
+                child: Text('ORD-${_viewModel.orderRandom}',
                     style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -959,7 +832,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
-                      value: _paymentMethod,
+                      value: _viewModel.paymentMethod,
                       isExpanded: true,
                       icon: const Icon(Icons.keyboard_arrow_down, size: 18),
                       items: const [
@@ -969,7 +842,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                         DropdownMenuItem(value: 'Other', child: Text('Other')),
                       ],
                       onChanged: (v) {
-                        if (v != null) setState(() => _paymentMethod = v);
+                        if (v != null) _viewModel.setPaymentMethod(v);
                       },
                     ),
                   ),
@@ -990,6 +863,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                 controller: _notesCtrl,
                 maxLines: 3,
                 style: const TextStyle(fontSize: 14, color: kTitle),
+                onChanged: (v) => _viewModel.setNotes(v),
                 decoration: InputDecoration(
                   hintText: 'Enter notes...',
                   hintStyle: const TextStyle(color: Color(0xFFD1D5DB)),
@@ -1014,14 +888,14 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       children: [
         Expanded(
           child: _outlineBtn('Draft', Icons.save_outlined, () {
-            if (_items.isEmpty) return;
+            if (_viewModel.items.isEmpty) return;
             _submitDraft();
           }),
         ),
         const SizedBox(width: 10),
         Expanded(
           child: _outlineBtn('Preview', Icons.visibility_outlined, () async {
-            if (_items.isEmpty) return;
+            if (_viewModel.items.isEmpty) return;
             ShopScope.loadShop(
               context,
               shopId: AuthScope.userOf(context)?.shopId ?? '',
@@ -1033,15 +907,15 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                   customerName: _customerNameCtrl.text,
                   customerPhone: _customerPhoneCtrl.text.isNotEmpty ? _customerPhoneCtrl.text : null,
                   staffName: AuthScope.userOf(context)?.fullName ?? 'Staff',
-                  voucherNo: 'INV-$_voucherRandom',
-                  orderId: 'ORD-$_orderRandom',
+                  voucherNo: 'INV-${_viewModel.voucherRandom}',
+                  orderId: 'ORD-${_viewModel.orderRandom}',
                   dateTime: DateTime.now(),
-                  items: List<SaleItem>.from(_items),
-                  discountPct: _discountPct,
-                  subtotal: _subtotal,
-                  discountAmt: _discountAmt,
-                  totalPayable: _totalPayable,
-                  paymentMethod: _paymentMethod,
+                  items: List<SaleItem>.from(_viewModel.items),
+                  discountPct: _viewModel.discountPercent,
+                  subtotal: _viewModel.subtotal,
+                  discountAmt: _viewModel.discountAmount,
+                  totalPayable: _viewModel.totalPayable,
+                  paymentMethod: _viewModel.paymentMethod,
                   notes: _notesCtrl.text.isNotEmpty ? _notesCtrl.text : null,
                   shopName: ShopScope.shopOf(context)?.name,
                   shopAddress: ShopScope.shopOf(context)?.physicalAddress,
@@ -1056,22 +930,22 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         const SizedBox(width: 10),
         Expanded(
           child: GestureDetector(
-            onTap: (_isSubmitting || _items.isEmpty) ? null : _submitSale,
+            onTap: (_viewModel.isSubmitting || _viewModel.items.isEmpty) ? null : _submitSale,
             child: Container(
               height: 48,
               decoration: BoxDecoration(
-                gradient: (_isSubmitting || _items.isEmpty)
+                gradient: (_viewModel.isSubmitting || _viewModel.items.isEmpty)
                     ? null
                     : const LinearGradient(
                         colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
                       ),
-                color: (_isSubmitting || _items.isEmpty) ? kGray : null,
+                color: (_viewModel.isSubmitting || _viewModel.items.isEmpty) ? kGray : null,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  if (_isSubmitting)
+                  if (_viewModel.isSubmitting)
                     const SizedBox(
                       width: 16,
                       height: 16,
@@ -1082,7 +956,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                     const Icon(Icons.check_circle_outline,
                         color: Colors.white, size: 18),
                   const SizedBox(width: 6),
-                  Text(_isSubmitting ? 'Saving...' : 'Sale',
+                  Text(_viewModel.isSubmitting ? 'Saving...' : 'Sale',
                       style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
@@ -1132,8 +1006,8 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       'dateTime': DateTime.now(),
       'items': items,
       'discountPct': discountPct,
-      'subtotal': _subtotal,
-      'discountAmt': _discountAmt,
+      'subtotal': _viewModel.subtotal,
+      'discountAmt': _viewModel.discountAmount,
       'totalPayable': totalPayable,
       'paymentMethod': paymentMethod,
       'notes': notes,

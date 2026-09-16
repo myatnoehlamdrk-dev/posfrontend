@@ -1,24 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/core/extensions/datetime_extensions.dart';
-import 'package:posfrontend/modules/sale/model/sale_models.dart';
+import 'package:posfrontend/features/sale/domain/entities/sale.dart';
+import 'package:posfrontend/modules/sale/model/sale_models.dart' as old;
 import 'package:posfrontend/modules/sale/view/new_sale_screen.dart';
-import 'package:posfrontend/modules/sale_items/model/sale_item_models.dart';
-import 'package:posfrontend/modules/sale_items/viewmodel/sale_item_view_model.dart';
 import 'package:posfrontend/modules/shared/widgets/price_text.dart';
 
 
 class SaleDetailScreen extends StatefulWidget {
-  final SaleOrder order;
-  final SaleItemViewModel viewModel;
+  final SaleOrderEntity order;
 
-  const SaleDetailScreen({super.key, required this.order, required this.viewModel});
+  const SaleDetailScreen({super.key, required this.order});
 
   @override
   State<SaleDetailScreen> createState() => _SaleDetailScreenState();
 }
 
 class _SaleDetailScreenState extends State<SaleDetailScreen> {
-  late SaleOrder _order;
+  late SaleOrderEntity _order;
 
   static const Color teal = Color(0xFF14B8A6);
   static const Color titleColor = Color(0xFF111827);
@@ -114,15 +112,13 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                         _infoRow('Order Status', isAlreadySale ? 'Completed' : 'Pending'),
                         _infoRow('Voucher Ref', _order.voucherNo.isNotEmpty ? '#${_order.voucherNo}' : '#${_order.orderId}'),
                       ]),
-                      if (_order.createdBy.isNotEmpty || _order.updatedBy.isNotEmpty) ...[
+                      if (_order.createdBy.isNotEmpty) ...[
                         const SizedBox(height: 12),
                         _buildInfoCard('Audit Information', [
                           if (_order.createdBy.isNotEmpty)
                             _infoRow('Created By', _order.createdBy),
                           if (_order.createdAt.isNotEmpty)
                             _infoRow('Created At', _formatDate(_order.createdAt)),
-                          if (_order.updatedBy.isNotEmpty)
-                            _infoRow('Updated By', _order.updatedBy),
                           if (_order.updatedAt.isNotEmpty)
                             _infoRow('Updated At', _formatDate(_order.updatedAt)),
                         ]),
@@ -340,7 +336,7 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
   void _upToSale() {
     final saleItems = _order.saleItems
         .where((item) => item.productId.isNotEmpty)
-        .map((item) => SaleItem(
+        .map((item) => old.SaleItem(
               productId: item.productId,
               productName: item.productName,
               unitPrice: item.unitPrice.toDouble(),

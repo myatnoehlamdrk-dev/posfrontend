@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/category/model/category_models.dart';
 import 'package:posfrontend/modules/category/repository/category_repository_impl.dart';
+import 'package:posfrontend/modules/category/viewmodel/add_category_view_model.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/shared/widgets/error_snackbar.dart';
@@ -27,75 +27,43 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
+  late final AddCategoryViewModel _viewModel;
 
   @override
   void initState() {
     super.initState();
+    _viewModel = AddCategoryViewModel(repository: CategoryRepositoryImpl());
     if (widget.existingCategory != null) {
-      final c = widget.existingCategory!;
-      _nameController.text = c.name;
-      _amountController.text = c.packageLimit > 0 ? c.packageLimit.toString() : '';
-      _descController.text = c.description;
+      _viewModel.loadExisting(widget.existingCategory!);
+      _nameController.text = widget.existingCategory!.name;
+      _amountController.text = widget.existingCategory!.packageLimit > 0
+          ? widget.existingCategory!.packageLimit.toString()
+          : '';
+      _descController.text = widget.existingCategory!.description;
     }
   }
 
-  bool _saving = false;
-
   Future<void> _save() async {
-    if (_saving) return;
-    final name = _nameController.text.trim();
-    if (name.isEmpty) {
+    final success = await _viewModel.save(
+      isEditing: widget.isEditing,
+      categoryId: widget.existingCategory?.id,
+      inventoryType: widget.inventoryType,
+    );
+    if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Category name is required')),
+        SnackBar(
+          content: Text(widget.isEditing ? 'Category updated' : 'Category created'),
+        ),
       );
-      return;
-    }
-
-    setState(() => _saving = true);
-    try {
-      final amountText = _amountController.text.trim();
-      final amount = int.tryParse(amountText);
-
-      if (widget.isEditing) {
-        final existing = widget.existingCategory;
-        if (existing == null) return;
-        final updated = await CategoryRepositoryImpl().updateCategory(
-          id: existing.id,
-          name: name,
-          description: _descController.text.trim(),
-          packageLimit: amount,
-        );
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Category updated')),
-        );
-        Navigator.of(context).pop(updated);
-      } else {
-        final created = await CategoryRepositoryImpl().createCategory(
-          type: widget.inventoryType,
-          name: name,
-          description: _descController.text.trim(),
-          packageLimit: amount,
-        );
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Category created')),
-        );
-        Navigator.of(context).pop(created);
-      }
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      showErrorSnackBar(context, e);
-    } catch (e) {
-      if (!mounted) return;
-      showErrorSnackBar(context, e);
-    } finally {
-      if (mounted) setState(() => _saving = false);
+      Navigator.of(context).pop(_viewModel.result);
+    } else if (_viewModel.hasError && mounted) {
+      showErrorSnackBar(context, _viewModel.errorMessage!);
     }
   }
 
   @override
   void dispose() {
+    _viewModel.dispose();
     _nameController.dispose();
     _amountController.dispose();
     _descController.dispose();
@@ -175,6 +143,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                 controller: _nameController,
                 hint: 'Enter category name',
                 max: 100,
+                onChanged: _viewModel.setName,
               ),
             ),
             const SizedBox(height: 16),
@@ -187,6 +156,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                 hint: '0',
                 max: 11,
                 keyboardType: TextInputType.number,
+                onChanged: _viewModel.setPackageLimit,
               ),
             ),
             const SizedBox(height: 16),
@@ -198,12 +168,13 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                 hint: 'Enter category description',
                 max: 300,
                 maxLines: 4,
+                onChanged: _viewModel.setDescription,
               ),
             ),
             const SizedBox(height: 24),
             FormActions(
               onCancel: () => Navigator.of(context).pop(),
-              onSave: _save,
+              onSave: _viewModel.isSaving ? null : _save,
               saveLabel: isEdit ? 'Update Category' : 'Save Category',
             ),
             const SizedBox(height: 16),

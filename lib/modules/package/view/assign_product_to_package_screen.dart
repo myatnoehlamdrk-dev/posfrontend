@@ -1,8 +1,7 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/category/model/category_models.dart';
 import 'package:posfrontend/modules/package/model/package_models.dart';
+import 'package:posfrontend/modules/package/viewmodel/assign_product_to_package_view_model.dart';
 import 'package:posfrontend/modules/product/model/catalog_product.dart';
 import 'package:posfrontend/modules/product/repository/catalog_product_repository_impl.dart';
 import 'package:posfrontend/modules/shared/widgets/inventory_form_widgets.dart';
@@ -25,150 +24,59 @@ class AssignProductToPackageScreen extends StatefulWidget {
 class _AssignProductToPackageScreenState
     extends State<AssignProductToPackageScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
-  final CancelToken _cancelToken = CancelToken();
-  String _searchQuery = '';
-  String _selectedCategory = 'All';
-  List<String> _categories = ['All'];
-
-  List<CatalogProduct> _allProducts = [];
-  bool _loading = true;
-  String? _error;
-  bool _assigning = false;
-
-  final Set<String> _selectedIds = {};
+  late final AssignProductToPackageViewModel _viewModel;
 
   @override
   void initState() {
     super.initState();
-    _loadProducts();
-  }
-
-  Future<void> _loadProducts() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    try {
-      final products = await CatalogProductRepositoryImpl().getProducts();
-      if (!mounted) return;
-      setState(() {
-        _allProducts = products;
-        _loading = false;
-        _categories = [
-          'All',
-          ...products
-              .map((p) => p.category)
-              .where((c) => c.isNotEmpty)
-              .toSet()
-              .toList(),
-        ];
-      });
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _error = e.message;
-        _loading = false;
-      });
-    }
-  }
-
-  List<CatalogProduct> get _filtered {
-    return _allProducts.where((p) {
-      final matchCat =
-          _selectedCategory == 'All' || p.category == _selectedCategory;
-      final matchSearch = _searchQuery.isEmpty ||
-          p.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          p.sku.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          p.brand.toLowerCase().contains(_searchQuery.toLowerCase());
-      final hasNoPackage = p.packageId.isEmpty || p.packageId == '—';
-      return matchCat && matchSearch && hasNoPackage;
-    }).toList();
-  }
-
-  int get _selectedCount => _selectedIds.length;
-
-  void _toggleSelect(String id) {
-    setState(() {
-      if (_selectedIds.contains(id)) {
-        _selectedIds.remove(id);
-      } else {
-        _selectedIds.add(id);
-      }
-    });
-  }
-
-  void _selectAll() {
-    setState(() {
-      final filtered = _filtered;
-      if (_selectedIds.length == filtered.length) {
-        _selectedIds.clear();
-      } else {
-        _selectedIds.addAll(filtered.map((p) => p.id));
-      }
-    });
+    _viewModel = AssignProductToPackageViewModel(
+      productRepository: CatalogProductRepositoryImpl(),
+      package: widget.package,
+    );
+    _viewModel.loadProducts();
   }
 
   Future<void> _assignToPackage() async {
-    if (_selectedIds.isEmpty) return;
-
-    setState(() => _assigning = true);
-
-    try {
-      final dio = ApiClient.create();
-      int successCount = 0;
-
-      for (final productId in _selectedIds) {
-        try {
-          await dio.put(
-            '/api/products/$productId',
-            data: {'packageId': int.tryParse(widget.package.id)},
-            cancelToken: _cancelToken,
-          );
-          successCount++;
-        } on DioException {
-          // Continue with other products
-        }
-      }
-
-      if (!mounted) return;
-      setState(() => _assigning = false);
-
+    final successCount = await _viewModel.assignToPackage();
+    if (successCount > 0 && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('$successCount product(s) added to package'),
         ),
       );
-      Navigator.of(context).pop(successCount > 0);
-    } on DioException catch (e) {
-      if (!mounted) return;
-      setState(() => _assigning = false);
-      final msg = ApiException.fromDio(e).message;
+      Navigator.of(context).pop(true);
+    } else if (_viewModel.hasError && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(msg)),
+        SnackBar(content: Text(_viewModel.errorMessage!)),
       );
     }
   }
 
   @override
   void dispose() {
-    if (!_cancelToken.isCancelled) _cancelToken.cancel();
+    _viewModel.dispose();
     _searchCtrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
-      body: Column(
-        children: [
-          _header(),
-          _searchBar(),
-          _categoryChips(),
-          Expanded(child: _productList()),
-          if (_selectedCount > 0) _bottomBar(),
-        ],
-      ),
+    return ListenableBuilder(
+      listenable: _viewModel,
+      builder: (context, _) {
+        return Scaffold(
+          backgroundColor: const Color(0xFFF9FAFB),
+          body: Column(
+            children: [
+              _header(),
+              _searchBar(),
+              _categoryChips(),
+              Expanded(child: _productList()),
+              if (_viewModel.selectedCount > 0) _bottomBar(),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -203,9 +111,9 @@ class _AssignProductToPackageScreenState
                 ],
               ),
             ),
-            if (!_loading)
+            if (!_viewModel.isLoading)
               GestureDetector(
-                onTap: _selectAll,
+                onTap: _viewModel.toggleSelectAll,
                 child: Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -215,8 +123,7 @@ class _AssignProductToPackageScreenState
                     border: Border.all(color: kBorder),
                   ),
                   child: Text(
-                    _selectedIds.length == _filtered.length &&
-                            _filtered.isNotEmpty
+                    _viewModel.allFilteredSelected
                         ? 'Deselect All'
                         : 'Select All',
                     style: const TextStyle(
@@ -237,7 +144,7 @@ class _AssignProductToPackageScreenState
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: TextField(
         controller: _searchCtrl,
-        onChanged: (v) => setState(() => _searchQuery = v),
+        onChanged: _viewModel.setSearchQuery,
         decoration: InputDecoration(
           hintText: 'Search products by name, SKU, brand...',
           hintStyle: const TextStyle(color: Color(0xFFD1D5DB), fontSize: 14),
@@ -264,13 +171,13 @@ class _AssignProductToPackageScreenState
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: _categories.length,
+        itemCount: _viewModel.categories.length,
         separatorBuilder: (ctx, index) => const SizedBox(width: 8),
         itemBuilder: (_, i) {
-          final cat = _categories[i];
-          final active = _selectedCategory == cat;
+          final cat = _viewModel.categories[i];
+          final active = _viewModel.selectedCategory == cat;
           return GestureDetector(
-            onTap: () => setState(() => _selectedCategory = cat),
+            onTap: () => _viewModel.setSelectedCategory(cat),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               margin: const EdgeInsets.symmetric(vertical: 8),
@@ -297,27 +204,27 @@ class _AssignProductToPackageScreenState
   }
 
   Widget _productList() {
-    if (_loading) {
+    if (_viewModel.isLoading) {
       return const Center(
         child: CircularProgressIndicator(color: kPurple),
       );
     }
-    if (_error != null) {
+    if (_viewModel.hasError) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(_error!, style: const TextStyle(color: kGray)),
+            Text(_viewModel.errorMessage!, style: const TextStyle(color: kGray)),
             const SizedBox(height: 12),
             ElevatedButton(
-              onPressed: _loadProducts,
+              onPressed: _viewModel.loadProducts,
               child: const Text('Retry'),
             ),
           ],
         ),
       );
     }
-    final items = _filtered;
+    final items = _viewModel.filtered;
     if (items.isEmpty) {
       return Center(
         child: Column(
@@ -347,9 +254,9 @@ class _AssignProductToPackageScreenState
   }
 
   Widget _productCard(CatalogProduct p) {
-    final selected = _selectedIds.contains(p.id);
+    final selected = _viewModel.selectedIds.contains(p.id);
     return GestureDetector(
-      onTap: () => _toggleSelect(p.id),
+      onTap: () => _viewModel.toggleSelect(p.id),
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(12),
@@ -471,25 +378,25 @@ class _AssignProductToPackageScreenState
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                '$_selectedCount product(s) selected',
+                '${_viewModel.selectedCount} product(s) selected',
                 style: const TextStyle(
                     fontSize: 14, fontWeight: FontWeight.w600, color: kTitle),
               ),
             ),
             GestureDetector(
-              onTap: _assigning ? null : _assignToPackage,
+              onTap: _viewModel.isAssigning ? null : _assignToPackage,
               child: Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 decoration: BoxDecoration(
-                  gradient: !_assigning
+                  gradient: !_viewModel.isAssigning
                       ? const LinearGradient(
                           colors: [Color(0xFF6D28D9), Color(0xFF5B21B6)])
                       : null,
-                  color: _assigning ? const Color(0xFFD1D5DB) : null,
+                  color: _viewModel.isAssigning ? const Color(0xFFD1D5DB) : null,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: _assigning
+                child: _viewModel.isAssigning
                     ? const SizedBox(
                         width: 16,
                         height: 16,

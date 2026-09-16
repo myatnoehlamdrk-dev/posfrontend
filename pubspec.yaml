@@ -51,6 +51,11 @@ dependencies:
   printing: ^5.14.3
   # PDF generation
   pdf: ^3.11.2
+  # Dependency injection
+  get_it: ^8.0.3
+  injectable: ^2.5.0
+  # Value equality for entities/failures
+  equatable: ^2.1.0
 
 dev_dependencies:
   flutter_test:
@@ -64,6 +69,9 @@ dev_dependencies:
   flutter_lints: ^6.0.0
 
   flutter_launcher_icons: ^0.14.3
+
+  build_runner: ^2.4.14
+  injectable_generator: ^2.7.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

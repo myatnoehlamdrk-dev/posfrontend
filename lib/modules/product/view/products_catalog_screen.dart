@@ -1,11 +1,10 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:posfrontend/core/extensions/datetime_extensions.dart';
-import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/modules/product/model/catalog_product.dart';
 import 'package:posfrontend/modules/product/repository/catalog_product_repository_impl.dart';
 import 'package:posfrontend/modules/product/view/add_product_screen.dart';
 import 'package:posfrontend/modules/product/view/product_detail_screen.dart';
+import 'package:posfrontend/modules/product/viewmodel/products_catalog_view_model.dart';
 import 'package:posfrontend/modules/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
@@ -19,48 +18,28 @@ class ProductsCatalogScreen extends StatefulWidget {
   State<ProductsCatalogScreen> createState() => _ProductsCatalogScreenState();
 }
 
-enum ProductSort {
-  dateNewest,
-  dateOldest,
-  nameAz,
-  nameZa,
-  priceLow,
-  priceHigh,
-}
-
 class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _search = TextEditingController();
-  final CancelToken _cancelToken = CancelToken();
-  List<CatalogProduct> _all = [];
-  bool _isGrid = true;
-  bool _loading = true;
-  String? _error;
-  String _category = 'All';
-  ProductSort _sort = ProductSort.dateNewest;
+  late final ProductsCatalogViewModel _viewModel;
   late final PageController _hotPageController;
   int _hotIndex = 0;
   bool _hotPaused = false;
+  bool _isGrid = true;
   bool _disposed = false;
   static const Color bg = Color(0xFFF8F9FC);
   static const Color gray = Color(0xFF6B7280);
   static const Color purple = Color(0xFF6D28D9);
   static const Color titleColor = Color(0xFF111827);
 
-  List<String> get _filters {
-    final cats = <String>{
-      for (final p in _all)
-        if (p.category.isNotEmpty) p.category,
-    };
-    final sorted = cats.toList()..sort();
-    return ['All', ...sorted];
-  }
-
   @override
   void initState() {
     super.initState();
+    _viewModel = ProductsCatalogViewModel(
+      repository: CatalogProductRepositoryImpl(),
+    );
     _hotPageController = PageController(initialPage: 5000);
-    _load();
+    _viewModel.load();
     _startAutoScroll();
   }
 
@@ -71,7 +50,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
         _startAutoScroll();
         return;
       }
-      final hotProducts = _hotProducts;
+      final hotProducts = _viewModel.hotProducts;
       if (hotProducts.length > 1 && _hotPageController.hasClients) {
         _hotIndex = (_hotIndex + 1) % hotProducts.length;
         _hotPageController.nextPage(
@@ -83,68 +62,13 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
     });
   }
 
-  List<CatalogProduct> get _hotProducts {
-    final list = List<CatalogProduct>.from(_all);
-    return list.length > 4 ? list.sublist(0, 4) : list;
-  }
-
-  Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    try {
-      _all = await CatalogProductRepositoryImpl().getProducts();
-      if (!mounted) return;
-      _hotIndex = 0;
-      if (_hotPageController.hasClients) {
-        _hotPageController.jumpToPage(5000);
-      }
-      setState(() => _loading = false);
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _error = e.message;
-        _loading = false;
-      });
-    }
-  }
-
   @override
   void dispose() {
     _disposed = true;
-    if (!_cancelToken.isCancelled) _cancelToken.cancel();
+    _viewModel.dispose();
     _search.dispose();
     _hotPageController.dispose();
     super.dispose();
-  }
-
-  List<CatalogProduct> get _filtered {
-    final q = _search.text.toLowerCase();
-    final list = _all.where((p) {
-      final matchesCat = _category == 'All' || p.category == _category;
-      final matchesSearch =
-          q.isEmpty || p.name.toLowerCase().contains(q) || p.brand.toLowerCase().contains(q);
-      return matchesCat && matchesSearch;
-    }).toList();
-
-    list.sort((a, b) {
-      switch (_sort) {
-        case ProductSort.nameAz:
-          return a.name.toLowerCase().compareTo(b.name.toLowerCase());
-        case ProductSort.nameZa:
-          return b.name.toLowerCase().compareTo(a.name.toLowerCase());
-        case ProductSort.priceLow:
-          return a.price.compareTo(b.price);
-        case ProductSort.priceHigh:
-          return b.price.compareTo(a.price);
-        case ProductSort.dateNewest:
-          return b.name.toLowerCase().compareTo(a.name.toLowerCase());
-        case ProductSort.dateOldest:
-          return a.name.toLowerCase().compareTo(b.name.toLowerCase());
-      }
-    });
-    return list;
   }
 
   void _open(CatalogProduct p) {
@@ -171,18 +95,9 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              try {
-                final dio = ApiClient.create();
-                await dio.delete('/api/products/${p.id}', cancelToken: _cancelToken);
-                if (mounted) setState(() => _all.removeWhere((item) => item.id == p.id));
-              } on ApiException catch (e) {
-                if (mounted) {
-                  showErrorSnackBar(context, e);
-                }
-              } catch (e) {
-                if (mounted) {
-                  showErrorSnackBar(context, e);
-                }
+              final success = await _viewModel.deleteProduct(p.id);
+              if (!success && mounted && _viewModel.hasError) {
+                showErrorSnackBar(context, _viewModel.errorMessage!);
               }
             },
             child: const Text('Delete', style: TextStyle(color: Colors.red)),
@@ -194,49 +109,54 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) {
-          navigateToDashboard(context);
-        }
-      },
-      child: LayoutBuilder(
-        builder: (ctx, constraints) {
-          final isWide = constraints.maxWidth >= 768;
-          final body = _content();
+    return ListenableBuilder(
+      listenable: _viewModel,
+      builder: (context, _) {
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, _) {
+            if (!didPop) {
+              navigateToDashboard(context);
+            }
+          },
+          child: LayoutBuilder(
+            builder: (ctx, constraints) {
+              final isWide = constraints.maxWidth >= 768;
+              final body = _content();
 
-          if (isWide) {
-            return Scaffold(
-              backgroundColor: bg,
-              body: SafeArea(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(
-                      width: 240,
-                      child: AppDrawer(activeItem: 'Product'),
+              if (isWide) {
+                return Scaffold(
+                  backgroundColor: bg,
+                  body: SafeArea(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(
+                          width: 240,
+                          child: AppDrawer(activeItem: 'Product'),
+                        ),
+                        Expanded(child: _content()),
+                      ],
                     ),
-                    Expanded(child: _content()),
-                  ],
-                ),
-              ),
-            );
-          }
-          return Scaffold(
-            key: _scaffoldKey,
-            backgroundColor: bg,
-            drawer: const AppDrawer(activeItem: 'Product'),
-            body: SafeArea(child: body),
-          );
-        },
-      ),
+                  ),
+                );
+              }
+              return Scaffold(
+                key: _scaffoldKey,
+                backgroundColor: bg,
+                drawer: const AppDrawer(activeItem: 'Product'),
+                body: SafeArea(child: body),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
   Widget _content() {
     final dateLabel = _formatDate(DateTime.now());
-    final products = _filtered;
+    final products = _viewModel.filtered;
 
     return ListenableBuilder(
       listenable: _search,
@@ -287,7 +207,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                         child: PopupMenuButton<ProductSort>(
                           icon: const Icon(Icons.filter_list, color: titleColor),
                           tooltip: 'Sort',
-                          onSelected: (v) => setState(() => _sort = v),
+                          onSelected: (v) => _viewModel.setSort(v),
                           itemBuilder: (ctx) => const [
                             PopupMenuItem(
                               value: ProductSort.dateNewest,
@@ -327,25 +247,25 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
             ),
             Expanded(
               child: RefreshableBody(
-                onRefresh: _load,
-                child: _loading
+                onRefresh: _viewModel.load,
+                child: _viewModel.isLoading
                     ? const SizedBox(
                         height: 300,
                         child: Center(
                           child: CircularProgressIndicator(color: Color(0xFF6D28D9)),
                         ),
                       )
-                    : _error != null
+                    : _viewModel.hasError
                         ? SizedBox(
                             height: 300,
                             child: Center(
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Text(_error!, style: const TextStyle(color: Colors.red)),
+                                  Text(_viewModel.errorMessage!, style: const TextStyle(color: Colors.red)),
                                   const SizedBox(height: 12),
                                   ElevatedButton(
-                                    onPressed: _load,
+                                    onPressed: _viewModel.load,
                                     child: const Text('Retry'),
                                   ),
                                 ],
@@ -375,7 +295,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                                   ],
                                 ),
                                 const SizedBox(height: 12),
-                                if (_hotProducts.isNotEmpty) _hotCarousel(_hotProducts),
+                                if (_viewModel.hotProducts.isNotEmpty) _hotCarousel(_viewModel.hotProducts),
                                 const SizedBox(height: 24),
                                 Row(
                                   children: [
@@ -457,7 +377,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                 builder: (_) => AddProductScreen(),
               ),
             );
-            if (mounted) _load();
+            if (mounted) _viewModel.load();
           },
           child: const Center(
             child: Row(
@@ -484,7 +404,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
   Widget _searchField() {
     return TextField(
       controller: _search,
-      onChanged: (_) {},
+      onChanged: _viewModel.setSearchQuery,
       decoration: InputDecoration(
         hintText: 'Search products...',
         hintStyle: const TextStyle(color: gray, fontSize: 14),
@@ -504,18 +424,18 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
-        children: _filters
+        children: _viewModel.filters
             .map((f) => Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: GestureDetector(
-                    onTap: () => setState(() => _category = f),
+                    onTap: () => _viewModel.setCategory(f),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        color: _category == f ? purple : Colors.white,
+                        color: _viewModel.category == f ? purple : Colors.white,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: _category == f ? purple : const Color(0xFFE5E7EB),
+                          color: _viewModel.category == f ? purple : const Color(0xFFE5E7EB),
                         ),
                       ),
                       child: Text(
@@ -523,7 +443,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
-                          color: _category == f ? Colors.white : titleColor,
+                          color: _viewModel.category == f ? Colors.white : titleColor,
                         ),
                       ),
                     ),

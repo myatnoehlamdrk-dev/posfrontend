@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/modules/product/model/catalog_product.dart';
-import 'package:posfrontend/modules/product/model/product_detail_models.dart';
 import 'package:posfrontend/modules/product/repository/product_detail_repository_impl.dart';
 import 'package:posfrontend/modules/product/view/add_product_screen.dart';
+import 'package:posfrontend/modules/product/viewmodel/product_detail_view_model.dart';
 import 'package:posfrontend/modules/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 import 'package:posfrontend/modules/shared/widgets/price_text.dart';
@@ -24,60 +23,54 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  ProductDetail? _detail;
-  bool _loading = true;
-  String? _error;
-  int _tabIndex = 0;
+  late final ProductDetailViewModel _viewModel;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _viewModel = ProductDetailViewModel(
+      repository: ProductDetailRepositoryImpl(),
+      productId: widget.productId,
+    );
+    _viewModel.load();
   }
 
-  Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    try {
-      _detail = await ProductDetailRepositoryImpl().getDetail(widget.productId);
-      if (!mounted) return;
-      setState(() => _loading = false);
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _error = e.message;
-        _loading = false;
-      });
-    }
+  @override
+  void dispose() {
+    _viewModel.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (ctx, constraints) {
-        final isWide = constraints.maxWidth >= 768;
-        final body = _content(isWide: isWide);
+    return ListenableBuilder(
+      listenable: _viewModel,
+      builder: (context, _) {
+        return LayoutBuilder(
+          builder: (ctx, constraints) {
+            final isWide = constraints.maxWidth >= 768;
+            final body = _content(isWide: isWide);
 
-        return Scaffold(
-          key: _scaffoldKey,
-          backgroundColor: Colors.white,
-          drawer: isWide ? null : AppDrawer(activeItem: 'Inventory'),
-          body: SafeArea(
-            child: isWide
-                ? Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      SizedBox(
-                        width: 240,
-                        child: AppDrawer(activeItem: 'Inventory'),
-                      ),
-                      Expanded(child: _content(isWide: isWide)),
-                    ],
-                  )
-                : body,
-          ),
+            return Scaffold(
+              key: _scaffoldKey,
+              backgroundColor: Colors.white,
+              drawer: isWide ? null : AppDrawer(activeItem: 'Inventory'),
+              body: SafeArea(
+                child: isWide
+                    ? Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          SizedBox(
+                            width: 240,
+                            child: AppDrawer(activeItem: 'Inventory'),
+                          ),
+                          Expanded(child: _content(isWide: isWide)),
+                        ],
+                      )
+                    : body,
+              ),
+            );
+          },
         );
       },
     );
@@ -109,32 +102,32 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
         Expanded(
           child: RefreshableBody(
-            onRefresh: _load,
-            child: _loading
+            onRefresh: _viewModel.load,
+            child: _viewModel.isLoading
                 ? const SizedBox(
                     height: 300,
                     child: Center(
                       child: CircularProgressIndicator(color: Color(0xFF6D28D9)),
                     ),
                   )
-                : _error != null
+                : _viewModel.hasError
                     ? SizedBox(
                         height: 300,
                         child: Center(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(_error!, style: const TextStyle(color: Colors.red)),
+                              Text(_viewModel.errorMessage!, style: const TextStyle(color: Colors.red)),
                               const SizedBox(height: 12),
                               ElevatedButton(
-                                onPressed: _load,
+                                onPressed: _viewModel.load,
                                 child: const Text('Retry'),
                               ),
                             ],
                           ),
                         ),
                       )
-                    : _detail == null
+                    : _viewModel.detail == null
                         ? const SizedBox(
                             height: 300,
                             child: Center(
@@ -164,7 +157,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Widget _heroImage() {
-    final d = _detail!;
+    final d = _viewModel.detail!;
     final color = CatalogProduct.colorFor(d.categoryName);
     final hasImage = d.imageUrl != null;
     return Stack(
@@ -214,11 +207,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               await Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => AddProductScreen(
-                    existingProduct: _detail,
+                    existingProduct: _viewModel.detail,
                   ),
                 ),
               );
-              if (mounted) _load();
+              if (mounted) _viewModel.load();
             },
             child: Container(
               padding: const EdgeInsets.all(8),
@@ -279,7 +272,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              _detail!.categoryName,
+              _viewModel.detail!.categoryName,
               style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -293,7 +286,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _detail!.name,
+                  _viewModel.detail!.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -307,7 +300,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
           ),
           PriceText(
-            _detail!.price,
+            _viewModel.detail!.price,
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -329,10 +322,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       ),
       child: Row(
         children: List.generate(tabs.length, (i) {
-          final active = _tabIndex == i;
+          final active = _viewModel.tabIndex == i;
           return Expanded(
             child: GestureDetector(
-              onTap: () => setState(() => _tabIndex = i),
+              onTap: () => _viewModel.setTabIndex(i),
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
@@ -367,7 +360,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Widget _tabContent() {
-    switch (_tabIndex) {
+    switch (_viewModel.tabIndex) {
       case 1:
         return _stockTab();
       case 2:
@@ -378,7 +371,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Widget _infoTab() {
-    final variants = _detail!.variants;
+    final d = _viewModel.detail!;
+    final variants = d.variants;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -388,8 +382,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
         const SizedBox(height: 12),
         _card([
-          _row(Icons.qr_code, 'SKU', _detail!.sku),
-          _row(Icons.layers, 'Is Set / Bundle', _detail!.isBundle),
+          _row(Icons.qr_code, 'SKU', d.sku),
+          _row(Icons.layers, 'Is Set / Bundle', d.isBundle),
         ]),
         const SizedBox(height: 24),
         const Text(
@@ -398,16 +392,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
         const SizedBox(height: 12),
         _card([
-          _row(Icons.inventory_2, 'Product Name', _detail!.name),
-          _row(Icons.business, 'Brand', _detail!.brand),
-          _row(Icons.category, 'Category', _detail!.categoryName),
-          _row(Icons.color_lens, 'Color', _detail!.color),
-          _row(Icons.straighten, 'Size', _detail!.size),
-          _row(Icons.inventory, 'Package', _detail!.packageName),
-          _row(Icons.store, 'Inventory', _detail!.inventoryType),
-          _row(Icons.check_circle, 'Product Status', _detail!.status),
+          _row(Icons.inventory_2, 'Product Name', d.name),
+          _row(Icons.business, 'Brand', d.brand),
+          _row(Icons.category, 'Category', d.categoryName),
+          _row(Icons.color_lens, 'Color', d.color),
+          _row(Icons.straighten, 'Size', d.size),
+          _row(Icons.inventory, 'Package', d.packageName),
+          _row(Icons.store, 'Inventory', d.inventoryType),
+          _row(Icons.check_circle, 'Product Status', d.status),
         ]),
-        if (_detail!.createdBy.isNotEmpty || _detail!.updatedBy.isNotEmpty) ...[
+        if (d.createdBy.isNotEmpty || d.updatedBy.isNotEmpty) ...[
           const SizedBox(height: 24),
           const Text(
             'Audit Information',
@@ -415,14 +409,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
           const SizedBox(height: 12),
           _card([
-            if (_detail!.createdBy.isNotEmpty)
-              _row(Icons.person_add, 'Created By', _detail!.createdBy),
-            if (_detail!.createdAt.isNotEmpty)
-              _row(Icons.access_time, 'Created At', _detail!.createdAt),
-            if (_detail!.updatedBy.isNotEmpty)
-              _row(Icons.edit, 'Updated By', _detail!.updatedBy),
-            if (_detail!.updatedAt.isNotEmpty)
-              _row(Icons.update, 'Updated At', _detail!.updatedAt),
+            if (d.createdBy.isNotEmpty)
+              _row(Icons.person_add, 'Created By', d.createdBy),
+            if (d.createdAt.isNotEmpty)
+              _row(Icons.access_time, 'Created At', d.createdAt),
+            if (d.updatedBy.isNotEmpty)
+              _row(Icons.edit, 'Updated By', d.updatedBy),
+            if (d.updatedAt.isNotEmpty)
+              _row(Icons.update, 'Updated At', d.updatedAt),
           ]),
         ],
         if (variants.isNotEmpty) ...[
@@ -495,12 +489,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Widget _stockTab() {
-    final pct = _detail!.stockAvailable / _detail!.maxCapacity;
-    final color = _detail!.stockStatus == 'High Stock'
+    final d = _viewModel.detail!;
+    final pct = d.stockAvailable / d.maxCapacity;
+    final color = d.stockStatus == 'High Stock'
         ? const Color(0xFF16A34A)
-        : (_detail!.stockStatus == 'Mid-Cap Stock'
+        : (d.stockStatus == 'Mid-Cap Stock'
             ? const Color(0xFF2563EB)
-            : (_detail!.stockStatus == 'Low Stock'
+            : (d.stockStatus == 'Low Stock'
                 ? const Color(0xFFD97706)
                 : const Color(0xFFDC2626)));
     return Column(
@@ -533,7 +528,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${_detail!.stockAvailable}',
+                      '${d.stockAvailable}',
                       style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
@@ -572,9 +567,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
         const SizedBox(height: 12),
         _card([
-          _row(Icons.check_box, 'Available', '${_detail!.stockAvailable} units'),
-          _row(Icons.remove_circle, 'Minimum', '${_detail!.minStock} units'),
-          _row(Icons.inventory, 'Maximum', '${_detail!.maxCapacity} units'),
+          _row(Icons.check_box, 'Available', '${d.stockAvailable} units'),
+          _row(Icons.remove_circle, 'Minimum', '${d.minStock} units'),
+          _row(Icons.inventory, 'Maximum', '${d.maxCapacity} units'),
         ]),
         const SizedBox(height: 16),
         Container(
@@ -598,7 +593,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   ),
                   const Spacer(),
                   Text(
-                    _detail!.stockStatus,
+                    d.stockStatus,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -622,6 +617,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Widget _supplierTab() {
+    final d = _viewModel.detail!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -631,10 +627,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
         const SizedBox(height: 12),
         _card([
-          _row(Icons.badge, 'Supplier ID', _detail!.supplierId),
-          _row(Icons.business, 'Supplier Name', _detail!.supplierName),
-          _row(Icons.description, 'Contact No', _detail!.contractNumber),
-          _row(Icons.calendar_today, 'Supplier Since', _detail!.supplierSince),
+          _row(Icons.badge, 'Supplier ID', d.supplierId),
+          _row(Icons.business, 'Supplier Name', d.supplierName),
+          _row(Icons.description, 'Contact No', d.contractNumber),
+          _row(Icons.calendar_today, 'Supplier Since', d.supplierSince),
         ]),
       ],
     );

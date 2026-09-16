@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:posfrontend/core/utils/error_handler.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/modules/profile/repository/profile_repository_impl.dart';
 import 'package:posfrontend/modules/profile/viewmodel/profile_view_model.dart';
-import 'package:posfrontend/modules/shop/model/shop.dart';
 import 'package:posfrontend/modules/shop/repository/shop_api_repository_impl.dart';
 import 'package:posfrontend/shared/repositories/imgbb_repository_impl.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
@@ -41,8 +39,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _obscureNew = true;
   bool _obscureConfirm = true;
 
-  Shop? _shop;
-
   static const Color primary = Color(0xFF7B2CBF);
   static const Color primaryLight = Color(0xFF9D4EDD);
   static const Color borderColor = Color(0xFFE0E0E0);
@@ -52,21 +48,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _viewModel = ProfileViewModel(repository: ProfileRepositoryImpl());
+    _viewModel = ProfileViewModel(
+      repository: ProfileRepositoryImpl(),
+      shopRepository: ShopApiRepositoryImpl(),
+    );
     _viewModel.addListener(_onViewModelChange);
     _viewModel.loadProfile();
-    _loadShop();
-  }
-
-  Future<void> _loadShop() async {
     final shopId = AuthScope.userOf(context)?.shopId ?? '';
-    if (shopId.isEmpty) return;
-    try {
-      final shop = await ShopApiRepositoryImpl().getShopById(shopId);
-      if (mounted) setState(() => _shop = shop);
-    } catch (_) {
-      // Shop load failure is non-critical
-    }
+    _viewModel.loadShop(shopId);
   }
 
   void _onViewModelChange() {
@@ -128,28 +117,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await _viewModel.saveProfile();
   }
 
-  bool _saving = false;
-
   Future<void> _save() async {
-    if (_saving) return;
-    setState(() => _saving = true);
-    try {
-      final success = await _viewModel.saveProfile();
-      if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_viewModel.successMessage),
-            backgroundColor: primary,
-          ),
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
+    if (_viewModel.isSaving) return;
+    final success = await _viewModel.saveProfile();
+    if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(formatApiError(e))),
+        SnackBar(
+          content: Text(_viewModel.successMessage),
+          backgroundColor: primary,
+        ),
       );
-    } finally {
-      if (mounted) setState(() => _saving = false);
     }
   }
 
@@ -502,37 +479,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 _shopInfoRow(
                                   icon: Icons.store_outlined,
                                   label: 'Shop Name',
-                                  value: _shop?.name ?? '-',
+                                  value: _viewModel.shop?.name ?? '-',
                                 ),
                                 const SizedBox(height: 10),
                                 _shopInfoRow(
                                   icon: Icons.category_outlined,
                                   label: 'Shop Type',
-                                  value: _shop?.type ?? '-',
+                                  value: _viewModel.shop?.type ?? '-',
                                 ),
                                 const SizedBox(height: 10),
                                 _shopInfoRow(
                                   icon: Icons.location_on_outlined,
                                   label: 'Address',
-                                  value: _shop?.physicalAddress ?? '-',
+                                  value: _viewModel.shop?.physicalAddress ?? '-',
                                 ),
                                 const SizedBox(height: 10),
                                 _shopInfoRow(
                                   icon: Icons.person_outline,
                                   label: 'Owner',
-                                  value: _shop?.ownerInformation.name ?? '-',
+                                  value: _viewModel.shop?.ownerInformation.name ?? '-',
                                 ),
                                 const SizedBox(height: 10),
                                 _shopInfoRow(
                                   icon: Icons.email_outlined,
                                   label: 'Owner Email',
-                                  value: _shop?.ownerInformation.email ?? '-',
+                                  value: _viewModel.shop?.ownerInformation.email ?? '-',
                                 ),
                                 const SizedBox(height: 10),
                                 _shopInfoRow(
                                   icon: Icons.phone_outlined,
                                   label: 'Owner Phone',
-                                  value: _shop?.ownerInformation.phone ?? '-',
+                                  value: _viewModel.shop?.ownerInformation.phone ?? '-',
                                 ),
                                 const SizedBox(height: 24),
                                 _gradientButton(

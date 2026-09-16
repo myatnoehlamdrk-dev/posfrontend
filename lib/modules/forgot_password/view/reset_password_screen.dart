@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:posfrontend/modules/forgot_password/repository/forgot_password_repository_impl.dart';
-import 'package:posfrontend/modules/forgot_password/viewmodel/forgot_password_view_model.dart';
+import 'package:posfrontend/core/di/injection.dart';
+import 'package:posfrontend/features/auth/domain/usecases/forgot_password.dart';
+import 'package:posfrontend/features/auth/presentation/viewmodels/forgot_password_view_model.dart';
 import 'package:posfrontend/modules/login/view/login_screen.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/widgets/app_input_decoration.dart';
@@ -35,7 +36,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   void initState() {
     super.initState();
     _viewModel = ForgotPasswordViewModel(
-      repository: ForgotPasswordRepositoryImpl(),
+      sendOtpUseCase: getIt<SendForgotPasswordOtpUseCase>(),
+      verifyOtpUseCase: getIt<VerifyForgotPasswordOtpUseCase>(),
+      resetPasswordUseCase: getIt<ResetPasswordUseCase>(),
     );
     _viewModel.setEmail(widget.email);
     _viewModel.setResetToken(widget.resetToken);
