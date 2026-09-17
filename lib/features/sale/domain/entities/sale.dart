@@ -25,6 +25,30 @@ class SaleItemEntity extends Equatable {
 
   double get subtotal => unitPrice * quantity;
 
+  SaleItemEntity copyWith({
+    String? productId,
+    String? productName,
+    String? imageUrl,
+    double? unitPrice,
+    int? quantity,
+    String? size,
+    String? color,
+    String? notes,
+    String? category,
+  }) {
+    return SaleItemEntity(
+      productId: productId ?? this.productId,
+      productName: productName ?? this.productName,
+      imageUrl: imageUrl ?? this.imageUrl,
+      unitPrice: unitPrice ?? this.unitPrice,
+      quantity: quantity ?? this.quantity,
+      size: size ?? this.size,
+      color: color ?? this.color,
+      notes: notes ?? this.notes,
+      category: category ?? this.category,
+    );
+  }
+
   @override
   List<Object?> get props => [productId, productName, unitPrice, quantity, size, color];
 }
@@ -107,3 +131,5 @@ class SaleItemDetailEntity extends Equatable {
   @override
   List<Object?> get props => [id, productName, quantity];
 }
+
+typedef SaleItem = SaleItemEntity;

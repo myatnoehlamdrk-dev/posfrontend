@@ -9,13 +9,13 @@ class ProductRemoteDataSource {
 
   ProductRemoteDataSource([Dio? dio]) : _dio = dio ?? ApiClient.create();
 
-  Future<List<ProductApiModel>> getProducts({String? packageId}) async {
+  Future<List<ProductApiModel>> getProducts({String? packageId, CancelToken? cancelToken}) async {
     try {
       final queryParams = <String, dynamic>{};
       if (packageId != null && packageId.isNotEmpty) {
         queryParams['packageId'] = packageId;
       }
-      final response = await _dio.get('/api/products', queryParameters: queryParams);
+      final response = await _dio.get('/api/products', queryParameters: queryParams, cancelToken: cancelToken);
       final data = response.data;
       final List<dynamic> items = data is Map ? (data['data'] ?? data['products'] ?? []) : (data as List? ?? []);
       return items.map((json) => ProductApiModel.fromJson(json as Map<String, dynamic>)).toList();
@@ -24,9 +24,9 @@ class ProductRemoteDataSource {
     }
   }
 
-  Future<ProductDetailApiModel> getProductDetail(String productId) async {
+  Future<ProductDetailApiModel> getProductDetail(String productId, {CancelToken? cancelToken}) async {
     try {
-      final response = await _dio.get('/api/products/$productId');
+      final response = await _dio.get('/api/products/$productId', cancelToken: cancelToken);
       final data = response.data;
       final json = data is Map ? (data['data'] ?? data) : data;
       return ProductDetailApiModel.fromJson(json as Map<String, dynamic>);

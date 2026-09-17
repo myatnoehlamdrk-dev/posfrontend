@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:posfrontend/modules/profile/view/profile_screen.dart';
+import 'package:posfrontend/features/profile/presentation/screens/profile_screen.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';

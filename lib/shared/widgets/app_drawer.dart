@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/core/auth/token_storage.dart';
 import 'package:posfrontend/core/network/api_client.dart';
-import 'package:posfrontend/modules/dashboard/view/dashboard_screen.dart';
-import 'package:posfrontend/modules/inventory/view/inventory_screen.dart';
-import 'package:posfrontend/modules/login/view/login_screen.dart';
-import 'package:posfrontend/modules/product/view/products_catalog_screen.dart';
-import 'package:posfrontend/modules/purchase_items/view/purchase_items_screen.dart';
-import 'package:posfrontend/modules/sale/view/new_sale_screen.dart';
-import 'package:posfrontend/modules/sale_items/view/sale_items_screen.dart';
-import 'package:posfrontend/modules/settings/view/settings_screen.dart';
-import 'package:posfrontend/modules/customer/view/customer_screen.dart';
+import 'package:posfrontend/features/auth/presentation/screens/login_screen.dart';
+import 'package:posfrontend/features/product/presentation/screens/products_catalog_screen.dart';
+import 'package:posfrontend/features/sale/presentation/screens/new_sale_screen.dart';
+import 'package:posfrontend/features/sale/presentation/screens/sale_items_screen.dart';
+import 'package:posfrontend/features/dashboard/presentation/screens/dashboard_screen.dart';
+import 'package:posfrontend/features/inventory/presentation/screens/inventory_screen.dart';
+import 'package:posfrontend/features/purchase/presentation/screens/purchase_items_screen.dart';
+import 'package:posfrontend/features/settings/presentation/screens/settings_screen.dart';
+import 'package:posfrontend/features/customer/presentation/screens/customer_screen.dart';
 
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';

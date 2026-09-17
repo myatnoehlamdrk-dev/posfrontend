@@ -2,13 +2,13 @@ import 'package:posfrontend/core/base/use_case.dart';
 import 'package:posfrontend/features/product/domain/entities/category.dart';
 import 'package:posfrontend/features/product/domain/repositories/product_manage_repository.dart';
 
-class GetCategoriesUseCase extends UseCase<List<CategoryEntity>, NoParams> {
+class GetCategoriesUseCase extends UseCase<List<Category>, NoParams> {
   final CategoryRepository _repository;
 
   GetCategoriesUseCase(this._repository);
 
   @override
-  Future<List<CategoryEntity>> call(NoParams params) {
+  Future<List<Category>> call(NoParams params) {
     return _repository.getCategories();
   }
 }

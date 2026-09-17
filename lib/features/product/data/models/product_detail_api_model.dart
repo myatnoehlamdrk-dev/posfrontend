@@ -104,7 +104,7 @@ class ProductDetailApiModel {
       name: name,
       categoryName: categoryName,
       sku: sku,
-      isBundle: isBundle,
+      isBundle: isBundle ? 'Yes' : 'No',
       brand: brand,
       color: color,
       size: size,

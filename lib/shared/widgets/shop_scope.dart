@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:posfrontend/modules/shop/model/shop.dart';
-import 'package:posfrontend/modules/shop/repository/shop_api_repository_impl.dart';
-import 'package:posfrontend/modules/shop/repository/shop_local_repository_impl.dart';
+import 'package:posfrontend/features/shop/domain/entities/shop.dart';
+import 'package:posfrontend/features/shop/data/repositories/shop_api_repository_impl.dart';
+import 'package:posfrontend/features/shop/data/repositories/shop_local_repository_impl.dart';
 
 class ShopScope extends StatefulWidget {
   final Widget child;

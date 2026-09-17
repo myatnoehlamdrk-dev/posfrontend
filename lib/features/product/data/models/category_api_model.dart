@@ -34,8 +34,8 @@ class CategoryApiModel {
     );
   }
 
-  CategoryEntity toEntity() {
-    return CategoryEntity(
+  Category toEntity() {
+    return Category(
       id: id,
       name: name,
       inventoryId: inventoryId,

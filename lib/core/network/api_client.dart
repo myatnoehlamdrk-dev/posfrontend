@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:posfrontend/core/auth/token_storage.dart';
+import 'package:posfrontend/core/network/api_interceptor.dart';
 export 'package:posfrontend/core/network/app_exceptions.dart';
 
 class ApiClient {
@@ -29,23 +29,7 @@ class ApiClient {
     dio.interceptors.add(
       LogInterceptor(requestBody: true, responseBody: true),
     );
-    dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) async {
-          final token = await TokenStorage.getToken();
-          if (token != null && token.isNotEmpty) {
-            options.headers['Authorization'] = 'Bearer $token';
-          }
-          handler.next(options);
-        },
-        onError: (error, handler) async {
-          if (error.response?.statusCode == 401) {
-            await TokenStorage.clearToken();
-          }
-          handler.next(error);
-        },
-      ),
-    );
+    dio.interceptors.add(AuthInterceptor());
     return dio;
   }
 }

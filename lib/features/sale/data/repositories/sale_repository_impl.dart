@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:posfrontend/features/sale/data/datasources/sale_remote_data_source.dart';
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
 import 'package:posfrontend/features/sale/domain/repositories/sale_repository.dart';
@@ -21,6 +22,7 @@ class SaleRepositoryImpl implements SaleRepository {
     required double grandTotal,
     int? discount,
     String? notes,
+    CancelToken? cancelToken,
   }) {
     return _remoteDataSource.createSale(
       userName: userName, voucherNo: voucherNo, orderId: orderId,

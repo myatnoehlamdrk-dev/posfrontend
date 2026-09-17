@@ -12,7 +12,7 @@ abstract class ProductManageRepository {
 }
 
 abstract class CategoryRepository {
-  Future<List<CategoryEntity>> getCategories();
+  Future<List<Category>> getCategories();
   Future<void> createCategory({required String name, String? description, String? inventoryId, String? type});
   Future<void> updateCategory(String id, {String? name, String? description, bool? active});
 }

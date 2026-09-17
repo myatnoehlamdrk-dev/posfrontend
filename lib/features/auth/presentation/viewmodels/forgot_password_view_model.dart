@@ -1,5 +1,6 @@
 import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/core/base/form_validation_mixin.dart';
+import 'package:posfrontend/core/network/app_exceptions.dart';
 import 'package:posfrontend/features/auth/domain/usecases/forgot_password.dart';
 
 class ForgotPasswordViewModel extends BaseViewModel with FormValidationMixin {
@@ -85,7 +86,11 @@ class ForgotPasswordViewModel extends BaseViewModel with FormValidationMixin {
       notifyListeners();
       return true;
     } catch (e) {
-      setError('Failed to send OTP: $e');
+      if (e is AppException) {
+        setError(e.message);
+      } else {
+        setError('Failed to send OTP. Please try again.');
+      }
       return false;
     } finally {
       setLoading(false);
@@ -104,7 +109,11 @@ class ForgotPasswordViewModel extends BaseViewModel with FormValidationMixin {
       notifyListeners();
       return true;
     } catch (e) {
-      setError('OTP verification failed: $e');
+      if (e is AppException) {
+        setError(e.message);
+      } else {
+        setError('OTP verification failed. Please try again.');
+      }
       return false;
     } finally {
       setLoading(false);
@@ -125,7 +134,11 @@ class ForgotPasswordViewModel extends BaseViewModel with FormValidationMixin {
       ));
       return true;
     } catch (e) {
-      setError('Password reset failed: $e');
+      if (e is AppException) {
+        setError(e.message);
+      } else {
+        setError('Password reset failed. Please try again.');
+      }
       return false;
     } finally {
       setLoading(false);

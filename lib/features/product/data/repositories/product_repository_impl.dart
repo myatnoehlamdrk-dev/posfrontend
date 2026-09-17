@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:posfrontend/features/product/data/datasources/product_remote_data_source.dart';
 import 'package:posfrontend/features/product/domain/entities/product.dart';
 import 'package:posfrontend/features/product/domain/entities/product_detail.dart';
@@ -13,8 +14,8 @@ class ProductRepositoryImpl implements ProductRepository {
       : _remoteDataSource = remoteDataSource ?? ProductRemoteDataSource();
 
   @override
-  Future<List<ProductEntity>> getProducts({String? packageId}) async {
-    final models = await _remoteDataSource.getProducts(packageId: packageId);
+  Future<List<ProductEntity>> getProducts({String? packageId, CancelToken? cancelToken}) async {
+    final models = await _remoteDataSource.getProducts(packageId: packageId, cancelToken: cancelToken);
     return models.map((m) => m.toEntity()).toList();
   }
 
@@ -51,8 +52,8 @@ class ProductDetailRepositoryImpl implements ProductDetailRepository {
       : _remoteDataSource = remoteDataSource ?? ProductRemoteDataSource();
 
   @override
-  Future<ProductDetailEntity> getDetail(String productId) async {
-    final model = await _remoteDataSource.getProductDetail(productId);
+  Future<ProductDetailEntity> getDetail(String productId, {CancelToken? cancelToken}) async {
+    final model = await _remoteDataSource.getProductDetail(productId, cancelToken: cancelToken);
     return model.toEntity();
   }
 }
@@ -95,7 +96,7 @@ class CategoryRepositoryImpl implements CategoryRepository {
       : _remoteDataSource = remoteDataSource ?? ProductRemoteDataSource();
 
   @override
-  Future<List<CategoryEntity>> getCategories() async {
+  Future<List<Category>> getCategories() async {
     final models = await _remoteDataSource.getCategories();
     return models.map((m) => m.toEntity()).toList();
   }

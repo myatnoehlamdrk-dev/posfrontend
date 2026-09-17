@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:posfrontend/core/auth/auth_redirect.dart';
 import 'package:posfrontend/core/di/injection.dart';
-import 'package:posfrontend/modules/onboarding/view/get_started_screen.dart';
+import 'package:posfrontend/features/onboarding/presentation/screens/get_started_screen.dart';
+import 'package:posfrontend/shared/theme/app_theme.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/shop_scope.dart';
 
@@ -31,14 +31,7 @@ class MyApp extends StatelessWidget {
           title: 'Inventory',
           navigatorKey: navigatorKey,
           debugShowCheckedModeBanner: false,
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFF7B2CBF),
-            ),
-            useMaterial3: true,
-            textTheme: GoogleFonts.poppinsTextTheme(),
-            fontFamily: GoogleFonts.poppins().fontFamily,
-          ),
+          theme: AppTheme.lightTheme,
           home: const GetStartedScreen(),
         ),
       ),

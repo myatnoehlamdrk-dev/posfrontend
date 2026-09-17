@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:posfrontend/modules/dashboard/view/dashboard_screen.dart';
-import 'package:posfrontend/modules/profile/view/profile_screen.dart';
+import 'package:posfrontend/features/dashboard/presentation/screens/dashboard_screen.dart';
+import 'package:posfrontend/features/profile/presentation/screens/profile_screen.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
 
 void navigateToDashboard(BuildContext context) {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:posfrontend/modules/login/model/login_response.dart';
+import 'package:posfrontend/features/auth/data/models/login_response.dart';
 
 class AuthScope extends StatefulWidget {
   final Widget child;
@@ -46,20 +46,6 @@ class _AuthScopeData extends InheritedWidget {
     required this.updateUser,
     required super.child,
   });
-
-  static _AuthScopeData? _maybeOf(BuildContext context) {
-    return context.dependOnInheritedWidgetOfExactType<_AuthScopeData>();
-  }
-
-  static LoginResponse? userOf(BuildContext context) {
-    final scope = _maybeOf(context);
-    return scope?.user;
-  }
-
-  static void updateUserOf(BuildContext context, LoginResponse? user) {
-    final scope = _maybeOf(context);
-    scope?.updateUser(user);
-  }
 
   @override
   bool updateShouldNotify(_AuthScopeData oldWidget) {

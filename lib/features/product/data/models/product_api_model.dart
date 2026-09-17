@@ -33,12 +33,15 @@ class ProductApiModel {
   factory ProductApiModel.fromJson(Map<String, dynamic> json) {
     final variants = json['variants'];
     final variantList = variants is List ? variants : const [];
+    final price = variantList.isNotEmpty
+        ? (variantList.first['price'] ?? 0).toDouble()
+        : 0.0;
     return ProductApiModel(
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
       brand: json['brand']?.toString() ?? '',
       sku: json['sku']?.toString() ?? '',
-      price: (json['price'] as num?)?.toDouble() ?? 0,
+      price: price,
       stock: (json['stock'] as num?)?.toInt() ?? 0,
       isSet: json['isSet'] == true,
       category: json['category']?.toString() ?? '',

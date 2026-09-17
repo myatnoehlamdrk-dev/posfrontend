@@ -1,4 +1,10 @@
+import 'package:dio/dio.dart';
+import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart';
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
+
+abstract class SaleProductRepository {
+  Future<List<CatalogProductView>> getProducts({CancelToken? cancelToken});
+}
 
 abstract class SaleRepository {
   Future<void> createSale({
@@ -13,6 +19,7 @@ abstract class SaleRepository {
     required double grandTotal,
     int? discount,
     String? notes,
+    CancelToken? cancelToken,
   });
 }
 
