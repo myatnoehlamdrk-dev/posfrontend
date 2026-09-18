@@ -28,4 +28,11 @@ class ShopApiRepositoryImpl implements ShopApiRepository {
     final model = await _dataSource.getShopById(id);
     return model.toEntity();
   }
+
+  @override
+  Future<ShopEntity> updateShop(String id, ShopEntity shop, {CancelToken? cancelToken}) async {
+    final model = ShopApiModel.fromEntity(shop);
+    final result = await _dataSource.updateShop(id, model);
+    return result.toEntity();
+  }
 }

@@ -86,7 +86,7 @@ class ProductRemoteDataSource {
 
   Future<void> updateProduct(String productId, Map<String, dynamic> data) async {
     try {
-      await _dio.put('/api/products/$productId', data: data);
+      await _dio.patch('/api/products/$productId', data: data);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
@@ -137,7 +137,7 @@ class ProductRemoteDataSource {
 
   Future<void> updateCategory(String id, {String? name, String? description, bool? active}) async {
     try {
-      await _dio.put('/api/categories/$id', data: {
+      await _dio.patch('/api/categories/$id', data: {
         if (name != null) 'name': name,
         if (description != null) 'description': description,
         if (active != null) 'active': active,

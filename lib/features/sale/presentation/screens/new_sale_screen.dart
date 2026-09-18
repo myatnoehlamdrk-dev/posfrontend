@@ -50,9 +50,11 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   bool _pdfExportEnabled = true;
   bool _printVoucherEnabled = false;
   String _printFormat = 'thermal';
+  String _paperSize = '58mm';
   static const _keyPdfExport = 'print_pdf_export';
   static const _keyPrintVoucher = 'print_voucher_enabled';
   static const _keyPrintFormat = 'print_format';
+  static const _keyPaperSize = 'print_paper_size';
 
   @override
   void initState() {
@@ -83,6 +85,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       _pdfExportEnabled = prefs.getBool(_keyPdfExport) ?? true;
       _printVoucherEnabled = prefs.getBool(_keyPrintVoucher) ?? false;
       _printFormat = prefs.getString(_keyPrintFormat) ?? 'thermal';
+      _paperSize = prefs.getString(_keyPaperSize) ?? '58mm';
     });
   }
 
@@ -91,10 +94,14 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     await prefs.setBool(_keyPdfExport, _pdfExportEnabled);
     await prefs.setBool(_keyPrintVoucher, _printVoucherEnabled);
     await prefs.setString(_keyPrintFormat, _printFormat);
+    await prefs.setString(_keyPaperSize, _paperSize);
   }
 
   Future<void> _submitSale() async {
     final staffName = AuthScope.userOf(context)?.fullName ?? 'Staff';
+    _viewModel.setCustomerName(_customerNameCtrl.text);
+    _viewModel.setCustomerPhone(_customerPhoneCtrl.text);
+    _viewModel.setCustomerLocation(_customerLocationCtrl.text);
     final success = await _viewModel.submitSale(
       staffName: staffName,
       existingOrderId: widget.existingOrderId,
@@ -112,6 +119,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     final itemsSnapshot = List<SaleItemEntity>.from(_viewModel.items);
     final customerName = _customerNameCtrl.text;
     final customerPhone = _customerPhoneCtrl.text.isNotEmpty ? _customerPhoneCtrl.text : null;
+    final customerLocation = _customerLocationCtrl.text.isNotEmpty ? _customerLocationCtrl.text : null;
     final paymentMethod = _viewModel.paymentMethod;
     final notes = _notesCtrl.text.isNotEmpty ? _notesCtrl.text : null;
     final voucherNo = 'INV-${_viewModel.voucherRandom}';
@@ -127,7 +135,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     _viewModel.clearCart();
 
     if (_pdfExportEnabled || _printVoucherEnabled) {
-      final saleArgs = _buildSaleArgs(customerName, customerPhone, staffName, voucherNo, orderId, itemsSnapshot, _viewModel.discountPercent, _viewModel.totalPayable, paymentMethod, notes);
+      final saleArgs = _buildSaleArgs(customerName, customerPhone, customerLocation, staffName, voucherNo, orderId, itemsSnapshot, _viewModel.discountPercent, _viewModel.totalPayable, paymentMethod, notes);
       if (_pdfExportEnabled) _autoExportPdf(saleArgs);
       if (_printVoucherEnabled) _autoPrintVoucher(saleArgs);
     }
@@ -135,6 +143,9 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
 
   Future<void> _submitDraft() async {
     final staffName = AuthScope.userOf(context)?.fullName ?? 'Staff';
+    _viewModel.setCustomerName(_customerNameCtrl.text);
+    _viewModel.setCustomerPhone(_customerPhoneCtrl.text);
+    _viewModel.setCustomerLocation(_customerLocationCtrl.text);
     final success = await _viewModel.submitDraft(staffName: staffName);
     if (!success) {
       if (!mounted) return;
@@ -905,6 +916,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                 builder: (_) => SalePreviewScreen(
                   customerName: _customerNameCtrl.text,
                   customerPhone: _customerPhoneCtrl.text.isNotEmpty ? _customerPhoneCtrl.text : null,
+                  customerLocation: _customerLocationCtrl.text.isNotEmpty ? _customerLocationCtrl.text : null,
                   staffName: AuthScope.userOf(context)?.fullName ?? 'Staff',
                   voucherNo: 'INV-${_viewModel.voucherRandom}',
                   orderId: 'ORD-${_viewModel.orderRandom}',
@@ -994,11 +1006,12 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     );
   }
 
-  Map<String, dynamic> _buildSaleArgs(String customerName, String? customerPhone, String staffName, String voucherNo, String orderId, List<SaleItemEntity> items, double discountPct, double totalPayable, String paymentMethod, String? notes) {
+  Map<String, dynamic> _buildSaleArgs(String customerName, String? customerPhone, String? customerLocation, String staffName, String voucherNo, String orderId, List<SaleItemEntity> items, double discountPct, double totalPayable, String paymentMethod, String? notes) {
     final shop = ShopScope.shopOf(context);
     return {
       'customerName': customerName,
       'customerPhone': customerPhone,
+      'customerLocation': customerLocation,
       'staffName': staffName,
       'voucherNo': voucherNo,
       'orderId': orderId,
@@ -1049,6 +1062,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   void _autoPrintVoucher(Map<String, dynamic> args) async {
     try {
       if (_printFormat == 'thermal') {
+        final paperWidthMm = _paperSize == '80mm' ? 78.0 : 56.7;
         await VoucherPdfService.generateAndPrintReceipt(
           customerName: args['customerName'],
           customerPhone: args['customerPhone'],
@@ -1067,6 +1081,8 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           shopAddress: args['shopAddress'],
           shopPhone: args['shopPhone'],
           shopImage: args['shopImage'],
+          paperWidthMm: paperWidthMm,
+          customerLocation: args['customerLocation'],
         );
       } else {
         await VoucherPdfService.generateAndPrint(
@@ -1160,6 +1176,22 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                         const SizedBox(height: 8),
                         _formatOption(ctx, setSheetState, 'A4 Paper', 'a4', Icons.description_outlined),
                       ],
+                      if (_printVoucherEnabled && _printFormat == 'thermal') ...[
+                        const SizedBox(height: 20),
+                        const Text('Paper Size', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: kTitle)),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _paperSizeOption(ctx, setSheetState, '58mm', Icons.crop_free),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _paperSizeOption(ctx, setSheetState, '80mm', Icons.aspect_ratio),
+                            ),
+                          ],
+                        ),
+                      ],
                       const SizedBox(height: 24),
                     ],
                   ),
@@ -1193,6 +1225,37 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             const SizedBox(width: 10),
             Expanded(child: Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: isSelected ? kPurple : kTitle))),
             if (isSelected) const Icon(Icons.check_circle, color: kPurple, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _paperSizeOption(BuildContext ctx, StateSetter setSheetState, String label, IconData icon) {
+    final isSelected = _paperSize == label;
+    return GestureDetector(
+      onTap: () {
+        setSheetState(() => _paperSize = label);
+        setState(() => _paperSize = label);
+        _savePrintSettings();
+      },
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFF5F0FF) : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: isSelected ? kPurple : kBorder),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: isSelected ? kPurple : kGray, size: 20),
+            const SizedBox(width: 8),
+            Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: isSelected ? kPurple : kTitle)),
+            if (isSelected) ...[
+              const SizedBox(width: 6),
+              const Icon(Icons.check_circle, color: kPurple, size: 18),
+            ],
           ],
         ),
       ),

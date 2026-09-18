@@ -79,6 +79,7 @@ class SaleOrderEntity extends Equatable {
   final int amount;
   final String customerName;
   final String customerPhone;
+  final String customerLocation;
   final String payMethod;
   final List<SaleItemDetailEntity> saleItems;
   final String createdBy;
@@ -96,6 +97,7 @@ class SaleOrderEntity extends Equatable {
     this.amount = 0,
     this.customerName = '',
     this.customerPhone = '',
+    this.customerLocation = '',
     this.payMethod = 'Cash',
     this.saleItems = const [],
     this.createdBy = '',

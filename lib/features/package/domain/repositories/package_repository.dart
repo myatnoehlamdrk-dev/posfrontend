@@ -22,4 +22,5 @@ abstract class PackageRepository {
     String? stockStatus,
     CancelToken? cancelToken,
   });
+  Future<void> deletePackage(String id);
 }

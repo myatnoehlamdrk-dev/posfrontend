@@ -5,6 +5,7 @@ abstract class ShopApiRepository {
   Future<ShopEntity> createShop(ShopEntity shop, {CancelToken? cancelToken});
   Future<List<ShopEntity>> getShops({CancelToken? cancelToken});
   Future<ShopEntity> getShopById(String id, {CancelToken? cancelToken});
+  Future<ShopEntity> updateShop(String id, ShopEntity shop, {CancelToken? cancelToken});
 }
 
 abstract class ShopLocalRepository {

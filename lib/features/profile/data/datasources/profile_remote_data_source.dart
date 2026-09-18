@@ -6,6 +6,7 @@ abstract class ProfileRemoteDataSource {
   Future<Response> changePassword({
     required String currentPassword,
     required String newPassword,
+    required String confirmPassword,
     CancelToken? cancelToken,
   });
 }
@@ -22,19 +23,20 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
 
   @override
   Future<Response> updateProfile(Map<String, dynamic> data, {CancelToken? cancelToken}) {
-    return dio.put('/api/auth/profile', data: data, cancelToken: cancelToken);
+    return dio.patch('/api/auth/profile', data: data, cancelToken: cancelToken);
   }
 
   @override
   Future<Response> changePassword({
     required String currentPassword,
     required String newPassword,
+    required String confirmPassword,
     CancelToken? cancelToken,
   }) {
     return dio.put('/api/auth/profile/password', data: {
       'current_password': currentPassword,
       'new_password': newPassword,
-      'new_password_confirmation': newPassword,
+      'new_password_confirmation': confirmPassword,
     }, cancelToken: cancelToken);
   }
 }

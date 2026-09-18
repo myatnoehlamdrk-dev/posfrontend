@@ -14,4 +14,5 @@ abstract class CategoryRepository {
     String? description,
     int? packageLimit,
   });
+  Future<void> deleteCategory(String id);
 }

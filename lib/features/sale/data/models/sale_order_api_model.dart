@@ -9,6 +9,7 @@ class SaleOrderApiModel {
   final int amount;
   final String customerName;
   final String customerPhone;
+  final String customerLocation;
   final String payMethod;
   final List<SaleItemDetailApiModel> saleItems;
   final String createdBy;
@@ -24,6 +25,7 @@ class SaleOrderApiModel {
     this.amount = 0,
     this.customerName = '',
     this.customerPhone = '',
+    this.customerLocation = '',
     this.payMethod = 'Cash',
     this.saleItems = const [],
     this.createdBy = '',
@@ -62,6 +64,7 @@ class SaleOrderApiModel {
       amount: json.integer('totalPrice'),
       customerName: json.str('customerName'),
       customerPhone: json.str('customerPhone'),
+      customerLocation: json.str('customerLocation'),
       payMethod: json.str('payMethod', 'Cash'),
       saleItems: saleItemsList,
       createdBy: json.str('createdBy'),
@@ -90,6 +93,7 @@ class SaleOrderApiModel {
       amount: json.integer('grandTotal'),
       customerName: json.str('customerName'),
       customerPhone: json.str('customerPhone'),
+      customerLocation: json.str('customerLocation'),
       payMethod: json.str('payMethod', 'Cash'),
       saleItems: saleItemsList,
       createdBy: json.str('createdBy'),
@@ -115,6 +119,7 @@ class SaleOrderApiModel {
       amount: amount,
       customerName: customerName,
       customerPhone: customerPhone,
+      customerLocation: customerLocation,
       payMethod: payMethod,
       saleItems: saleItems.map((e) => e.toEntity()).toList(),
       createdBy: createdBy,

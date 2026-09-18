@@ -125,7 +125,7 @@ class AppDrawer extends StatelessWidget {
               ),
             ),
             const Divider(height: 1, color: border),
-            _logoutItem(context),
+            const _LogoutTile(),
             const SizedBox(height: 16),
           ],
         ),
@@ -166,40 +166,6 @@ class AppDrawer extends StatelessWidget {
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         onTap: () => _onTap(context, label),
-      ),
-    );
-  }
-
-  Widget _logoutItem(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      child: ListTile(
-        leading: const Icon(Icons.logout, color: Color(0xFFEF4444), size: 22),
-        title: const Text(
-          'Logout',
-          style: TextStyle(
-            color: Color(0xFFEF4444),
-            fontWeight: FontWeight.w600,
-            fontSize: 15,
-          ),
-        ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        onTap: () async {
-          try {
-            final dio = ApiClient.create();
-            await dio.post('/api/auth/logout');
-          } catch (_) {
-            // Logout API failure is non-critical; proceed with local cleanup
-          }
-          await TokenStorage.clearToken();
-          if (context.mounted) {
-            AuthScope.updateUserOf(context, null);
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => const LoginScreen()),
-              (route) => false,
-            );
-          }
-        },
       ),
     );
   }
@@ -249,6 +215,107 @@ class AppDrawer extends StatelessWidget {
     }
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => destination),
+    );
+  }
+}
+
+class _LogoutTile extends StatefulWidget {
+  const _LogoutTile();
+
+  @override
+  State<_LogoutTile> createState() => _LogoutTileState();
+}
+
+class _LogoutTileState extends State<_LogoutTile> {
+  bool _isLoading = false;
+
+  static const Color gray = Color(0xFF6B7280);
+  static const Color titleColor = Color(0xFF111827);
+
+  Future<void> _handleLogout() async {
+    setState(() => _isLoading = true);
+    try {
+      final dio = ApiClient.create();
+      await dio.post('/api/auth/logout');
+    } catch (_) {
+      // Logout API failure is non-critical; proceed with local cleanup
+    }
+    await TokenStorage.clearToken();
+    if (mounted) {
+      AuthScope.updateUserOf(context, null);
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: ListTile(
+        leading: _isLoading
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  color: Color(0xFFEF4444),
+                  strokeWidth: 2.5,
+                ),
+              )
+            : const Icon(Icons.logout, color: Color(0xFFEF4444), size: 22),
+        title: const Text(
+          'Logout',
+          style: TextStyle(
+            color: Color(0xFFEF4444),
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
+          ),
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        onTap: _isLoading
+            ? null
+            : () {
+                showDialog(
+                  context: context,
+                  builder: (ctx) {
+                    return AlertDialog(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      title: const Text('Logout', style: TextStyle(fontWeight: FontWeight.w600, color: titleColor)),
+                      content: const Text('Are you sure you want to logout?', style: TextStyle(color: gray)),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text('Cancel', style: TextStyle(color: gray)),
+                        ),
+                        ElevatedButton(
+                          onPressed: () async {
+                            Navigator.pop(ctx);
+                            await _handleLogout();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFEF4444),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text('Logout'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+      ),
     );
   }
 }

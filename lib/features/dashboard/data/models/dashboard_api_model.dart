@@ -83,7 +83,7 @@ class DashboardApiModel {
               ?.map((e) => e.toString())
               .toList() ??
           [];
-      final name = item['name'] as String? ?? 'Unknown';
+      final name = item['category'] as String? ?? 'Unknown';
       trendSeries.add(TrendSeriesEntity(
         name: name,
         colorValue: _categoryColors[i % _categoryColors.length],

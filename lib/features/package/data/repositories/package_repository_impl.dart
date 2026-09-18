@@ -59,4 +59,9 @@ class PackageRepositoryImpl implements PackageRepository {
     );
     return model.toEntity();
   }
+
+  @override
+  Future<void> deletePackage(String id) {
+    return _dataSource.deletePackage(id);
+  }
 }

@@ -123,4 +123,20 @@ class CategoryViewModel extends BaseViewModel {
       notifyListeners();
     }
   }
+
+  Future<bool> deleteCategory(String categoryId) async {
+    try {
+      final dio = ApiClient.create();
+      await dio.delete('/api/categories/$categoryId', cancelToken: cancelToken);
+      _categories.removeWhere((c) => c.id == categoryId);
+      notifyListeners();
+      return true;
+    } on ApiException catch (e) {
+      setError(e.message);
+      return false;
+    } catch (e) {
+      setError('Failed to delete category: $e');
+      return false;
+    }
+  }
 }

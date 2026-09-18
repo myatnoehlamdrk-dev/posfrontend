@@ -64,4 +64,9 @@ class CategoryRepositoryImpl implements CategoryRepository {
       rethrow;
     }
   }
+
+  @override
+  Future<void> deleteCategory(String id) {
+    return _dataSource.deleteCategory(id);
+  }
 }

@@ -79,7 +79,7 @@ class PackageRemoteDataSource {
     CancelToken? cancelToken,
   }) async {
     try {
-      final resp = await _dio.put(
+      final resp = await _dio.patch(
         '/api/packages/$id',
         data: {
           'categoryId': int.tryParse(categoryId),
@@ -95,6 +95,14 @@ class PackageRemoteDataSource {
       final Map<String, dynamic> json =
           data is Map<String, dynamic> ? data : data['data'] as Map<String, dynamic>;
       return PackageApiModel.fromJson(json);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  Future<void> deletePackage(String id, {CancelToken? cancelToken}) async {
+    try {
+      await _dio.delete('/api/packages/$id', cancelToken: cancelToken);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }

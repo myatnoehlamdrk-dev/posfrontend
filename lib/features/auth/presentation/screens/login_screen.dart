@@ -58,6 +58,7 @@ class _LoginScreenState extends State<LoginScreen> {
         accessToken: result.accessToken,
         tokenType: 'Bearer',
         shopId: result.user.shopId,
+        role: result.user.role,
       );
       AuthScope.updateUserOf(context, loginResponse);
       ShopScope.loadShop(context, shopId: result.user.shopId);

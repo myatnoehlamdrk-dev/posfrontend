@@ -69,6 +69,8 @@ class PdfBuildParams {
   final String? shopAddress;
   final String? shopPhone;
   final Uint8List? shopImageBytes;
+  final double paperWidthMm;
+  final String? customerLocation;
 
   PdfBuildParams({
     required this.customerName,
@@ -88,6 +90,8 @@ class PdfBuildParams {
     this.shopAddress,
     this.shopPhone,
     this.shopImageBytes,
+    this.paperWidthMm = 56.7,
+    this.customerLocation,
   });
 }
 
@@ -345,8 +349,12 @@ Future<Uint8List> _buildReceiptPdfBytes(PdfBuildParams params) async {
 
   pdf.addPage(
     pw.MultiPage(
-      pageFormat: PdfPageFormat(56.7 * PdfPageFormat.mm, 297 * PdfPageFormat.mm),
+      pageFormat: PdfPageFormat(params.paperWidthMm * PdfPageFormat.mm, 297 * PdfPageFormat.mm),
       margin: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      theme: pw.ThemeData.withFont(
+        base: pw.Font.courier(),
+        bold: pw.Font.courierBold(),
+      ),
       build: (context) => [
         if (shopImg != null)
           pw.Center(
@@ -376,10 +384,11 @@ Future<Uint8List> _buildReceiptPdfBytes(PdfBuildParams params) async {
         pw.SizedBox(height: 4),
         _receiptInfoRow('Date', dateStr, titleColor, grayColor),
         _receiptInfoRow('Time', timeStr, titleColor, grayColor),
-        _receiptInfoRow('Staff', params.staffName, titleColor, grayColor),
         _receiptInfoRow('Customer', params.customerName, titleColor, grayColor),
         if (params.customerPhone != null && params.customerPhone!.isNotEmpty)
           _receiptInfoRow('Phone', params.customerPhone!, titleColor, grayColor),
+        if (params.customerLocation != null && params.customerLocation!.isNotEmpty)
+          _receiptInfoRow('Location', params.customerLocation!, titleColor, grayColor),
         pw.SizedBox(height: 4),
         pw.Container(height: 0.5, color: borderColor),
         pw.SizedBox(height: 4),
@@ -537,6 +546,8 @@ class VoucherPdfService {
     String? shopAddress,
     String? shopPhone,
     String? shopImage,
+    double paperWidthMm = 56.7,
+    String? customerLocation,
   }) async {
     final imageBytes = await _fetchShopImage(shopImage);
 
@@ -558,6 +569,8 @@ class VoucherPdfService {
       shopAddress: shopAddress,
       shopPhone: shopPhone,
       shopImageBytes: imageBytes,
+      paperWidthMm: paperWidthMm,
+      customerLocation: customerLocation,
     );
 
     final pdfBytes = await Isolate.run(() => _buildReceiptPdfBytes(params));
@@ -565,7 +578,7 @@ class VoucherPdfService {
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat format) async => pdfBytes,
       name: 'Receipt_$voucherNo',
-      format: PdfPageFormat(56.7 * PdfPageFormat.mm, 297 * PdfPageFormat.mm),
+      format: PdfPageFormat(paperWidthMm * PdfPageFormat.mm, 297 * PdfPageFormat.mm),
     );
   }
 
@@ -631,6 +644,8 @@ class VoucherPdfService {
     String? shopAddress,
     String? shopPhone,
     String? shopImage,
+    double paperWidthMm = 56.7,
+    String? customerLocation,
   }) async {
     final imageBytes = await _fetchShopImage(shopImage);
 
@@ -652,6 +667,8 @@ class VoucherPdfService {
       shopAddress: shopAddress,
       shopPhone: shopPhone,
       shopImageBytes: imageBytes,
+      paperWidthMm: paperWidthMm,
+      customerLocation: customerLocation,
     );
 
     return await Isolate.run(() => _buildReceiptPdfBytes(params));

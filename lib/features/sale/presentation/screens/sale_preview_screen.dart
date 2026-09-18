@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:posfrontend/core/extensions/number_extensions.dart';
 import 'package:posfrontend/core/extensions/datetime_extensions.dart';
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
@@ -8,9 +9,14 @@ import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
 
 String _fmtPrice(double value) => value.withCommas();
 
+TextStyle _monoStyle({double fontSize = 13, FontWeight fontWeight = FontWeight.normal, Color? color}) {
+  return GoogleFonts.robotoMono(fontSize: fontSize, fontWeight: fontWeight, color: color);
+}
+
 class SalePreviewScreen extends StatelessWidget {
   final String customerName;
   final String? customerPhone;
+  final String? customerLocation;
   final String staffName;
   final String voucherNo;
   final String orderId;
@@ -32,6 +38,7 @@ class SalePreviewScreen extends StatelessWidget {
     super.key,
     required this.customerName,
     this.customerPhone,
+    this.customerLocation,
     required this.staffName,
     required this.voucherNo,
     required this.orderId,
@@ -237,8 +244,8 @@ class SalePreviewScreen extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(fontSize: 13, color: kGray)),
-        Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kTitle)),
+        Text(label, style: _monoStyle(fontSize: 13, color: kGray)),
+        Text(value, style: _monoStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kTitle)),
       ],
     );
   }
@@ -246,33 +253,42 @@ class SalePreviewScreen extends StatelessWidget {
   Widget _customerSection() {
     return Padding(
       padding: const EdgeInsets.all(20),
-      child: Row(
+      child: Column(
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5F0FF),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(Icons.person, color: kPurple, size: 18),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Customer', style: TextStyle(fontSize: 11, color: kGray)),
-                const SizedBox(height: 2),
-                Text(customerName,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: kTitle)),
-                if (customerPhone?.isNotEmpty == true) ...[
-                  const SizedBox(height: 2),
-                  Text(customerPhone!,
-                      style: const TextStyle(fontSize: 12, color: kGray)),
-                ],
-              ],
-            ),
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5F0FF),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.person, color: kPurple, size: 18),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Customer', style: TextStyle(fontSize: 11, color: kGray)),
+                    const SizedBox(height: 2),
+                    Text(customerName,
+                        style: _monoStyle(fontSize: 14, fontWeight: FontWeight.w600, color: kTitle)),
+                    if (customerPhone?.isNotEmpty == true) ...[
+                      const SizedBox(height: 2),
+                      Text(customerPhone!,
+                          style: _monoStyle(fontSize: 12, color: kGray)),
+                    ],
+                    if (customerLocation?.isNotEmpty == true) ...[
+                      const SizedBox(height: 2),
+                      Text(customerLocation!,
+                          style: _monoStyle(fontSize: 12, color: kGray)),
+                    ],
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -284,24 +300,24 @@ class SalePreviewScreen extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
       child: Row(
         children: [
-          const Expanded(
+          Expanded(
             flex: 4,
-            child: Text('Item', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: kGray)),
+            child: Text('Item', style: _monoStyle(fontSize: 11, fontWeight: FontWeight.w600, color: kGray)),
           ),
-          const Expanded(
+          Expanded(
             flex: 1,
             child: Text('Qty', textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: kGray)),
+                style: _monoStyle(fontSize: 11, fontWeight: FontWeight.w600, color: kGray)),
           ),
-          const Expanded(
+          Expanded(
             flex: 2,
             child: Text('Price', textAlign: TextAlign.right,
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: kGray)),
+                style: _monoStyle(fontSize: 11, fontWeight: FontWeight.w600, color: kGray)),
           ),
-          const Expanded(
+          Expanded(
             flex: 2,
             child: Text('Total', textAlign: TextAlign.right,
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: kGray)),
+                style: _monoStyle(fontSize: 11, fontWeight: FontWeight.w600, color: kGray)),
           ),
         ],
       ),
@@ -337,11 +353,11 @@ class SalePreviewScreen extends StatelessWidget {
                       Text(item.productName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kTitle)),
+                          style: _monoStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kTitle)),
                       if (variant.isNotEmpty) ...[
                         const SizedBox(height: 2),
                         Text(variant,
-                            style: const TextStyle(fontSize: 11, color: kGray)),
+                            style: _monoStyle(fontSize: 11, color: kGray)),
                       ],
                     ],
                   ),
@@ -349,17 +365,17 @@ class SalePreviewScreen extends StatelessWidget {
                 Expanded(
                   flex: 1,
                   child: Text('${item.quantity}', textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 13, color: kTitle)),
+                      style: _monoStyle(fontSize: 13, color: kTitle)),
                 ),
                 Expanded(
                   flex: 2,
                   child: Text(_fmtPrice(item.unitPrice), textAlign: TextAlign.right,
-                      style: const TextStyle(fontSize: 12, color: kTitle)),
+                      style: _monoStyle(fontSize: 12, color: kTitle)),
                 ),
                 Expanded(
                   flex: 2,
                   child: Text(_fmtPrice(item.subtotal), textAlign: TextAlign.right,
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: kTitle)),
+                      style: _monoStyle(fontSize: 12, fontWeight: FontWeight.w600, color: kTitle)),
                 ),
               ],
             ),
@@ -381,9 +397,9 @@ class SalePreviewScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Discount ($discountPct%)',
-                    style: const TextStyle(fontSize: 13, color: kGray)),
+                    style: _monoStyle(fontSize: 13, color: kGray)),
                 Text('-${_fmtPrice(discountAmt)}', textAlign: TextAlign.right,
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kRed)),
+                    style: _monoStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kRed)),
               ],
             ),
           ],
@@ -394,10 +410,10 @@ class SalePreviewScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Total Payable',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: kTitle)),
+              Text('Total Payable',
+                  style: _monoStyle(fontSize: 15, fontWeight: FontWeight.w700, color: kTitle)),
               Text(_fmtPrice(totalPayable), textAlign: TextAlign.right,
-                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF7C3AED))),
+                  style: _monoStyle(fontSize: 17, fontWeight: FontWeight.bold, color: const Color(0xFF7C3AED))),
             ],
           ),
           const SizedBox(height: 12),
@@ -413,7 +429,7 @@ class SalePreviewScreen extends StatelessWidget {
               children: [
                 const Text('Payment Method', style: TextStyle(fontSize: 13, color: kGray)),
                 Text(paymentMethod,
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kPurple)),
+                    style: _monoStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kPurple)),
               ],
             ),
           ),
@@ -426,9 +442,9 @@ class SalePreviewScreen extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(fontSize: 13, color: kGray)),
+        Text(label, style: _monoStyle(fontSize: 13, color: kGray)),
         Text(_fmtPrice(amount), textAlign: TextAlign.right,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kTitle)),
+            style: _monoStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kTitle)),
       ],
     );
   }

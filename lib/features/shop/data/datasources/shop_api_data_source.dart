@@ -43,4 +43,17 @@ class ShopApiDataSource {
       throw ApiException.fromDio(e);
     }
   }
+
+  Future<ShopApiModel> updateShop(String id, ShopApiModel shop, {CancelToken? cancelToken}) async {
+    try {
+      final response = await _dio.patch(
+        '/api/shops/$id',
+        data: shop.toApiJson(),
+        cancelToken: cancelToken,
+      );
+      return ShopApiModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
 }

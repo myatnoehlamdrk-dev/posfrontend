@@ -55,6 +55,8 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                        _buildInfoCard('Customer Information', [
                          _infoRow('Customer Name', _order.customerName.isNotEmpty ? _order.customerName : '-'),
                          _infoRow('Phone', _order.customerPhone.isNotEmpty ? _order.customerPhone : '-'),
+                         if (_order.customerLocation.isNotEmpty)
+                           _infoRow('Location', _order.customerLocation),
                        ]),
                        const SizedBox(height: 12),
                        if (_order.createdBy.isNotEmpty)

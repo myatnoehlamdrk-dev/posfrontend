@@ -52,7 +52,7 @@ class ProductCreateRepositoryImpl implements ProductCreateRepository {
   Future<void> updateProduct(String id, ProductCreateRequest request, {CancelToken? cancelToken}) async {
     try {
       final dio = ApiClient.create();
-      await dio.put('/api/products/$id', data: request.toJson(), cancelToken: cancelToken);
+      await dio.patch('/api/products/$id', data: request.toJson(), cancelToken: cancelToken);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }

@@ -22,6 +22,6 @@ class SettingsRemoteDataSourceImpl implements SettingsRemoteDataSource {
     if (language != null) body['language'] = language;
     if (shopType != null) body['shop_type'] = shopType;
     if (shopImage != null) body['shop_image'] = shopImage;
-    return dio.put('/api/settings', data: body, cancelToken: cancelToken);
+    return dio.patch('/api/settings', data: body, cancelToken: cancelToken);
   }
 }

@@ -80,7 +80,7 @@ class PackageDetailViewModel extends BaseViewModel {
   Future<bool> removeProduct(CatalogProductView product) async {
     try {
       final dio = ApiClient.create();
-      await dio.put(
+      await dio.patch(
         '/api/products/${product.id}',
         data: {'packageId': null},
         cancelToken: cancelToken,

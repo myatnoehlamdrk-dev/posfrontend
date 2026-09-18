@@ -86,4 +86,20 @@ class PackageViewModel extends BaseViewModel {
       notifyListeners();
     }
   }
+
+  Future<bool> deletePackage(String packageId) async {
+    try {
+      final dio = ApiClient.create();
+      await dio.delete('/api/packages/$packageId', cancelToken: cancelToken);
+      _packages.removeWhere((p) => p.id == packageId);
+      notifyListeners();
+      return true;
+    } on ApiException catch (e) {
+      setError(e.message);
+      return false;
+    } catch (e) {
+      setError('Failed to delete package: $e');
+      return false;
+    }
+  }
 }

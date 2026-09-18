@@ -16,6 +16,7 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   late final SettingsViewModel _viewModel;
+  bool _isLoggingOut = false;
 
   static const Color titleColor = Color(0xFF111827);
   static const Color gray = Color(0xFF6B7280);
@@ -453,7 +454,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             border: Border.all(color: red.withValues(alpha: 0.3)),
           ),
           child: const Text(
-            'Sign Out',
+            'Logout',
             style: TextStyle(
               color: red,
               fontSize: 16,
@@ -908,40 +909,55 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (ctx) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Sign Out', style: TextStyle(fontWeight: FontWeight.w600, color: titleColor)),
-          content: const Text('Are you sure you want to sign out?', style: TextStyle(color: gray)),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel', style: TextStyle(color: gray)),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                Navigator.pop(ctx);
-                try {
-                  final dio = ApiClient.create();
-                  await dio.post('/api/auth/logout');
-                } catch (_) {
-                  // Logout API failure is non-critical; proceed with local cleanup
-                }
-                await TokenStorage.clearToken();
-                if (context.mounted) {
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
-                    (route) => false,
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: red,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              child: const Text('Sign Out'),
-            ),
-          ],
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: const Text('Logout', style: TextStyle(fontWeight: FontWeight.w600, color: titleColor)),
+              content: const Text('Are you sure you want to logout?', style: TextStyle(color: gray)),
+              actions: [
+                TextButton(
+                  onPressed: _isLoggingOut ? null : () => Navigator.pop(ctx),
+                  child: const Text('Cancel', style: TextStyle(color: gray)),
+                ),
+                ElevatedButton(
+                  onPressed: _isLoggingOut
+                      ? null
+                      : () async {
+                          setDialogState(() => _isLoggingOut = true);
+                          try {
+                            final dio = ApiClient.create();
+                            await dio.post('/api/auth/logout');
+                          } catch (_) {
+                            // Logout API failure is non-critical; proceed with local cleanup
+                          }
+                          await TokenStorage.clearToken();
+                          if (mounted) {
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(builder: (_) => const LoginScreen()),
+                              (route) => false,
+                            );
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: red,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: _isLoggingOut
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text('Logout'),
+                ),
+              ],
+            );
+          },
         );
       },
     );

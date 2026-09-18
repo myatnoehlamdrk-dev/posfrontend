@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
+import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 import 'package:posfrontend/features/profile/data/repositories/profile_repository_impl.dart';
 import 'package:posfrontend/features/profile/presentation/viewmodels/profile_view_model.dart';
 import 'package:posfrontend/features/shop/data/repositories/shop_api_repository_impl.dart';
@@ -39,11 +40,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _obscureNew = true;
   bool _obscureConfirm = true;
 
+  final _shopNameController = TextEditingController();
+  final _shopTypeController = TextEditingController();
+  final _shopAddressController = TextEditingController();
+  final _ownerNameController = TextEditingController();
+  final _ownerEmailController = TextEditingController();
+  final _ownerPhoneController = TextEditingController();
+
   static const Color primary = Color(0xFF7B2CBF);
   static const Color primaryLight = Color(0xFF9D4EDD);
   static const Color borderColor = Color(0xFFE0E0E0);
   static const Color labelColor = Color(0xFF1A1A1A);
   static const Color hintColor = Color(0xFF9E9E9E);
+  static const Color red = Color(0xFFEF4444);
 
   @override
   void initState() {
@@ -82,6 +91,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ProfileImageNotifier.instance.update(_viewModel.imageUrl);
       }
     }
+    if (_viewModel.shop != null && mounted) {
+      _shopNameController.text = _viewModel.shopName;
+      _shopTypeController.text = _viewModel.shopType;
+      _shopAddressController.text = _viewModel.shopAddress;
+      _ownerNameController.text = _viewModel.ownerName;
+      _ownerEmailController.text = _viewModel.ownerEmail;
+      _ownerPhoneController.text = _viewModel.ownerPhone;
+    }
   }
 
   @override
@@ -103,6 +120,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _currentPasswordController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
+    _shopNameController.dispose();
+    _shopTypeController.dispose();
+    _shopAddressController.dispose();
+    _ownerNameController.dispose();
+    _ownerEmailController.dispose();
+    _ownerPhoneController.dispose();
     super.dispose();
   }
 
@@ -119,20 +142,162 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final url = result.url;
     _viewModel.setImageUrl(url);
     ProfileImageNotifier.instance.update(url);
-    await _viewModel.saveProfile();
+    final success = await _viewModel.saveProfile();
+    if (success && mounted) {
+      showSuccessSnackBar(context, 'Profile updated successfully');
+    }
   }
 
   Future<void> _save() async {
     if (_viewModel.isSaving) return;
     final success = await _viewModel.saveProfile();
     if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_viewModel.successMessage),
-          backgroundColor: primary,
-        ),
-      );
+      showSuccessSnackBar(context, 'Profile updated successfully');
     }
+  }
+
+  Future<void> _saveShop() async {
+    if (_viewModel.isSavingShop) return;
+    _viewModel.setShopName(_shopNameController.text);
+    _viewModel.setShopType(_shopTypeController.text);
+    _viewModel.setShopAddress(_shopAddressController.text);
+    _viewModel.setOwnerName(_ownerNameController.text);
+    _viewModel.setOwnerEmail(_ownerEmailController.text);
+    _viewModel.setOwnerPhone(_ownerPhoneController.text);
+    final success = await _viewModel.saveShop();
+    if (success && mounted) {
+      showSuccessSnackBar(context, 'Shop updated successfully');
+    }
+  }
+
+  List<Widget> _buildShopFields() {
+    final user = AuthScope.userOf(context);
+    final isOwner = user?.isOwner ?? false;
+
+    if (!isOwner) {
+      return [
+        _shopInfoRow(
+          icon: Icons.store_outlined,
+          label: 'Shop Name',
+          value: _viewModel.shop?.name ?? '-',
+        ),
+        const SizedBox(height: 10),
+        _shopInfoRow(
+          icon: Icons.category_outlined,
+          label: 'Shop Type',
+          value: _viewModel.shop?.type ?? '-',
+        ),
+        const SizedBox(height: 10),
+        _shopInfoRow(
+          icon: Icons.location_on_outlined,
+          label: 'Address',
+          value: _viewModel.shop?.physicalAddress ?? '-',
+        ),
+        const SizedBox(height: 10),
+        _shopInfoRow(
+          icon: Icons.person_outline,
+          label: 'Owner',
+          value: _viewModel.shop?.ownerInformation.name ?? '-',
+        ),
+        const SizedBox(height: 10),
+        _shopInfoRow(
+          icon: Icons.email_outlined,
+          label: 'Owner Email',
+          value: _viewModel.shop?.ownerInformation.email ?? '-',
+        ),
+        const SizedBox(height: 10),
+        _shopInfoRow(
+          icon: Icons.phone_outlined,
+          label: 'Owner Phone',
+          value: _viewModel.shop?.ownerInformation.phone ?? '-',
+        ),
+      ];
+    }
+
+    return [
+      _shopField(
+        controller: _shopNameController,
+        label: 'Shop Name',
+        icon: Icons.store_outlined,
+      ),
+      const SizedBox(height: 12),
+      _shopField(
+        controller: _shopTypeController,
+        label: 'Shop Type',
+        icon: Icons.category_outlined,
+      ),
+      const SizedBox(height: 12),
+      _shopField(
+        controller: _shopAddressController,
+        label: 'Address',
+        icon: Icons.location_on_outlined,
+      ),
+      const SizedBox(height: 12),
+      _shopField(
+        controller: _ownerNameController,
+        label: 'Owner Name',
+        icon: Icons.person_outline,
+      ),
+      const SizedBox(height: 12),
+      _shopField(
+        controller: _ownerEmailController,
+        label: 'Owner Email',
+        icon: Icons.email_outlined,
+        keyboardType: TextInputType.emailAddress,
+      ),
+      const SizedBox(height: 12),
+      _shopField(
+        controller: _ownerPhoneController,
+        label: 'Owner Phone',
+        icon: Icons.phone_outlined,
+        keyboardType: TextInputType.phone,
+      ),
+      const SizedBox(height: 16),
+      if (_viewModel.hasError)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Text(
+            _viewModel.errorMessage!,
+            style: const TextStyle(color: Colors.red, fontSize: 13),
+          ),
+        ),
+      _gradientButton(
+        label: 'Save Shop',
+        icon: Icons.store_outlined,
+        loading: _viewModel.isSavingShop,
+        onTap: _saveShop,
+      ),
+    ];
+  }
+
+  Widget _shopField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    TextInputType? keyboardType,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: labelColor,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          decoration: _inputDecoration(
+            hint: 'Enter ${label.toLowerCase()}',
+            icon: icon,
+          ),
+        ),
+      ],
+    );
   }
 
   void _showChangePasswordDialog() {
@@ -142,144 +307,145 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _obscureCurrent = true;
     _obscureNew = true;
     _obscureConfirm = true;
+    _viewModel.resetError();
+    _viewModel.clearAllFieldErrors();
 
     showDialog(
       context: context,
       builder: (ctx) {
-        return StatefulBuilder(
-          builder: (ctx, setDialogState) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              title: const Text(
-                'Change Password',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: labelColor,
-                ),
-              ),
-              content: SizedBox(
-                width: 380,
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      TextField(
-                        controller: _currentPasswordController,
-                        obscureText: _obscureCurrent,
-                        decoration: InputDecoration(
-                          hintText: 'Current password',
-                          hintStyle: const TextStyle(color: hintColor),
-                          prefixIcon: const Icon(Icons.lock_outline, color: primary, size: 20),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscureCurrent
-                                  ? Icons.visibility_outlined
-                                  : Icons.visibility_off_outlined,
-                              color: hintColor,
-                              size: 20,
-                            ),
-                            onPressed: () => setDialogState(
-                                () => _obscureCurrent = !_obscureCurrent),
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: primary, width: 1.5),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: _newPasswordController,
-                        obscureText: _obscureNew,
-                        decoration: InputDecoration(
-                          hintText: 'New password',
-                          hintStyle: const TextStyle(color: hintColor),
-                          prefixIcon: const Icon(Icons.lock_outline, color: primary, size: 20),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscureNew
-                                  ? Icons.visibility_outlined
-                                  : Icons.visibility_off_outlined,
-                              color: hintColor,
-                              size: 20,
-                            ),
-                            onPressed: () => setDialogState(
-                                () => _obscureNew = !_obscureNew),
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: primary, width: 1.5),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: _confirmPasswordController,
-                        obscureText: _obscureConfirm,
-                        decoration: InputDecoration(
-                          hintText: 'Confirm new password',
-                          hintStyle: const TextStyle(color: hintColor),
-                          prefixIcon: const Icon(Icons.lock_outline, color: primary, size: 20),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscureConfirm
-                                  ? Icons.visibility_outlined
-                                  : Icons.visibility_off_outlined,
-                              color: hintColor,
-                              size: 20,
-                            ),
-                            onPressed: () => setDialogState(
-                                () => _obscureConfirm = !_obscureConfirm),
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: primary, width: 1.5),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        ),
-                      ),
-                    ],
+        return ListenableBuilder(
+          listenable: _viewModel,
+          builder: (context, _) {
+            return StatefulBuilder(
+              builder: (ctx, setDialogState) {
+                return AlertDialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Cancel', style: TextStyle(color: hintColor)),
-                ),
-                ListenableBuilder(
-                  listenable: _viewModel,
-                  builder: (context, _) {
-                    return ElevatedButton(
+                  title: const Text(
+                    'Change Password',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: labelColor,
+                    ),
+                  ),
+                  content: SizedBox(
+                    width: 380,
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextField(
+                            controller: _currentPasswordController,
+                            obscureText: _obscureCurrent,
+                            decoration: InputDecoration(
+                              hintText: 'Current password',
+                              errorText: _viewModel.getFieldError('currentPassword'),
+                              hintStyle: const TextStyle(color: hintColor),
+                              prefixIcon: const Icon(Icons.lock_outline, color: primary, size: 20),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscureCurrent
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
+                                  color: hintColor,
+                                  size: 20,
+                                ),
+                                onPressed: () => setDialogState(
+                                    () => _obscureCurrent = !_obscureCurrent),
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: primary, width: 1.5),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: _newPasswordController,
+                            obscureText: _obscureNew,
+                            decoration: InputDecoration(
+                              hintText: 'New password',
+                              errorText: _viewModel.getFieldError('newPassword'),
+                              hintStyle: const TextStyle(color: hintColor),
+                              prefixIcon: const Icon(Icons.lock_outline, color: primary, size: 20),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscureNew
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
+                                  color: hintColor,
+                                  size: 20,
+                                ),
+                                onPressed: () => setDialogState(
+                                    () => _obscureNew = !_obscureNew),
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: primary, width: 1.5),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: _confirmPasswordController,
+                            obscureText: _obscureConfirm,
+                            decoration: InputDecoration(
+                              hintText: 'Confirm new password',
+                              errorText: _viewModel.getFieldError('confirmPassword'),
+                              hintStyle: const TextStyle(color: hintColor),
+                              prefixIcon: const Icon(Icons.lock_outline, color: primary, size: 20),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscureConfirm
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
+                                  color: hintColor,
+                                  size: 20,
+                                ),
+                                onPressed: () => setDialogState(
+                                    () => _obscureConfirm = !_obscureConfirm),
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: primary, width: 1.5),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('Cancel', style: TextStyle(color: hintColor)),
+                    ),
+                    ElevatedButton(
                       onPressed: _viewModel.isChangingPassword
                           ? null
                           : () async {
                               final success = await _viewModel.changePassword(
                                 currentPassword: _currentPasswordController.text,
                                 newPassword: _newPasswordController.text,
+                                confirmPassword: _confirmPasswordController.text,
                               );
                               if (success && ctx.mounted) {
                                 Navigator.pop(ctx);
                                 if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(_viewModel.successMessage),
-                                      backgroundColor: primary,
-                                    ),
-                                  );
+                                  showSuccessSnackBar(context, 'Password changed successfully');
                                 }
                               }
                             },
@@ -301,10 +467,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                             )
                           : const Text('Change Password'),
-                    );
-                  },
-                ),
-              ],
+                    ),
+                  ],
+                );
+              },
             );
           },
         );
@@ -481,41 +647,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 const SizedBox(height: 24),
                                 _sectionTitle('About Shop'),
                                 const SizedBox(height: 12),
-                                _shopInfoRow(
-                                  icon: Icons.store_outlined,
-                                  label: 'Shop Name',
-                                  value: _viewModel.shop?.name ?? '-',
-                                ),
-                                const SizedBox(height: 10),
-                                _shopInfoRow(
-                                  icon: Icons.category_outlined,
-                                  label: 'Shop Type',
-                                  value: _viewModel.shop?.type ?? '-',
-                                ),
-                                const SizedBox(height: 10),
-                                _shopInfoRow(
-                                  icon: Icons.location_on_outlined,
-                                  label: 'Address',
-                                  value: _viewModel.shop?.physicalAddress ?? '-',
-                                ),
-                                const SizedBox(height: 10),
-                                _shopInfoRow(
-                                  icon: Icons.person_outline,
-                                  label: 'Owner',
-                                  value: _viewModel.shop?.ownerInformation.name ?? '-',
-                                ),
-                                const SizedBox(height: 10),
-                                _shopInfoRow(
-                                  icon: Icons.email_outlined,
-                                  label: 'Owner Email',
-                                  value: _viewModel.shop?.ownerInformation.email ?? '-',
-                                ),
-                                const SizedBox(height: 10),
-                                _shopInfoRow(
-                                  icon: Icons.phone_outlined,
-                                  label: 'Owner Phone',
-                                  value: _viewModel.shop?.ownerInformation.phone ?? '-',
-                                ),
+                                ..._buildShopFields(),
                                 const SizedBox(height: 24),
                                 _gradientButton(
                                   label: 'Change Password',
@@ -531,18 +663,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       _viewModel.errorMessage!,
                                       style: const TextStyle(
                                         color: Colors.red,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ),
-                                if (_viewModel.successMessage.isNotEmpty &&
-                                    _viewModel.errorMessage == null)
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 12),
-                                    child: Text(
-                                      _viewModel.successMessage,
-                                      style: const TextStyle(
-                                        color: Colors.green,
                                         fontSize: 13,
                                       ),
                                     ),

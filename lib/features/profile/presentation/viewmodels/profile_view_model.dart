@@ -53,11 +53,42 @@ class ProfileViewModel extends BaseViewModel with FormValidationMixin {
   bool _isChangingPassword = false;
   bool get isChangingPassword => _isChangingPassword;
 
-  String _successMessage = '';
-  String get successMessage => _successMessage;
-
   Shop? _shop;
   Shop? get shop => _shop;
+
+  String _shopName = '';
+  String _shopType = '';
+  String _shopAddress = '';
+  String _ownerName = '';
+  String _ownerEmail = '';
+  String _ownerPhone = '';
+
+  String get shopName => _shopName;
+  String get shopType => _shopType;
+  String get shopAddress => _shopAddress;
+  String get ownerName => _ownerName;
+  String get ownerEmail => _ownerEmail;
+  String get ownerPhone => _ownerPhone;
+
+  bool _isSavingShop = false;
+  bool get isSavingShop => _isSavingShop;
+
+  void setShopName(String v) => _shopName = v;
+  void setShopType(String v) => _shopType = v;
+  void setShopAddress(String v) => _shopAddress = v;
+  void setOwnerName(String v) => _ownerName = v;
+  void setOwnerEmail(String v) => _ownerEmail = v;
+  void setOwnerPhone(String v) => _ownerPhone = v;
+
+  void _populateShopFields() {
+    if (_shop == null) return;
+    _shopName = _shop!.name;
+    _shopType = _shop!.type;
+    _shopAddress = _shop!.physicalAddress;
+    _ownerName = _shop!.ownerInformation.name;
+    _ownerEmail = _shop!.ownerInformation.email;
+    _ownerPhone = _shop!.ownerInformation.phone;
+  }
 
   void setName(String v) => _name = v;
   void setEmail(String v) => _email = v;
@@ -73,18 +104,47 @@ class ProfileViewModel extends BaseViewModel with FormValidationMixin {
   void setType(String v) => _type = v;
   void setImageUrl(String v) => _imageUrl = v;
 
-  void clearSuccess() {
-    _successMessage = '';
-    notifyListeners();
-  }
-
   Future<void> loadShop(String shopId) async {
     if (shopId.isEmpty) return;
     try {
       _shop = await _shopRepository.getShopById(shopId);
+      _populateShopFields();
       notifyListeners();
     } catch (_) {
       // Shop load failure is non-critical
+    }
+  }
+
+  Future<bool> saveShop() async {
+    if (_shop == null) return false;
+
+    _isSavingShop = true;
+    resetError();
+    notifyListeners();
+
+    try {
+      final updated = _shop!.copyWith(
+        name: _shopName.trim(),
+        type: _shopType.trim(),
+        physicalAddress: _shopAddress.trim(),
+        ownerInformation: OwnerInformation(
+          name: _ownerName.trim(),
+          email: _ownerEmail.trim(),
+          phone: _ownerPhone.trim(),
+        ),
+      );
+      _shop = await _shopRepository.updateShop(_shop!.id!, updated);
+      _populateShopFields();
+      return true;
+    } on ApiException catch (e) {
+      setError(e.message);
+      return false;
+    } catch (e) {
+      setError('Failed to save shop: $e');
+      return false;
+    } finally {
+      _isSavingShop = false;
+      notifyListeners();
     }
   }
 
@@ -136,7 +196,6 @@ class ProfileViewModel extends BaseViewModel with FormValidationMixin {
     if (fieldErrors.isNotEmpty) return false;
 
     _isSaving = true;
-    _successMessage = '';
     resetError();
     notifyListeners();
 
@@ -156,8 +215,6 @@ class ProfileViewModel extends BaseViewModel with FormValidationMixin {
         'type': _type,
         'image': _imageUrl,
       });
-      _successMessage = 'Profile updated successfully.';
-      notifyListeners();
       return true;
     } on ApiException catch (e) {
       setError(e.message);
@@ -174,6 +231,7 @@ class ProfileViewModel extends BaseViewModel with FormValidationMixin {
   Future<bool> changePassword({
     required String currentPassword,
     required String newPassword,
+    required String confirmPassword,
   }) async {
     clearAllFieldErrors();
     if (currentPassword.isEmpty) {
@@ -184,12 +242,16 @@ class ProfileViewModel extends BaseViewModel with FormValidationMixin {
     } else if (newPassword.length < 6) {
       setFieldError('newPassword', 'Password must be at least 6 characters');
     }
+    if (confirmPassword.isEmpty) {
+      setFieldError('confirmPassword', 'Confirm password is required');
+    } else if (newPassword != confirmPassword) {
+      setFieldError('confirmPassword', 'Passwords do not match');
+    }
     notifyListeners();
 
     if (fieldErrors.isNotEmpty) return false;
 
     _isChangingPassword = true;
-    _successMessage = '';
     resetError();
     notifyListeners();
 
@@ -197,15 +259,16 @@ class ProfileViewModel extends BaseViewModel with FormValidationMixin {
       await _repository.changePassword(
         currentPassword: currentPassword,
         newPassword: newPassword,
+        confirmPassword: confirmPassword,
       );
-      _successMessage = 'Password changed successfully.';
-      notifyListeners();
       return true;
     } on ApiException catch (e) {
-      setError(e.message);
+      setFieldError('currentPassword', 'Current password is wrong');
+      notifyListeners();
       return false;
     } catch (e) {
-      setError('Failed to change password: $e');
+      setFieldError('currentPassword', 'Current password is wrong');
+      notifyListeners();
       return false;
     } finally {
       _isChangingPassword = false;

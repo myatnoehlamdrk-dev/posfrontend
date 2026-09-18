@@ -7,6 +7,7 @@ import 'package:posfrontend/features/package/presentation/screens/package_detail
 import 'package:posfrontend/features/package/presentation/viewmodels/package_view_model.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
+import 'package:posfrontend/shared/widgets/error_snackbar.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 
 class PackageScreen extends StatefulWidget {
@@ -69,6 +70,32 @@ class _PackageScreenState extends State<PackageScreen> {
     if (result is PackageEntity) {
       _viewModel.updatePackage(result);
     }
+  }
+
+  void _showDeleteDialog(PackageEntity p) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Package'),
+        content: Text('Are you sure you want to delete "${p.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final success = await _viewModel.deletePackage(p.id);
+              if (!success && mounted && _viewModel.hasError) {
+                showErrorSnackBar(context, _viewModel.errorMessage!);
+              }
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -358,6 +385,7 @@ class _PackageScreenState extends State<PackageScreen> {
           ),
         ),
       ),
+      onLongPress: () => _showDeleteDialog(p),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(

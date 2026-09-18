@@ -7,6 +7,7 @@ class LoginResponseModel {
   final String accessToken;
   final String tokenType;
   final String shopId;
+  final String role;
 
   const LoginResponseModel({
     required this.id,
@@ -15,6 +16,7 @@ class LoginResponseModel {
     required this.accessToken,
     required this.tokenType,
     this.shopId = '',
+    this.role = '',
   });
 
   factory LoginResponseModel.fromJson(Map<String, dynamic> json) {
@@ -25,6 +27,7 @@ class LoginResponseModel {
       accessToken: json['access_token'] as String? ?? '',
       tokenType: json['token_type'] as String? ?? 'Bearer',
       shopId: (json['shopId'] ?? json['shop_id'] ?? '').toString(),
+      role: json['role'] as String? ?? '',
     );
   }
 
@@ -34,6 +37,7 @@ class LoginResponseModel {
       fullName: fullName,
       email: email,
       shopId: shopId,
+      role: role,
     );
   }
 }

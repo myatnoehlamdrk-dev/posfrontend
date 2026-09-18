@@ -51,7 +51,7 @@ class CategoryRemoteDataSource {
     int? packageLimit,
     CancelToken? cancelToken,
   }) async {
-    final resp = await _dio.put(
+    final resp = await _dio.patch(
       '/api/categories/$id',
       data: {
         'name': name,
@@ -64,5 +64,9 @@ class CategoryRemoteDataSource {
     final Map<String, dynamic> json =
         data is Map<String, dynamic> ? data : data['data'] as Map<String, dynamic>;
     return CategoryApiModel.fromJson(json);
+  }
+
+  Future<void> deleteCategory(String id, {CancelToken? cancelToken}) async {
+    await _dio.delete('/api/categories/$id', cancelToken: cancelToken);
   }
 }

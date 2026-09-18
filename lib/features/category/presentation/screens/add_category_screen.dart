@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:posfrontend/features/category/domain/entities/category.dart';
+import 'package:posfrontend/features/category/domain/repositories/category_repository.dart';
 import 'package:posfrontend/features/category/presentation/viewmodels/add_category_view_model.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
@@ -31,7 +33,9 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
   @override
   void initState() {
     super.initState();
-    _viewModel = AddCategoryViewModel();
+    _viewModel = AddCategoryViewModel(
+      repository: GetIt.instance<CategoryRepository>(),
+    );
     if (widget.existingCategory != null) {
       _viewModel.loadExisting(widget.existingCategory!);
       _nameController.text = widget.existingCategory!.name;

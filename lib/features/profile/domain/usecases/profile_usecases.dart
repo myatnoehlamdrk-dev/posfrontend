@@ -34,6 +34,7 @@ class ChangePasswordUseCase extends UseCase<void, ChangePasswordParams> {
     return repository.changePassword(
       currentPassword: params.currentPassword,
       newPassword: params.newPassword,
+      confirmPassword: params.confirmPassword,
     );
   }
 }
@@ -41,6 +42,7 @@ class ChangePasswordUseCase extends UseCase<void, ChangePasswordParams> {
 class ChangePasswordParams {
   final String currentPassword;
   final String newPassword;
+  final String confirmPassword;
 
-  ChangePasswordParams({required this.currentPassword, required this.newPassword});
+  ChangePasswordParams({required this.currentPassword, required this.newPassword, required this.confirmPassword});
 }

@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:posfrontend/features/category/domain/entities/category.dart';
+import 'package:posfrontend/features/category/domain/repositories/category_repository.dart';
 import 'package:posfrontend/features/category/presentation/screens/add_category_screen.dart';
 import 'package:posfrontend/features/category/presentation/viewmodels/category_view_model.dart';
+import 'package:posfrontend/features/inventory/domain/repositories/inventory_repository.dart';
 import 'package:posfrontend/features/package/presentation/screens/package_screen.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
+import 'package:posfrontend/shared/widgets/error_snackbar.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 
 class CategoryScreen extends StatefulWidget {
@@ -40,6 +44,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
   void initState() {
     super.initState();
     _viewModel = CategoryViewModel(
+      repository: GetIt.instance<CategoryRepository>(),
+      inventoryRepository: GetIt.instance<InventoryRepository>(),
       type: widget.inventoryType,
     );
   }
@@ -69,6 +75,32 @@ class _CategoryScreenState extends State<CategoryScreen> {
     if (result is Category) {
       _viewModel.updateCategory(result);
     }
+  }
+
+  void _showDeleteDialog(Category c) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Category'),
+        content: Text('Are you sure you want to delete "${c.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final success = await _viewModel.deleteCategory(c.id);
+              if (!success && mounted && _viewModel.hasError) {
+                showErrorSnackBar(context, _viewModel.errorMessage!);
+              }
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -363,6 +395,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
           ),
         ),
       ),
+      onLongPress: () => _showDeleteDialog(c),
       child: Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
