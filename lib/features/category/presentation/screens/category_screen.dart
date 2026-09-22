@@ -78,28 +78,45 @@ class _CategoryScreenState extends State<CategoryScreen> {
   }
 
   void _showDeleteDialog(Category c) {
+    bool deleting = false;
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete Category'),
-        content: Text('Are you sure you want to delete "${c.name}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              final success = await _viewModel.deleteCategory(c.id);
-              if (!success && mounted && _viewModel.hasError) {
-                showErrorSnackBar(context, _viewModel.errorMessage!);
-              }
-            },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return AlertDialog(
+              title: const Text('Delete Category'),
+              content: Text('Are you sure you want to delete "${c.name}"?'),
+              actions: [
+                TextButton(
+                  onPressed: deleting ? null : () => Navigator.pop(ctx),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: deleting ? null : () async {
+                    setDialogState(() => deleting = true);
+                    Navigator.pop(ctx);
+                    final success = await _viewModel.deleteCategory(c.id);
+                    if (!success && mounted && _viewModel.hasError) {
+                      showErrorSnackBar(context, _viewModel.errorMessage!);
+                    }
+                  },
+                  child: deleting
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.red,
+                          ),
+                        )
+                      : const Text('Delete', style: TextStyle(color: Colors.red)),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -476,20 +493,30 @@ class _CategoryScreenState extends State<CategoryScreen> {
           const SizedBox(height: 16),
           Row(
             children: [
-              Text(
-                'Created: ${c.createdDate}',
-                style: const TextStyle(fontSize: 12, color: gray),
-              ),
-              if (c.createdBy.isNotEmpty) ...[
-                const SizedBox(width: 8),
-                Text(
-                  'by ${c.createdBy}',
-                  style: const TextStyle(fontSize: 11, color: gray, fontStyle: FontStyle.italic),
+              Expanded(
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      'Created: ${c.createdDate}',
+                      style: const TextStyle(fontSize: 12, color: gray),
+                    ),
+                    if (c.createdBy.isNotEmpty)
+                      Text(
+                        'by ${c.createdBy}',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: gray,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    _statusBadge(c.active),
+                  ],
                 ),
-              ],
+              ),
               const SizedBox(width: 8),
-              _statusBadge(c.active),
-              const Spacer(),
               const Icon(Icons.chevron_right, color: gray),
             ],
           ),

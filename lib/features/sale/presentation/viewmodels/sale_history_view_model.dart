@@ -1,4 +1,6 @@
 import 'package:posfrontend/core/base/base_view_model.dart';
+import 'package:posfrontend/core/models/paginated_response.dart';
+import 'package:posfrontend/features/sale/data/models/sale_order_api_model.dart';
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
 import 'package:posfrontend/features/sale/domain/usecases/sale_usecases.dart';
 
@@ -26,7 +28,8 @@ class SaleHistoryViewModel extends BaseViewModel {
   String _selectedTab = 'All';
   String _searchQuery = '';
   int _currentPage = 1;
-  bool _hasMore = true;
+  int _lastPage = 1;
+  bool get hasMore => _currentPage <= _lastPage;
 
   List<SaleOrderEntity> get filteredOrders {
     List<SaleOrderEntity> source;
@@ -54,7 +57,6 @@ class SaleHistoryViewModel extends BaseViewModel {
 
   String get selectedTab => _selectedTab;
   String get searchQuery => _searchQuery;
-  bool get hasMore => _hasMore;
   int get totalSalesCount => _allSales.length;
   int get totalOrdersCount => _allOrders.length;
 
@@ -71,21 +73,41 @@ class SaleHistoryViewModel extends BaseViewModel {
   Future<void> loadAll({bool refresh = false}) async {
     if (refresh) {
       _currentPage = 1;
-      _hasMore = true;
+      _allSales = [];
+      _allOrders = [];
     }
+    if (isLoading) return;
     setLoading(true);
     resetError();
     try {
-      final sales = await _getSalesUseCase(_currentPage);
-      final orders = await _getOrdersUseCase(_currentPage);
+      final salesResponse = await _getSalesUseCase(
+        GetSalesParams(page: _currentPage),
+      );
+      final ordersResponse = await _getOrdersUseCase(
+        GetOrdersParams(page: _currentPage),
+      );
+
+      final salesPaginated = PaginatedResponse.fromJson(
+        salesResponse,
+        (json) => SaleOrderApiModel.fromJson(json).toEntity(),
+      );
+      final ordersPaginated = PaginatedResponse.fromJson(
+        ordersResponse,
+        (json) => SaleOrderApiModel.fromOrderJson(json).toEntity(),
+      );
+
       if (_currentPage == 1) {
-        _allSales = sales;
-        _allOrders = orders;
+        _allSales = salesPaginated.data;
+        _allOrders = ordersPaginated.data;
       } else {
-        _allSales = [..._allSales, ...sales];
-        _allOrders = [..._allOrders, ...orders];
+        _allSales = [..._allSales, ...salesPaginated.data];
+        _allOrders = [..._allOrders, ...ordersPaginated.data];
       }
-      _hasMore = sales.isNotEmpty || orders.isNotEmpty;
+
+      final maxSalesPage = salesPaginated.lastPage;
+      final maxOrdersPage = ordersPaginated.lastPage;
+      _lastPage = maxSalesPage > maxOrdersPage ? maxSalesPage : maxOrdersPage;
+      _currentPage++;
     } catch (e) {
       setError(e.toString());
     } finally {
@@ -94,8 +116,7 @@ class SaleHistoryViewModel extends BaseViewModel {
   }
 
   Future<void> loadMore() async {
-    if (!_hasMore || isLoading) return;
-    _currentPage++;
+    if (!hasMore || isLoading) return;
     await loadAll();
   }
 

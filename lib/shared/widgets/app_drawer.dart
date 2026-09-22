@@ -3,13 +3,13 @@ import 'package:posfrontend/core/auth/token_storage.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/features/auth/presentation/screens/login_screen.dart';
 import 'package:posfrontend/features/product/presentation/screens/products_catalog_screen.dart';
-import 'package:posfrontend/features/sale/presentation/screens/new_sale_screen.dart';
+import 'package:posfrontend/features/product/presentation/screens/add_product_screen.dart';
 import 'package:posfrontend/features/sale/presentation/screens/sale_items_screen.dart';
 import 'package:posfrontend/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:posfrontend/features/inventory/presentation/screens/inventory_screen.dart';
 import 'package:posfrontend/features/purchase/presentation/screens/purchase_items_screen.dart';
 import 'package:posfrontend/features/settings/presentation/screens/settings_screen.dart';
-import 'package:posfrontend/features/customer/presentation/screens/customer_screen.dart';
+import 'package:posfrontend/features/cart/presentation/screens/add_to_cart_screen.dart';
 
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
@@ -114,11 +114,11 @@ class AppDrawer extends StatelessWidget {
                     _navItem(context, 'Dashboard', Icons.dashboard_outlined),
                     _navItem(context, 'Inventory', Icons.inventory_2_outlined),
                     _navItem(context, 'Product', Icons.category_outlined),
-                    _navItem(context, 'Sale', Icons.point_of_sale_outlined),
+                    _navItem(context, 'Add Product', Icons.add_circle_outline),
                     _navItem(context, 'Sale Item', Icons.receipt_long_outlined),
+                    _navItem(context, 'Add to Cart', Icons.shopping_cart_outlined),
                     
                     _navItem(context, 'Purchase Item', Icons.local_shipping_outlined),
-                    _navItem(context, 'Customers', Icons.people_outlined),
                     _navItem(context, 'Setting', Icons.settings_outlined)
                     ],
                 ),
@@ -188,8 +188,8 @@ class AppDrawer extends StatelessWidget {
       case 'Product':
         destination = const ProductsCatalogScreen();
         break;
-      case 'Sale':
-        destination = const NewSaleScreen();
+      case 'Add Product':
+        destination = const AddProductScreen();
         break;
       case 'Sale Item':
         destination = const SaleItemScreen();
@@ -197,8 +197,8 @@ class AppDrawer extends StatelessWidget {
       case 'Purchase Item':
         destination = const PurchaseItemsScreen();
         break;
-      case 'Customers':
-        destination = const CustomerScreen();
+      case 'Add to Cart':
+        destination = const AddToCartScreen();
         break;
       case 'Setting':
         destination = const SettingsScreen();
@@ -207,7 +207,7 @@ class AppDrawer extends StatelessWidget {
       default:
         return;
     }
-    if (label == 'Setting' || label == 'Sale' || label == 'Sale Item' || label == 'Purchase Item' || label == 'Customers') {
+    if (label == 'Setting' || label == 'Sale Item' || label == 'Purchase Item' || label == 'Add Product' || label == 'Add to Cart') {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => destination),
       );

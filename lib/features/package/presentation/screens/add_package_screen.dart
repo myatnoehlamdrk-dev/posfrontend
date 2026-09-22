@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/core/network/api_client.dart';
-import 'package:posfrontend/core/utils/error_handler.dart';
 import 'package:posfrontend/features/category/domain/entities/category.dart';
 import 'package:posfrontend/features/category/data/repositories/category_repository_impl.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
@@ -8,6 +7,7 @@ import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/features/package/domain/entities/package.dart';
 import 'package:posfrontend/features/package/data/repositories/package_repository_impl.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
+import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
 class AddPackageScreen extends StatefulWidget {
   final Category? category;
@@ -58,15 +58,11 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
     if (_saving) return;
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Package name is required')),
-      );
+      showErrorSnackBar(context, 'Package name is required');
       return;
     }
     if (_selectedCategory == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a category')),
-      );
+      showErrorSnackBar(context, 'Please select a category');
       return;
     }
 
@@ -89,9 +85,7 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
           stockStatus: null,
         );
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Package updated')),
-        );
+        showSuccessSnackBar(context, 'Package updated');
         Navigator.of(context).pop(updated);
       } else {
         final created = await PackageRepositoryImpl().createPackage(
@@ -103,21 +97,15 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
           stockStatus: null,
         );
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Package saved')),
-        );
+        showSuccessSnackBar(context, 'Package saved');
         Navigator.of(context).pop(created);
       }
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      showErrorSnackBar(context, e);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(formatApiError(e))),
-      );
+      showErrorSnackBar(context, e);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -289,6 +277,7 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
               onCancel: () => Navigator.of(context).pop(),
               onSave: _save,
               saveLabel: isEdit ? 'Update Package' : 'Save Package',
+              loading: _saving,
             ),
             const SizedBox(height: 16),
           ],

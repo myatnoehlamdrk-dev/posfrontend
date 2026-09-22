@@ -1,7 +1,9 @@
 import 'dart:math';
 import 'package:posfrontend/core/base/base_view_model.dart';
+import 'package:posfrontend/core/models/paginated_response.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/features/customer/domain/repositories/customer_repository.dart';
+import 'package:posfrontend/features/product/data/models/product_api_model.dart';
 import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart';
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
 import 'package:posfrontend/features/sale/domain/repositories/sale_repository.dart';
@@ -24,6 +26,13 @@ class SaleViewModel extends BaseViewModel {
 
   List<CatalogProductView> _products = [];
   List<CatalogProductView> get products => _products;
+
+  int _currentPage = 1;
+  int _lastPage = 1;
+  int _total = 0;
+  bool get hasMore => _currentPage <= _lastPage;
+  int get total => _total;
+  bool _pendingLoadMore = false;
 
   final List<SaleItemEntity> _items = [];
   List<SaleItemEntity> get items => List.unmodifiable(_items);
@@ -188,17 +197,67 @@ class SaleViewModel extends BaseViewModel {
   }
 
   Future<void> loadProducts() async {
+    if (isLoading) return;
     setLoading(true);
     resetError();
     try {
-      _products = await _productRepository.getProducts(cancelToken: cancelToken);
+      final response = await _productRepository.getProducts(
+        page: _currentPage,
+        perPage: 10,
+        cancelToken: cancelToken,
+      );
+
+      final paginated = PaginatedResponse.fromJson(
+        response,
+        (json) => ProductApiModel.fromJson(json).toEntity(),
+      );
+
+      final newItems = paginated.data.map((e) => CatalogProductView(
+        id: e.id,
+        name: e.name,
+        brand: e.brand,
+        sku: e.sku,
+        price: e.price,
+        stock: e.stock,
+        isSet: e.isSet,
+        category: e.category,
+        packageId: e.packageId,
+        icon: CatalogProductView.iconFor(e.category),
+        color: CatalogProductView.colorFor(e.category),
+        imageUrl: e.imageUrl,
+        variants: e.variants.map((v) => ProductVariant(
+          size: v.size,
+          color: v.color,
+          quantity: v.quantity,
+          price: v.price,
+        )).toList(),
+        createdBy: e.createdBy,
+      )).toList();
+
+      _products = _currentPage == 1 ? newItems : [..._products, ...newItems];
+      _lastPage = paginated.lastPage;
+      _total = paginated.total;
+      _currentPage++;
     } on ApiException catch (e) {
       setError(e.message);
     } catch (e) {
       setError(e.toString());
     } finally {
       setLoading(false);
+      if (_pendingLoadMore) {
+        _pendingLoadMore = false;
+        loadMore();
+      }
     }
+  }
+
+  Future<void> loadMore() async {
+    if (!hasMore) return;
+    if (isLoading) {
+      _pendingLoadMore = true;
+      return;
+    }
+    await loadProducts();
   }
 
   Future<bool> submitSale({

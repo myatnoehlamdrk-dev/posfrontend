@@ -79,15 +79,13 @@ class SaleHistoryRepositoryImpl implements SaleHistoryRepository {
       : _remoteDataSource = remoteDataSource ?? SaleRemoteDataSource();
 
   @override
-  Future<List<SaleOrderEntity>> getSales({int page = 1}) async {
-    final models = await _remoteDataSource.getSales(page: page);
-    return models.map((m) => m.toEntity()).toList();
+  Future<Map<String, dynamic>> getSales({int page = 1, int perPage = 10}) async {
+    return await _remoteDataSource.getSales(page: page, perPage: perPage);
   }
 
   @override
-  Future<List<SaleOrderEntity>> getOrders({int page = 1}) async {
-    final models = await _remoteDataSource.getOrders(page: page);
-    return models.map((m) => m.toEntity()).toList();
+  Future<Map<String, dynamic>> getOrders({int page = 1, int perPage = 10}) async {
+    return await _remoteDataSource.getOrders(page: page, perPage: perPage);
   }
 
   @override

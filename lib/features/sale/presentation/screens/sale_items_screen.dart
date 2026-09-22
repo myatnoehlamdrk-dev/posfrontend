@@ -21,19 +21,30 @@ class SaleItemScreen extends StatefulWidget {
 
 class _SaleItemScreenState extends State<SaleItemScreen> {
   final _searchController = TextEditingController();
+  final ScrollController _scrollCtrl = ScrollController();
   late final SaleHistoryViewModel _viewModel;
 
   @override
   void initState() {
     super.initState();
     _viewModel = GetIt.instance<SaleHistoryViewModel>();
+    _scrollCtrl.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _viewModel.loadAll(refresh: true);
     });
   }
 
+  void _onScroll() {
+    if (_scrollCtrl.position.pixels >=
+        _scrollCtrl.position.maxScrollExtent - 200) {
+      _viewModel.loadMore();
+    }
+  }
+
   @override
   void dispose() {
+    _scrollCtrl.removeListener(_onScroll);
+    _scrollCtrl.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -83,43 +94,61 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
     return RefreshIndicator(
       onRefresh: () => _viewModel.loadAll(refresh: true),
       child: SingleChildScrollView(
+        controller: _scrollCtrl,
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 12),
-            const Text(
-              'Products that are already sale and will be sale (Order)',
-              style: TextStyle(fontSize: 13, color: AppColors.gray),
-            ),
-            const SizedBox(height: 16),
-            FilterTabs(
-              tabs: [
-                ('All', _viewModel.filteredOrders.length),
-                ('Sold', _viewModel.totalSalesCount),
-                ('Order', _viewModel.totalOrdersCount),
-              ],
-              selectedIndex: _selectedTabIndex,
-              onTabChanged: (i) {
-                _viewModel.setTab(['All', 'Sold', 'Order'][i]);
-              },
-            ),
-            const SizedBox(height: 16),
-            SearchInputBar(
-              controller: _searchController,
-              hintText: 'Search products, order ID, customer...',
-              onChanged: _viewModel.setSearchQuery,
-            ),
-            const SizedBox(height: 16),
-            ..._viewModel.filteredOrders.asMap().entries.map((entry) => KeyedSubtree(
-              key: ValueKey('${entry.value.orderId}_${entry.key}'),
-              child: _buildOrderCard(entry.value),
-            )),
-            const SizedBox(height: 24),
-          ],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 12),
+              const Text(
+                'Products that are already sale and will be sale (Order)',
+                style: TextStyle(fontSize: 13, color: AppColors.gray),
+              ),
+              const SizedBox(height: 16),
+              FilterTabs(
+                tabs: [
+                  ('All', _viewModel.filteredOrders.length),
+                  ('Sold', _viewModel.totalSalesCount),
+                  ('Order', _viewModel.totalOrdersCount),
+                ],
+                selectedIndex: _selectedTabIndex,
+                onTabChanged: (i) {
+                  _viewModel.setTab(['All', 'Sold', 'Order'][i]);
+                },
+              ),
+              const SizedBox(height: 16),
+              SearchInputBar(
+                controller: _searchController,
+                hintText: 'Search products, order ID, customer...',
+                onChanged: _viewModel.setSearchQuery,
+              ),
+              const SizedBox(height: 16),
+              ..._viewModel.filteredOrders.asMap().entries.map((entry) => KeyedSubtree(
+                key: ValueKey('${entry.value.orderId}_${entry.key}'),
+                child: _buildOrderCard(entry.value),
+              )),
+              if (_viewModel.isLoading && _viewModel.filteredOrders.isNotEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(
+                    child: CircularProgressIndicator(color: AppColors.teal),
+                  ),
+                ),
+              if (!_viewModel.hasMore && _viewModel.filteredOrders.isNotEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(
+                    child: Text(
+                      'No more items',
+                      style: TextStyle(color: AppColors.gray, fontSize: 13),
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
-      ),
     );
   }
 

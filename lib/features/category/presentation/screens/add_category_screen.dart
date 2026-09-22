@@ -5,8 +5,8 @@ import 'package:posfrontend/features/category/domain/repositories/category_repos
 import 'package:posfrontend/features/category/presentation/viewmodels/add_category_view_model.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
-import 'package:posfrontend/shared/widgets/error_snackbar.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
+import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
 class AddCategoryScreen extends StatefulWidget {
   final String inventoryType;
@@ -47,17 +47,20 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
   }
 
   Future<void> _save() async {
+    if (_viewModel.isSaving) return;
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      showErrorSnackBar(context, 'Category name is required');
+      return;
+    }
+
     final success = await _viewModel.save(
       isEditing: widget.isEditing,
       categoryId: widget.existingCategory?.id,
       inventoryType: widget.inventoryType,
     );
     if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(widget.isEditing ? 'Category updated' : 'Category created'),
-        ),
-      );
+      showSuccessSnackBar(context, widget.isEditing ? 'Category updated' : 'Category created');
       Navigator.of(context).pop(_viewModel.result);
     } else if (_viewModel.hasError && mounted) {
       showErrorSnackBar(context, _viewModel.errorMessage!);
@@ -179,6 +182,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
               onCancel: () => Navigator.of(context).pop(),
               onSave: _viewModel.isSaving ? null : _save,
               saveLabel: isEdit ? 'Update Category' : 'Save Category',
+              loading: _viewModel.isSaving,
             ),
             const SizedBox(height: 16),
           ],

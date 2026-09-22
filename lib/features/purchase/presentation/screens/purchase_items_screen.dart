@@ -90,37 +90,64 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
     }
     return RefreshIndicator(
       onRefresh: () => _viewModel.loadPurchaseItems(refresh: true),
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 12),
-            const Text(
-              'Manage purchase orders from your suppliers',
-              style: TextStyle(fontSize: 13, color: AppColors.gray),
-            ),
-            const SizedBox(height: 16),
-            FilterTabs(
-              tabs: [
-                ('All', _viewModel.purchaseItems.length),
-                ('Completed', _viewModel.purchaseItems.where((o) => o.status == PurchaseStatus.completed).length),
-                ('Pending', _viewModel.purchaseItems.where((o) => o.status == PurchaseStatus.pending).length),
-              ],
-              selectedIndex: _selectedTab,
-              onTabChanged: (i) => setState(() => _selectedTab = i),
-            ),
-            const SizedBox(height: 16),
-            SearchInputBar(
-              controller: _searchController,
-              hintText: 'Search item, order ID, supplier...',
-              onChanged: (_) {},
-            ),
-            const SizedBox(height: 16),
-            ..._filteredOrders.map((order) => _buildOrderCard(order)),
-            const SizedBox(height: 80),
-          ],
+      child: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (notification is ScrollEndNotification &&
+              notification.metrics.pixels >=
+                  notification.metrics.maxScrollExtent - 200) {
+            _viewModel.loadPurchaseItems();
+          }
+          return false;
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 12),
+              const Text(
+                'Manage purchase orders from your suppliers',
+                style: TextStyle(fontSize: 13, color: AppColors.gray),
+              ),
+              const SizedBox(height: 16),
+              FilterTabs(
+                tabs: [
+                  ('All', _viewModel.purchaseItems.length),
+                  ('Completed', _viewModel.purchaseItems.where((o) => o.status == PurchaseStatus.completed).length),
+                  ('Pending', _viewModel.purchaseItems.where((o) => o.status == PurchaseStatus.pending).length),
+                ],
+                selectedIndex: _selectedTab,
+                onTabChanged: (i) => setState(() => _selectedTab = i),
+              ),
+              const SizedBox(height: 16),
+              SearchInputBar(
+                controller: _searchController,
+                hintText: 'Search item, order ID, supplier...',
+                onChanged: (_) {},
+              ),
+              const SizedBox(height: 16),
+              ..._filteredOrders.map((order) => _buildOrderCard(order)),
+              if (_viewModel.isLoading && _viewModel.purchaseItems.isNotEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(
+                    child: CircularProgressIndicator(color: AppColors.teal),
+                  ),
+                ),
+              if (!_viewModel.hasMore && _viewModel.purchaseItems.isNotEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(
+                    child: Text(
+                      'No more items',
+                      style: TextStyle(color: AppColors.gray, fontSize: 13),
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 80),
+            ],
+          ),
         ),
       ),
     );

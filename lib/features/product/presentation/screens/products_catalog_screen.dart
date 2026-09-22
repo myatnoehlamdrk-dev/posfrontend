@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:posfrontend/core/extensions/datetime_extensions.dart';
 import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart';
-import 'package:posfrontend/features/product/data/repositories/product_repository_impl.dart';
-import 'package:posfrontend/features/product/presentation/screens/add_product_screen.dart';
 import 'package:posfrontend/features/product/presentation/screens/product_detail_screen.dart';
+import 'package:posfrontend/features/product/presentation/screens/category_products_screen.dart';
 import 'package:posfrontend/features/product/presentation/viewmodels/products_catalog_view_model.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/shared/widgets/error_snackbar.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
+import 'package:posfrontend/features/product/presentation/widgets/category_showcase_data.dart';
+import 'package:posfrontend/features/product/presentation/widgets/category_showcase_grid.dart';
+import 'package:posfrontend/features/product/presentation/widgets/category_skeleton.dart';
 
 class ProductsCatalogScreen extends StatefulWidget {
   const ProductsCatalogScreen({super.key});
@@ -21,11 +23,12 @@ class ProductsCatalogScreen extends StatefulWidget {
 class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _search = TextEditingController();
+  final ScrollController _scrollCtrl = ScrollController();
   late final ProductsCatalogViewModel _viewModel;
   late final PageController _hotPageController;
   int _hotIndex = 0;
   bool _hotPaused = false;
-  bool _isGrid = true;
+  bool _isSearchOpen = false;
   bool _disposed = false;
   static const Color bg = Color(0xFFF8F9FC);
   static const Color gray = Color(0xFF6B7280);
@@ -35,9 +38,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
   @override
   void initState() {
     super.initState();
-    _viewModel = ProductsCatalogViewModel(
-      repository: ProductRepositoryImpl(),
-    );
+    _viewModel = ProductsCatalogViewModel();
     _hotPageController = PageController(initialPage: 5000);
     _viewModel.load();
     _startAutoScroll();
@@ -65,18 +66,17 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
   @override
   void dispose() {
     _disposed = true;
+    _scrollCtrl.dispose();
     _viewModel.dispose();
     _search.dispose();
     _hotPageController.dispose();
     super.dispose();
   }
 
-  void _open(CatalogProductView p) {
+  void _openProduct(CatalogProductView p) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => ProductDetailScreen(
-          productId: p.id,
-        ),
+        builder: (_) => ProductDetailScreen(productId: p.id),
       ),
     );
   }
@@ -122,11 +122,18 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
           child: LayoutBuilder(
             builder: (ctx, constraints) {
               final isWide = constraints.maxWidth >= 768;
-              final body = _content();
 
               if (isWide) {
                 return Scaffold(
                   backgroundColor: bg,
+                  floatingActionButton: FloatingActionButton(
+                    onPressed: () => setState(() => _isSearchOpen = !_isSearchOpen),
+                    backgroundColor: purple,
+                    child: Icon(
+                      _isSearchOpen ? Icons.close : Icons.search,
+                      color: Colors.white,
+                    ),
+                  ),
                   body: SafeArea(
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -144,8 +151,16 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
               return Scaffold(
                 key: _scaffoldKey,
                 backgroundColor: bg,
+                floatingActionButton: FloatingActionButton(
+                  onPressed: () => setState(() => _isSearchOpen = !_isSearchOpen),
+                  backgroundColor: purple,
+                  child: Icon(
+                    _isSearchOpen ? Icons.close : Icons.search,
+                    color: Colors.white,
+                  ),
+                ),
                 drawer: const AppDrawer(activeItem: 'Product'),
-                body: SafeArea(child: body),
+                body: SafeArea(child: _content()),
               );
             },
           ),
@@ -155,248 +170,152 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
   }
 
   Widget _content() {
-    final dateLabel = _formatDate(DateTime.now());
-    final products = _viewModel.filtered;
+    final categories = _viewModel.categories;
 
     return ListenableBuilder(
       listenable: _search,
       builder: (context, _) {
-        return Column(
+        return Stack(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  AppTopBar(
-                    title: 'Products',
-                    showMenuButton: true,
-                    onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+            Column(
+              children: [
+                AppScreenTopBar(
+                  title: 'Products',
+                  showMenuButton: true,
+                  onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+                ),
+                Expanded(
+                  child: RefreshableBody(
+                    scrollController: _scrollCtrl,
+                    onRefresh: () => _viewModel.load(),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                      child: _buildBody(categories),
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Catalog',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
+                ),
+              ],
+            ),
+            if (_isSearchOpen)
+              Positioned(
+                top: 72,
+                left: 24,
+                right: 24,
+                child: Material(
+                  elevation: 4,
+                  borderRadius: BorderRadius.circular(10),
+                  child: Row(
                     children: [
-                      const Expanded(
-                        child: Text(
-                          'Products',
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w700,
-                            color: titleColor,
-                          ),
-                        ),
-                      ),
-                      _iconButton(
-                        _isGrid ? Icons.grid_view : Icons.view_list,
-                        onTap: () => setState(() => _isGrid = !_isGrid),
-                      ),
+                      Expanded(child: _searchField()),
                       const SizedBox(width: 8),
-                      Container(
-                        height: 40,
-                        width: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFFE5E7EB)),
-                        ),
-                        child: PopupMenuButton<ProductSort>(
-                          icon: const Icon(Icons.filter_list, color: titleColor),
-                          tooltip: 'Sort',
-                          onSelected: (v) => _viewModel.setSort(v),
-                          itemBuilder: (ctx) => const [
-                            PopupMenuItem(
-                              value: ProductSort.dateNewest,
-                              child: Text('Newest first'),
-                            ),
-                            PopupMenuItem(
-                              value: ProductSort.dateOldest,
-                              child: Text('Oldest first'),
-                            ),
-                            PopupMenuItem(
-                              value: ProductSort.nameAz,
-                              child: Text('Name (A–Z)'),
-                            ),
-                            PopupMenuItem(
-                              value: ProductSort.nameZa,
-                              child: Text('Name (Z–A)'),
-                            ),
-                            PopupMenuItem(
-                              value: ProductSort.priceLow,
-                              child: Text('Price (Low–High)'),
-                            ),
-                            PopupMenuItem(
-                              value: ProductSort.priceHigh,
-                              child: Text('Price (High–Low)'),
-                            ),
-                          ],
-                        ),
-                      ),
+                      _iconButton(Icons.close, onTap: () {
+                        setState(() {
+                          _isSearchOpen = false;
+                          _search.clear();
+                          _viewModel.setSearchQuery('');
+                        });
+                      }),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  _searchField(),
-                  const SizedBox(height: 16),
-                  _pills(),
-                ],
+                ),
               ),
-            ),
-            Expanded(
-              child: RefreshableBody(
-                onRefresh: _viewModel.load,
-                child: _viewModel.isLoading
-                    ? const SizedBox(
-                        height: 300,
-                        child: Center(
-                          child: CircularProgressIndicator(color: Color(0xFF6D28D9)),
-                        ),
-                      )
-                    : _viewModel.hasError
-                        ? SizedBox(
-                            height: 300,
-                            child: Center(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(_viewModel.errorMessage!, style: const TextStyle(color: Colors.red)),
-                                  const SizedBox(height: 12),
-                                  ElevatedButton(
-                                    onPressed: _viewModel.load,
-                                    child: const Text('Retry'),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          )
-                        : Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Text(
-                                      "Hot Products",
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w700,
-                                        color: titleColor,
-                                      ),
-                                    ),
-                                    const Spacer(),
-                                    Text(
-                                      dateLabel,
-                                      style: const TextStyle(fontSize: 14, color: gray),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                if (_viewModel.hotProducts.isNotEmpty) _hotCarousel(_viewModel.hotProducts),
-                                const SizedBox(height: 24),
-                                Row(
-                                  children: [
-                                    const Text(
-                                      'All Products',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w700,
-                                        color: titleColor,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      '${products.length}',
-                                      style: const TextStyle(fontSize: 14, color: gray),
-                                    ),
-                                    const Spacer(),
-                                    _addProductButton(),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                products.isEmpty
-                                    ? const Padding(
-                                        padding: EdgeInsets.symmetric(vertical: 48),
-                                        child: Center(
-                                          child: Text(
-                                            'No products found.',
-                                            style: TextStyle(color: Color(0xFF6B7280)),
-                                          ),
-                                        ),
-                                      )
-                                    : (_isGrid ? _grid(products) : _list(products)),
-                                const SizedBox(height: 16),
-                              ],
-                            ),
-                          ),
-              ),
-            ),
           ],
         );
       },
     );
   }
 
-  Widget _iconButton(IconData icon, {required VoidCallback onTap}) {
-    return Container(
-      height: 44,
-      width: 44,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF3E8FF),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: IconButton(
-        icon: Icon(icon, color: purple),
-        onPressed: onTap,
-      ),
-    );
-  }
+  Widget _buildBody(List<CategoryShowcaseData> categories) {
+    if (_viewModel.isLoading && categories.isEmpty) {
+      return const CategorySkeleton();
+    }
 
-  Widget _addProductButton() {
-    return Container(
-      height: 40,
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF7C3AED), Color(0xFF5B21B6)],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: () async {
-            await Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => AddProductScreen(),
+    if (_viewModel.hasError && categories.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Color(0xFFE5E7EB)),
+            const SizedBox(height: 16),
+            Text(
+              _viewModel.errorMessage ?? 'Unable to load categories',
+              style: const TextStyle(color: Colors.red, fontSize: 15),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () => _viewModel.load(),
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text('Retry'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: purple,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
-            );
-            if (mounted) _viewModel.load();
-          },
-          child: const Center(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.add, color: Colors.white, size: 18),
-                SizedBox(width: 4),
-                Text(
-                  'Add Product',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (categories.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.category_outlined, size: 64, color: Colors.grey[300]),
+            const SizedBox(height: 16),
+            Text(
+              'No categories available',
+              style: TextStyle(fontSize: 16, color: Colors.grey[500]),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Add products to see categories here',
+              style: TextStyle(fontSize: 13, color: Colors.grey[400]),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_viewModel.hotProducts.isNotEmpty) ...[
+          _hotCarousel(_viewModel.hotProducts),
+          const SizedBox(height: 28),
+        ],
+        CategoryShowcaseGrid(
+          categories: categories,
+          onProductTap: _openProduct,
+          onProductLongPress: _showDeleteDialog,
+          onCategoryTap: (cat) => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => CategoryProductsScreen(
+                categoryId: cat.id,
+                categoryName: cat.name,
+              ),
             ),
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _iconButton(IconData icon, {required VoidCallback onTap}) {
+    return Container(
+      height: 40,
+      width: 40,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: IconButton(
+        icon: Icon(icon, color: titleColor, size: 20),
+        onPressed: onTap,
+        padding: EdgeInsets.zero,
       ),
     );
   }
@@ -405,51 +324,27 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
     return TextField(
       controller: _search,
       onChanged: _viewModel.setSearchQuery,
+      style: const TextStyle(fontSize: 13),
       decoration: InputDecoration(
-        hintText: 'Search products...',
-        hintStyle: const TextStyle(color: gray, fontSize: 14),
-        prefixIcon: const Icon(Icons.search, color: gray),
+        hintText: 'Search...',
+        hintStyle: const TextStyle(color: gray, fontSize: 13),
+        prefixIcon: const Icon(Icons.search, color: gray, size: 18),
+        isDense: true,
         filled: true,
-        fillColor: const Color(0xFFF3F4F6),
+        fillColor: Colors.white,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
         ),
-        contentPadding: const EdgeInsets.symmetric(vertical: 0),
-      ),
-    );
-  }
-
-  Widget _pills() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: _viewModel.filters
-            .map((f) => Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: GestureDetector(
-                    onTap: () => _viewModel.setCategory(f),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: _viewModel.category == f ? purple : Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: _viewModel.category == f ? purple : const Color(0xFFE5E7EB),
-                        ),
-                      ),
-                      child: Text(
-                        f,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: _viewModel.category == f ? Colors.white : titleColor,
-                        ),
-                      ),
-                    ),
-                  ),
-                ))
-            .toList(),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: purple),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
     );
   }
@@ -500,7 +395,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
 
   Widget _hotBanner(CatalogProductView p) {
     return GestureDetector(
-      onTap: () => _open(p),
+      onTap: () => _openProduct(p),
       child: Container(
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
@@ -513,28 +408,10 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
               Image.network(
                 p.imageUrl!,
                 fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF8B5CF6), Color(0xFFDDD6FE)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                  child: Icon(p.icon, color: Colors.white, size: 60),
-                ),
+                errorBuilder: (_, _, _) => _imageFallback(p, 60),
               )
             else
-              Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF8B5CF6), Color(0xFFDDD6FE)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                child: Icon(p.icon, color: Colors.white, size: 60),
-              ),
+              _imageFallback(p, 60),
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -570,8 +447,8 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                       color: Colors.white70,
                     ),
                   ),
-                  const SizedBox(height: 6),
                   if (p.variants.isNotEmpty) ...[
+                    const SizedBox(height: 6),
                     Wrap(
                       spacing: 6,
                       runSpacing: 4,
@@ -593,17 +470,6 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                         );
                       }).toList(),
                     ),
-                    if (p.variants.length > 3)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          '+${p.variants.length - 3} more variants',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Colors.white60,
-                          ),
-                        ),
-                      ),
                   ],
                   const SizedBox(height: 4),
                   PriceText(
@@ -642,269 +508,6 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
     );
   }
 
-  Widget _grid(List<CatalogProductView> products) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final w = constraints.maxWidth;
-        int cross = 2;
-        if (w >= 1100) {
-          cross = 4;
-        } else if (w >= 820) {
-          cross = 3;
-        }
-        return RepaintBoundary(
-          child: GridView.count(
-            crossAxisCount: cross,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: 0.62,
-            children: products.map((p) => KeyedSubtree(
-            key: ValueKey(p.id),
-            child: _gridCard(p),
-          )).toList(),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _gridCard(CatalogProductView p) {
-    return GestureDetector(
-      onTap: () => _open(p),
-      onLongPress: () => _showDeleteDialog(p),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x0D000000),
-              blurRadius: 8,
-              offset: Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
-              children: [
-                Container(
-                  height: 120,
-                  decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                    child: p.imageUrl != null
-                        ? Image.network(
-                            p.imageUrl!,
-                            width: double.infinity,
-                            height: 120,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => _imageFallback(p, 44),
-                          )
-                        : _imageFallback(p, 44),
-                  ),
-                ),
-                Positioned(
-                  top: 10,
-                  left: 10,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '${p.stock} in stock',
-                      style: const TextStyle(fontSize: 10, color: titleColor),
-                    ),
-                  ),
-                ),
-                if (p.isSet)
-                  Positioned(
-                    top: 10,
-                    right: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: purple,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Text(
-                        'SET',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      p.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: titleColor,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      p.brand,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 12, color: gray),
-                    ),
-                    if (p.createdBy.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        'by ${p.createdBy}',
-                        style: const TextStyle(fontSize: 11, color: gray, fontStyle: FontStyle.italic),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                    const Spacer(),
-                    PriceText(
-                      p.price,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: purple,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _list(List<CatalogProductView> products) {
-    return Column(
-      children: products
-          .map((p) => Padding(
-                key: ValueKey(p.id),
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _listCard(p),
-              ))
-          .toList(),
-    );
-  }
-
-  Widget _listCard(CatalogProductView p) {
-    return GestureDetector(
-      onTap: () => _open(p),
-      onLongPress: () => _showDeleteDialog(p),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x0D000000),
-              blurRadius: 8,
-              offset: Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 76,
-              height: 76,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: p.imageUrl != null
-                    ? Image.network(
-                        p.imageUrl!,
-                        width: 76,
-                        height: 76,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => _imageFallback(p, 34),
-                      )
-                    : _imageFallback(p, 34),
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    p.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: titleColor,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text('SKU: ${p.sku}', style: const TextStyle(fontSize: 12, color: gray)),
-                  const SizedBox(height: 2),
-                  Text(p.brand, style: const TextStyle(fontSize: 12, color: gray)),
-                  const SizedBox(height: 4),
-                  PriceText(
-                    p.price,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: purple,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF3E8FF),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '${p.stock} in stock',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: purple,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Icon(Icons.chevron_right, color: gray),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _imageFallback(CatalogProductView p, double iconSize) {
     return Container(
       width: double.infinity,
@@ -924,6 +527,4 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
       ),
     );
   }
-
-  String _formatDate(DateTime d) => d.toShortDate();
 }

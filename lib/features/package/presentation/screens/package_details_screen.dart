@@ -10,6 +10,7 @@ import 'package:posfrontend/features/package/presentation/screens/assign_product
 import 'package:posfrontend/features/product/presentation/screens/product_detail_screen.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
+import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
 class PackageDetailsScreen extends StatefulWidget {
   final PackageEntity package;
@@ -60,6 +61,8 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
     }
   }
 
+  bool _removingProductId = false;
+
   Future<void> _removeProductFromPackage(CatalogProductView product) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -82,15 +85,16 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
     );
     if (confirmed != true) return;
 
-    final success = await _viewModel.removeProduct(product);
-    if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Product removed from package')),
-      );
-    } else if (_viewModel.hasError && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_viewModel.errorMessage!)),
-      );
+    setState(() => _removingProductId = true);
+    try {
+      final success = await _viewModel.removeProduct(product);
+      if (success && mounted) {
+        showSuccessSnackBar(context, 'Product removed from package');
+      } else if (_viewModel.hasError && mounted) {
+        showErrorSnackBar(context, _viewModel.errorMessage!);
+      }
+    } finally {
+      if (mounted) setState(() => _removingProductId = false);
     }
   }
 
@@ -653,9 +657,18 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                 ),
                 const SizedBox(height: 8),
                 PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert, color: kGray, size: 20),
+                  icon: _removingProductId
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.red,
+                          ),
+                        )
+                      : const Icon(Icons.more_vert, color: kGray, size: 20),
                   tooltip: 'Actions',
-                  onSelected: (value) {
+                  onSelected: _removingProductId ? null : (value) {
                     if (value == 'remove') {
                       _removeProductFromPackage(pr);
                     }

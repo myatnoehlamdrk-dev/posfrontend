@@ -49,6 +49,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
 
   bool _pdfExportEnabled = true;
   bool _printVoucherEnabled = false;
+  bool _submittingDraft = false;
   String _printFormat = 'thermal';
   String _paperSize = '58mm';
   static const _keyPdfExport = 'print_pdf_export';
@@ -142,28 +143,34 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   }
 
   Future<void> _submitDraft() async {
-    final staffName = AuthScope.userOf(context)?.fullName ?? 'Staff';
-    _viewModel.setCustomerName(_customerNameCtrl.text);
-    _viewModel.setCustomerPhone(_customerPhoneCtrl.text);
-    _viewModel.setCustomerLocation(_customerLocationCtrl.text);
-    final success = await _viewModel.submitDraft(staffName: staffName);
-    if (!success) {
+    if (_submittingDraft) return;
+    setState(() => _submittingDraft = true);
+    try {
+      final staffName = AuthScope.userOf(context)?.fullName ?? 'Staff';
+      _viewModel.setCustomerName(_customerNameCtrl.text);
+      _viewModel.setCustomerPhone(_customerPhoneCtrl.text);
+      _viewModel.setCustomerLocation(_customerLocationCtrl.text);
+      final success = await _viewModel.submitDraft(staffName: staffName);
+      if (!success) {
+        if (!mounted) return;
+        showErrorSnackBar(context, Exception(_viewModel.errorMessage ?? 'Failed to save draft'));
+        return;
+      }
       if (!mounted) return;
-      showErrorSnackBar(context, Exception(_viewModel.errorMessage ?? 'Failed to save draft'));
-      return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Draft saved successfully!'), backgroundColor: Color(0xFF2563EB)),
+      );
+      setState(() {
+        _customerNameCtrl.text = 'Customer';
+        _customerPhoneCtrl.clear();
+        _customerLocationCtrl.clear();
+        _discountCtrl.text = '0';
+        _notesCtrl.clear();
+      });
+      _viewModel.clearCart();
+    } finally {
+      if (mounted) setState(() => _submittingDraft = false);
     }
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Draft saved successfully!'), backgroundColor: Color(0xFF2563EB)),
-    );
-    setState(() {
-      _customerNameCtrl.text = 'Customer';
-      _customerPhoneCtrl.clear();
-      _customerLocationCtrl.clear();
-      _discountCtrl.text = '0';
-      _notesCtrl.clear();
-    });
-    _viewModel.clearCart();
   }
 
   @override
@@ -897,14 +904,14 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     return Row(
       children: [
         Expanded(
-          child: _outlineBtn('Draft', Icons.save_outlined, () {
+          child: _outlineBtn('Draft', Icons.save_outlined, _submittingDraft, () {
             if (_viewModel.items.isEmpty) return;
             _submitDraft();
           }),
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: _outlineBtn('Preview', Icons.visibility_outlined, () async {
+          child: _outlineBtn('Preview', Icons.visibility_outlined, false, () async {
             if (_viewModel.items.isEmpty) return;
             ShopScope.loadShop(
               context,
@@ -981,23 +988,33 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     );
   }
 
-  Widget _outlineBtn(String label, IconData icon, VoidCallback onTap) {
+  Widget _outlineBtn(String label, IconData icon, bool loading, VoidCallback onTap) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: loading ? null : onTap,
       child: Container(
         height: 48,
         decoration: BoxDecoration(
-          border: Border.all(color: const Color(0xFF2563EB)),
+          border: Border.all(color: loading ? kBorder : const Color(0xFF2563EB)),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: const Color(0xFF2563EB), size: 18),
+            if (loading)
+              const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Color(0xFF2563EB),
+                ),
+              )
+            else
+              Icon(icon, color: const Color(0xFF2563EB), size: 18),
             const SizedBox(width: 6),
             Text(label,
-                style: const TextStyle(
-                    color: Color(0xFF2563EB),
+                style: TextStyle(
+                    color: loading ? kGray : const Color(0xFF2563EB),
                     fontWeight: FontWeight.w600,
                     fontSize: 13)),
           ],

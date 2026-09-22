@@ -1,133 +1,117 @@
+import 'dart:async';
+
+import 'package:dio/dio.dart';
 import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart';
-import 'package:posfrontend/features/product/domain/entities/product.dart';
-import 'package:posfrontend/features/product/domain/repositories/product_repository.dart';
-
-enum ProductSort {
-  dateNewest,
-  dateOldest,
-  nameAz,
-  nameZa,
-  priceLow,
-  priceHigh,
-}
+import 'package:posfrontend/features/product/presentation/widgets/category_showcase_data.dart';
 
 class ProductsCatalogViewModel extends BaseViewModel {
-  final ProductRepository _repository;
+  final Dio _dio;
 
-  ProductsCatalogViewModel({required ProductRepository repository})
-      : _repository = repository;
+  ProductsCatalogViewModel({Dio? dio})
+      : _dio = dio ?? ApiClient.create();
 
-  List<CatalogProductView> _allProducts = [];
-  List<CatalogProductView> get allProducts => _allProducts;
-
-  String _category = 'All';
-  String get category => _category;
-
-  ProductSort _sort = ProductSort.dateNewest;
-  ProductSort get sort => _sort;
+  List<CategoryShowcaseData> _categories = [];
+  List<CategoryShowcaseData> get categories => _categories;
 
   String _searchQuery = '';
   String get searchQuery => _searchQuery;
 
-  List<String> get filters {
-    final cats = <String>{
-      for (final p in _allProducts)
-        if (p.category.isNotEmpty) p.category,
-    };
-    final sorted = cats.toList()..sort();
-    return ['All', ...sorted];
-  }
-
-  List<CatalogProductView> get filtered {
-    final q = _searchQuery.toLowerCase();
-    final list = _allProducts.where((p) {
-      final matchesCat = _category == 'All' || p.category == _category;
-      final matchesSearch =
-          q.isEmpty || p.name.toLowerCase().contains(q) || p.brand.toLowerCase().contains(q);
-      return matchesCat && matchesSearch;
-    }).toList();
-
-    list.sort((a, b) {
-      switch (_sort) {
-        case ProductSort.nameAz:
-          return a.name.toLowerCase().compareTo(b.name.toLowerCase());
-        case ProductSort.nameZa:
-          return b.name.toLowerCase().compareTo(a.name.toLowerCase());
-        case ProductSort.priceLow:
-          return a.price.compareTo(b.price);
-        case ProductSort.priceHigh:
-          return b.price.compareTo(a.price);
-        case ProductSort.dateNewest:
-          return b.name.toLowerCase().compareTo(a.name.toLowerCase());
-        case ProductSort.dateOldest:
-          return a.name.toLowerCase().compareTo(b.name.toLowerCase());
-      }
-    });
-    return list;
-  }
-
-  List<CatalogProductView> get hotProducts {
-    final list = List<CatalogProductView>.from(_allProducts);
-    return list.length > 4 ? list.sublist(0, 4) : list;
-  }
-
-  void setCategory(String value) {
-    _category = value;
-    notifyListeners();
-  }
-
-  void setSort(ProductSort value) {
-    _sort = value;
-    notifyListeners();
-  }
+  Timer? _debounce;
 
   void setSearchQuery(String value) {
     _searchQuery = value;
-    notifyListeners();
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      load();
+    });
   }
 
   Future<void> load() async {
+    if (isLoading) return;
+
     setLoading(true);
     resetError();
+
     try {
-      final entities = await _repository.getProducts(cancelToken: cancelToken);
-      _allProducts = entities.map((e) => CatalogProductView(
-        id: e.id,
-        name: e.name,
-        brand: e.brand,
-        sku: e.sku,
-        price: e.price,
-        stock: e.stock,
-        isSet: e.isSet,
-        category: e.category,
-        packageId: e.packageId,
-        icon: CatalogProductView.iconFor(e.category),
-        color: CatalogProductView.colorFor(e.category),
-        imageUrl: e.imageUrl,
-        variants: e.variants.map((v) => ProductVariant(
-          size: v.size,
-          color: v.color,
-          quantity: v.quantity,
-          price: v.price,
-        )).toList(),
-        createdBy: e.createdBy,
-      )).toList();
+      final queryParams = <String, dynamic>{
+        'productLimit': 4,
+      };
+      if (_searchQuery.isNotEmpty) {
+        queryParams['search'] = _searchQuery;
+      }
+
+      final response = await _dio.get(
+        '/api/categories/with-products',
+        queryParameters: queryParams,
+        cancelToken: cancelToken,
+      );
+
+      final data = response.data;
+      final List<dynamic> items = data is Map ? (data['data'] ?? []) : (data as List? ?? []);
+
+      _categories = items.map((json) {
+        final cat = json as Map<String, dynamic>;
+        final categoryId = cat['id']?.toString() ?? '';
+        final categoryName = cat['name']?.toString() ?? '';
+        final products = (cat['products'] as List? ?? []).map((p) {
+          final product = p as Map<String, dynamic>;
+          return CatalogProductView(
+            id: product['id']?.toString() ?? '',
+            name: product['name']?.toString() ?? '',
+            brand: product['brand']?.toString() ?? '',
+            sku: product['sku']?.toString() ?? '',
+            price: (product['variants'] as List?)?.isNotEmpty == true
+                ? ((product['variants'] as List).first['price'] ?? 0).toDouble()
+                : 0.0,
+            stock: (product['stock'] as num?)?.toInt() ?? 0,
+            isSet: product['isSet'] == true,
+            category: categoryName,
+            packageId: product['packageId']?.toString() ?? '',
+            icon: CatalogProductView.iconFor(categoryName),
+            color: CatalogProductView.colorFor(categoryName),
+            imageUrl: product['image']?.toString().trim(),
+            createdBy: product['createdBy']?.toString() ?? '',
+          );
+        }).toList();
+
+        return CategoryShowcaseData(
+          id: categoryId,
+          name: categoryName,
+          products: products,
+        );
+      }).toList();
     } on ApiException catch (e) {
       setError(e.message);
     } catch (e) {
-      setError('Failed to load products: $e');
+      setError('Failed to load categories: $e');
     } finally {
       setLoading(false);
     }
   }
 
+  List<CatalogProductView> get hotProducts {
+    final allProducts = _categories.expand((c) => c.products).toList();
+    return allProducts.length > 4 ? allProducts.sublist(0, 4) : allProducts;
+  }
+
+  List<String> get filters {
+    final cats = <String>{
+      for (final c in _categories)
+        if (c.name.isNotEmpty && c.name != 'Uncategorized') c.name,
+    };
+    final sorted = cats.toList()..sort();
+    return ['All', ...sorted];
+  }
+
   Future<bool> deleteProduct(String productId) async {
     try {
-      final dio = ApiClient.create();
-      await dio.delete('/api/products/$productId', cancelToken: cancelToken);
-      _allProducts.removeWhere((p) => p.id == productId);
+      await _dio.delete('/api/products/$productId', cancelToken: cancelToken);
+      for (final cat in _categories) {
+        cat.products.removeWhere((p) => p.id == productId);
+      }
+      _categories.removeWhere((c) => c.products.isEmpty);
       notifyListeners();
       return true;
     } on ApiException catch (e) {
@@ -137,5 +121,11 @@ class ProductsCatalogViewModel extends BaseViewModel {
       setError('Failed to delete product: $e');
       return false;
     }
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
   }
 }

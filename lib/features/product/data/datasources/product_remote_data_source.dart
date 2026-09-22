@@ -9,16 +9,41 @@ class ProductRemoteDataSource {
 
   ProductRemoteDataSource([Dio? dio]) : _dio = dio ?? ApiClient.create();
 
-  Future<List<ProductApiModel>> getProducts({String? packageId, CancelToken? cancelToken}) async {
+  Future<Map<String, dynamic>> getProducts({
+    String? packageId,
+    String? categoryId,
+    String? search,
+    String? sort,
+    String? order,
+    int page = 1,
+    int perPage = 10,
+    CancelToken? cancelToken,
+  }) async {
     try {
-      final queryParams = <String, dynamic>{};
+      final queryParams = <String, dynamic>{
+        'page': page,
+        'per_page': perPage,
+      };
       if (packageId != null && packageId.isNotEmpty) {
         queryParams['packageId'] = packageId;
       }
+      if (categoryId != null && categoryId.isNotEmpty) {
+        queryParams['categoryId'] = categoryId;
+      }
+      if (search != null && search.isNotEmpty) {
+        queryParams['search'] = search;
+      }
+      if (sort != null && sort.isNotEmpty) {
+        queryParams['sort'] = sort;
+      }
+      if (order != null && order.isNotEmpty) {
+        queryParams['order'] = order;
+      }
       final response = await _dio.get('/api/products', queryParameters: queryParams, cancelToken: cancelToken);
       final data = response.data;
-      final List<dynamic> items = data is Map ? (data['data'] ?? data['products'] ?? []) : (data as List? ?? []);
-      return items.map((json) => ProductApiModel.fromJson(json as Map<String, dynamic>)).toList();
+      if (data is Map<String, dynamic>) return data;
+      if (data is List) return {'data': data, 'meta': {'current_page': page, 'last_page': 1, 'total': data.length}};
+      return {'data': [], 'meta': {'current_page': 1, 'last_page': 1, 'total': 0}};
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
@@ -117,6 +142,31 @@ class ProductRemoteDataSource {
       final data = response.data;
       final List<dynamic> items = data is Map ? (data['data'] ?? []) : (data as List? ?? []);
       return items.map((json) => CategoryApiModel.fromJson(json as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getCategoriesWithProducts({
+    String? search,
+    int productLimit = 4,
+    CancelToken? cancelToken,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{
+        'productLimit': productLimit,
+      };
+      if (search != null && search.isNotEmpty) {
+        queryParams['search'] = search;
+      }
+      final response = await _dio.get(
+        '/api/categories/with-products',
+        queryParameters: queryParams,
+        cancelToken: cancelToken,
+      );
+      final data = response.data;
+      final List<dynamic> items = data is Map ? (data['data'] ?? []) : (data as List? ?? []);
+      return items.cast<Map<String, dynamic>>();
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }

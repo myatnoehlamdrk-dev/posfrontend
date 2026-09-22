@@ -99,7 +99,7 @@ class _CustomerScreenState extends State<CustomerScreen> with SingleTickerProvid
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 child: AppTopBar(
-                  title: 'Customer Analysis',
+                  title: 'Customer Data',
                   showMenuButton: !isWide,
                   onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
                 ),

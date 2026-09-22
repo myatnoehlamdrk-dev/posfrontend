@@ -1,9 +1,8 @@
 import 'package:dio/dio.dart';
-import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart';
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
 
 abstract class SaleProductRepository {
-  Future<List<CatalogProductView>> getProducts({CancelToken? cancelToken});
+  Future<Map<String, dynamic>> getProducts({int page = 1, int perPage = 10, CancelToken? cancelToken});
 }
 
 abstract class SaleRepository {
@@ -43,8 +42,8 @@ abstract class OrderRepository {
 }
 
 abstract class SaleHistoryRepository {
-  Future<List<SaleOrderEntity>> getSales({int page = 1});
-  Future<List<SaleOrderEntity>> getOrders({int page = 1});
+  Future<Map<String, dynamic>> getSales({int page = 1, int perPage = 10});
+  Future<Map<String, dynamic>> getOrders({int page = 1, int perPage = 10});
   Future<SaleOrderEntity> getSaleById(String id);
   Future<SaleOrderEntity> getOrderById(String id);
   Future<void> deleteSale(String id);

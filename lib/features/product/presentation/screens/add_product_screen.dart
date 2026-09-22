@@ -25,6 +25,7 @@ class AddProductScreen extends StatefulWidget {
 class _AddProductScreenState extends State<AddProductScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late final AddProductViewModel _vm;
+  bool _saving = false;
 
   @override
   void initState() {
@@ -591,6 +592,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     final nameController = TextEditingController();
     final phoneController = TextEditingController();
     final addressController = TextEditingController();
+    bool savingSupplier = false;
 
     showModalBottomSheet(
       context: context,
@@ -599,85 +601,101 @@ class _AddProductScreenState extends State<AddProductScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
-        return Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(color: kBorder, borderRadius: BorderRadius.circular(2)),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Add New Supplier',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: kTitle),
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(color: kBorder, borderRadius: BorderRadius.circular(2)),
+                        ),
                       ),
-                      GestureDetector(
-                        onTap: () => Navigator.pop(ctx),
-                        child: const Icon(Icons.close, color: kGray),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Add New Supplier',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: kTitle),
+                          ),
+                          GestureDetector(
+                            onTap: () => Navigator.pop(ctx),
+                            child: const Icon(Icons.close, color: kGray),
+                          ),
+                        ],
                       ),
+                      const SizedBox(height: 20),
+                      _field('Supplier Name', nameController, 'e.g. Golden Harvest Co.', req: true),
+                      const SizedBox(height: 16),
+                      _field('Contact / Phone', phoneController, 'e.g. 09-1234-5678'),
+                      const SizedBox(height: 16),
+                      _field('Address', addressController, 'e.g. No.12, Market St, Yangon'),
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton(
+                          onPressed: savingSupplier ? null : () async {
+                            if (nameController.text.isNotEmpty) {
+                              setSheetState(() => savingSupplier = true);
+                              try {
+                                final dio = ApiClient.create();
+                                final resp = await dio.post('/api/suppliers', data: {
+                                  'name': nameController.text.trim(),
+                                  'contact': phoneController.text.trim(),
+                                  'address': addressController.text.trim(),
+                                });
+                                final data = resp.data;
+                                if (data is Map<String, dynamic>) {
+                                  final newSupplier = SupplierOption(
+                                    id: (data['id'] ?? '').toString(),
+                                    name: data['name'] ?? nameController.text.trim(),
+                                  );
+                                  _vm.addSupplier(newSupplier);
+                                }
+                                if (ctx.mounted) Navigator.pop(ctx);
+                              } on ApiException catch (e) {
+                                if (ctx.mounted) {
+                                  ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(e.message)));
+                                }
+                              } finally {
+                                if (ctx.mounted) setSheetState(() => savingSupplier = false);
+                              }
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: kPurple700,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: savingSupplier
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2.5,
+                                  ),
+                                )
+                              : const Text('Save Supplier', style: TextStyle(fontWeight: FontWeight.w600)),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
                     ],
                   ),
-                  const SizedBox(height: 20),
-                  _field('Supplier Name', nameController, 'e.g. Golden Harvest Co.', req: true),
-                  const SizedBox(height: 16),
-                  _field('Contact / Phone', phoneController, 'e.g. 09-1234-5678'),
-                  const SizedBox(height: 16),
-                  _field('Address', addressController, 'e.g. No.12, Market St, Yangon'),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        if (nameController.text.isNotEmpty) {
-                          try {
-                            final dio = ApiClient.create();
-                            final resp = await dio.post('/api/suppliers', data: {
-                              'name': nameController.text.trim(),
-                              'contact': phoneController.text.trim(),
-                              'address': addressController.text.trim(),
-                            });
-                            final data = resp.data;
-                            if (data is Map<String, dynamic>) {
-                              final newSupplier = SupplierOption(
-                                id: (data['id'] ?? '').toString(),
-                                name: data['name'] ?? nameController.text.trim(),
-                              );
-                              _vm.addSupplier(newSupplier);
-                            }
-                            if (ctx.mounted) Navigator.pop(ctx);
-                          } on ApiException catch (e) {
-                            if (ctx.mounted) {
-                              ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(e.message)));
-                            }
-                          }
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: kPurple700,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: const Text('Save Supplier', style: TextStyle(fontWeight: FontWeight.w600)),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
@@ -767,31 +785,46 @@ class _AddProductScreenState extends State<AddProductScreen> {
       child: Container(
         height: 52,
         decoration: BoxDecoration(
-          gradient: kPurpleGradient,
+          gradient: _saving ? null : kPurpleGradient,
+          color: _saving ? kGray : null,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
             borderRadius: BorderRadius.circular(12),
-            onTap: () async {
-              final success = await _vm.save(existingProduct: widget.existingProduct);
-              if (!mounted) return;
-              if (success) {
-                Navigator.of(context).pop(true);
-              } else {
-                _showError();
+            onTap: _saving ? null : () async {
+              setState(() => _saving = true);
+              try {
+                final success = await _vm.save(existingProduct: widget.existingProduct);
+                if (!mounted) return;
+                if (success) {
+                  Navigator.of(context).pop(true);
+                } else {
+                  _showError();
+                }
+              } finally {
+                if (mounted) setState(() => _saving = false);
               }
             },
             child: Center(
-              child: Text(
-                widget.existingProduct != null ? 'Update Product' : 'Create Product',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                ),
-              ),
+              child: _saving
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2.5,
+                      ),
+                    )
+                  : Text(
+                      widget.existingProduct != null ? 'Update Product' : 'Create Product',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                    ),
             ),
           ),
         ),

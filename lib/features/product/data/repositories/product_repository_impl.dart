@@ -14,9 +14,26 @@ class ProductRepositoryImpl implements ProductRepository {
       : _remoteDataSource = remoteDataSource ?? ProductRemoteDataSource();
 
   @override
-  Future<List<ProductEntity>> getProducts({String? packageId, CancelToken? cancelToken}) async {
-    final models = await _remoteDataSource.getProducts(packageId: packageId, cancelToken: cancelToken);
-    return models.map((m) => m.toEntity()).toList();
+  Future<Map<String, dynamic>> getProducts({
+    String? packageId,
+    String? categoryId,
+    String? search,
+    String? sort,
+    String? order,
+    int page = 1,
+    int perPage = 10,
+    CancelToken? cancelToken,
+  }) async {
+    return await _remoteDataSource.getProducts(
+      packageId: packageId,
+      categoryId: categoryId,
+      search: search,
+      sort: sort,
+      order: order,
+      page: page,
+      perPage: perPage,
+      cancelToken: cancelToken,
+    );
   }
 
   @override

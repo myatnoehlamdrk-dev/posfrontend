@@ -358,12 +358,14 @@ class FormActions extends StatelessWidget {
   final VoidCallback onCancel;
   final VoidCallback? onSave;
   final String saveLabel;
+  final bool loading;
 
   const FormActions({
     super.key,
     required this.onCancel,
     this.onSave,
     this.saveLabel = 'Save',
+    this.loading = false,
   });
 
   @override
@@ -411,16 +413,25 @@ class FormActions extends StatelessWidget {
               color: Colors.transparent,
               child: InkWell(
                 borderRadius: BorderRadius.circular(12),
-                onTap: onSave,
+                onTap: loading ? null : onSave,
                 child: Center(
-                  child: Text(
-                    saveLabel,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                    ),
-                  ),
+                  child: loading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.5,
+                          ),
+                        )
+                      : Text(
+                          saveLabel,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                          ),
+                        ),
                 ),
               ),
             ),

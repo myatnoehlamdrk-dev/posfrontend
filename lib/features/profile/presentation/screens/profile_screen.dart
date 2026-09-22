@@ -19,6 +19,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late final ProfileViewModel _viewModel;
   final _formKey = GlobalKey<FormState>();
   final _picker = ImagePicker();
+  bool _uploadingImage = false;
 
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -130,21 +131,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _pickImage() async {
+    if (_uploadingImage) return;
     final xfile = await _picker.pickImage(source: ImageSource.gallery);
     if (xfile == null) return;
     final bytes = await xfile.readAsBytes();
     if (!mounted) return;
-    final result = await ImgbbRepositoryImpl().uploadImage(
-      bytes,
-      fileName: xfile.name,
-    );
-    if (!mounted) return;
-    final url = result.url;
-    _viewModel.setImageUrl(url);
-    ProfileImageNotifier.instance.update(url);
-    final success = await _viewModel.saveProfile();
-    if (success && mounted) {
-      showSuccessSnackBar(context, 'Profile updated successfully');
+    setState(() => _uploadingImage = true);
+    try {
+      final result = await ImgbbRepositoryImpl().uploadImage(
+        bytes,
+        fileName: xfile.name,
+      );
+      if (!mounted) return;
+      final url = result.url;
+      _viewModel.setImageUrl(url);
+      ProfileImageNotifier.instance.update(url);
+      final success = await _viewModel.saveProfile();
+      if (success && mounted) {
+        showSuccessSnackBar(context, 'Profile updated successfully');
+      }
+    } finally {
+      if (mounted) setState(() => _uploadingImage = false);
     }
   }
 
@@ -726,7 +733,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         children: [
           GestureDetector(
-            onTap: _pickImage,
+            onTap: _uploadingImage ? null : _pickImage,
             child: Stack(
               children: [
                 CircleAvatar(
@@ -744,6 +751,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ? const Icon(Icons.person, size: 50, color: primary)
                       : null,
                 ),
+                if (_uploadingImage)
+                  const Positioned.fill(
+                    child: CircleAvatar(
+                      radius: 50,
+                      backgroundColor: Color(0x80000000),
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.5,
+                        ),
+                      ),
+                    ),
+                  ),
                 Positioned(
                   bottom: 0,
                   right: 0,

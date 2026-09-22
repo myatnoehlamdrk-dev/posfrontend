@@ -115,26 +115,38 @@ class DeleteOrderUseCase extends UseCase<void, String> {
   }
 }
 
-class GetSalesUseCase extends UseCase<List<SaleOrderEntity>, int> {
+class GetSalesUseCase extends UseCase<Map<String, dynamic>, GetSalesParams> {
   final SaleHistoryRepository _repository;
 
   GetSalesUseCase(this._repository);
 
   @override
-  Future<List<SaleOrderEntity>> call(int page) {
-    return _repository.getSales(page: page);
+  Future<Map<String, dynamic>> call(GetSalesParams params) {
+    return _repository.getSales(page: params.page, perPage: params.perPage);
   }
 }
 
-class GetOrdersUseCase extends UseCase<List<SaleOrderEntity>, int> {
+class GetSalesParams {
+  final int page;
+  final int perPage;
+  const GetSalesParams({this.page = 1, this.perPage = 10});
+}
+
+class GetOrdersUseCase extends UseCase<Map<String, dynamic>, GetOrdersParams> {
   final SaleHistoryRepository _repository;
 
   GetOrdersUseCase(this._repository);
 
   @override
-  Future<List<SaleOrderEntity>> call(int page) {
-    return _repository.getOrders(page: page);
+  Future<Map<String, dynamic>> call(GetOrdersParams params) {
+    return _repository.getOrders(page: params.page, perPage: params.perPage);
   }
+}
+
+class GetOrdersParams {
+  final int page;
+  final int perPage;
+  const GetOrdersParams({this.page = 1, this.perPage = 10});
 }
 
 class DeleteSaleUseCase extends UseCase<void, String> {

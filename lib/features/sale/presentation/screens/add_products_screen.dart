@@ -17,6 +17,7 @@ class AddProductsScreen extends StatefulWidget {
 
 class _AddProductsScreenState extends State<AddProductsScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
+  final ScrollController _scrollCtrl = ScrollController();
   final SaleViewModel _viewModel = SaleViewModel(
     productRepository: SaleProductRepositoryImpl(),
     saleRepository: SaleRepositoryImpl(),
@@ -35,18 +36,38 @@ class _AddProductsScreenState extends State<AddProductsScreen> {
   final Map<String, String> _selectedColors = {};
   final Map<String, TextEditingController> _notesCtrls = {};
   final Map<String, TextEditingController> _qtyCtrls = {};
-  bool _categoriesInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    _viewModel.loadProducts();
+    _scrollCtrl.addListener(_onScroll);
+    _loadInitial();
+  }
+
+  Future<void> _loadInitial() async {
+    await _viewModel.loadProducts();
+    _checkAndLoadMore();
+  }
+
+  void _checkAndLoadMore() {
+    if (!_viewModel.hasMore || _viewModel.isLoading) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollCtrl.hasClients &&
+          _scrollCtrl.position.maxScrollExtent <= 0) {
+        _viewModel.loadMore().then((_) => _checkAndLoadMore());
+      }
+    });
+  }
+
+  void _onScroll() {
+    if (_scrollCtrl.position.pixels >=
+        _scrollCtrl.position.maxScrollExtent - 200) {
+      _viewModel.loadMore().then((_) => _checkAndLoadMore());
+    }
   }
 
   void _syncDerivedState() {
     if (_viewModel.isLoading || _viewModel.errorMessage != null) return;
-    if (_categoriesInitialized) return;
-    _categoriesInitialized = true;
     final cats = _viewModel.products
         .map((p) => p.category)
         .where((c) => c.isNotEmpty)
@@ -66,6 +87,8 @@ class _AddProductsScreenState extends State<AddProductsScreen> {
 
   @override
   void dispose() {
+    _scrollCtrl.removeListener(_onScroll);
+    _scrollCtrl.dispose();
     _viewModel.dispose();
     _searchCtrl.dispose();
     for (final c in _notesCtrls.values) {
@@ -323,12 +346,12 @@ class _AddProductsScreenState extends State<AddProductsScreen> {
   }
 
   Widget _productList() {
-    if (_viewModel.isLoading) {
+    if (_viewModel.isLoading && _viewModel.products.isEmpty) {
       return const Center(
         child: CircularProgressIndicator(color: kPurple),
       );
     }
-    if (_viewModel.hasError) {
+    if (_viewModel.hasError && _viewModel.products.isEmpty) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -351,12 +374,21 @@ class _AddProductsScreenState extends State<AddProductsScreen> {
       );
     }
     return ListView.builder(
+      controller: _scrollCtrl,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: items.length,
-      itemBuilder: (_, i) => KeyedSubtree(
-        key: ValueKey(items[i].id),
-        child: _productCard(items[i]),
-      ),
+      itemCount: items.length + (_viewModel.hasMore ? 1 : 0),
+      itemBuilder: (_, i) {
+        if (i == items.length) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(child: CircularProgressIndicator(color: kPurple, strokeWidth: 2)),
+          );
+        }
+        return KeyedSubtree(
+          key: ValueKey(items[i].id),
+          child: _productCard(items[i]),
+        );
+      },
     );
   }
 

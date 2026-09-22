@@ -120,39 +120,25 @@ class SaleRemoteDataSource {
     }
   }
 
-  Future<List<SaleOrderApiModel>> getSales({int page = 1}) async {
+  Future<Map<String, dynamic>> getSales({int page = 1, int perPage = 10}) async {
     try {
-      final response = await _dio.get('/api/sales', queryParameters: {'page': page});
-      final payload = response.data;
-      if (payload is List) {
-        return payload.whereType<Map<String, dynamic>>().map((e) => SaleOrderApiModel.fromJson(e)).toList();
-      }
-      if (payload is Map<String, dynamic>) {
-        final data = payload['data'];
-        if (data is List) {
-          return data.whereType<Map<String, dynamic>>().map((e) => SaleOrderApiModel.fromJson(e)).toList();
-        }
-      }
-      return [];
+      final response = await _dio.get('/api/sales', queryParameters: {'page': page, 'per_page': perPage});
+      final data = response.data;
+      if (data is Map<String, dynamic>) return data;
+      if (data is List) return {'data': data, 'meta': {'current_page': page, 'last_page': 1, 'total': data.length}};
+      return {'data': [], 'meta': {'current_page': 1, 'last_page': 1, 'total': 0}};
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
   }
 
-  Future<List<SaleOrderApiModel>> getOrders({int page = 1}) async {
+  Future<Map<String, dynamic>> getOrders({int page = 1, int perPage = 10}) async {
     try {
-      final response = await _dio.get('/api/orders', queryParameters: {'page': page});
-      final payload = response.data;
-      if (payload is List) {
-        return payload.whereType<Map<String, dynamic>>().map((e) => SaleOrderApiModel.fromOrderJson(e)).toList();
-      }
-      if (payload is Map<String, dynamic>) {
-        final data = payload['data'];
-        if (data is List) {
-          return data.whereType<Map<String, dynamic>>().map((e) => SaleOrderApiModel.fromOrderJson(e)).toList();
-        }
-      }
-      return [];
+      final response = await _dio.get('/api/orders', queryParameters: {'page': page, 'per_page': perPage});
+      final data = response.data;
+      if (data is Map<String, dynamic>) return data;
+      if (data is List) return {'data': data, 'meta': {'current_page': page, 'last_page': 1, 'total': data.length}};
+      return {'data': [], 'meta': {'current_page': 1, 'last_page': 1, 'total': 0}};
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }

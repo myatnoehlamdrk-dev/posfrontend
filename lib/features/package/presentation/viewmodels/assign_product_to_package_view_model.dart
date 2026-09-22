@@ -83,28 +83,49 @@ class AssignProductToPackageViewModel extends BaseViewModel {
     setLoading(true);
     resetError();
     try {
-      final entities = await _productRepository.getProducts(cancelToken: cancelToken);
-      _allProducts = entities.map((e) => CatalogProductView(
-        id: e.id,
-        name: e.name,
-        brand: e.brand,
-        sku: e.sku,
-        price: e.price,
-        stock: e.stock,
-        isSet: e.isSet,
-        category: e.category,
-        packageId: e.packageId,
-        icon: CatalogProductView.iconFor(e.name),
-        color: CatalogProductView.colorFor(e.name),
-        imageUrl: e.imageUrl,
-        variants: e.variants.map((v) => ProductVariant(
-          size: v.size,
-          color: v.color,
-          quantity: v.quantity,
-          price: v.price,
-        )).toList(),
-        createdBy: e.createdBy,
-      )).toList();
+      final response = await _productRepository.getProducts(cancelToken: cancelToken);
+      final rawList = response['data'];
+      final List<dynamic> items = rawList is List ? rawList : [];
+      _allProducts = items.map((json) {
+        final map = json as Map<String, dynamic>;
+        final id = map['id']?.toString() ?? '';
+        final name = map['name']?.toString() ?? '';
+        final brand = map['brand']?.toString() ?? '';
+        final sku = map['sku']?.toString() ?? '';
+        final price = (map['stock'] as num?)?.toDouble() ?? 0.0;
+        final stock = (map['stock'] as num?)?.toInt() ?? 0;
+        final isSet = map['isSet'] == true;
+        final category = map['category']?.toString() ?? '';
+        final packageId = map['packageId']?.toString() ?? '';
+        final imageUrl = map['image']?.toString().trim();
+        final createdBy = map['createdBy']?.toString() ?? '';
+        final variantsRaw = map['variants'];
+        final variantList = variantsRaw is List ? variantsRaw : [];
+        return CatalogProductView(
+          id: id,
+          name: name,
+          brand: brand,
+          sku: sku,
+          price: price,
+          stock: stock,
+          isSet: isSet,
+          category: category,
+          packageId: packageId,
+          icon: CatalogProductView.iconFor(name),
+          color: CatalogProductView.colorFor(name),
+          imageUrl: imageUrl,
+          variants: variantList.map((v) {
+            final vm = v as Map<String, dynamic>;
+            return ProductVariant(
+              size: (vm['size'] as String?)?.trim() ?? '',
+              color: (vm['color'] as String?)?.trim() ?? '',
+              quantity: (vm['quantity'] as num?)?.toInt() ?? 0,
+              price: (vm['price'] as num?)?.toDouble() ?? 0,
+            );
+          }).toList(),
+          createdBy: createdBy,
+        );
+      }).toList();
       _categories = [
         'All',
         ..._allProducts

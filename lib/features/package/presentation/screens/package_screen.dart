@@ -73,28 +73,45 @@ class _PackageScreenState extends State<PackageScreen> {
   }
 
   void _showDeleteDialog(PackageEntity p) {
+    bool deleting = false;
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete Package'),
-        content: Text('Are you sure you want to delete "${p.name}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              final success = await _viewModel.deletePackage(p.id);
-              if (!success && mounted && _viewModel.hasError) {
-                showErrorSnackBar(context, _viewModel.errorMessage!);
-              }
-            },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return AlertDialog(
+              title: const Text('Delete Package'),
+              content: Text('Are you sure you want to delete "${p.name}"?'),
+              actions: [
+                TextButton(
+                  onPressed: deleting ? null : () => Navigator.pop(ctx),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: deleting ? null : () async {
+                    setDialogState(() => deleting = true);
+                    Navigator.pop(ctx);
+                    final success = await _viewModel.deletePackage(p.id);
+                    if (!success && mounted && _viewModel.hasError) {
+                      showErrorSnackBar(context, _viewModel.errorMessage!);
+                    }
+                  },
+                  child: deleting
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.red,
+                          ),
+                        )
+                      : const Text('Delete', style: TextStyle(color: Colors.red)),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
