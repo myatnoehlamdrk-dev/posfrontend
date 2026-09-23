@@ -352,11 +352,11 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
   }
 
   static const List<LinearGradient> _promoGradients = [
-    LinearGradient(colors: [Color(0xFFC4B5FD), Color(0xFF8B5CF6)]),
-    LinearGradient(colors: [Color(0xFF93C5FD), Color(0xFF3B82F6)]),
-    LinearGradient(colors: [Color(0xFF6EE7B7), Color(0xFF10B981)]),
-    LinearGradient(colors: [Color(0xFFFDBA74), Color(0xFFF97316)]),
-    LinearGradient(colors: [Color(0xFFA5B4FC), Color(0xFF6366F1)]),
+    LinearGradient(colors: [Color(0xFFA78BFA), Color(0xFF7C3AED)]),
+    LinearGradient(colors: [Color(0xFF60A5FA), Color(0xFF2563EB)]),
+    LinearGradient(colors: [Color(0xFF34D399), Color(0xFF059669)]),
+    LinearGradient(colors: [Color(0xFFFB923C), Color(0xFFEA580C)]),
+    LinearGradient(colors: [Color(0xFF818CF8), Color(0xFF4F46E5)]),
   ];
 
   Widget _hotCarousel(List<CatalogProductView> items) {
@@ -409,213 +409,151 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
     final gradient = _promoGradients[index % _promoGradients.length];
     final accent = Color.lerp(gradient.colors[0], gradient.colors[1], 0.6)!;
     final hasImage = (p.imageUrl ?? '').isNotEmpty;
-    final radius = 30.0;
     return GestureDetector(
       onTap: () => _openProduct(p),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(10, 6, 10, 4),
-        // Isometric/perspective tilt of the whole card (mockup showcase).
-        child: Transform(
-          alignment: Alignment.topCenter,
-          transform: Matrix4.identity()
-            ..setEntry(3, 2, 0.0012)
-            ..rotateX(-0.09)
-            ..rotateY(0.035),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // — Clay / glass card —
-              Container(
-                width: double.infinity,
-                height: 194,
-                padding: const EdgeInsets.fromLTRB(22, 16, 22, 16),
-                decoration: BoxDecoration(
-                  gradient: gradient,
-                  borderRadius: BorderRadius.circular(radius),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.16),
-                      blurRadius: 26,
-                      offset: const Offset(0, 16),
-                    ),
-                    BoxShadow(
-                      color: accent.withValues(alpha: 0.28),
-                      blurRadius: 10,
-                      offset: const Offset(0, 6),
-                    ),
-                    BoxShadow(
-                      color: Colors.white.withValues(alpha: 0.22),
-                      blurRadius: 6,
-                      offset: const Offset(-2, -3),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: SizedBox(
-                        height: 126,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.55),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                p.category.isEmpty ? 'Featured' : p.category,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF111827),
-                                ),
-                              ),
+        padding: const EdgeInsets.fromLTRB(8, 4, 8, 2),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: double.infinity,
+              height: 194,
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+              decoration: BoxDecoration(
+                gradient: gradient,
+                borderRadius: BorderRadius.circular(22),
+                boxShadow: [
+                  BoxShadow(
+                    color: accent.withValues(alpha: 0.35),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 126,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.6),
+                              borderRadius: BorderRadius.circular(20),
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              p.name,
+                            child: Text(
+                              p.category.isEmpty ? 'Featured' : p.category,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
                                 color: Color(0xFF111827),
                               ),
                             ),
-                            const SizedBox(height: 6),
-                            PriceText(
-                              p.price,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF5B21B6),
-                              ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            p.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF111827),
                             ),
-                            const Spacer(),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 7),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    gradient.colors[1],
-                                    accent,
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: accent.withValues(alpha: 0.4),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 3),
-                                  ),
+                          ),
+                          const SizedBox(height: 6),
+                          PriceText(
+                            p.price,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF5B21B6),
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  gradient.colors[1],
+                                  accent,
                                 ],
                               ),
-                              child: const Text(
-                                'Shop Now',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: accent.withValues(alpha: 0.4),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
                                 ),
+                              ],
+                            ),
+                            child: const Text(
+                              'View Details',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 90),
-                  ],
-                ),
-              ),
-              // Clay volumetric shading (top highlight, base tone).
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(radius),
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.white.withValues(alpha: 0.28),
-                          Colors.white.withValues(alpha: 0.0),
-                          Colors.black.withValues(alpha: 0.05),
+                          ),
                         ],
-                        stops: const [0.0, 0.5, 1.0],
                       ),
                     ),
                   ),
-                ),
+                  const SizedBox(width: 90),
+                ],
               ),
-              // Glossy glass sheen across the whole card.
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(radius),
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Colors.white.withValues(alpha: 0.20),
-                          Colors.transparent,
-                          Colors.white.withValues(alpha: 0.07),
-                        ],
-                        stops: const [0.0, 0.55, 1.0],
-                      ),
-                    ),
+            ),
+            Positioned(
+              right: 6,
+              bottom: 6,
+              child: Container(
+                width: 150,
+                height: 40,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  gradient: RadialGradient(
+                    radius: 1.1,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.16),
+                      Colors.black.withValues(alpha: 0.06),
+                      Colors.transparent,
+                    ],
+                    stops: const [0.0, 0.6, 1.0],
                   ),
                 ),
               ),
-              // Soft ambient shadow under the product area.
-              Positioned(
-                right: 10,
-                bottom: 10,
-                child: Container(
-                  width: 150,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(22),
-                    gradient: RadialGradient(
-                      radius: 1.1,
-                      colors: [
-                        Colors.black.withValues(alpha: 0.14),
-                        Colors.black.withValues(alpha: 0.05),
-                        Colors.transparent,
-                      ],
-                      stops: const [0.0, 0.6, 1.0],
-                    ),
-                  ),
+            ),
+            Positioned(
+              right: 0,
+              top: 0,
+              bottom: 0,
+              child: SizedBox(
+                width: 160,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(22),
+                  child: hasImage
+                      ? _GradientBlendedImage(
+                          imageUrl: p.imageUrl!,
+                          width: 160,
+                          gradient: gradient,
+                          errorFallback: _promoBadge(p, gradient),
+                        )
+                      : _promoBadge(p, gradient),
                 ),
               ),
-              // The product itself, sitting on the card.
-              Positioned(
-                right: 6,
-                top: 10,
-                bottom: 10,
-                child: SizedBox(
-                  width: 158,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(radius),
-                    child: hasImage
-                        ? _GradientBlendedImage(
-                            imageUrl: p.imageUrl!,
-                            width: 158,
-                            gradient: gradient,
-                            errorFallback: _promoBadge(p, gradient),
-                          )
-                        : _promoBadge(p, gradient),
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -707,15 +645,16 @@ class _GradientBlendedImageState extends State<_GradientBlendedImage> {
     if (image == null) return const SizedBox.shrink();
     return CustomPaint(
       size: Size(widget.width, double.infinity),
-      painter: _GradientColorImagePainter(image),
+      painter: _GradientColorImagePainter(image, widget.gradient),
     );
   }
 }
 
 class _GradientColorImagePainter extends CustomPainter {
-  _GradientColorImagePainter(this.image);
+  _GradientColorImagePainter(this.image, this.gradient);
 
   final ui.Image image;
+  final LinearGradient gradient;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -725,70 +664,46 @@ class _GradientColorImagePainter extends CustomPainter {
       image.width.toDouble(),
       image.height.toDouble(),
     );
-    final base = math.min(
+    final scale = math.min(
       size.width / src.width,
       size.height / src.height,
     );
-    // Oversize slightly so the photo fills the whole image area and no
-    // photo border/edge line is visible.
-    final target = base * 1.12;
-    final dstW = src.width * target;
-    final dstH = src.height * target;
-    // Bias the photo toward the top while keeping it fully visible.
-    var cy = size.height * 0.42;
-    if (cy - dstH / 2 < 0) cy = dstH / 2;
     final dst = Rect.fromCenter(
-      center: Offset(size.width / 2, cy),
-      width: dstW,
-      height: dstH,
+      center: size.center(Offset.zero),
+      width: src.width * scale,
+      height: src.height * scale,
     );
-    final box = Offset.zero & size;
-
-    // Soft white glow behind the product so it pops off the pastel card.
+    // Draw the image twice: first as grayscale, then multiply the gradient
+    // over it (upper layer), so the photo is seen entirely in the card's
+    // gradient color with no foreign hues and no white background.
+    final gray = Paint()
+      ..colorFilter = const ColorFilter.matrix(<double>[
+        0.299, 0.587, 0.114, 0, 0, //
+        0.299, 0.587, 0.114, 0, 0, //
+        0.299, 0.587, 0.114, 0, 0, //
+        0, 0, 0, 1, 0, //
+      ])
+      ..filterQuality = FilterQuality.medium;
+    canvas.drawImageRect(image, src, dst, gray);
     canvas.drawRect(
-      box,
-      Paint()
-        ..shader = const RadialGradient(
-          radius: 1.0,
-          colors: [Color(0x66FFFFFF), Colors.transparent],
-          stops: [0.0, 0.75],
-        ).createShader(box),
-    );
-
-    // Soft contact shadow beneath the product for depth.
-    final shadowRect = Rect.fromLTWH(
-      dst.left - 10,
-      dst.bottom - 6,
-      dst.width + 20,
-      34,
-    );
-    canvas.drawRect(
-      shadowRect,
-      Paint()
-        ..shader = const RadialGradient(
-          radius: 1.0,
-          colors: [Color(0x33000000), Colors.transparent],
-          stops: [0.0, 1.0],
-        ).createShader(shadowRect),
-    );
-
-    // The product itself, above the board layers, soft at the edges.
-    canvas.saveLayer(
-      box,
-      Paint()..color = const Color.fromRGBO(0, 0, 0, 0.82),
-    );
-    canvas.drawImageRect(
-      image,
-      src,
       dst,
       Paint()
-        ..filterQuality = FilterQuality.medium
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5),
+        ..shader = gradient.createShader(dst)
+        ..blendMode = BlendMode.multiply,
     );
-    canvas.restore();
+    // Soft white glow so the image side of the card reads lighter.
+    canvas.drawRect(
+      dst,
+      Paint()
+        ..shader = const RadialGradient(
+          radius: 1.1,
+          colors: [Color(0x66FFFFFF), Colors.transparent],
+          stops: [0.0, 0.85],
+        ).createShader(dst),
+    );
   }
 
   @override
   bool shouldRepaint(_GradientColorImagePainter oldDelegate) =>
-      oldDelegate.image != image;
+      oldDelegate.image != image || oldDelegate.gradient != gradient;
 }
