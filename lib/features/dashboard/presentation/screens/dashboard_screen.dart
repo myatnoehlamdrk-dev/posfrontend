@@ -8,6 +8,7 @@ import 'package:posfrontend/features/dashboard/presentation/viewmodels/dashboard
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
+import 'package:posfrontend/shared/widgets/shop_scope.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -288,23 +289,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return SizedBox(
         width: 220,
         height: 220,
-        child: PieChart(
-          PieChartData(
-            sectionsSpace: 2,
-            centerSpaceRadius: 40,
-            startDegreeOffset: -90,
-            sections: items.asMap().entries.map((entry) {
-              final item = entry.value;
-              return PieChartSectionData(
-                value: item.productCount.toDouble(),
-                color: Color(item.colorValue),
-                radius: 60,
-                showTitle: false,
-              );
-            }).toList(),
-          ),
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeOutCubic,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            PieChart(
+              PieChartData(
+                sectionsSpace: 2,
+                centerSpaceRadius: 40,
+                startDegreeOffset: -90,
+                sections: items.asMap().entries.map((entry) {
+                  final item = entry.value;
+                  return PieChartSectionData(
+                    value: item.productCount.toDouble(),
+                    color: Color(item.colorValue),
+                    radius: 60,
+                    showTitle: false,
+                  );
+                }).toList(),
+              ),
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeOutCubic,
+            ),
+            SizedBox(
+              width: 80,
+              child: Text(
+                ShopScope.shopOf(context)?.name ?? 'Shop',
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: labelColor,
+                ),
+              ),
+            ),
+          ],
         ),
       );
     }

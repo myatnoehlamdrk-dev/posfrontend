@@ -154,6 +154,7 @@ class ProductCreateRequest {
   final String categoryId;
   final String packageId;
   final List<ProductCreateVariant> variants;
+  final int? stock;
   final String sku;
   final String supplierId;
   final String supplierName;
@@ -172,6 +173,7 @@ class ProductCreateRequest {
     this.categoryId = '',
     this.packageId = '',
     this.variants = const [],
+    this.stock,
     this.sku = '',
     this.supplierId = '',
     this.supplierName = '',
@@ -191,7 +193,7 @@ class ProductCreateRequest {
         'image': imageUrl.isEmpty ? null : imageUrl,
         'brand': brand.isEmpty ? null : brand,
         'sku': sku.isEmpty ? null : sku,
-        'stock': totalStock,
+        'stock': stock ?? totalStock,
         if (variants.isNotEmpty) 'size': variants.first.size,
         if (variants.isNotEmpty) 'color': variants.first.color,
         'variants': variants.map((v) => v.toJson()).toList(),

@@ -359,6 +359,17 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
     LinearGradient(colors: [Color(0xFF818CF8), Color(0xFF4F46E5)]),
   ];
 
+  static LinearGradient _lightWallGradient(LinearGradient g) {
+    final left = Color.lerp(g.colors[0], Colors.white, 0.72)!;
+    final right = Color.lerp(g.colors[1], Colors.white, 0.38)!;
+    return LinearGradient(
+      begin: Alignment.centerLeft,
+      end: Alignment.centerRight,
+      colors: [left, Color.lerp(left, right, 0.5)!, right],
+      stops: const [0.0, 0.5, 1.0],
+    );
+  }
+
   Widget _hotCarousel(List<CatalogProductView> items) {
     final loopCount = 10000;
     return RepaintBoundary(
@@ -408,6 +419,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
   Widget _hotBanner(CatalogProductView p, int index) {
     final gradient = _promoGradients[index % _promoGradients.length];
     final accent = Color.lerp(gradient.colors[0], gradient.colors[1], 0.6)!;
+    final lightGradient = _lightWallGradient(gradient);
     final hasImage = (p.imageUrl ?? '').isNotEmpty;
     return GestureDetector(
       onTap: () => _openProduct(p),
@@ -421,7 +433,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
               height: 194,
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
               decoration: BoxDecoration(
-                gradient: gradient,
+                gradient: lightGradient,
                 borderRadius: BorderRadius.circular(22),
                 boxShadow: [
                   BoxShadow(
@@ -546,7 +558,6 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                       ? _GradientBlendedImage(
                           imageUrl: p.imageUrl!,
                           width: 160,
-                          gradient: gradient,
                           errorFallback: _promoBadge(p, gradient),
                         )
                       : _promoBadge(p, gradient),
@@ -581,13 +592,11 @@ class _GradientBlendedImage extends StatefulWidget {
   const _GradientBlendedImage({
     required this.imageUrl,
     required this.width,
-    required this.gradient,
     required this.errorFallback,
   });
 
   final String imageUrl;
   final double width;
-  final LinearGradient gradient;
   final Widget errorFallback;
 
   @override
@@ -645,16 +654,15 @@ class _GradientBlendedImageState extends State<_GradientBlendedImage> {
     if (image == null) return const SizedBox.shrink();
     return CustomPaint(
       size: Size(widget.width, double.infinity),
-      painter: _GradientColorImagePainter(image, widget.gradient),
+      painter: _GradientColorImagePainter(image),
     );
   }
 }
 
 class _GradientColorImagePainter extends CustomPainter {
-  _GradientColorImagePainter(this.image, this.gradient);
+  _GradientColorImagePainter(this.image);
 
   final ui.Image image;
-  final LinearGradient gradient;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -668,42 +676,113 @@ class _GradientColorImagePainter extends CustomPainter {
       size.width / src.width,
       size.height / src.height,
     );
-    final dst = Rect.fromCenter(
+    final imgRect = Rect.fromCenter(
       center: size.center(Offset.zero),
       width: src.width * scale,
       height: src.height * scale,
     );
-    // Draw the image twice: first as grayscale, then multiply the gradient
-    // over it (upper layer), so the photo is seen entirely in the card's
-    // gradient color with no foreign hues and no white background.
-    final gray = Paint()
-      ..colorFilter = const ColorFilter.matrix(<double>[
-        0.299, 0.587, 0.114, 0, 0, //
-        0.299, 0.587, 0.114, 0, 0, //
-        0.299, 0.587, 0.114, 0, 0, //
-        0, 0, 0, 1, 0, //
-      ])
-      ..filterQuality = FilterQuality.medium;
-    canvas.drawImageRect(image, src, dst, gray);
-    canvas.drawRect(
-      dst,
-      Paint()
-        ..shader = gradient.createShader(dst)
-        ..blendMode = BlendMode.multiply,
+
+    // Frame geometry: photo, an ivory mat around it, then a 3D wooden frame.
+    const double mat = 7;
+    const double frame = 15;
+    final matRect = imgRect.inflate(mat);
+    final frameOuterRect = matRect.inflate(frame);
+    final frameOuter =
+        RRect.fromRectAndRadius(frameOuterRect, const Radius.circular(16));
+    final frameInner =
+        RRect.fromRectAndRadius(matRect, const Radius.circular(10));
+
+    // Lay the frame down slightly from vertical (little tilt).
+    const double tiltDeg = 7.5;
+    final tilt = tiltDeg * math.pi / 180;
+    final cosT = math.cos(tilt);
+    final sinT = math.sin(tilt);
+    final fw = frameOuterRect.width;
+    final fh = frameOuterRect.height;
+    final rotW = fw * cosT + fh * sinT;
+    final rotH = fw * sinT + fh * cosT;
+    final fit = math.min(
+      1.0,
+      math.min(size.width / rotW, size.height / rotH),
     );
-    // Soft white glow so the image side of the card reads lighter.
-    canvas.drawRect(
-      dst,
+
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    canvas.save();
+    canvas.translate(cx, cy);
+    canvas.rotate(tilt);
+    canvas.scale(fit);
+    canvas.translate(-cx, -cy);
+
+    // Drop shadow so the frame appears lifted off the wall.
+    canvas.save();
+    canvas.translate(0, 12);
+    canvas.drawRRect(
+      frameOuter,
       Paint()
-        ..shader = const RadialGradient(
-          radius: 1.1,
-          colors: [Color(0x66FFFFFF), Colors.transparent],
-          stops: [0.0, 0.85],
-        ).createShader(dst),
+        ..color = const Color(0x4D000000)
+        ..maskFilter = const ui.MaskFilter.blur(BlurStyle.normal, 16),
     );
+    canvas.restore();
+    canvas.drawRRect(
+      frameOuter,
+      Paint()
+        ..color = const Color(0x33000000)
+        ..maskFilter = const ui.MaskFilter.blur(BlurStyle.normal, 5),
+    );
+
+    // Ivory mat between the frame and the photo.
+    canvas.drawRRect(frameInner, Paint()..color = const Color(0xFFF7F1E6));
+
+    // Wooden frame ring with a vertical bevel gradient.
+    final framePath = Path.combine(
+      PathOperation.difference,
+      Path()..addRRect(frameOuter),
+      Path()..addRRect(frameInner),
+    );
+    canvas.drawPath(
+      framePath,
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFFE7C08A),
+            Color(0xFF9C6B3A),
+            Color(0xFF3E2610),
+            Color(0xFF6B4520),
+          ],
+          stops: [0.0, 0.35, 0.85, 1.0],
+        ).createShader(frameOuterRect),
+    );
+    // Bevel lip: light inner edge, dark outer edge.
+    canvas.drawRRect(
+      frameInner,
+      Paint()
+        ..color = const Color(0x99FFF3DC)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5,
+    );
+    canvas.drawRRect(
+      frameOuter,
+      Paint()
+        ..color = const Color(0x40000000)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2,
+    );
+
+    // The photo, full color, on top of the mat.
+    canvas.drawImageRect(
+      image,
+      src,
+      imgRect,
+      Paint()..filterQuality = FilterQuality.medium,
+    );
+
+    canvas.restore();
   }
 
   @override
   bool shouldRepaint(_GradientColorImagePainter oldDelegate) =>
-      oldDelegate.image != image || oldDelegate.gradient != gradient;
+      oldDelegate.image != image;
 }

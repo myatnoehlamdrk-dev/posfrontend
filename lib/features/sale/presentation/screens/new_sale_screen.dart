@@ -49,7 +49,6 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
 
   bool _pdfExportEnabled = true;
   bool _printVoucherEnabled = false;
-  bool _submittingDraft = false;
   String _printFormat = 'thermal';
   String _paperSize = '58mm';
   static const _keyPdfExport = 'print_pdf_export';
@@ -142,37 +141,6 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     }
   }
 
-  Future<void> _submitDraft() async {
-    if (_submittingDraft) return;
-    setState(() => _submittingDraft = true);
-    try {
-      final staffName = AuthScope.userOf(context)?.fullName ?? 'Staff';
-      _viewModel.setCustomerName(_customerNameCtrl.text);
-      _viewModel.setCustomerPhone(_customerPhoneCtrl.text);
-      _viewModel.setCustomerLocation(_customerLocationCtrl.text);
-      final success = await _viewModel.submitDraft(staffName: staffName);
-      if (!success) {
-        if (!mounted) return;
-        showErrorSnackBar(context, Exception(_viewModel.errorMessage ?? 'Failed to save draft'));
-        return;
-      }
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Draft saved successfully!'), backgroundColor: Color(0xFF2563EB)),
-      );
-      setState(() {
-        _customerNameCtrl.text = 'Customer';
-        _customerPhoneCtrl.clear();
-        _customerLocationCtrl.clear();
-        _discountCtrl.text = '0';
-        _notesCtrl.clear();
-      });
-      _viewModel.clearCart();
-    } finally {
-      if (mounted) setState(() => _submittingDraft = false);
-    }
-  }
-
   @override
   void dispose() {
     _viewModel.dispose();
@@ -235,8 +203,6 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
               const BreadcrumbItem('New Sale', true),
             ]),
             const SizedBox(height: 24),
-            _customerCard(),
-            const SizedBox(height: 16),
             _infoCard(),
             const SizedBox(height: 24),
             _itemsSection(),
@@ -255,205 +221,6 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     );
   }
 
-  Widget _customerCard() {
-    return _card(
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF5F0FF),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.person, color: kPurple, size: 22),
-              ),
-              const SizedBox(width: 14),
-              const Text('Customer',
-                  style: TextStyle(fontSize: 12, color: kGray)),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TextField(
-                      controller: _customerNameCtrl,
-                      style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: kTitle),
-                      decoration: const InputDecoration(
-                        border: InputBorder.none,
-                        isDense: true,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      onChanged: (q) => _viewModel.searchCustomers(q),
-                      onTap: () => _viewModel.showCustomerSuggestions(),
-                    ),
-                    if (_viewModel.showSuggestions && _viewModel.customerSuggestions.isNotEmpty)
-                      Container(
-                        constraints: const BoxConstraints(maxHeight: 160),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: kBorder),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x1A000000),
-                              blurRadius: 8,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          padding: EdgeInsets.zero,
-                          itemCount: _viewModel.customerSuggestions.length,
-                          itemBuilder: (context, index) {
-                            final c = _viewModel.customerSuggestions[index];
-                            return InkWell(
-                              onTap: () {
-                                _viewModel.selectCustomer(c);
-                                _customerNameCtrl.text = _viewModel.customerName;
-                                if (_viewModel.customerPhone.isNotEmpty) {
-                                  _customerPhoneCtrl.text = _viewModel.customerPhone;
-                                }
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 10),
-                                child: Row(
-                                  children: [
-                                    const Icon(Icons.person_outline,
-                                        size: 16, color: kGray),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            c['name'] ?? '',
-                                            style: const TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w500,
-                                                color: kTitle),
-                                          ),
-                                          if (c['phone'] != null &&
-                                              (c['phone'] as String)
-                                                  .isNotEmpty)
-                                            Text(
-                                              c['phone'],
-                                              style: const TextStyle(
-                                                  fontSize: 12, color: kGray),
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              GestureDetector(
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5F0FF),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.edit, color: kPurple, size: 18),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF5F0FF),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.phone, color: kPurple, size: 22),
-              ),
-              const SizedBox(width: 14),
-              const Text('Phone',
-                  style: TextStyle(fontSize: 12, color: kGray)),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextField(
-                  controller: _customerPhoneCtrl,
-                  keyboardType: TextInputType.phone,
-                  style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: kTitle),
-                  decoration: InputDecoration(
-                    hintText: 'Optional',
-                    hintStyle: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: Color(0xFFD1D5DB)),
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF5F0FF),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.location_on, color: kPurple, size: 22),
-              ),
-              const SizedBox(width: 14),
-              const Text('Location',
-                  style: TextStyle(fontSize: 12, color: kGray)),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextField(
-                  controller: _customerLocationCtrl,
-                  style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: kTitle),
-                  decoration: InputDecoration(
-                    hintText: 'Optional',
-                    hintStyle: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: Color(0xFFD1D5DB)),
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _infoCard() {
     final now = DateTime.now();
     final dateStr = '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
@@ -461,23 +228,6 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     return _card(
       child: Row(
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Voucher No.',
-                    style: TextStyle(fontSize: 12, color: kGray)),
-                const SizedBox(height: 4),
-                Text('INV-${_viewModel.voucherRandom}',
-                    style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF2563EB))),
-              ],
-            ),
-          ),
-          Container(width: 1, height: 40, color: kBorder),
-          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -817,25 +567,6 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           child: Row(
             children: [
               const Expanded(
-                child: Text('Order ID',
-                    style: TextStyle(fontSize: 14, color: kGray)),
-              ),
-              Expanded(
-                flex: 2,
-                child: Text('ORD-${_viewModel.orderRandom}',
-                    style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF2563EB))),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        _card(
-          child: Row(
-            children: [
-              const Expanded(
                 child: Text('Payment Method',
                     style: TextStyle(fontSize: 14, color: kGray)),
               ),
@@ -903,13 +634,6 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   Widget _actionButtons() {
     return Row(
       children: [
-        Expanded(
-          child: _outlineBtn('Draft', Icons.save_outlined, _submittingDraft, () {
-            if (_viewModel.items.isEmpty) return;
-            _submitDraft();
-          }),
-        ),
-        const SizedBox(width: 10),
         Expanded(
           child: _outlineBtn('Preview', Icons.visibility_outlined, false, () async {
             if (_viewModel.items.isEmpty) return;

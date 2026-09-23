@@ -3,7 +3,7 @@ import 'package:posfrontend/core/auth/token_storage.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/features/auth/presentation/screens/login_screen.dart';
 import 'package:posfrontend/features/product/presentation/screens/products_catalog_screen.dart';
-import 'package:posfrontend/features/product/presentation/screens/add_product_screen.dart';
+import 'package:posfrontend/features/product/presentation/screens/add_product_options_screen.dart';
 import 'package:posfrontend/features/sale/presentation/screens/sale_items_screen.dart';
 import 'package:posfrontend/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:posfrontend/features/inventory/presentation/screens/inventory_screen.dart';
@@ -189,7 +189,7 @@ class AppDrawer extends StatelessWidget {
         destination = const ProductsCatalogScreen();
         break;
       case 'Add Product':
-        destination = const AddProductScreen();
+        destination = const AddProductOptionsScreen();
         break;
       case 'Sale Item':
         destination = const SaleItemScreen();
