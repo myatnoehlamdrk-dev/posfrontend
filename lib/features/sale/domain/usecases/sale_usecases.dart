@@ -53,13 +53,13 @@ class CreateSaleParams {
   });
 }
 
-class CreateOrderUseCase extends UseCase<void, CreateOrderParams> {
+class CreateOrderUseCase extends UseCase<String, CreateOrderParams> {
   final OrderRepository _repository;
 
   CreateOrderUseCase(this._repository);
 
   @override
-  Future<void> call(CreateOrderParams params) {
+  Future<String> call(CreateOrderParams params) {
     return _repository.createOrder(
       userName: params.userName,
       voucherNo: params.voucherNo,

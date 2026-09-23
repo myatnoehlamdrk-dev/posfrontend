@@ -56,6 +56,7 @@ dependencies:
   injectable: ^2.5.0
   # Value equality for entities/failures
   equatable: ^2.1.0
+  image: ^4.10.1
 
 dev_dependencies:
   flutter_test:

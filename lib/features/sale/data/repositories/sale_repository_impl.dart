@@ -40,7 +40,7 @@ class OrderRepositoryImpl implements OrderRepository {
       : _remoteDataSource = remoteDataSource ?? SaleRemoteDataSource();
 
   @override
-  Future<void> createOrder({
+  Future<String> createOrder({
     required String userName,
     required String voucherNo,
     required String orderId,
@@ -64,6 +64,14 @@ class OrderRepositoryImpl implements OrderRepository {
   @override
   Future<void> updateOrderStatus({required String orderId, required String status}) {
     return _remoteDataSource.updateOrderStatus(orderId: orderId, status: status);
+  }
+
+  @override
+  Future<String> addOrderItems({
+    required String orderId,
+    required List<SaleItemEntity> items,
+  }) {
+    return _remoteDataSource.addOrderItems(orderId: orderId, items: items);
   }
 
   @override

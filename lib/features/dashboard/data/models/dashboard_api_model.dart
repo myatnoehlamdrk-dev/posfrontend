@@ -4,15 +4,19 @@ import 'package:posfrontend/features/dashboard/domain/entities/dashboard.dart';
 
 class DashboardApiModel {
   final List<MetricEntity> metrics;
-  final List<TrendSeriesEntity> trendSeries;
+  final List<CategoryDistributionEntity> categoryDistribution;
+  final List<CategoryQuantityEntity> categoryQuantity;
   final List<ProductItemEntity> mostBought;
   final List<ProductItemEntity> leastBought;
+  final List<ProductItemEntity> noBought;
 
   const DashboardApiModel({
     required this.metrics,
-    required this.trendSeries,
+    required this.categoryDistribution,
+    required this.categoryQuantity,
     required this.mostBought,
     required this.leastBought,
+    required this.noBought,
   });
 
   static const List<int> _categoryColors = [
@@ -28,9 +32,11 @@ class DashboardApiModel {
 
   factory DashboardApiModel.fromJson(Map<String, dynamic> json) {
     final stats = json['stats'] as Map<String, dynamic>? ?? {};
-    final trendRes = json['category_trend'] as List<dynamic>? ?? [];
+    final distRes = json['category_distribution'] as List<dynamic>? ?? [];
+    final catQtyRes = json['category_quantity'] as List<dynamic>? ?? [];
     final topRes = json['top_products'] as List<dynamic>? ?? [];
     final leastRes = json['least_products'] as List<dynamic>? ?? [];
+    final noBoughtRes = json['no_bought_products'] as List<dynamic>? ?? [];
 
     final totalProducts = stats.integer('total_products');
     final inStock = stats.integer('in_stock');
@@ -72,25 +78,25 @@ class DashboardApiModel {
       ),
     ];
 
-    final trendSeries = <TrendSeriesEntity>[];
-    for (var i = 0; i < trendRes.length; i++) {
-      final item = trendRes[i] as Map<String, dynamic>;
-      final values = (item['values'] as List<dynamic>?)
-              ?.map((e) => (e as num).toDouble())
-              .toList() ??
-          [];
-      final dates = (item['dates'] as List<dynamic>?)
-              ?.map((e) => e.toString())
-              .toList() ??
-          [];
-      final name = item['category'] as String? ?? 'Unknown';
-      trendSeries.add(TrendSeriesEntity(
-        name: name,
+    final categoryDistribution = <CategoryDistributionEntity>[];
+    for (var i = 0; i < distRes.length; i++) {
+      final item = distRes[i] as Map<String, dynamic>;
+      final count = item.integer('product_count');
+      if (count <= 0) continue;
+      categoryDistribution.add(CategoryDistributionEntity(
+        category: item.str('category_name', 'Unknown'),
+        productCount: count,
         colorValue: _categoryColors[i % _categoryColors.length],
-        values: values,
-        dates: dates,
       ));
     }
+
+    final categoryQuantity = catQtyRes.map<CategoryQuantityEntity>((e) {
+      final item = e as Map<String, dynamic>;
+      return CategoryQuantityEntity(
+        category: item.str('category_name', 'Unknown'),
+        totalQuantity: item.integer('total_quantity'),
+      );
+    }).toList();
 
     final mostBought = topRes.map<ProductItemEntity>((e) {
       final item = e as Map<String, dynamic>;
@@ -120,20 +126,37 @@ class DashboardApiModel {
       );
     }).toList();
 
+    final noBought = noBoughtRes.map<ProductItemEntity>((e) {
+      final item = e as Map<String, dynamic>;
+      final name = item['product_name'] as String? ?? 'Unknown';
+      final image = item['product_image'] as String? ?? '';
+      return ProductItemEntity(
+        name: name,
+        sold: 'Never sold',
+        iconCodePoint: 0xe04c,
+        iconFontFamily: 'MaterialIcons',
+        image: image,
+      );
+    }).toList();
+
     return DashboardApiModel(
       metrics: metrics,
-      trendSeries: trendSeries,
+      categoryDistribution: categoryDistribution,
+      categoryQuantity: categoryQuantity,
       mostBought: mostBought,
       leastBought: leastBought,
+      noBought: noBought,
     );
   }
 
   DashboardEntity toEntity() {
     return DashboardEntity(
       metrics: metrics,
-      trendSeries: trendSeries,
+      categoryDistribution: categoryDistribution,
+      categoryQuantity: categoryQuantity,
       mostBought: mostBought,
       leastBought: leastBought,
+      noBought: noBought,
     );
   }
 }

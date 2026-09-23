@@ -17,4 +17,16 @@ class DashboardRemoteDataSource {
     );
     return response.data as Map<String, dynamic>;
   }
+
+  Future<Map<String, dynamic>> getMonthlySales({
+    required int year,
+    CancelToken? cancelToken,
+  }) async {
+    final response = await _dio.get(
+      '/api/dashboard/monthly-sales',
+      queryParameters: {'year': year},
+      cancelToken: cancelToken,
+    );
+    return response.data as Map<String, dynamic>;
+  }
 }

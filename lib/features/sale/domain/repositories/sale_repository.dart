@@ -23,7 +23,7 @@ abstract class SaleRepository {
 }
 
 abstract class OrderRepository {
-  Future<void> createOrder({
+  Future<String> createOrder({
     required String userName,
     required String voucherNo,
     required String orderId,
@@ -38,6 +38,10 @@ abstract class OrderRepository {
   });
 
   Future<void> updateOrderStatus({required String orderId, required String status});
+  Future<String> addOrderItems({
+    required String orderId,
+    required List<SaleItemEntity> items,
+  });
   Future<void> deleteOrder(String orderId);
 }
 

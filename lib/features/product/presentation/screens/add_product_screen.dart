@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:posfrontend/core/extensions/number_extensions.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/features/product/data/models/product_create_models.dart';
 import 'package:posfrontend/features/product/domain/entities/product_detail.dart';
-import 'package:posfrontend/features/product/presentation/entities/product_detail_view.dart' hide ProductVariantDetail;
 import 'package:posfrontend/features/product/presentation/viewmodels/add_product_view_model.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
@@ -103,42 +101,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
             ),
             const SizedBox(height: 20),
             FormCard(
-              label: 'Use from Purchase',
-              helper: 'Select a pending purchase item to auto-fill product details.',
-              child: _vm.loadingPurchaseItems
-                  ? const SizedBox(
-                      height: 48,
-                      child: Center(
-                        child: SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: Color(0xFF6D28D9),
-                          ),
-                        ),
-                      ),
-                    )
-                  : _vm.pendingPurchaseItems.isEmpty
-                      ? const SizedBox(
-                          height: 48,
-                          child: Center(
-                            child: Text(
-                              'No pending purchases available.',
-                              style: TextStyle(color: kGray, fontSize: 14),
-                            ),
-                          ),
-                        )
-                      : _pendingPurchaseSection(),
-            ),
-            const SizedBox(height: 16),
-            FormCard(
-              label: 'Find Existing Product',
-              helper: 'Type to search existing products. Selecting one fills all fields.',
-              child: _productSearchField(),
-            ),
-            const SizedBox(height: 16),
-            FormCard(
               label: 'Inventory Type',
               helper: 'Choose which inventory this product belongs to.',
               child: _inventoryTypeToggle(),
@@ -176,122 +138,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _pendingPurchaseSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        DropdownButtonHideUnderline(
-          child: DropdownButton<String>(
-            isExpanded: true,
-            value: _vm.selectedPurchaseItemId,
-            hint: const Text('Select a pending purchase item...', style: TextStyle(color: kGray, fontSize: 14)),
-            items: _vm.pendingPurchaseItems.map((item) {
-              final price = item.unitPrice.withCommas();
-              return DropdownMenuItem(
-                value: item.id,
-                child: Text(
-                  '${item.productName} (x${item.quantity} @ MMK $price)',
-                  style: const TextStyle(fontSize: 13),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              );
-            }).toList(),
-            onChanged: (val) {
-              if (val == null) return;
-              final item = _vm.pendingPurchaseItems.firstWhere((i) => i.id == val);
-              _vm.selectPurchaseItem(item);
-              _snack('Loaded: ${item.productName} (${item.quantity} units)');
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _productSearchField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextField(
-          controller: _vm.productSearch,
-          onChanged: _vm.searchProducts,
-          decoration: InputDecoration(
-            hintText: 'Search product name...',
-            hintStyle: const TextStyle(color: kGray, fontSize: 14),
-            prefixIcon: const Icon(Icons.search, color: kGray, size: 22),
-            suffixIcon: _vm.productSearch.text.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.close, color: kGray, size: 20),
-                    onPressed: () {
-                      _vm.productSearch.clear();
-                      _vm.dismissSearch();
-                    },
-                  )
-                : null,
-            filled: true,
-            fillColor: kBg,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: kBorder),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: kBorder),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: kPurple700),
-            ),
-          ),
-        ),
-        if (_vm.showSearchResults && _vm.searchResults.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Container(
-            constraints: const BoxConstraints(maxHeight: 200),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border.all(color: kBorder),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: ListView.builder(
-              shrinkWrap: true,
-              padding: const EdgeInsets.all(8),
-              itemCount: _vm.searchResults.length,
-              itemBuilder: (ctx, i) {
-                final p = _vm.searchResults[i];
-                return ListTile(
-                  key: ValueKey(p.id),
-                  dense: true,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  leading: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: kLightPurple,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(Icons.inventory_2_outlined, color: kPurple700, size: 20),
-                  ),
-                  title: Text(p.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: kTitle)),
-                  subtitle: Text(
-                    [if (p.brand.isNotEmpty) p.brand, if (p.sku.isNotEmpty) 'SKU: ${p.sku}'].join(' | '),
-                    style: const TextStyle(fontSize: 12, color: kGray),
-                  ),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: kGray),
-                  onTap: () {
-                    _vm.selectProduct(p);
-                    _vm.setSearchCategoryAndPackage(p);
-                  },
-                );
-              },
-            ),
-          ),
-        ],
-      ],
     );
   }
 

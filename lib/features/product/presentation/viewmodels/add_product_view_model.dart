@@ -9,7 +9,6 @@ import 'package:posfrontend/features/category/domain/entities/category.dart';
 import 'package:posfrontend/features/category/data/repositories/category_repository_impl.dart';
 import 'package:posfrontend/shared/repositories/imgbb_repository_impl.dart';
 import 'package:posfrontend/features/product/data/models/product_create_models.dart';
-import 'package:posfrontend/features/product/presentation/entities/product_detail_view.dart' hide ProductVariantDetail;
 import 'package:posfrontend/features/product/domain/entities/product_detail.dart';
 import 'package:posfrontend/features/product/data/repositories/product_create_repository_impl.dart';
 
@@ -18,7 +17,6 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
   final TextEditingController name = TextEditingController();
   final TextEditingController brand = TextEditingController();
   final TextEditingController sku = TextEditingController();
-  final TextEditingController productSearch = TextEditingController();
   final FocusNode imageFocus = FocusNode();
 
   bool _isSet = false;
@@ -29,15 +27,6 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
 
   String? _selectedSupplierId;
   String? get selectedSupplierId => _selectedSupplierId;
-
-  List<ProductSearchResult> _searchResults = [];
-  List<ProductSearchResult> get searchResults => _searchResults;
-
-  bool _showSearchResults = false;
-  bool get showSearchResults => _showSearchResults;
-
-  String? _selectedPurchaseItemId;
-  String? get selectedPurchaseItemId => _selectedPurchaseItemId;
 
   List<Category> _categories = [];
   List<Category> get categories => _categories;
@@ -53,12 +42,6 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
 
   List<SupplierOption> _suppliers = [];
   List<SupplierOption> get suppliers => _suppliers;
-
-  List<PendingPurchaseItem> _pendingPurchaseItems = [];
-  List<PendingPurchaseItem> get pendingPurchaseItems => _pendingPurchaseItems;
-
-  bool _loadingPurchaseItems = false;
-  bool get loadingPurchaseItems => _loadingPurchaseItems;
 
   File? _imageFile;
   File? get imageFile => _imageFile;
@@ -119,7 +102,7 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
   }
 
   Future<void> loadInitialData({ProductDetailEntity? existingProduct}) async {
-    await Future.wait([loadSuppliers(), loadPendingPurchaseItems()]);
+    await Future.wait([loadSuppliers()]);
     final product = existingProduct;
     if (product != null) {
       initFromProduct(product);
@@ -146,87 +129,6 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
     final list = await runAsync((token) => _repository.getSuppliers(cancelToken: token));
     if (list != null) _suppliers = list;
     notifyListeners();
-  }
-
-  Future<void> loadPendingPurchaseItems() async {
-    _loadingPurchaseItems = true;
-    notifyListeners();
-    final list = await runAsync((token) => _repository.getPendingPurchaseItems(cancelToken: token));
-    _pendingPurchaseItems = list ?? [];
-    _loadingPurchaseItems = false;
-    notifyListeners();
-  }
-
-  void selectPurchaseItem(PendingPurchaseItem item) {
-    _selectedPurchaseItemId = item.id;
-    name.text = item.productName;
-    if (item.supplierId.isNotEmpty) _selectedSupplierId = item.supplierId;
-    _variants.clear();
-    _variants.add(ProductCreateVariant(
-      size: 'Regular', color: '',
-      quantity: item.quantity, price: item.unitPrice.toDouble(),
-    ));
-    notifyListeners();
-  }
-
-  Future<void> searchProducts(String query) async {
-    if (query.length < 2) {
-      _searchResults = [];
-      _showSearchResults = false;
-      notifyListeners();
-      return;
-    }
-    final results = await runAsync((token) => _repository.searchProducts(query, cancelToken: token), showLoading: false);
-    _searchResults = results ?? [];
-    _showSearchResults = _searchResults.isNotEmpty;
-    notifyListeners();
-  }
-
-  void selectProduct(ProductSearchResult product) {
-    name.text = product.name;
-    brand.text = product.brand;
-    sku.text = product.sku;
-    _selectedSupplierId = product.supplierId;
-    _imageUrl = product.imageUrl;
-    _isSet = product.isSet;
-    _inventoryType = product.inventoryType.isNotEmpty ? product.inventoryType : 'self';
-    _showSearchResults = false;
-    _searchResults = [];
-    productSearch.clear();
-    _variants.clear();
-    if (product.variants.isNotEmpty) {
-      for (final v in product.variants) {
-        _variants.add(ProductCreateVariant(
-          size: (v['size'] ?? '').toString(),
-          color: (v['color'] ?? '').toString(),
-          quantity: v['quantity'] as int? ?? 0,
-          price: (v['price'] as num?)?.toDouble() ?? 0.0,
-        ));
-      }
-    } else {
-      _variants.add(ProductCreateVariant(
-        size: product.size.isNotEmpty ? product.size : 'Small',
-        color: product.color.isNotEmpty ? product.color : 'Black',
-      ));
-    }
-    notifyListeners();
-  }
-
-  void setSearchCategoryAndPackage(ProductSearchResult product) async {
-    await loadCategories();
-    if (product.categoryId.isNotEmpty) {
-      final cat = _categories.where((c) => c.id == product.categoryId).firstOrNull;
-      if (cat != null) {
-        await onCategoryChanged(cat);
-        if (product.packageId.isNotEmpty) {
-          final pkg = _packages.where((p) => p.id == product.packageId).firstOrNull;
-          if (pkg != null) {
-            _selectedPackage = pkg;
-            notifyListeners();
-          }
-        }
-      }
-    }
   }
 
   Future<void> loadCategories() async {
@@ -283,12 +185,6 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
   void addSupplier(SupplierOption supplier) {
     _suppliers.insert(0, supplier);
     _selectedSupplierId = supplier.id;
-    notifyListeners();
-  }
-
-  void dismissSearch() {
-    _showSearchResults = false;
-    _searchResults = [];
     notifyListeners();
   }
 
@@ -375,7 +271,6 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
       supplierSince: '',
       supplierAddress: '',
       imageDeleteUrl: _imageDeleteUrl ?? '',
-      purchaseItemId: _selectedPurchaseItemId ?? '',
     );
 
     try {
@@ -399,7 +294,6 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
     name.dispose();
     brand.dispose();
     sku.dispose();
-    productSearch.dispose();
     imageFocus.dispose();
     super.dispose();
   }

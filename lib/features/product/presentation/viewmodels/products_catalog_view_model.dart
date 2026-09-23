@@ -15,6 +15,8 @@ class ProductsCatalogViewModel extends BaseViewModel {
   List<CategoryShowcaseData> _categories = [];
   List<CategoryShowcaseData> get categories => _categories;
 
+  List<CatalogProductView> _hotProducts = [];
+
   String _searchQuery = '';
   String get searchQuery => _searchQuery;
 
@@ -89,9 +91,51 @@ class ProductsCatalogViewModel extends BaseViewModel {
     } finally {
       setLoading(false);
     }
+
+    await _loadHotProducts();
+  }
+
+  Future<void> _loadHotProducts() async {
+    try {
+      final response = await _dio.get(
+        '/api/products/latest',
+        queryParameters: {'limit': 4},
+        cancelToken: cancelToken,
+      );
+
+      final data = response.data;
+      final List<dynamic> items =
+          data is Map ? (data['data'] ?? []) : (data as List? ?? []);
+
+      _hotProducts = items.map((p) {
+        final product = p as Map<String, dynamic>;
+        final category = product['category']?.toString() ?? '';
+        return CatalogProductView(
+          id: product['id']?.toString() ?? '',
+          name: product['name']?.toString() ?? '',
+          brand: product['brand']?.toString() ?? '',
+          sku: product['sku']?.toString() ?? '',
+          price: (product['variants'] as List?)?.isNotEmpty == true
+              ? ((product['variants'] as List).first['price'] ?? 0).toDouble()
+              : 0.0,
+          stock: (product['stock'] as num?)?.toInt() ?? 0,
+          isSet: product['isSet'] == true,
+          category: category,
+          packageId: product['packageId']?.toString() ?? '',
+          icon: CatalogProductView.iconFor(category),
+          color: CatalogProductView.colorFor(category),
+          imageUrl: product['image']?.toString().trim(),
+          createdBy: product['createdBy']?.toString() ?? '',
+        );
+      }).toList();
+      notifyListeners();
+    } catch (e) {
+      // Non-fatal; the carousel falls back to category products.
+    }
   }
 
   List<CatalogProductView> get hotProducts {
+    if (_hotProducts.isNotEmpty) return _hotProducts;
     final allProducts = _categories.expand((c) => c.products).toList();
     return allProducts.length > 4 ? allProducts.sublist(0, 4) : allProducts;
   }

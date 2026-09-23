@@ -2,19 +2,30 @@ import 'package:equatable/equatable.dart';
 
 class DashboardEntity extends Equatable {
   final List<MetricEntity> metrics;
-  final List<TrendSeriesEntity> trendSeries;
+  final List<CategoryDistributionEntity> categoryDistribution;
+  final List<CategoryQuantityEntity> categoryQuantity;
   final List<ProductItemEntity> mostBought;
   final List<ProductItemEntity> leastBought;
+  final List<ProductItemEntity> noBought;
 
   const DashboardEntity({
     required this.metrics,
-    required this.trendSeries,
+    required this.categoryDistribution,
+    required this.categoryQuantity,
     required this.mostBought,
     required this.leastBought,
+    required this.noBought,
   });
 
   @override
-  List<Object?> get props => [metrics, trendSeries, mostBought, leastBought];
+  List<Object?> get props => [
+        metrics,
+        categoryDistribution,
+        categoryQuantity,
+        mostBought,
+        leastBought,
+        noBought,
+      ];
 }
 
 class MetricEntity extends Equatable {
@@ -45,21 +56,45 @@ class MetricEntity extends Equatable {
       ];
 }
 
-class TrendSeriesEntity extends Equatable {
-  final String name;
+class CategoryDistributionEntity extends Equatable {
+  final String category;
+  final int productCount;
   final int colorValue;
-  final List<double> values;
-  final List<String> dates;
 
-  const TrendSeriesEntity({
-    required this.name,
+  const CategoryDistributionEntity({
+    required this.category,
+    required this.productCount,
     required this.colorValue,
-    required this.values,
-    required this.dates,
   });
 
   @override
-  List<Object?> get props => [name, colorValue, values, dates];
+  List<Object?> get props => [category, productCount, colorValue];
+}
+
+class CategoryQuantityEntity extends Equatable {
+  final String category;
+  final int totalQuantity;
+
+  const CategoryQuantityEntity({
+    required this.category,
+    required this.totalQuantity,
+  });
+
+  @override
+  List<Object?> get props => [category, totalQuantity];
+}
+
+class MonthlySalesEntity extends Equatable {
+  final int month;
+  final int total;
+
+  const MonthlySalesEntity({
+    required this.month,
+    required this.total,
+  });
+
+  @override
+  List<Object?> get props => [month, total];
 }
 
 class ProductItemEntity extends Equatable {

@@ -56,7 +56,7 @@ class SaleRemoteDataSource {
     }
   }
 
-  Future<void> createOrder({
+  Future<String> createOrder({
     required String userName,
     required String voucherNo,
     required String orderId,
@@ -99,6 +99,11 @@ class SaleRemoteDataSource {
       if (resp.statusCode != 201) {
         throw ApiException(statusCode: resp.statusCode, message: 'Failed to save order');
       }
+      final data = resp.data;
+      if (data is Map<String, dynamic>) {
+        return data['id']?.toString() ?? '';
+      }
+      return '';
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
@@ -107,6 +112,38 @@ class SaleRemoteDataSource {
   Future<void> updateOrderStatus({required String orderId, required String status}) async {
     try {
       await _dio.put('/api/orders/$orderId', data: {'status': status});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  Future<String> addOrderItems({
+    required String orderId,
+    required List<SaleItemEntity> items,
+  }) async {
+    final itemsData = items.map((item) => {
+      'productId': int.tryParse(item.productId),
+      'productName': item.productName,
+      'quantity': item.quantity,
+      'unitPrice': item.unitPrice,
+      'subtotal': item.subtotal,
+      if (item.size != null) 'size': item.size,
+      if (item.color?.isNotEmpty == true) 'color': item.color,
+      if (item.notes?.isNotEmpty == true) 'notes': item.notes,
+    }).toList();
+
+    try {
+      final resp = await _dio.post('/api/orders/$orderId/items', data: {
+        'items': itemsData,
+      });
+      if (resp.statusCode != 200) {
+        throw ApiException(statusCode: resp.statusCode, message: 'Failed to add items to order');
+      }
+      final data = resp.data;
+      if (data is Map<String, dynamic>) {
+        return data['id']?.toString() ?? '';
+      }
+      return '';
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }

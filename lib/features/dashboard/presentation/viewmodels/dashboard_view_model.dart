@@ -11,36 +11,43 @@ class DashboardViewModel extends BaseViewModel {
   DashboardEntity? _data;
   DashboardEntity? get data => _data;
 
-  int _days = 365;
-  bool _isLoadingTrend = false;
-  bool get isLoadingTrend => _isLoadingTrend;
+  List<int> _years = [];
+  List<int> get years => _years;
+
+  int _selectedYear = DateTime.now().year;
+  int get selectedYear => _selectedYear;
+
+  List<MonthlySalesEntity> _monthlySales = [];
+  List<MonthlySalesEntity> get monthlySales => _monthlySales;
+
+  bool _isLoadingMonthly = false;
+  bool get isLoadingMonthly => _isLoadingMonthly;
+
+  String? _monthlyError;
+  String? get monthlyError => _monthlyError;
 
   Future<void> load({int? days}) async {
-    if (days != null) _days = days;
     final result = await runAsync(
-      (token) => _repository.getDashboardData(days: _days),
+      (token) => _repository.getDashboardData(days: days ?? 365),
       errorPrefix: 'Failed to load dashboard',
     );
     if (result != null) _data = result;
+    await loadMonthlySales(year: _selectedYear);
   }
 
-  Future<void> loadTrend({required int days}) async {
-    _isLoadingTrend = true;
+  Future<void> loadMonthlySales({required int year}) async {
+    _selectedYear = year;
+    _isLoadingMonthly = true;
+    _monthlyError = null;
     notifyListeners();
     try {
-      final result = await _repository.getDashboardData(days: days);
-      if (_data != null) {
-        _data = DashboardEntity(
-          metrics: _data!.metrics,
-          trendSeries: result.trendSeries,
-          mostBought: _data!.mostBought,
-          leastBought: _data!.leastBought,
-        );
-      }
-    } catch (_) {
-      // Trend load failure is non-critical; keep existing data
+      final result = await _repository.getMonthlySales(year: year);
+      if (result.years.isNotEmpty) _years = result.years;
+      _monthlySales = result.months;
+    } catch (e) {
+      _monthlyError = e.toString();
     }
-    _isLoadingTrend = false;
+    _isLoadingMonthly = false;
     notifyListeners();
   }
 }
