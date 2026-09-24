@@ -1,4 +1,5 @@
 import 'package:posfrontend/core/extensions/map_json_extensions.dart';
+import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/features/product/domain/entities/product_variant.dart';
 import 'package:posfrontend/features/product/domain/entities/product_detail.dart';
 
@@ -90,7 +91,7 @@ class ProductDetailApiModel {
       supplierId: json.str('supplierId', '—'),
       supplierName: json.str('supplierName', '—'),
       supplierContact: json.str('supplierContact', '—'),
-      imageUrl: image != null && image.isNotEmpty ? image : null,
+      imageUrl: resolveMediaUrl(image),
       variants: parsedVariants,
       createdBy: json.str('createdBy'),
       createdAt: json.str('createdAt'),

@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:posfrontend/core/network/api_client.dart';
+import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/features/cart/data/cart_store.dart';
 import 'package:posfrontend/features/cart/domain/entities/cart_card_entity.dart';
 import 'package:posfrontend/features/cart/domain/entities/cart_item_entity.dart';
@@ -13,6 +14,7 @@ import 'package:posfrontend/features/sale/domain/entities/sale.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
+import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 
 class VariantPick {
@@ -110,7 +112,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
           packageId: p['packageId']?.toString() ?? '',
           icon: CatalogProductView.iconFor(categoryName),
           color: CatalogProductView.colorFor(categoryName),
-          imageUrl: p['image']?.toString().trim(),
+          imageUrl: resolveMediaUrl(p['image']?.toString()),
           variants: variants,
           createdBy: p['createdBy']?.toString() ?? '',
         );
@@ -288,12 +290,9 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
         for (final pick in picks) {
           final avail = pick.variant.quantity;
           if (pick.qty > avail) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                    '${p.name} (${variantTitle(pick.variant)}) has only $avail in stock'),
-                backgroundColor: const Color(0xFFEF4444),
-              ),
+            showErrorMessage(
+              context,
+              '${p.name} (${variantTitle(pick.variant)}) has only $avail in stock',
             );
             return;
           }
@@ -312,12 +311,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
       }
       final available = _stockFor(p);
       if (qty > available) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${p.name} has only $available in stock'),
-            backgroundColor: const Color(0xFFEF4444),
-          ),
-        );
+        showErrorMessage(context, '${p.name} has only $available in stock');
         return;
       }
       items.add(CartItemEntity(
@@ -330,13 +324,11 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
       ));
     }
     if (items.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_selectedCount == 0
-              ? 'Select at least one product with a quantity'
-              : 'No item selected'),
-          backgroundColor: const Color(0xFFEF4444),
-        ),
+      showErrorMessage(
+        context,
+        _selectedCount == 0
+            ? 'Select at least one product with a quantity'
+            : 'No item selected',
       );
       return;
     }
@@ -358,11 +350,9 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
         CartStore.instance.value.where((c) => c.orderId.isNotEmpty).toList();
     if (cards.isEmpty) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No existing card to add into. Start a new card first.'),
-          backgroundColor: Color(0xFFEF4444),
-        ),
+      showErrorMessage(
+        context,
+        'No existing card to add into. Start a new card first.',
       );
       return;
     }
@@ -392,15 +382,11 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
       );
     } on AppException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message), backgroundColor: const Color(0xFFEF4444)),
-      );
+      showErrorMessage(context, e.message);
       return;
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to add to existing card: $e'), backgroundColor: const Color(0xFFEF4444)),
-      );
+      showErrorMessage(context, 'Failed to add to existing card: $e');
       return;
     }
 
@@ -442,15 +428,11 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
       );
     } on AppException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message), backgroundColor: const Color(0xFFEF4444)),
-      );
+      showErrorMessage(context, e.message);
       return;
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to add to cart: $e'), backgroundColor: const Color(0xFFEF4444)),
-      );
+      showErrorMessage(context, 'Failed to add to cart: $e');
       return;
     }
 

@@ -1,3 +1,4 @@
+import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/features/shop/domain/entities/shop.dart';
 
 class ShopApiModel {
@@ -23,7 +24,7 @@ class ShopApiModel {
     return ShopApiModel(
       id: json['id']?.toString(),
       logoData: json['logoData'] as String?,
-      logoUrl: json['logoUrl'] as String?,
+      logoUrl: resolveMediaUrl(json['logoUrl'] as String?),
       name: json['name'] as String?,
       type: json['type'] as String?,
       physicalAddress: json['physicalAddress'] as String?,

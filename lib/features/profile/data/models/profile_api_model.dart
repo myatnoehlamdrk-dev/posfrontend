@@ -1,4 +1,5 @@
 import 'package:posfrontend/core/extensions/map_json_extensions.dart';
+import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/features/profile/domain/entities/profile.dart';
 
 class ProfileApiModel {
@@ -11,7 +12,7 @@ class ProfileApiModel {
       type: json.str('type'),
       phone: json.str('phone'),
       social: json.str('social'),
-      image: json.str('image'),
+      image: resolveMediaUrl(json.str('image')) ?? '',
       imageDeleteUrl: json.str('imageDeleteUrl'),
       role: json.str('role'),
       address: json.str('address'),

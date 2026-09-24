@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/core/network/api_client.dart';
+import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart';
 import 'package:posfrontend/features/product/presentation/screens/product_detail_screen.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
@@ -71,7 +72,7 @@ class _ProductCardScreenState extends State<ProductCardScreen> {
           packageId: json['packageId']?.toString() ?? '',
           icon: CatalogProductView.iconFor(category),
           color: CatalogProductView.colorFor(category),
-          imageUrl: image != null && image.isNotEmpty ? image : null,
+          imageUrl: resolveMediaUrl(image),
           createdBy: json['createdBy']?.toString() ?? '',
         );
       }).toList();

@@ -112,11 +112,11 @@ class AppDrawer extends StatelessWidget {
                 child: Column(
                   children: [
                     _navItem(context, 'Dashboard', Icons.dashboard_outlined),
-                    _navItem(context, 'Inventory', Icons.inventory_2_outlined),
                     _navItem(context, 'Product', Icons.category_outlined),
                     _navItem(context, 'Add Product', Icons.add_circle_outline),
-                    _navItem(context, 'Sale Item', Icons.receipt_long_outlined),
                     _navItem(context, 'Add to Cart', Icons.shopping_cart_outlined),
+                    _navItem(context, 'Inventory', Icons.inventory_2_outlined),
+                    _navItem(context, 'Sale Item', Icons.receipt_long_outlined),
                     
                     _navItem(context, 'Purchase Item', Icons.local_shipping_outlined),
                     _navItem(context, 'Setting', Icons.settings_outlined)

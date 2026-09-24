@@ -7,6 +7,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:posfrontend/core/extensions/number_extensions.dart';
 import 'package:posfrontend/core/extensions/datetime_extensions.dart';
+import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
 
 String _fmt(double value) => value.withCommas();
@@ -462,8 +463,10 @@ class VoucherPdfService {
   static Future<Uint8List?> _fetchShopImage(String? shopImage) async {
     if (shopImage == null || shopImage.isEmpty) return null;
     try {
-      if (shopImage.startsWith('http')) {
-        final uri = Uri.parse(shopImage);
+      final resolved = resolveMediaUrl(shopImage);
+      if (resolved == null || resolved.isEmpty) return null;
+      if (resolved.startsWith('http')) {
+        final uri = Uri.parse(resolved);
         final request = await HttpClient().getUrl(uri);
         final response = await request.close();
         final bytes = await response.fold<List<int>>(

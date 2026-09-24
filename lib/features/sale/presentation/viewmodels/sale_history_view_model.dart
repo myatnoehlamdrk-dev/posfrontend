@@ -1,6 +1,7 @@
 import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/core/models/paginated_response.dart';
 import 'package:posfrontend/features/sale/data/models/sale_order_api_model.dart';
+import 'package:posfrontend/features/sale/data/repositories/sale_repository_impl.dart';
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
 import 'package:posfrontend/features/sale/domain/usecases/sale_usecases.dart';
 
@@ -12,16 +13,21 @@ class SaleHistoryViewModel extends BaseViewModel {
   final DeleteSaleItemUseCase _deleteSaleItemUseCase;
 
   SaleHistoryViewModel({
-    required GetSalesUseCase getSalesUseCase,
-    required GetOrdersUseCase getOrdersUseCase,
-    required DeleteSaleUseCase deleteSaleUseCase,
-    required DeleteOrderUseCase deleteOrderUseCase,
-    required DeleteSaleItemUseCase deleteSaleItemUseCase,
-  })  : _getSalesUseCase = getSalesUseCase,
-        _getOrdersUseCase = getOrdersUseCase,
-        _deleteSaleUseCase = deleteSaleUseCase,
-        _deleteOrderUseCase = deleteOrderUseCase,
-        _deleteSaleItemUseCase = deleteSaleItemUseCase;
+    GetSalesUseCase? getSalesUseCase,
+    GetOrdersUseCase? getOrdersUseCase,
+    DeleteSaleUseCase? deleteSaleUseCase,
+    DeleteOrderUseCase? deleteOrderUseCase,
+    DeleteSaleItemUseCase? deleteSaleItemUseCase,
+  })  : _getSalesUseCase =
+            getSalesUseCase ?? GetSalesUseCase(SaleHistoryRepositoryImpl()),
+        _getOrdersUseCase =
+            getOrdersUseCase ?? GetOrdersUseCase(SaleHistoryRepositoryImpl()),
+        _deleteSaleUseCase =
+            deleteSaleUseCase ?? DeleteSaleUseCase(SaleHistoryRepositoryImpl()),
+        _deleteOrderUseCase =
+            deleteOrderUseCase ?? DeleteOrderUseCase(OrderRepositoryImpl()),
+        _deleteSaleItemUseCase = deleteSaleItemUseCase ??
+            DeleteSaleItemUseCase(SaleHistoryRepositoryImpl());
 
   List<SaleOrderEntity> _allSales = [];
   List<SaleOrderEntity> _allOrders = [];
@@ -29,6 +35,7 @@ class SaleHistoryViewModel extends BaseViewModel {
   String _searchQuery = '';
   int _currentPage = 1;
   int _lastPage = 1;
+  bool _pendingLoadMore = false;
   bool get hasMore => _currentPage <= _lastPage;
 
   List<SaleOrderEntity> get filteredOrders {
@@ -73,6 +80,8 @@ class SaleHistoryViewModel extends BaseViewModel {
   Future<void> loadAll({bool refresh = false}) async {
     if (refresh) {
       _currentPage = 1;
+      _lastPage = 1;
+      _pendingLoadMore = false;
       _allSales = [];
       _allOrders = [];
     }
@@ -112,11 +121,18 @@ class SaleHistoryViewModel extends BaseViewModel {
       setError(e.toString());
     } finally {
       setLoading(false);
+      if (_pendingLoadMore) {
+        _pendingLoadMore = false;
+        loadMore();
+      }
     }
   }
 
   Future<void> loadMore() async {
-    if (!hasMore || isLoading) return;
+    if (isLoading) {
+      _pendingLoadMore = true;
+      return;
+    }
     await loadAll();
   }
 

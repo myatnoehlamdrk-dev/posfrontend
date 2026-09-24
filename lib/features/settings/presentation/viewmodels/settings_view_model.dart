@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:posfrontend/core/base/base_view_model.dart';
+import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/features/settings/domain/entities/settings.dart';
 import 'package:posfrontend/features/settings/domain/repositories/settings_repository.dart';
 import 'package:posfrontend/features/settings/data/repositories/settings_repository_impl.dart';
@@ -116,7 +117,7 @@ class SettingsViewModel extends BaseViewModel {
         imageBytes,
         fileName: fileName ?? 'shop_image.jpg',
       );
-      _settings = _settings.copyWith(shopImage: result.url);
+      _settings = _settings.copyWith(shopImage: resolveMediaUrl(result.url) ?? '');
       notifyListeners();
       _settings = await _repository.updateSettings(shopImage: result.url);
 

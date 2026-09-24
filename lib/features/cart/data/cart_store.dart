@@ -98,6 +98,11 @@ class CartStore extends ValueNotifier<List<CartCardEntity>> {
     } catch (_) {}
   }
 
+  Future<void> replaceAll(List<CartCardEntity> cards) async {
+    value = List.of(cards);
+    await _persist(cards);
+  }
+
   Future<void> _persist(List<CartCardEntity> cards) async {
     try {
       final prefs = await SharedPreferences.getInstance();

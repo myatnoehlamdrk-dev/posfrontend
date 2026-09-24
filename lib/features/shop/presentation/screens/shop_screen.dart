@@ -9,6 +9,7 @@ import 'package:posfrontend/features/shop/data/repositories/shop_api_repository_
 import 'package:posfrontend/features/shop/data/repositories/shop_local_repository_impl.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/widgets/app_input_decoration.dart';
+import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 import 'package:posfrontend/shared/widgets/gradient_button.dart';
 import 'package:posfrontend/shared/widgets/required_label.dart';
 
@@ -261,10 +262,7 @@ class _ShopScreenState extends State<ShopScreen> {
       child: Row(
         children: [
           if (Navigator.canPop(context))
-            IconButton(
-              onPressed: () => Navigator.pop(context),
-              icon: Icon(Icons.arrow_back, color: AppColors.primary),
-            )
+            const CustomBackButton()
           else
             const SizedBox(width: 48),
           Expanded(

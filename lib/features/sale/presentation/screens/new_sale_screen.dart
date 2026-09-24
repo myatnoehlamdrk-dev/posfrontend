@@ -7,7 +7,6 @@ import 'package:posfrontend/features/sale/domain/entities/sale.dart';
 import 'package:posfrontend/features/customer/data/repositories/customer_repository_impl.dart';
 import 'package:posfrontend/features/sale/data/repositories/sale_repository_impl.dart';
 import 'package:posfrontend/features/sale/data/repositories/sale_product_repository_impl.dart';
-import 'package:posfrontend/features/sale/presentation/screens/add_products_screen.dart';
 import 'package:posfrontend/features/sale/presentation/screens/sale_preview_screen.dart';
 import 'package:posfrontend/features/sale/presentation/viewmodels/sale_view_model.dart';
 import 'package:posfrontend/shared/services/voucher_pdf_service.dart';
@@ -16,7 +15,7 @@ import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
-import 'package:posfrontend/shared/widgets/error_snackbar.dart';
+import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 import 'package:printing/printing.dart';
 
 class NewSaleScreen extends StatefulWidget {
@@ -55,6 +54,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   static const _keyPrintVoucher = 'print_voucher_enabled';
   static const _keyPrintFormat = 'print_format';
   static const _keyPaperSize = 'print_paper_size';
+  static const double _valueColW = 96;
 
   @override
   void initState() {
@@ -112,9 +112,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       return;
     }
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Sale saved successfully!'), backgroundColor: Color(0xFF16A34A)),
-    );
+    showSuccessMessage(context, 'Sale saved successfully!');
 
     final itemsSnapshot = List<SaleItemEntity>.from(_viewModel.items);
     final customerName = _customerNameCtrl.text;
@@ -192,17 +190,10 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           children: [
             AppTopBar(
               title: 'New Sale',
-              showMenuButton: !isWide,
-              showBackButton: isWide,
-              onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+              showMenuButton: false,
+              showBackButton: true,
             ),
             const SizedBox(height: 20),
-            Breadcrumb([
-              const BreadcrumbItem('Dashboard', false),
-              const BreadcrumbItem('Sale', false),
-              const BreadcrumbItem('New Sale', true),
-            ]),
-            const SizedBox(height: 24),
             _infoCard(),
             const SizedBox(height: 24),
             _itemsSection(),
@@ -278,24 +269,6 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                     fontWeight: FontWeight.w600,
                     color: kTitle)),
             const Spacer(),
-            GestureDetector(
-              onTap: () async {
-                final result = await Navigator.of(context).push<List<SaleItemEntity>>(
-                  MaterialPageRoute(builder: (_) => const AddProductsScreen()),
-                );
-                if (result != null && result.isNotEmpty) {
-                  _viewModel.addItems(result);
-                }
-              },
-              child: Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2563EB),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.add, color: Colors.white, size: 20),
-              ),
-            ),
           ],
         ),
         const SizedBox(height: 12),
@@ -398,11 +371,6 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                           fontWeight: FontWeight.w600,
                           color: kTitle)),
                   const SizedBox(height: 4),
-                  GestureDetector(
-                    onTap: () => _viewModel.removeItem(index),
-                    child: const Icon(Icons.delete_outline,
-                        color: kRed, size: 18),
-                  ),
                 ],
               ),
             ],
@@ -410,7 +378,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           const SizedBox(height: 8),
           Row(
             children: [
-              _qtyControl(index),
+              _qtyLabel(index),
               const Spacer(),
               const Text('Total:',
                   style: TextStyle(fontSize: 11, color: kGray)),
@@ -428,39 +396,25 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     );
   }
 
-  Widget _qtyControl(int index) {
+  Widget _qtyLabel(int index) {
     final qty = _viewModel.items[index].quantity;
     return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         border: Border.all(color: kBorder),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          _qtyBtn(Icons.remove, () => _viewModel.updateItemQuantity(index, -1)),
-          Container(
-            width: 32,
-            alignment: Alignment.center,
-            child: Text('$qty',
-                style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: kTitle)),
-          ),
-          _qtyBtn(Icons.add, () => _viewModel.updateItemQuantity(index, 1)),
+          const Text('Qty: ',
+              style: TextStyle(fontSize: 13, color: kGray)),
+          Text('$qty',
+              style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: kTitle)),
         ],
-      ),
-    );
-  }
-
-  Widget _qtyBtn(IconData icon, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 32,
-        height: 32,
-        alignment: Alignment.center,
-        child: Icon(icon, size: 16, color: kGray),
       ),
     );
   }
@@ -479,7 +433,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                   style: TextStyle(fontSize: 14, color: kGray)),
               const Spacer(),
               SizedBox(
-                width: 80,
+                width: _valueColW,
                 child: TextField(
                   controller: _discountCtrl,
                   keyboardType:
@@ -517,12 +471,18 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                       fontWeight: FontWeight.w700,
                       color: kTitle)),
               const Spacer(),
-              PriceText(_viewModel.totalPayable,
-                  maxLength: 12,
-                  style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2563EB))),
+              SizedBox(
+                width: _valueColW,
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: PriceText(_viewModel.totalPayable,
+                      maxLength: 12,
+                      style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2563EB))),
+                ),
+              ),
             ],
           ),
         ],
@@ -535,13 +495,17 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       children: [
         Text(label, style: const TextStyle(fontSize: 14, color: kGray)),
         const Spacer(),
-        Flexible(
-          child: Text(value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.end,
-              style: const TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w600, color: kTitle)),
+        SizedBox(
+          width: _valueColW,
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: Text(value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.end,
+                style: const TextStyle(
+                    fontSize: 13, fontWeight: FontWeight.w600, color: kTitle)),
+          ),
         ),
       ],
     );
@@ -552,10 +516,16 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       children: [
         Text(label, style: const TextStyle(fontSize: 14, color: kGray)),
         const Spacer(),
-        PriceText(amount,
-            maxLength: 12,
-            style: const TextStyle(
-                fontSize: 13, fontWeight: FontWeight.w600, color: kTitle)),
+        SizedBox(
+          width: _valueColW,
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: PriceText(amount,
+                maxLength: 12,
+                style: const TextStyle(
+                    fontSize: 13, fontWeight: FontWeight.w600, color: kTitle)),
+          ),
+        ),
       ],
     );
   }

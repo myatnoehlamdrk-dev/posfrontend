@@ -1,30 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/widgets/app_message.dart';
+export 'package:posfrontend/shared/widgets/app_message.dart';
 export 'package:posfrontend/shared/widgets/error_snackbar.dart';
 
+/// Backwards-compatible wrapper for the unified [showSuccessMessage]
+/// (green, like the login screen's "Login successful" message).
 void showSuccessSnackBar(BuildContext context, String message) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Row(
-        children: [
-          const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              message,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
-      ),
-      backgroundColor: AppColors.green,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      margin: const EdgeInsets.all(16),
-    ),
-  );
+  showSuccessMessage(context, message);
 }

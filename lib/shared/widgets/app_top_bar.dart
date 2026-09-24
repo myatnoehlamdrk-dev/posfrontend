@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:posfrontend/features/profile/presentation/screens/profile_screen.dart';
+import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
 
 void navigateToDashboard(BuildContext context) {
@@ -32,13 +33,12 @@ class AppTopBar extends StatelessWidget {
       children: [
         if (showMenuButton)
           IconButton(
-            icon: const Icon(Icons.menu, color: Color(0xFF111827)),
+            icon: const GradientIcon(icon: Icons.menu),
             onPressed: onMenuTap,
           ),
         if (showBackButton)
-          IconButton(
-            icon: const Icon(Icons.arrow_back, color: Color(0xFF111827)),
-            onPressed: onBackTap ??
+          CustomBackButton(
+            onTap: onBackTap ??
                 () {
               if (Navigator.of(context).canPop()) {
                 Navigator.of(context).pop();

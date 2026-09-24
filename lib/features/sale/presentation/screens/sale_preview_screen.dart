@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:posfrontend/core/extensions/number_extensions.dart';
 import 'package:posfrontend/core/extensions/datetime_extensions.dart';
+import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
+import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
 
 String _fmtPrice(double value) => value.withCommas();
@@ -64,10 +66,7 @@ class SalePreviewScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: kTitle),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        leading: const CustomBackButton(),
         title: const Text('Invoice Preview',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: kTitle)),
         actions: [
@@ -136,7 +135,7 @@ class SalePreviewScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               child: shopImage!.startsWith('http')
                   ? Image.network(
-                      shopImage!,
+                      resolveMediaUrl(shopImage)!,
                       width: 64,
                       height: 64,
                       fit: BoxFit.cover,

@@ -28,7 +28,6 @@ import 'package:posfrontend/features/sale/data/datasources/sale_remote_data_sour
 import 'package:posfrontend/features/sale/data/repositories/sale_repository_impl.dart' as sale_impl;
 import 'package:posfrontend/features/sale/domain/repositories/sale_repository.dart' as sale;
 import 'package:posfrontend/features/sale/domain/usecases/sale_usecases.dart';
-import 'package:posfrontend/features/sale/presentation/viewmodels/sale_history_view_model.dart';
 
 // Dashboard
 import 'package:posfrontend/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
@@ -133,13 +132,6 @@ Future<void> init() async {
   getIt.registerLazySingleton<GetOrdersUseCase>(() => GetOrdersUseCase(getIt<sale.SaleHistoryRepository>()));
   getIt.registerLazySingleton<DeleteSaleUseCase>(() => DeleteSaleUseCase(getIt<sale.SaleHistoryRepository>()));
   getIt.registerLazySingleton<DeleteSaleItemUseCase>(() => DeleteSaleItemUseCase(getIt<sale.SaleHistoryRepository>()));
-  getIt.registerLazySingleton<SaleHistoryViewModel>(() => SaleHistoryViewModel(
-        getSalesUseCase: getIt(),
-        getOrdersUseCase: getIt(),
-        deleteSaleUseCase: getIt(),
-        deleteOrderUseCase: getIt(),
-        deleteSaleItemUseCase: getIt(),
-      ));
 
   // Dashboard
   getIt.registerLazySingleton<DashboardRemoteDataSource>(() => DashboardRemoteDataSource());

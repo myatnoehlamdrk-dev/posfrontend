@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/features/cart/data/cart_store.dart';
 import 'package:posfrontend/features/cart/domain/entities/cart_card_entity.dart';
 import 'package:posfrontend/features/cart/domain/entities/cart_item_entity.dart';
@@ -6,8 +7,10 @@ import 'package:posfrontend/features/cart/presentation/screens/cart_card_screen.
 import 'package:posfrontend/features/cart/presentation/widgets/cart_item_row.dart';
 import 'package:posfrontend/features/sale/data/repositories/sale_repository_impl.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
+import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 
 class AddToCartScreen extends StatefulWidget {
   const AddToCartScreen({super.key});
@@ -17,16 +20,28 @@ class AddToCartScreen extends StatefulWidget {
 }
 
 class _AddToCartScreenState extends State<AddToCartScreen> {
+  static const int _perPage = 20;
+
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final ScrollController _scrollCtrl = ScrollController();
+
+  int _page = 1;
+  bool _hasMore = true;
+  bool _loadingMore = false;
+
   @override
   void initState() {
     super.initState();
     CartStore.instance.addListener(_onCartChanged);
     CartStore.instance.init();
-    _syncFromBackend();
+    _scrollCtrl.addListener(_onScroll);
+    _loadBackendCards();
   }
 
   @override
   void dispose() {
+    _scrollCtrl.removeListener(_onScroll);
+    _scrollCtrl.dispose();
     CartStore.instance.removeListener(_onCartChanged);
     super.dispose();
   }
@@ -35,23 +50,93 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
     if (mounted) setState(() {});
   }
 
-  Future<void> _syncFromBackend() async {
+  void _onScroll() {
+    if (!_scrollCtrl.hasClients) return;
+    if (_loadingMore || !_hasMore) return;
+    if (_scrollCtrl.position.pixels >=
+        _scrollCtrl.position.maxScrollExtent - 200) {
+      _loadBackendCards();
+    }
+  }
+
+  Future<void> _loadBackendCards() async {
+    if (_loadingMore || !_hasMore) return;
+    _loadingMore = true;
     try {
-      final result = await SaleHistoryRepositoryImpl().getOrders(page: 1, perPage: 100);
+      final result = await SaleHistoryRepositoryImpl().getOrders(
+        page: _page,
+        perPage: _perPage,
+      );
       final data = result['data'];
-      if (data is! List) return;
+      final meta = result['meta'];
+      if (data is! List) {
+        _hasMore = false;
+        return;
+      }
       final cards = <CartCardEntity>[];
       for (final item in data) {
-        if (item is! Map<String, dynamic>) continue;
-        final status = item['status']?.toString() ?? '';
-        if (status != 'draft') continue;
-        final card = _cardFromOrder(item);
+        final card = _draftCardFrom(item);
         if (card != null) cards.add(card);
       }
       await CartStore.instance.mergeCards(cards);
+      final lastPage = meta is Map<String, dynamic> ? meta['last_page'] : null;
+      _hasMore = lastPage is num
+          ? _page < lastPage.toInt()
+          : data.length >= _perPage;
+      _page++;
     } catch (_) {
-      // Backend sync is best-effort; local cards still shown
+      _hasMore = false;
+    } finally {
+      if (mounted) {
+        setState(() => _loadingMore = false);
+      }
     }
+  }
+
+  Future<void> _reload() async {
+    if (_loadingMore) return;
+    _loadingMore = true;
+    _page = 1;
+    _hasMore = true;
+    try {
+      final localOnly = CartStore.instance.value
+          .where((c) => c.orderId.isEmpty)
+          .toList();
+      final fresh = <CartCardEntity>[];
+      var page = 1;
+      while (true) {
+        final result = await SaleHistoryRepositoryImpl().getOrders(
+          page: page,
+          perPage: _perPage,
+        );
+        final data = result['data'];
+        final meta = result['meta'];
+        if (data is! List) break;
+        for (final item in data) {
+          final card = _draftCardFrom(item);
+          if (card != null) fresh.add(card);
+        }
+        final lastPage = meta is Map<String, dynamic> ? meta['last_page'] : null;
+        if (lastPage is num && page >= lastPage.toInt()) break;
+        if (lastPage is! num && data.length < _perPage) break;
+        if (page >= 100) break;
+        page++;
+      }
+      await CartStore.instance.replaceAll([...localOnly, ...fresh]);
+    } catch (_) {
+      // Keep the current list if the reload fails
+    } finally {
+      if (mounted) {
+        setState(() => _loadingMore = false);
+      }
+    }
+  }
+
+  CartCardEntity? _draftCardFrom(dynamic raw) {
+    if (raw is! Map<String, dynamic>) return null;
+    final status = raw['status']?.toString() ?? '';
+    if (status != 'draft') return null;
+    return _cardFromOrder(raw);
   }
 
   CartCardEntity? _cardFromOrder(Map<String, dynamic> json) {
@@ -68,6 +153,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
       items.add(CartItemEntity(
         productId: raw['productId']?.toString() ?? '',
         productName: raw['productName']?.toString() ?? '',
+        imageUrl: resolveMediaUrl(raw['imageUrl']?.toString()),
         unitPrice: price,
         quantity: qty,
         size: (raw['size'] as String?)?.trim().isNotEmpty == true
@@ -92,22 +178,40 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
   Widget build(BuildContext context) {
     final cards = CartStore.instance.value;
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: const Color(0xFFF8F9FC),
+      drawer: const AppDrawer(activeItem: 'Add to Cart'),
       body: SafeArea(
         child: Column(
           children: [
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              child: AppTopBar(title: 'Add to Cart', showMenuButton: false, showBackButton: true),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              child: AppTopBar(
+                title: 'Add to Cart',
+                showMenuButton: true,
+                showBackButton: false,
+                onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+              ),
             ),
             Expanded(
               child: cards.isEmpty
-                  ? _emptyState()
-                  : _cardsList(cards),
+                  ? RefreshableBody(onRefresh: _reload, child: _loadingMore ? _loadingState() : _emptyState())
+                  : RefreshIndicator(
+                      onRefresh: _reload,
+                      color: const Color(0xFF2D1B69),
+                      backgroundColor: Colors.white,
+                      child: _cardsList(cards),
+                    ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _loadingState() {
+    return const Center(
+      child: CircularProgressIndicator(color: AppColors.teal),
     );
   }
 
@@ -133,11 +237,38 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
   }
 
   Widget _cardsList(List<CartCardEntity> cards) {
+    final showFooter = _loadingMore || !_hasMore;
     return ListView.separated(
+      controller: _scrollCtrl,
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: cards.length,
+      itemCount: cards.length + (showFooter ? 1 : 0),
       separatorBuilder: (ctx, index) => const SizedBox(height: 10),
-      itemBuilder: (ctx, index) => _CardTile(card: cards[index]),
+      itemBuilder: (ctx, index) {
+        if (index == cards.length) return _footer();
+        return _CardTile(card: cards[index]);
+      },
+    );
+  }
+
+  Widget _footer() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Center(
+        child: _loadingMore
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  color: AppColors.teal,
+                  strokeWidth: 2,
+                ),
+              )
+            : const Text(
+                'No more items',
+                style: TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+              ),
+      ),
     );
   }
 }

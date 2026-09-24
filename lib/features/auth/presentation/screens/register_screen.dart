@@ -5,6 +5,7 @@ import 'package:posfrontend/features/auth/presentation/viewmodels/register_view_
 import 'package:posfrontend/features/auth/presentation/screens/verify_account_screen.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/widgets/app_input_decoration.dart';
+import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 import 'package:posfrontend/shared/widgets/gradient_button.dart';
 import 'package:posfrontend/shared/widgets/required_label.dart';
 
@@ -437,14 +438,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
       child: Row(
         children: [
-          IconButton(
-            onPressed: () {
-              if (Navigator.canPop(context)) {
-                Navigator.pop(context);
-              }
-            },
-            icon: Icon(Icons.arrow_back, color: AppColors.primary),
-          ),
+          const CustomBackButton(),
           Expanded(
             child: Center(
               child: Text(

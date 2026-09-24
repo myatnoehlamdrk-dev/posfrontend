@@ -1,3 +1,4 @@
+import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/features/product/domain/entities/product_variant.dart';
 import 'package:posfrontend/features/product/domain/entities/product.dart';
 
@@ -46,7 +47,7 @@ class ProductApiModel {
       isSet: json['isSet'] == true,
       category: json['category']?.toString() ?? '',
       packageId: json['packageId']?.toString() ?? '',
-      imageUrl: json['image']?.toString().trim(),
+      imageUrl: resolveMediaUrl(json['image']?.toString()),
       variants: variantList
           .map((v) => ProductVariantApiModel.fromJson(v as Map<String, dynamic>))
           .toList(),

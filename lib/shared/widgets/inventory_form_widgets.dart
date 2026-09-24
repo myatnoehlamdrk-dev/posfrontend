@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 
 const Color kTitle = Color(0xFF111827);
 const Color kGray = Color(0xFF6B7280);
@@ -58,14 +59,11 @@ class InventoryHeader extends StatelessWidget {
       children: [
         if (showMenu)
           IconButton(
-            icon: const Icon(Icons.menu, color: kTitle),
+            icon: const GradientIcon(icon: Icons.menu),
             onPressed: onMenu,
           )
         else
-          IconButton(
-            icon: const Icon(Icons.arrow_back, color: kTitle),
-            onPressed: onBack ?? () => Navigator.of(ctx).pop(),
-          ),
+          CustomBackButton(onTap: onBack ?? () => Navigator.of(ctx).pop()),
         Expanded(
           child: Text(
             title,

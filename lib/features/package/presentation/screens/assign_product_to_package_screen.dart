@@ -4,7 +4,9 @@ import 'package:posfrontend/features/package/domain/entities/package.dart';
 import 'package:posfrontend/features/package/presentation/viewmodels/assign_product_to_package_view_model.dart';
 import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart';
 import 'package:posfrontend/features/product/data/repositories/product_repository_impl.dart';
+import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
+import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
 class AssignProductToPackageScreen extends StatefulWidget {
   final PackageEntity package;
@@ -39,16 +41,10 @@ class _AssignProductToPackageScreenState
   Future<void> _assignToPackage() async {
     final successCount = await _viewModel.assignToPackage();
     if (successCount > 0 && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('$successCount product(s) added to package'),
-        ),
-      );
+      showSuccessMessage(context, '$successCount product(s) added to package');
       Navigator.of(context).pop(true);
     } else if (_viewModel.hasError && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_viewModel.errorMessage!)),
-      );
+      showErrorMessage(context, _viewModel.errorMessage ?? 'Failed to assign products');
     }
   }
 
@@ -87,10 +83,7 @@ class _AssignProductToPackageScreenState
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
-            GestureDetector(
-              onTap: () => Navigator.of(context).pop(false),
-              child: const Icon(Icons.arrow_back, size: 24, color: kTitle),
-            ),
+            CustomBackButton(onTap: () => Navigator.of(context).pop(false)),
             const SizedBox(width: 12),
             Expanded(
               child: Column(

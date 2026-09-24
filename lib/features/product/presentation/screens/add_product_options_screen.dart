@@ -3,15 +3,25 @@ import 'package:posfrontend/features/product/presentation/screens/add_product_sc
 import 'package:posfrontend/features/product/presentation/screens/quick_add_product_screen.dart';
 import 'package:posfrontend/features/product/presentation/screens/stock_add_screen.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 
-class AddProductOptionsScreen extends StatelessWidget {
+class AddProductOptionsScreen extends StatefulWidget {
   const AddProductOptionsScreen({super.key});
+
+  @override
+  State<AddProductOptionsScreen> createState() => _AddProductOptionsScreenState();
+}
+
+class _AddProductOptionsScreenState extends State<AddProductOptionsScreen> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: Colors.white,
+      drawer: const AppDrawer(activeItem: 'Add Product'),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -20,8 +30,9 @@ class AddProductOptionsScreen extends StatelessWidget {
             children: [
               AppTopBar(
                 title: 'Add Product',
-                showMenuButton: false,
-                showBackButton: true,
+                showMenuButton: true,
+                showBackButton: false,
+                onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
               ),
               const SizedBox(height: 8),
               const Text(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:posfrontend/core/extensions/datetime_extensions.dart';
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
 import 'package:posfrontend/features/sale/presentation/screens/new_sale_screen.dart';
+import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
 
 
@@ -169,10 +170,7 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
       ),
       child: Row(
         children: [
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back, color: titleColor),
-          ),
+          const CustomBackButton(),
           const Expanded(
             child: Center(
               child: Text(

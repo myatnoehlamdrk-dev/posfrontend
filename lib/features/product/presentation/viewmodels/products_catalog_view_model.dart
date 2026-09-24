@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/core/network/api_client.dart';
+import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart';
 import 'package:posfrontend/features/product/presentation/widgets/category_showcase_data.dart';
 
@@ -20,14 +21,108 @@ class ProductsCatalogViewModel extends BaseViewModel {
   String _searchQuery = '';
   String get searchQuery => _searchQuery;
 
+  List<CatalogProductView> _searchResults = [];
+  List<CatalogProductView> get searchResults => _searchResults;
+
+  bool _searchLoading = false;
+  bool get searchLoading => _searchLoading;
+
+  int _searchRevision = 0;
+  bool _searchRequested = false;
+  bool get searchRequested => _searchRequested;
+
+  bool get isSearching => _searchQuery.trim().isNotEmpty;
+
   Timer? _debounce;
 
   void setSearchQuery(String value) {
     _searchQuery = value;
+    if (value.trim().isEmpty) {
+      _searchResults = [];
+      _searchRequested = false;
+    }
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 300), () {
-      load();
+      if (isSearching) {
+        searchProducts();
+      } else {
+        load();
+      }
     });
+  }
+
+  Future<void> refresh() async {
+    if (isSearching) {
+      await searchProducts();
+    } else {
+      await load();
+    }
+  }
+
+  Future<void> searchProducts() async {
+    final query = _searchQuery.trim();
+    if (query.isEmpty) {
+      load();
+      return;
+    }
+
+    final rev = ++_searchRevision;
+    _searchRequested = true;
+    _searchResults = [];
+    _setSearchLoading(true);
+    resetError();
+
+    try {
+      final response = await _dio.get(
+        '/api/products/search',
+        queryParameters: {'q': query},
+        cancelToken: cancelToken,
+      );
+
+      final List<dynamic> items = response.data is List
+          ? response.data as List
+          : (response.data is Map
+              ? ((response.data as Map)['data'] as List? ?? const [])
+              : const []);
+
+      if (rev != _searchRevision) return;
+
+      final parsed = items.whereType<Map<String, dynamic>>().map((product) {
+        final category = product['category']?.toString() ?? '';
+        return CatalogProductView(
+          id: product['id']?.toString() ?? '',
+          name: product['name']?.toString() ?? '',
+          brand: product['brand']?.toString() ?? '',
+          sku: product['sku']?.toString() ?? '',
+          price: (product['variants'] as List?)?.isNotEmpty == true
+              ? ((product['variants'] as List).first['price'] ?? 0).toDouble()
+              : 0.0,
+          stock: (product['stock'] as num?)?.toInt() ?? 0,
+          isSet: product['isSet'] == true,
+          category: category,
+          packageId: product['packageId']?.toString() ?? '',
+          icon: CatalogProductView.iconFor(category),
+          color: CatalogProductView.colorFor(category),
+          imageUrl: resolveMediaUrl(product['image']?.toString()),
+          createdBy: product['createdBy']?.toString() ?? '',
+        );
+      }).toList();
+
+      _searchResults = parsed;
+      notifyListeners();
+    } on ApiException catch (e) {
+      if (rev == _searchRevision) setError(e.message);
+    } catch (e) {
+      if (rev == _searchRevision) setError('Failed to search products: $e');
+    } finally {
+      if (rev == _searchRevision) _setSearchLoading(false);
+    }
+  }
+
+  void _setSearchLoading(bool value) {
+    if (_searchLoading == value) return;
+    _searchLoading = value;
+    notifyListeners();
   }
 
   Future<void> load() async {
@@ -73,7 +168,7 @@ class ProductsCatalogViewModel extends BaseViewModel {
             packageId: product['packageId']?.toString() ?? '',
             icon: CatalogProductView.iconFor(categoryName),
             color: CatalogProductView.colorFor(categoryName),
-            imageUrl: product['image']?.toString().trim(),
+            imageUrl: resolveMediaUrl(product['image']?.toString()),
             createdBy: product['createdBy']?.toString() ?? '',
           );
         }).toList();
@@ -124,7 +219,7 @@ class ProductsCatalogViewModel extends BaseViewModel {
           packageId: product['packageId']?.toString() ?? '',
           icon: CatalogProductView.iconFor(category),
           color: CatalogProductView.colorFor(category),
-          imageUrl: product['image']?.toString().trim(),
+          imageUrl: resolveMediaUrl(product['image']?.toString()),
           createdBy: product['createdBy']?.toString() ?? '',
         );
       }).toList();
@@ -156,6 +251,7 @@ class ProductsCatalogViewModel extends BaseViewModel {
         cat.products.removeWhere((p) => p.id == productId);
       }
       _categories.removeWhere((c) => c.products.isEmpty);
+      _searchResults.removeWhere((p) => p.id == productId);
       notifyListeners();
       return true;
     } on ApiException catch (e) {

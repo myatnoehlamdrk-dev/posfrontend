@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get_it/get_it.dart';
 import 'package:posfrontend/core/extensions/datetime_extensions.dart';
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
 import 'package:posfrontend/features/sale/presentation/viewmodels/sale_history_view_model.dart';
@@ -21,30 +20,20 @@ class SaleItemScreen extends StatefulWidget {
 
 class _SaleItemScreenState extends State<SaleItemScreen> {
   final _searchController = TextEditingController();
-  final ScrollController _scrollCtrl = ScrollController();
   late final SaleHistoryViewModel _viewModel;
 
   @override
   void initState() {
     super.initState();
-    _viewModel = GetIt.instance<SaleHistoryViewModel>();
-    _scrollCtrl.addListener(_onScroll);
+    _viewModel = SaleHistoryViewModel();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _viewModel.loadAll(refresh: true);
     });
   }
 
-  void _onScroll() {
-    if (_scrollCtrl.position.pixels >=
-        _scrollCtrl.position.maxScrollExtent - 200) {
-      _viewModel.loadMore();
-    }
-  }
-
   @override
   void dispose() {
-    _scrollCtrl.removeListener(_onScroll);
-    _scrollCtrl.dispose();
+    _viewModel.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -93,10 +82,18 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
     }
     return RefreshIndicator(
       onRefresh: () => _viewModel.loadAll(refresh: true),
-      child: SingleChildScrollView(
-        controller: _scrollCtrl,
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (notification is ScrollEndNotification &&
+              notification.metrics.pixels >=
+                  notification.metrics.maxScrollExtent - 200) {
+            _viewModel.loadMore();
+          }
+          return false;
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -149,6 +146,7 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
             ],
           ),
         ),
+      ),
     );
   }
 

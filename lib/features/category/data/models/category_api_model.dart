@@ -1,3 +1,4 @@
+import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/features/category/domain/entities/category.dart';
 
 class CategoryApiModel {
@@ -36,7 +37,12 @@ class CategoryApiModel {
   factory CategoryApiModel.fromJson(Map<String, dynamic> json) {
     final rawImages = json['productImages'];
     final productImages = (rawImages is List)
-        ? rawImages.whereType<String>().where((s) => s.isNotEmpty).toList()
+        ? rawImages
+            .whereType<String>()
+            .map(resolveMediaUrl)
+            .whereType<String>()
+            .where((s) => s.isNotEmpty)
+            .toList()
         : <String>[];
 
     return CategoryApiModel(
@@ -58,7 +64,7 @@ class CategoryApiModel {
       updatedBy: json['updatedBy'] ?? '',
       updatedAt: json['updatedAt'] ?? '',
       active: json['active'] is bool ? json['active'] as bool : true,
-      imageUrl: json['imageUrl'] as String?,
+      imageUrl: resolveMediaUrl(json['imageUrl'] as String?),
       productImages: productImages,
     );
   }

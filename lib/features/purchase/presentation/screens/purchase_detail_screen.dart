@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:posfrontend/core/extensions/datetime_extensions.dart';
 import 'package:posfrontend/core/extensions/number_extensions.dart';
 import 'package:posfrontend/features/purchase/domain/entities/purchase.dart';
+import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
 
 class PurchaseDetailScreen extends StatefulWidget {
@@ -120,10 +121,7 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
       ),
       child: Row(
         children: [
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back, color: titleColor),
-          ),
+          const CustomBackButton(),
           const Expanded(
             child: Center(
               child: Text(

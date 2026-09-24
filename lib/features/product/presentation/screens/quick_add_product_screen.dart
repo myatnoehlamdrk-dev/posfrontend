@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:posfrontend/core/network/app_exceptions.dart';
@@ -8,6 +9,7 @@ import 'package:posfrontend/features/product/data/repositories/product_create_re
 import 'package:posfrontend/shared/repositories/imgbb_repository_impl.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
+import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
 const Color kPurple700 = Color(0xFF7C3AED);
 const Color kPurple600 = Color(0xFF6D28D9);
@@ -40,10 +42,6 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
     _stock.dispose();
     _price.dispose();
     super.dispose();
-  }
-
-  void _snack(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   Future<void> _pickImage() async {
@@ -106,7 +104,8 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
         _imageKey = UniqueKey();
       });
     } on ApiException catch (e) {
-      _snack(e.message);
+      if (!mounted) return;
+      showErrorMessage(context, e.message);
     } finally {
       if (mounted) setState(() => _uploading = false);
     }
@@ -122,22 +121,22 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
 
   Future<void> _submit() async {
     if (_uploading) {
-      _snack('Please wait for image upload to finish');
+      showErrorMessage(context, 'Please wait for image upload to finish');
       return;
     }
     final name = _name.text.trim();
     if (name.isEmpty) {
-      _snack('Product name is required');
+      showErrorMessage(context, 'Product name is required');
       return;
     }
     final stock = int.tryParse(_stock.text.trim());
     if (stock == null || stock < 0) {
-      _snack('Enter a valid stock amount');
+      showErrorMessage(context, 'Enter a valid stock amount');
       return;
     }
     final price = double.tryParse(_price.text.trim());
     if (price == null || price <= 0) {
-      _snack('Enter a valid price');
+      showErrorMessage(context, 'Enter a valid price');
       return;
     }
 
@@ -157,9 +156,9 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } on ApiException catch (e) {
-      _snack(e.message);
+      showErrorMessage(context, e.message);
     } catch (e) {
-      _snack('Failed to add product');
+      showErrorMessage(context, 'Failed to add product');
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -217,12 +216,19 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
         child: hasPreview
             ? ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.file(
-                  _imageFile!,
-                  key: _imageKey,
-                  height: 160,
-                  fit: BoxFit.cover,
-                ),
+                child: kIsWeb
+                    ? Image.network(
+                        _imageFile!.path,
+                        key: _imageKey,
+                        height: 160,
+                        fit: BoxFit.cover,
+                      )
+                    : Image.file(
+                        _imageFile!,
+                        key: _imageKey,
+                        height: 160,
+                        fit: BoxFit.cover,
+                      ),
               )
             : _uploading
                 ? const CircularProgressIndicator(color: kPurple700)

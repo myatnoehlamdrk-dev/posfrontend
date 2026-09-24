@@ -1,3 +1,4 @@
+import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/features/settings/domain/entities/settings.dart';
 
 class SettingsApiModel {
@@ -6,7 +7,7 @@ class SettingsApiModel {
       themeMode: json['themeMode'] == 'dark' ? AppThemeMode.dark : AppThemeMode.light,
       language: json['language'] as String? ?? 'Myanmar',
       shopType: _parseShopType(json['shopType'] as String? ?? 'shop'),
-      shopImage: json['shopImage'] as String? ?? '',
+      shopImage: resolveMediaUrl(json['shopImage'] as String?) ?? '',
     );
   }
 

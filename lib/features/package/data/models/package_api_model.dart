@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/features/package/domain/entities/package.dart';
 
 class PackageApiModel {
@@ -40,7 +41,12 @@ class PackageApiModel {
     final id = json['id']?.toString() ?? '';
     final rawImages = json['productImages'];
     final productImages = (rawImages is List)
-        ? rawImages.whereType<String>().where((s) => s.isNotEmpty).toList()
+        ? rawImages
+            .whereType<String>()
+            .map(resolveMediaUrl)
+            .whereType<String>()
+            .where((s) => s.isNotEmpty)
+            .toList()
         : <String>[];
     return PackageApiModel(
       id: id,

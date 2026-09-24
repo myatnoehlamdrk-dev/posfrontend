@@ -1,5 +1,6 @@
 import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/core/network/api_client.dart';
+import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/features/package/domain/entities/package.dart';
 import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart';
 import 'package:posfrontend/features/product/domain/repositories/product_repository.dart';
@@ -97,7 +98,7 @@ class AssignProductToPackageViewModel extends BaseViewModel {
         final isSet = map['isSet'] == true;
         final category = map['category']?.toString() ?? '';
         final packageId = map['packageId']?.toString() ?? '';
-        final imageUrl = map['image']?.toString().trim();
+        final imageUrl = resolveMediaUrl(map['image']?.toString().trim());
         final createdBy = map['createdBy']?.toString() ?? '';
         final variantsRaw = map['variants'];
         final variantList = variantsRaw is List ? variantsRaw : [];

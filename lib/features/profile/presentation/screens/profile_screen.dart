@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
+import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 import 'package:posfrontend/features/profile/data/repositories/profile_repository_impl.dart';
 import 'package:posfrontend/features/profile/presentation/viewmodels/profile_view_model.dart';
@@ -143,9 +145,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         fileName: xfile.name,
       );
       if (!mounted) return;
-      final url = result.url;
-      _viewModel.setImageUrl(url);
-      ProfileImageNotifier.instance.update(url);
+      _viewModel.setImageUrl(result.url);
+      ProfileImageNotifier.instance
+          .update(resolveMediaUrl(result.url) ?? result.url);
       final success = await _viewModel.saveProfile();
       if (success && mounted) {
         showSuccessSnackBar(context, 'Profile updated successfully');
@@ -705,10 +707,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       child: Row(
         children: [
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back, color: primary),
-          ),
+          const CustomBackButton(),
           const Expanded(
             child: Center(
               child: Text(

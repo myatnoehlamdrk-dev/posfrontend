@@ -6,6 +6,7 @@ import 'package:posfrontend/features/product/data/models/product_create_models.d
 import 'package:posfrontend/features/product/data/repositories/product_create_repository_impl.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
+import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
 const Color kPurple700 = Color(0xFF7C3AED);
 const Color kLightPurple = Color(0xFFF5F0FF);
@@ -110,7 +111,7 @@ class _StockAddScreenState extends State<StockAddScreen> {
     if (product == null) return;
 
     if (_variantControllers.any((c) => c.text.trim().isNotEmpty && (int.tryParse(c.text.trim()) ?? -1) < 0)) {
-      _snack('Enter a valid stock amount');
+      showErrorMessage(context, 'Enter a valid stock amount');
       return;
     }
 
@@ -119,14 +120,12 @@ class _StockAddScreenState extends State<StockAddScreen> {
       final request = _buildRequest(product);
       await _repository.updateProduct(product.id, request);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Stock added successfully')),
-      );
+      showSuccessMessage(context, 'Stock added successfully');
       _deselect();
     } on ApiException catch (e) {
-      _snack(e.message);
+      showErrorMessage(context, e.message);
     } catch (_) {
-      _snack('Failed to add stock');
+      showErrorMessage(context, 'Failed to add stock');
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -161,10 +160,6 @@ class _StockAddScreenState extends State<StockAddScreen> {
         price: ((v['price'] ?? 0) as num).toDouble(),
       )).toList(),
     );
-  }
-
-  void _snack(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   @override

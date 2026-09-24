@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:posfrontend/features/profile/presentation/screens/profile_screen.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
+import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
 
 class AppScreenTopBar extends StatelessWidget {
@@ -31,7 +32,7 @@ class AppScreenTopBar extends StatelessWidget {
             Builder(
               builder: (ctx) => IconButton(
                 onPressed: onMenuTap ?? () => Scaffold.of(ctx).openDrawer(),
-                icon: const Icon(Icons.menu, color: AppColors.titleColor),
+                icon: const GradientIcon(icon: Icons.menu),
               ),
             ),
           Expanded(

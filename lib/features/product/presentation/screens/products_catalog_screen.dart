@@ -189,7 +189,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                 Expanded(
                   child: RefreshableBody(
                     scrollController: _scrollCtrl,
-                    onRefresh: () => _viewModel.load(),
+                    onRefresh: () => _viewModel.refresh(),
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
                       child: _buildBody(categories),
@@ -221,6 +221,15 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                   ),
                 ),
               ),
+            if (_viewModel.isSearching && _viewModel.searchLoading)
+              const Positioned.fill(
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: purple,
+                    strokeWidth: 2.5,
+                  ),
+                ),
+              ),
           ],
         );
       },
@@ -228,6 +237,10 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
   }
 
   Widget _buildBody(List<CategoryShowcaseData> categories) {
+    if (_viewModel.isSearching) {
+      return _buildSearchResults();
+    }
+
     if (_viewModel.isLoading && categories.isEmpty) {
       return const CategorySkeleton();
     }
@@ -302,6 +315,140 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _searchTileIcon(CatalogProductView p) {
+    return Container(
+      color: const Color(0xFFF5F0FF),
+      alignment: Alignment.center,
+      child: Icon(p.icon, color: p.color, size: 20),
+    );
+  }
+
+  Widget _searchResultTile(CatalogProductView p) {
+    final imageUrl = p.imageUrl ?? '';
+    return InkWell(
+      onTap: () => _openProduct(p),
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: imageUrl.isNotEmpty
+                  ? Image.network(
+                      imageUrl,
+                      width: 40,
+                      height: 40,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => _searchTileIcon(p),
+                    )
+                  : _searchTileIcon(p),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    p.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: titleColor),
+                  ),
+                  if (p.brand.isNotEmpty)
+                    Text(
+                      p.brand,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 12, color: gray),
+                    ),
+                  Text(
+                    'Stock: ${p.stock}',
+                    style: const TextStyle(fontSize: 12, color: gray),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded, color: gray),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchResults() {
+    final results = _viewModel.searchResults;
+
+    if (_viewModel.searchLoading || !_viewModel.searchRequested) {
+      return const SizedBox.shrink();
+    }
+
+    if (_viewModel.hasError && results.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Color(0xFFE5E7EB)),
+            const SizedBox(height: 16),
+            Text(
+              _viewModel.errorMessage ?? 'Unable to search products',
+              style: const TextStyle(color: Colors.red, fontSize: 15),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () => _viewModel.searchProducts(),
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text('Retry'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: purple,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (results.isEmpty) {
+      final query = _viewModel.searchQuery.trim();
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.search_off, size: 64, color: Colors.grey[300]),
+            const SizedBox(height: 16),
+            Text(
+              'No products found for "$query"',
+              style: TextStyle(fontSize: 16, color: Colors.grey[500]),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Try a different keyword or brand',
+              style: TextStyle(fontSize: 13, color: Colors.grey[400]),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: results.map((p) => _searchResultTile(p)).toList(),
     );
   }
 

@@ -5,7 +5,6 @@ import 'package:posfrontend/features/auth/domain/entities/user.dart';
 import 'package:posfrontend/features/auth/domain/usecases/register.dart';
 import 'package:posfrontend/features/shop/domain/entities/shop.dart';
 import 'package:posfrontend/features/shop/domain/repositories/shop_repository.dart';
-import 'package:posfrontend/features/shop/domain/repositories/shop_repository.dart';
 import 'package:posfrontend/shared/repositories/imgbb_repository.dart';
 
 class RegisterViewModel extends BaseViewModel with FormValidationMixin {

@@ -3,9 +3,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:posfrontend/core/auth/token_storage.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
+import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 import 'package:posfrontend/features/auth/presentation/screens/login_screen.dart';
 import 'package:posfrontend/features/settings/domain/entities/settings.dart';
 import 'package:posfrontend/features/settings/presentation/viewmodels/settings_view_model.dart';
+import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -131,10 +133,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       child: Row(
         children: [
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back, color: titleColor),
-          ),
+          const CustomBackButton(),
           const Expanded(
             child: Center(
               child: Text(
@@ -776,12 +775,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ElevatedButton(
                   onPressed: () {
                     Navigator.pop(ctx);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Feedback submitted!'),
-                        backgroundColor: orange,
-                      ),
-                    );
+                    showSuccessMessage(context, 'Feedback submitted!');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: orange,
@@ -801,12 +795,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _rateApp() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Redirecting to app rating...'),
-        backgroundColor: orange,
-      ),
-    );
+    showSuccessMessage(context, 'Redirecting to app rating...');
   }
 
   void _showAboutDialog() {

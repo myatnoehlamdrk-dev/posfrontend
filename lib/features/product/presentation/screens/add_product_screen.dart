@@ -1,11 +1,14 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:posfrontend/core/network/api_client.dart';
+import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/features/product/data/models/product_create_models.dart';
 import 'package:posfrontend/features/product/domain/entities/product_detail.dart';
 import 'package:posfrontend/features/product/presentation/viewmodels/add_product_view_model.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
+import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
 const Color kPurple700 = Color(0xFF7C3AED);
 const Color kPurple600 = Color(0xFF6D28D9);
@@ -41,12 +44,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
   int get _totalStock =>
       _vm.variants.fold(0, (s, v) => s + (v.quantity > 0 ? v.quantity : 0));
 
-  void _snack(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-  }
-
   void _showError() {
-    if (_vm.errorMessage != null) _snack(_vm.errorMessage!);
+    if (_vm.errorMessage != null) showErrorMessage(context, _vm.errorMessage!);
   }
 
   @override
@@ -196,7 +195,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
             await _vm.pickAndUpload();
             if (!mounted) return;
             if (_vm.errorMessage == null) {
-              _snack('Image uploaded');
+              showSuccessMessage(context, 'Image uploaded');
             } else {
               _showError();
               _vm.resetError();
@@ -208,9 +207,21 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(12),
                       child: _vm.imageFile != null
-                          ? Image.file(_vm.imageFile!, key: _vm.imageKey, height: 160, fit: BoxFit.cover)
+                          ? (kIsWeb
+                              ? Image.network(
+                                  _vm.imageFile!.path,
+                                  key: _vm.imageKey,
+                                  height: 160,
+                                  fit: BoxFit.cover,
+                                )
+                              : Image.file(
+                                  _vm.imageFile!,
+                                  key: _vm.imageKey,
+                                  height: 160,
+                                  fit: BoxFit.cover,
+                                ))
                           : Image.network(
-                              _vm.imageUrl!,
+                              resolveMediaUrl(_vm.imageUrl!)!,
                               key: _vm.imageKey,
                               height: 160,
                               fit: BoxFit.cover,
@@ -511,7 +522,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                 if (ctx.mounted) Navigator.pop(ctx);
                               } on ApiException catch (e) {
                                 if (ctx.mounted) {
-                                  ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(e.message)));
+                                  showErrorMessage(ctx, e.message);
                                 }
                               } finally {
                                 if (ctx.mounted) setSheetState(() => savingSupplier = false);
