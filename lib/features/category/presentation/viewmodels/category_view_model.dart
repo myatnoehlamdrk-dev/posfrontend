@@ -17,9 +17,7 @@ class CategoryViewModel extends BaseViewModel {
   final String type;
   List<Category> _categories = [];
 
-  String _search = '';
-  String _status = 'All Status';
-  CategorySort _sort = CategorySort.dateNewest;
+  CategorySort _sort = CategorySort.nameAz;
 
   CategoryViewModel({
     CategoryRepository? repository,
@@ -65,15 +63,7 @@ class CategoryViewModel extends BaseViewModel {
   }
 
   List<Category> get filtered {
-    final q = _search.toLowerCase();
-    final list = _categories.where((c) {
-      final matchesSearch = c.name.toLowerCase().contains(q);
-      final matchesStatus =
-          _status == 'All Status' ||
-          (_status == 'Active' && c.active) ||
-          (_status == 'Inactive' && !c.active);
-      return matchesSearch && matchesStatus;
-    }).toList();
+    final list = _categories.toList();
 
     list.sort((a, b) {
       switch (_sort) {
@@ -93,18 +83,6 @@ class CategoryViewModel extends BaseViewModel {
   int get totalCount => _categories.length;
 
   CategorySort get sort => _sort;
-  String get search => _search;
-  String get status => _status;
-
-  void setSearch(String value) {
-    _search = value;
-    notifyListeners();
-  }
-
-  void setStatus(String value) {
-    _status = value;
-    notifyListeners();
-  }
 
   void setSort(CategorySort value) {
     _sort = value;

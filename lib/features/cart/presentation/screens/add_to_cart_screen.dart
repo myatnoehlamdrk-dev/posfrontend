@@ -8,7 +8,7 @@ import 'package:posfrontend/features/cart/presentation/widgets/cart_item_row.dar
 import 'package:posfrontend/features/sale/data/repositories/sale_repository_impl.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
-import 'package:posfrontend/shared/widgets/app_top_bar.dart';
+import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 
@@ -184,14 +184,10 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              child: AppTopBar(
-                title: 'Add to Cart',
-                showMenuButton: true,
-                showBackButton: false,
-                onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
-              ),
+            AppScreenTopBar(
+              title: 'Add to Cart',
+              showMenuButton: true,
+              onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
             ),
             Expanded(
               child: cards.isEmpty

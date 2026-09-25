@@ -32,7 +32,6 @@ class SaleHistoryViewModel extends BaseViewModel {
   List<SaleOrderEntity> _allSales = [];
   List<SaleOrderEntity> _allOrders = [];
   String _selectedTab = 'All';
-  String _searchQuery = '';
   int _currentPage = 1;
   int _lastPage = 1;
   bool _pendingLoadMore = false;
@@ -51,29 +50,15 @@ class SaleHistoryViewModel extends BaseViewModel {
         source = [..._allSales, ..._allOrders];
     }
 
-    if (_searchQuery.isEmpty) return source;
-
-    final q = _searchQuery.toLowerCase();
-    return source.where((o) {
-      return o.productName.toLowerCase().contains(q) ||
-          o.orderId.toLowerCase().contains(q) ||
-          o.customerName.toLowerCase().contains(q) ||
-          o.customerPhone.toLowerCase().contains(q);
-    }).toList();
+    return source;
   }
 
   String get selectedTab => _selectedTab;
-  String get searchQuery => _searchQuery;
   int get totalSalesCount => _allSales.length;
   int get totalOrdersCount => _allOrders.length;
 
   void setTab(String tab) {
     _selectedTab = tab;
-    notifyListeners();
-  }
-
-  void setSearchQuery(String query) {
-    _searchQuery = query;
     notifyListeners();
   }
 

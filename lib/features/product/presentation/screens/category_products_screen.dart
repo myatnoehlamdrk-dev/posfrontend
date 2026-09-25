@@ -12,8 +12,9 @@ import 'package:posfrontend/features/product/presentation/screens/product_detail
 import 'package:posfrontend/features/sale/data/repositories/sale_repository_impl.dart';
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
-import 'package:posfrontend/shared/widgets/app_top_bar.dart';
+import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
+import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 
@@ -58,6 +59,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
   final Map<String, int> _quantities = {};
   final Map<String, TextEditingController> _qtyCtrls = {};
   final Map<String, List<VariantPick>> _variantPicks = {};
+  bool _isAddingToCart = false;
 
   static const Color bg = Color(0xFFF8F9FC);
   static const Color purple = Color(0xFF6D28D9);
@@ -83,40 +85,18 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
 
     try {
       final dio = ApiClient.create();
-      final response = await dio.get('/api/products', queryParameters: {
-        'categoryId': widget.categoryId,
-        'page': _currentPage,
-        'per_page': 20,
-      });
+      final response = await dio.get(
+        '/api/products',
+        queryParameters: {
+          'categoryId': widget.categoryId,
+          'page': _currentPage,
+          'per_page': 20,
+        },
+      );
 
       final data = response.data;
-      final List<dynamic> items = data is Map ? (data['data'] ?? []) : (data as List? ?? []);
+      final newProducts = _parseProducts(data);
       final meta = data is Map ? data['meta'] : null;
-
-      final newProducts = items.map((json) {
-        final p = json as Map<String, dynamic>;
-        final categoryName = widget.categoryName;
-        final variants = (p['variants'] as List? ?? const [])
-            .map((v) =>
-                ProductVariant.fromJson(v as Map<String, dynamic>))
-            .toList();
-        return CatalogProductView(
-          id: p['id']?.toString() ?? '',
-          name: p['name']?.toString() ?? '',
-          brand: p['brand']?.toString() ?? '',
-          sku: p['sku']?.toString() ?? '',
-          price: variants.isNotEmpty ? variants.first.price : 0.0,
-          stock: (p['stock'] as num?)?.toInt() ?? 0,
-          isSet: p['isSet'] == true,
-          category: categoryName,
-          packageId: p['packageId']?.toString() ?? '',
-          icon: CatalogProductView.iconFor(categoryName),
-          color: CatalogProductView.colorFor(categoryName),
-          imageUrl: resolveMediaUrl(p['image']?.toString()),
-          variants: variants,
-          createdBy: p['createdBy']?.toString() ?? '',
-        );
-      }).toList();
 
       setState(() {
         _products = [..._products, ...newProducts];
@@ -124,7 +104,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
         if (meta != null) {
           _hasMore = _currentPage <= (meta['last_page'] ?? 1);
         } else {
-          _hasMore = items.isNotEmpty;
+          _hasMore = newProducts.isNotEmpty;
         }
       });
     } on ApiException catch (e) {
@@ -136,12 +116,76 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
     }
   }
 
+  List<CatalogProductView> _parseProducts(Object? data) {
+    final items = data is Map ? (data['data'] ?? []) : (data as List? ?? []);
+    return items.map((json) {
+      final p = json as Map<String, dynamic>;
+      final variants = (p['variants'] as List? ?? const [])
+          .map((v) => ProductVariant.fromJson(v as Map<String, dynamic>))
+          .toList();
+      return CatalogProductView(
+        id: p['id']?.toString() ?? '',
+        name: p['name']?.toString() ?? '',
+        brand: p['brand']?.toString() ?? '',
+        sku: p['sku']?.toString() ?? '',
+        price: variants.isNotEmpty ? variants.first.price : 0.0,
+        stock: (p['stock'] as num?)?.toInt() ?? 0,
+        isSet: p['isSet'] == true,
+        category: widget.categoryName,
+        packageId: p['packageId']?.toString() ?? '',
+        icon: CatalogProductView.iconFor(widget.categoryName),
+        color: CatalogProductView.colorFor(widget.categoryName),
+        imageUrl: resolveMediaUrl(p['image']?.toString()),
+        variants: variants,
+        createdBy: p['createdBy']?.toString() ?? '',
+      );
+    }).toList();
+  }
+
+  Future<void> _refreshProducts() async {
+    try {
+      final dio = ApiClient.create();
+      final response = await dio.get(
+        '/api/products',
+        queryParameters: {
+          'categoryId': widget.categoryId,
+          'page': 1,
+          'per_page': 20,
+        },
+      );
+      if (!mounted) return;
+      final data = response.data;
+      final newProducts = _parseProducts(data);
+      final meta = data is Map ? data['meta'] : null;
+      final existing = newProducts.map((e) => e.id).toSet();
+      setState(() {
+        _products = newProducts;
+        _currentPage = 2;
+        if (meta != null) {
+          _hasMore = 2 <= (meta['last_page'] ?? 1);
+        } else {
+          _hasMore = newProducts.isNotEmpty;
+        }
+        _error = null;
+        _selectedIds.removeWhere((id) => !existing.contains(id));
+        _variantPicks.removeWhere((key, _) => !existing.contains(key));
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(
+        () => _error = e is ApiException
+            ? e.message
+            : 'Failed to refresh products: $e',
+      );
+    }
+  }
+
   int get _selectedCount => _selectedIds.length;
 
   void _openCart() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const AddToCartScreen()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const AddToCartScreen()));
   }
 
   double get _selectedTotal {
@@ -296,16 +340,18 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
             );
             return;
           }
-          items.add(CartItemEntity(
-            productId: p.id,
-            productName: p.name,
-            imageUrl: p.imageUrl,
-            unitPrice: pick.variant.price,
-            quantity: pick.qty,
-            category: p.category,
-            size: pick.variant.size.isNotEmpty ? pick.variant.size : null,
-            color: pick.variant.color.isNotEmpty ? pick.variant.color : null,
-          ));
+          items.add(
+            CartItemEntity(
+              productId: p.id,
+              productName: p.name,
+              imageUrl: p.imageUrl,
+              unitPrice: pick.variant.price,
+              quantity: pick.qty,
+              category: p.category,
+              size: pick.variant.size.isNotEmpty ? pick.variant.size : null,
+              color: pick.variant.color.isNotEmpty ? pick.variant.color : null,
+            ),
+          );
         }
         continue;
       }
@@ -314,14 +360,16 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
         showErrorMessage(context, '${p.name} has only $available in stock');
         return;
       }
-      items.add(CartItemEntity(
-        productId: p.id,
-        productName: p.name,
-        imageUrl: p.imageUrl,
-        unitPrice: _priceFor(p),
-        quantity: qty,
-        category: p.category,
-      ));
+      items.add(
+        CartItemEntity(
+          productId: p.id,
+          productName: p.name,
+          imageUrl: p.imageUrl,
+          unitPrice: _priceFor(p),
+          quantity: qty,
+          category: p.category,
+        ),
+      );
     }
     if (items.isEmpty) {
       showErrorMessage(
@@ -332,22 +380,28 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
       );
       return;
     }
-
-    final choice = await showDialog<_AddToCartChoice>(
-      context: context,
-      builder: (_) => const _AddToCartChoiceDialog(),
-    );
-    if (choice == null || !mounted) return;
-    if (choice == _AddToCartChoice.newCard) {
-      await _addToCartCore(items);
-      return;
+    if (_isAddingToCart) return;
+    setState(() => _isAddingToCart = true);
+    try {
+      final choice = await showDialog<_AddToCartChoice>(
+        context: context,
+        builder: (_) => const _AddToCartChoiceDialog(),
+      );
+      if (choice == null || !mounted) return;
+      if (choice == _AddToCartChoice.newCard) {
+        await _addToCartCore(items);
+        return;
+      }
+      await _addToExistingCard(items);
+    } finally {
+      if (mounted) setState(() => _isAddingToCart = false);
     }
-    await _addToExistingCard(items);
   }
 
   Future<void> _addToExistingCard(List<CartItemEntity> items) async {
-    final cards =
-        CartStore.instance.value.where((c) => c.orderId.isNotEmpty).toList();
+    final cards = CartStore.instance.value
+        .where((c) => c.orderId.isNotEmpty)
+        .toList();
     if (cards.isEmpty) {
       if (!mounted) return;
       showErrorMessage(
@@ -369,16 +423,20 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
     try {
       await OrderRepositoryImpl().addOrderItems(
         orderId: card.orderId,
-        items: items.map((e) => SaleItemEntity(
-          productId: e.productId,
-          productName: e.productName,
-          imageUrl: e.imageUrl,
-          unitPrice: e.unitPrice,
-          quantity: e.quantity,
-          size: e.size,
-          color: e.color,
-          category: e.category,
-        )).toList(),
+        items: items
+            .map(
+              (e) => SaleItemEntity(
+                productId: e.productId,
+                productName: e.productName,
+                imageUrl: e.imageUrl,
+                unitPrice: e.unitPrice,
+                quantity: e.quantity,
+                size: e.size,
+                color: e.color,
+                category: e.category,
+              ),
+            )
+            .toList(),
       );
     } on AppException catch (e) {
       if (!mounted) return;
@@ -413,16 +471,20 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
         userName: AuthScope.userOf(context)?.fullName ?? 'Staff',
         voucherNo: 'INV-${_random5()}',
         orderId: 'ORD-${_random5()}',
-        items: items.map((e) => SaleItemEntity(
-          productId: e.productId,
-          productName: e.productName,
-          imageUrl: e.imageUrl,
-          unitPrice: e.unitPrice,
-          quantity: e.quantity,
-          size: e.size,
-          color: e.color,
-          category: e.category,
-        )).toList(),
+        items: items
+            .map(
+              (e) => SaleItemEntity(
+                productId: e.productId,
+                productName: e.productName,
+                imageUrl: e.imageUrl,
+                unitPrice: e.unitPrice,
+                quantity: e.quantity,
+                size: e.size,
+                color: e.color,
+                category: e.category,
+              ),
+            )
+            .toList(),
         grandTotal: items.fold(0.0, (sum, e) => sum + e.subtotal),
         status: 'draft',
       );
@@ -436,7 +498,10 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
       return;
     }
 
-    final card = await CartStore.instance.addCard(items, orderId: createOrderId);
+    final card = await CartStore.instance.addCard(
+      items,
+      orderId: createOrderId,
+    );
     if (!mounted) return;
     setState(() {
       for (final id in _selectedIds) {
@@ -447,9 +512,9 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
       _variantPicks.clear();
     });
     if (card == null) return;
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => CartCardScreen(card: card)),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => CartCardScreen(card: card)));
   }
 
   String _random5() {
@@ -474,17 +539,12 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              child: AppTopBar(
-                title: widget.categoryName,
-                showMenuButton: false,
-                showBackButton: true,
-              ),
+            AppScreenTopBar(
+              title: widget.categoryName,
+              showMenuButton: false,
+              showBackButton: true,
             ),
-            Expanded(
-              child: _buildBody(),
-            ),
+            Expanded(child: _buildBody()),
             _bottomBar(),
           ],
         ),
@@ -493,108 +553,125 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
   }
 
   Widget _buildBody() {
-    if (_products.isEmpty && _isLoading) {
-      return const Center(child: CircularProgressIndicator(color: purple));
-    }
+    return RefreshableBody(
+      onRefresh: _refreshProducts,
+      scrollController: _scrollCtrl,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final w = constraints.maxWidth;
+          int crossAxisCount;
+          if (w >= 1100) {
+            crossAxisCount = 5;
+          } else if (w >= 820) {
+            crossAxisCount = 4;
+          } else if (w >= 500) {
+            crossAxisCount = 3;
+          } else {
+            crossAxisCount = 2;
+          }
 
-    if (_error != null && _products.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline, size: 48, color: Color(0xFFE5E7EB)),
-            const SizedBox(height: 16),
-            Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 15)),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () {
-                setState(() {
-                  _error = null;
-                  _currentPage = 1;
-                  _hasMore = true;
-                  _products = [];
-                });
-                _loadProducts();
-              },
-              icon: const Icon(Icons.refresh, size: 18),
-              label: const Text('Retry'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: purple,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
+          if (_products.isEmpty && _isLoading) {
+            return const SizedBox(
+              height: 300,
+              child: Center(child: CircularProgressIndicator(color: purple)),
+            );
+          }
 
-    if (_products.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey[300]),
-            const SizedBox(height: 16),
-            Text('No products in this category',
-                style: TextStyle(fontSize: 16, color: Colors.grey[500])),
-          ],
-        ),
-      );
-    }
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final w = constraints.maxWidth;
-        int crossAxisCount;
-        if (w >= 1100) {
-          crossAxisCount = 5;
-        } else if (w >= 820) {
-          crossAxisCount = 4;
-        } else if (w >= 500) {
-          crossAxisCount = 3;
-        } else {
-          crossAxisCount = 2;
-        }
-
-        return GridView.builder(
-          controller: _scrollCtrl,
-          padding: const EdgeInsets.all(16),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 0.72,
-          ),
-          itemCount: _products.length + (_hasMore ? 1 : 0),
-          itemBuilder: (context, index) {
-            if (index == _products.length) {
-              return const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: CircularProgressIndicator(color: purple),
-                ),
-              );
-            }
-            final p = _products[index];
-            final selected = _selectedIds.contains(p.id);
-            return _ProductCard(
-              product: p,
-              selected: selected,
-              quantity: _totalQtyFor(p.id),
-              picks: p.variants.isNotEmpty ? (_variantPicks[p.id] ?? const []) : null,
-              qtyCtrl: _qtyCtrls[p.id],
-              onToggleSelect: () => _toggleSelect(p.id),
-              onEditVariants: p.variants.isNotEmpty ? () => _editVariants(p.id) : null,
-              onQtyDecrease: () => _adjustQty(p.id, -1),
-              onQtyIncrease: () => _adjustQty(p.id, 1),
-              onQtyChanged: (v) => _updateQtyFromCtrl(p.id, v),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => ProductDetailScreen(productId: p.id)),
+          if (_error != null && _products.isEmpty) {
+            return Center(
+              child: Column(
+                children: [
+                  const Icon(Icons.error_outline, size: 48, color: Color(0xFFE5E7EB)),
+                  const SizedBox(height: 16),
+                  Text(
+                    _error!,
+                    style: const TextStyle(color: Colors.red, fontSize: 15),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _error = null;
+                        _currentPage = 1;
+                        _hasMore = true;
+                        _products = [];
+                      });
+                      _loadProducts();
+                    },
+                    icon: const Icon(Icons.refresh, size: 18),
+                    label: const Text('Retry'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: purple,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ],
               ),
             );
-          },
-        );
-      },
+          }
+
+          if (_products.isEmpty) {
+            return Center(
+              child: Column(
+                children: [
+                  Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey[300]),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No products in this category',
+                    style: TextStyle(fontSize: 16, color: Colors.grey[500]),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 0.72,
+            ),
+            itemCount: _products.length + (_hasMore ? 1 : 0),
+            itemBuilder: (context, index) {
+              if (index == _products.length) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: CircularProgressIndicator(color: purple),
+                  ),
+                );
+              }
+              final p = _products[index];
+              final selected = _selectedIds.contains(p.id);
+              return _ProductCard(
+                product: p,
+                selected: selected,
+                quantity: _totalQtyFor(p.id),
+                picks: p.variants.isNotEmpty
+                    ? (_variantPicks[p.id] ?? const [])
+                    : null,
+                qtyCtrl: _qtyCtrls[p.id],
+                onToggleSelect: () => _toggleSelect(p.id),
+                onEditVariants: p.variants.isNotEmpty
+                    ? () => _editVariants(p.id)
+                    : null,
+                onQtyDecrease: () => _adjustQty(p.id, -1),
+                onQtyIncrease: () => _adjustQty(p.id, 1),
+                onQtyChanged: (v) => _updateQtyFromCtrl(p.id, v),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ProductDetailScreen(productId: p.id),
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 
@@ -626,7 +703,11 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                     onTap: _openCart,
                     child: const Padding(
                       padding: EdgeInsets.all(4),
-                      child: Icon(Icons.shopping_cart, size: 24, color: titleColor),
+                      child: Icon(
+                        Icons.shopping_cart,
+                        size: 24,
+                        color: titleColor,
+                      ),
                     ),
                   ),
                 ),
@@ -635,16 +716,22 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                     top: -6,
                     right: -6,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 2,
+                      ),
                       decoration: const BoxDecoration(
                         color: purple,
                         borderRadius: BorderRadius.all(Radius.circular(10)),
                       ),
-                      child: Text('$_selectedCount',
-                          style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white)),
+                      child: Text(
+                        '$_selectedCount',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
               ],
@@ -660,44 +747,70 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                         ? '$_selectedCount Items Selected'
                         : 'No items selected',
                     style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: titleColor),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: titleColor,
+                    ),
                   ),
                   PriceText(
                     _selectedTotal,
                     style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: titleColor),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: titleColor,
+                    ),
                   ),
                 ],
               ),
             ),
             GestureDetector(
-              onTap: _selectedCount > 0 ? _addToCart : null,
+              onTap: (_isAddingToCart || _selectedCount == 0)
+                  ? null
+                  : _addToCart,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
-                  gradient: _selectedCount > 0
-                      ? const LinearGradient(
-                          colors: [Color(0xFF6D28D9), Color(0xFF5B21B6)])
+                  gradient: (_isAddingToCart || _selectedCount == 0)
+                      ? null
+                      : const LinearGradient(
+                          colors: [Color(0xFF6D28D9), Color(0xFF5B21B6)],
+                        ),
+                  color: (_isAddingToCart || _selectedCount == 0)
+                      ? const Color(0xFFD1D5DB)
                       : null,
-                  color: _selectedCount > 0 ? null : const Color(0xFFD1D5DB),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.add_shopping_cart, color: Colors.white, size: 18),
-                    SizedBox(width: 6),
-                    Text('Add to Cart',
-                        style: TextStyle(
+                child: _isAddingToCart
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.add_shopping_cart,
                             color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14)),
-                  ],
-                ),
+                            size: 18,
+                          ),
+                          SizedBox(width: 6),
+                          Text(
+                            'Add to Cart',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
               ),
             ),
           ],
@@ -738,10 +851,11 @@ class _ProductCard extends StatelessWidget {
   static const Color gray = Color(0xFF6B7280);
   static const Color purple = Color(0xFF6D28D9);
 
-  double get _displayPrice =>
-      (picks != null && picks!.isNotEmpty)
-          ? picks!.first.variant.price
-          : (product.variants.isNotEmpty ? product.variants.first.price : product.price);
+  double get _displayPrice => (picks != null && picks!.isNotEmpty)
+      ? picks!.first.variant.price
+      : (product.variants.isNotEmpty
+            ? product.variants.first.price
+            : product.price);
 
   int get _displayStock => product.stock;
 
@@ -789,7 +903,10 @@ class _ProductCard extends StatelessWidget {
                     top: 8,
                     left: 8,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.6),
                         borderRadius: BorderRadius.circular(6),
@@ -818,9 +935,7 @@ class _ProductCard extends StatelessWidget {
                               : Colors.white.withValues(alpha: 0.92),
                           borderRadius: BorderRadius.circular(7),
                           border: Border.all(
-                            color: selected
-                                ? purple
-                                : const Color(0xFFD1D5DB),
+                            color: selected ? purple : const Color(0xFFD1D5DB),
                           ),
                           boxShadow: [
                             BoxShadow(
@@ -830,7 +945,11 @@ class _ProductCard extends StatelessWidget {
                           ],
                         ),
                         child: selected
-                            ? const Icon(Icons.check, color: Colors.white, size: 16)
+                            ? const Icon(
+                                Icons.check,
+                                color: Colors.white,
+                                size: 16,
+                              )
                             : null,
                       ),
                     ),
@@ -890,7 +1009,9 @@ class _ProductCard extends StatelessWidget {
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 7),
+                        horizontal: 6,
+                        vertical: 7,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF9FAFB),
                         borderRadius: BorderRadius.circular(8),
@@ -905,9 +1026,10 @@ class _ProductCard extends StatelessWidget {
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: purple),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: purple,
+                              ),
                             ),
                             const SizedBox(height: 6),
                             if (onEditVariants != null)
@@ -916,14 +1038,20 @@ class _ProductCard extends StatelessWidget {
                                 child: const Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.tune,
-                                        size: 12, color: AppColors.teal),
+                                    Icon(
+                                      Icons.tune,
+                                      size: 12,
+                                      color: AppColors.teal,
+                                    ),
                                     SizedBox(width: 4),
-                                    Text('Edit variants',
-                                        style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                            color: AppColors.teal)),
+                                    Text(
+                                      'Edit variants',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.teal,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -936,11 +1064,14 @@ class _ProductCard extends StatelessWidget {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Text('Quantity',
-                                      style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                          color: gray)),
+                                  const Text(
+                                    'Quantity',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: gray,
+                                    ),
+                                  ),
                                   const SizedBox(width: 8),
                                   _qtyEditor(),
                                 ],
@@ -951,11 +1082,14 @@ class _ProductCard extends StatelessWidget {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('Total',
-                                  style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: gray)),
+                              const Text(
+                                'Total',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: gray,
+                                ),
+                              ),
                               Flexible(
                                 child: FittedBox(
                                   fit: BoxFit.scaleDown,
@@ -1024,9 +1158,10 @@ class _ProductCard extends StatelessWidget {
               textAlign: TextAlign.center,
               maxLength: 4,
               style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: titleColor),
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: titleColor,
+              ),
               decoration: const InputDecoration(
                 counterText: '',
                 border: InputBorder.none,
@@ -1066,9 +1201,7 @@ class _ProductCard extends StatelessWidget {
           end: Alignment.bottomRight,
         ),
       ),
-      child: Center(
-        child: Icon(product.icon, color: Colors.white, size: 36),
-      ),
+      child: Center(child: Icon(product.icon, color: Colors.white, size: 36)),
     );
   }
 }
@@ -1077,10 +1210,7 @@ class _VariantPickDialog extends StatefulWidget {
   final CatalogProductView product;
   final ValueChanged<List<VariantPick>> onConfirm;
 
-  const _VariantPickDialog({
-    required this.product,
-    required this.onConfirm,
-  });
+  const _VariantPickDialog({required this.product, required this.onConfirm});
 
   @override
   State<_VariantPickDialog> createState() => _VariantPickDialogState();
@@ -1097,8 +1227,8 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
 
   int get _totalPicked => _qtys.fold(0, (sum, q) => sum + q);
 
-  int get _totalStock => _product.variants.fold(
-      0, (sum, v) => sum + v.quantity);
+  int get _totalStock =>
+      _product.variants.fold(0, (sum, v) => sum + v.quantity);
   int get _productStock => _product.stock > 0 ? _product.stock : _totalStock;
 
   @override
@@ -1190,16 +1320,19 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
                 child: Text(
                   '$_totalPicked / $_productStock pieces',
                   style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: purple),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: purple,
+                  ),
                 ),
               ),
               GestureDetector(
                 onTap: _fillAll,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF3E8FF),
                     borderRadius: BorderRadius.circular(8),
@@ -1209,11 +1342,14 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
                     children: [
                       Icon(Icons.bolt, size: 13, color: purple),
                       SizedBox(width: 4),
-                      Text('Fill all stock',
-                          style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: purple)),
+                      Text(
+                        'Fill all stock',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: purple,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -1228,8 +1364,7 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              for (var i = 0; i < _product.variants.length; i++)
-                _variantRow(i),
+              for (var i = 0; i < _product.variants.length; i++) _variantRow(i),
             ],
           ),
         ),
@@ -1272,8 +1407,7 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
         children: [
           Row(
             children: [
-              Icon(Icons.tune,
-                  size: 16, color: qty > 0 ? purple : gray),
+              Icon(Icons.tune, size: 16, color: qty > 0 ? purple : gray),
               const SizedBox(width: 8),
               Expanded(
                 child: Column(
@@ -1283,9 +1417,10 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
                     Text(
                       variantTitle(v),
                       style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF111827)),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF111827),
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -1299,9 +1434,10 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
                 v.price,
                 maxLength: 8,
                 style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.teal),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.teal,
+                ),
               ),
             ],
           ),
@@ -1311,9 +1447,7 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
             children: [
               Text(
                 qty > 0 ? 'Selected: $qty' : 'Tap + to select',
-                style: TextStyle(
-                    fontSize: 11,
-                    color: qty > 0 ? purple : gray),
+                style: TextStyle(fontSize: 11, color: qty > 0 ? purple : gray),
               ),
               Container(
                 decoration: BoxDecoration(
@@ -1324,8 +1458,10 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _stepBtn(Icons.remove,
-                        qty > 0 ? () => _setQty(i, qty - 1) : null),
+                    _stepBtn(
+                      Icons.remove,
+                      qty > 0 ? () => _setQty(i, qty - 1) : null,
+                    ),
                     SizedBox(
                       width: 38,
                       child: TextField(
@@ -1334,9 +1470,10 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
                         textAlign: TextAlign.center,
                         maxLength: 4,
                         style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF111827)),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF111827),
+                        ),
                         decoration: const InputDecoration(
                           counterText: '',
                           border: InputBorder.none,
@@ -1346,7 +1483,10 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
                         onChanged: (t) => _fromCtrl(i, t),
                       ),
                     ),
-                    _stepBtn(Icons.add, qty < maxQ ? () => _setQty(i, qty + 1) : null),
+                    _stepBtn(
+                      Icons.add,
+                      qty < maxQ ? () => _setQty(i, qty + 1) : null,
+                    ),
                   ],
                 ),
               ),
@@ -1365,7 +1505,11 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
         height: 26,
         alignment: Alignment.center,
         color: Colors.transparent,
-        child: Icon(icon, size: 14, color: onTap == null ? const Color(0xFFD1D5DB) : gray),
+        child: Icon(
+          icon,
+          size: 14,
+          color: onTap == null ? const Color(0xFFD1D5DB) : gray,
+        ),
       ),
     );
   }
@@ -1411,11 +1555,13 @@ class _AddToCartChoiceDialog extends StatelessWidget {
     );
   }
 
-  Widget _option(BuildContext ctx,
-      {required IconData icon,
-      required String title,
-      required String subtitle,
-      required _AddToCartChoice choice}) {
+  Widget _option(
+    BuildContext ctx, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required _AddToCartChoice choice,
+  }) {
     return InkWell(
       onTap: () => Navigator.of(ctx).pop(choice),
       borderRadius: BorderRadius.circular(12),
@@ -1513,7 +1659,10 @@ class _ExistingCardPickerState extends State<_ExistingCardPicker> {
             Expanded(
               child: ListView.separated(
                 controller: scrollCtrl,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 itemCount: widget.cards.length,
                 separatorBuilder: (_, _) => const SizedBox(height: 8),
                 itemBuilder: (ctx, index) {
@@ -1536,8 +1685,11 @@ class _ExistingCardPickerState extends State<_ExistingCardPicker> {
                               color: const Color(0xFFF3E8FF),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(Icons.shopping_cart_outlined,
-                                color: purple, size: 20),
+                            child: const Icon(
+                              Icons.shopping_cart_outlined,
+                              color: purple,
+                              size: 20,
+                            ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -1562,7 +1714,9 @@ class _ExistingCardPickerState extends State<_ExistingCardPicker> {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
-                                      fontSize: 11, color: gray),
+                                    fontSize: 11,
+                                    color: gray,
+                                  ),
                                 ),
                               ],
                             ),

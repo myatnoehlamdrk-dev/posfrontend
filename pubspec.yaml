@@ -119,4 +119,4 @@ flutter_launcher_icons:
     generate: true
   macos:
     generate: true
-  image_path: "inventory.png"
+  image_path: "Pos_logo.png"

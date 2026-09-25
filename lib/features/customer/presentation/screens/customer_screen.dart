@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/features/customer/presentation/viewmodels/customer_view_model.dart';
-import 'package:posfrontend/shared/widgets/app_drawer.dart';
-import 'package:posfrontend/shared/widgets/app_top_bar.dart';
+import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'overview_tab.dart';
 import 'customers_tab.dart';
 import 'trends_tab.dart';
@@ -13,8 +12,8 @@ class CustomerScreen extends StatefulWidget {
   State<CustomerScreen> createState() => _CustomerScreenState();
 }
 
-class _CustomerScreenState extends State<CustomerScreen> with SingleTickerProviderStateMixin {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+class _CustomerScreenState extends State<CustomerScreen>
+    with SingleTickerProviderStateMixin {
   late final CustomerViewModel _viewModel;
   late final TabController _tabController;
 
@@ -45,26 +44,10 @@ class _CustomerScreenState extends State<CustomerScreen> with SingleTickerProvid
         final body = _buildContent(isWide: isWide);
 
         if (isWide) {
-          return Scaffold(
-            backgroundColor: bg,
-            body: Row(
-              children: [
-                const SizedBox(
-                  width: 240,
-                  child: AppDrawer(activeItem: 'Customers'),
-                ),
-                Expanded(child: body),
-              ],
-            ),
-          );
+          return Scaffold(backgroundColor: bg, body: body);
         }
 
-        return Scaffold(
-          key: _scaffoldKey,
-          backgroundColor: bg,
-          drawer: const AppDrawer(activeItem: 'Customers'),
-          body: body,
-        );
+        return Scaffold(backgroundColor: bg, body: body);
       },
     );
   }
@@ -75,7 +58,9 @@ class _CustomerScreenState extends State<CustomerScreen> with SingleTickerProvid
         listenable: _viewModel,
         builder: (context, _) {
           if (_viewModel.isLoading && _viewModel.analytics == null) {
-            return const Center(child: CircularProgressIndicator(color: purple));
+            return const Center(
+              child: CircularProgressIndicator(color: purple),
+            );
           }
           if (_viewModel.hasError && _viewModel.analytics == null) {
             return Center(
@@ -84,7 +69,10 @@ class _CustomerScreenState extends State<CustomerScreen> with SingleTickerProvid
                 children: [
                   const Icon(Icons.error_outline, color: Colors.red, size: 48),
                   const SizedBox(height: 12),
-                  Text(_viewModel.errorMessage ?? 'Failed to load', style: const TextStyle(color: gray)),
+                  Text(
+                    _viewModel.errorMessage ?? 'Failed to load',
+                    style: const TextStyle(color: gray),
+                  ),
                   const SizedBox(height: 12),
                   ElevatedButton(
                     onPressed: () => _viewModel.loadAnalytics(),
@@ -96,13 +84,9 @@ class _CustomerScreenState extends State<CustomerScreen> with SingleTickerProvid
           }
           return Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                child: AppTopBar(
-                  title: 'Customer Data',
-                  showMenuButton: !isWide,
-                  onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
-                ),
+              AppScreenTopBar(
+                title: 'Customer Data',
+                showBackButton: true,
               ),
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 24),
@@ -119,8 +103,14 @@ class _CustomerScreenState extends State<CustomerScreen> with SingleTickerProvid
                     borderRadius: BorderRadius.circular(10),
                   ),
                   indicatorSize: TabBarIndicatorSize.tab,
-                  labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                  unselectedLabelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                  labelStyle: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  unselectedLabelStyle: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
                   tabs: const [
                     Tab(text: 'Overview'),
                     Tab(text: 'Customers'),

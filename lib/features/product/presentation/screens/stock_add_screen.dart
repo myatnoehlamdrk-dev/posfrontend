@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:posfrontend/core/network/app_exceptions.dart';
 import 'package:posfrontend/features/product/data/models/product_create_models.dart';
 import 'package:posfrontend/features/product/data/repositories/product_create_repository_impl.dart';
-import 'package:posfrontend/shared/widgets/app_top_bar.dart';
+import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
@@ -57,7 +57,10 @@ class _StockAddScreenState extends State<StockAddScreen> {
       });
       return;
     }
-    _debounce = Timer(const Duration(milliseconds: 350), () => _searchProducts(query));
+    _debounce = Timer(
+      const Duration(milliseconds: 350),
+      () => _searchProducts(query),
+    );
   }
 
   Future<void> _searchProducts(String query) async {
@@ -110,7 +113,10 @@ class _StockAddScreenState extends State<StockAddScreen> {
     final product = _selected;
     if (product == null) return;
 
-    if (_variantControllers.any((c) => c.text.trim().isNotEmpty && (int.tryParse(c.text.trim()) ?? -1) < 0)) {
+    if (_variantControllers.any(
+      (c) =>
+          c.text.trim().isNotEmpty && (int.tryParse(c.text.trim()) ?? -1) < 0,
+    )) {
       showErrorMessage(context, 'Enter a valid stock amount');
       return;
     }
@@ -145,68 +151,77 @@ class _StockAddScreenState extends State<StockAddScreen> {
       final i = e.key;
       final v = e.value;
       final added = int.tryParse(_variantControllers[i].text.trim()) ?? 0;
-      return {
-        ...v,
-        'quantity': _variantQuantity(v) + added,
-      };
+      return {...v, 'quantity': _variantQuantity(v) + added};
     }).toList();
 
     return ProductCreateRequest(
       name: product.name,
-      variants: updated.map((v) => ProductCreateVariant(
-        size: (v['size'] ?? '').toString(),
-        color: (v['color'] ?? '').toString(),
-        quantity: (v['quantity'] as num).toInt(),
-        price: ((v['price'] ?? 0) as num).toDouble(),
-      )).toList(),
+      variants: updated
+          .map(
+            (v) => ProductCreateVariant(
+              size: (v['size'] ?? '').toString(),
+              color: (v['color'] ?? '').toString(),
+              quantity: (v['quantity'] as num).toInt(),
+              price: ((v['price'] ?? 0) as num).toDouble(),
+            ),
+          )
+          .toList(),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8F9FC),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const AppTopBar(
-                title: 'Stock Add',
-                showMenuButton: false,
-                showBackButton: true,
-              ),
-              const SizedBox(height: 20),
-              FormCard(
-                label: 'Search Product',
-                helper: 'Search a product to add stock.',
+        child: Column(
+          children: [
+            const AppScreenTopBar(
+              title: 'Stock Add',
+              showMenuButton: false,
+              showBackButton: true,
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _searchField(),
-                    if (_searching)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        child: Center(
-                          child: CircularProgressIndicator(color: kPurple700, strokeWidth: 2.5),
-                        ),
-                      )
-                    else if (_results.isNotEmpty)
-                      ..._results.map((p) => _resultTile(p)),
+                    FormCard(
+                      label: 'Search Product',
+                      helper: 'Search a product to add stock.',
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _searchField(),
+                          if (_searching)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  color: kPurple700,
+                                  strokeWidth: 2.5,
+                                ),
+                              ),
+                            )
+                          else if (_results.isNotEmpty)
+                            ..._results.map((p) => _resultTile(p)),
+                        ],
+                      ),
+                    ),
+                    if (_selected != null) ...[
+                      const SizedBox(height: 16),
+                      FormCard(
+                        label: 'Add Stock',
+                        helper: 'Enter the amount of stock to add.',
+                        child: _stockForm(),
+                      ),
+                    ],
                   ],
                 ),
               ),
-              if (_selected != null) ...[
-                const SizedBox(height: 16),
-                FormCard(
-                  label: 'Add Stock',
-                  helper: 'Enter the amount of stock to add.',
-                  child: _stockForm(),
-                ),
-              ],
-            ],
-          ),
+            ),
+          ],
         ),
       ),
       bottomNavigationBar: _selected != null ? _submitButton() : null,
@@ -223,7 +238,10 @@ class _StockAddScreenState extends State<StockAddScreen> {
         prefixIcon: const Icon(Icons.search, color: kGray),
         filled: true,
         fillColor: kBg,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 12,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: kBorder),
@@ -272,7 +290,11 @@ class _StockAddScreenState extends State<StockAddScreen> {
                 children: [
                   Text(
                     p.name,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: kTitle),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: kTitle,
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                   if (p.brand.isNotEmpty)
@@ -302,7 +324,11 @@ class _StockAddScreenState extends State<StockAddScreen> {
       width: 40,
       height: 40,
       color: kLightPurple,
-      child: const Icon(Icons.inventory_2_outlined, color: kPurple700, size: 20),
+      child: const Icon(
+        Icons.inventory_2_outlined,
+        color: kPurple700,
+        size: 20,
+      ),
     );
   }
 
@@ -310,7 +336,11 @@ class _StockAddScreenState extends State<StockAddScreen> {
     final product = _selected!;
 
     if (product.variants.isEmpty) {
-      return _stockRow('Stock', 'Current: ${product.stock}', _variantControllers.first);
+      return _stockRow(
+        'Stock',
+        'Current: ${product.stock}',
+        _variantControllers.first,
+      );
     }
 
     return Column(
@@ -338,7 +368,14 @@ class _StockAddScreenState extends State<StockAddScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: kTitle)),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: kTitle,
+                ),
+              ),
               const SizedBox(height: 4),
               Text(current, style: const TextStyle(fontSize: 12, color: kGray)),
             ],
@@ -354,7 +391,10 @@ class _StockAddScreenState extends State<StockAddScreen> {
               hintStyle: const TextStyle(color: kGray, fontSize: 14),
               filled: true,
               fillColor: kBg,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 12,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(color: kBorder),
@@ -380,7 +420,11 @@ class _StockAddScreenState extends State<StockAddScreen> {
       decoration: const BoxDecoration(
         color: Colors.white,
         boxShadow: [
-          BoxShadow(color: Color(0x0D000000), blurRadius: 8, offset: Offset(0, -2)),
+          BoxShadow(
+            color: Color(0x0D000000),
+            blurRadius: 8,
+            offset: Offset(0, -2),
+          ),
         ],
       ),
       child: Container(
@@ -400,11 +444,18 @@ class _StockAddScreenState extends State<StockAddScreen> {
                   ? const SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2.5,
+                      ),
                     )
                   : const Text(
                       'Add Stock',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
                     ),
             ),
           ),

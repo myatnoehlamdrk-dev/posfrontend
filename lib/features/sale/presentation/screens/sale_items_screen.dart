@@ -7,7 +7,6 @@ import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/filter_tabs.dart';
-import 'package:posfrontend/shared/widgets/search_input_bar.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 
@@ -19,7 +18,6 @@ class SaleItemScreen extends StatefulWidget {
 }
 
 class _SaleItemScreenState extends State<SaleItemScreen> {
-  final _searchController = TextEditingController();
   late final SaleHistoryViewModel _viewModel;
 
   @override
@@ -34,7 +32,6 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
   @override
   void dispose() {
     _viewModel.dispose();
-    _searchController.dispose();
     super.dispose();
   }
 
@@ -113,12 +110,6 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                 onTabChanged: (i) {
                   _viewModel.setTab(['All', 'Sold', 'Order'][i]);
                 },
-              ),
-              const SizedBox(height: 16),
-              SearchInputBar(
-                controller: _searchController,
-                hintText: 'Search products, order ID, customer...',
-                onChanged: _viewModel.setSearchQuery,
               ),
               const SizedBox(height: 16),
               ..._viewModel.filteredOrders.asMap().entries.map((entry) => KeyedSubtree(

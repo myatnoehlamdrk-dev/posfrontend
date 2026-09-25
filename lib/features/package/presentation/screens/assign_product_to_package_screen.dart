@@ -44,7 +44,10 @@ class _AssignProductToPackageScreenState
       showSuccessMessage(context, '$successCount product(s) added to package');
       Navigator.of(context).pop(true);
     } else if (_viewModel.hasError && mounted) {
-      showErrorMessage(context, _viewModel.errorMessage ?? 'Failed to assign products');
+      showErrorMessage(
+        context,
+        _viewModel.errorMessage ?? 'Failed to assign products',
+      );
     }
   }
 
@@ -87,18 +90,23 @@ class _AssignProductToPackageScreenState
             const SizedBox(width: 12),
             Expanded(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const Text(
                     'Add Products to Package',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: kTitle),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: kTitle,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     '${widget.package.name} • ${widget.category.name}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontSize: 13, color: kGray),
                   ),
                 ],
@@ -108,8 +116,10 @@ class _AssignProductToPackageScreenState
               GestureDetector(
                 onTap: _viewModel.toggleSelectAll,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
@@ -120,9 +130,10 @@ class _AssignProductToPackageScreenState
                         ? 'Deselect All'
                         : 'Select All',
                     style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: kPurple),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: kPurple,
+                    ),
                   ),
                 ),
               ),
@@ -177,9 +188,7 @@ class _AssignProductToPackageScreenState
               decoration: BoxDecoration(
                 color: active ? kPurple : Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: active ? kPurple : kBorder,
-                ),
+                border: Border.all(color: active ? kPurple : kBorder),
               ),
               child: Text(
                 cat,
@@ -198,16 +207,17 @@ class _AssignProductToPackageScreenState
 
   Widget _productList() {
     if (_viewModel.isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: kPurple),
-      );
+      return const Center(child: CircularProgressIndicator(color: kPurple));
     }
     if (_viewModel.hasError) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(_viewModel.errorMessage!, style: const TextStyle(color: kGray)),
+            Text(
+              _viewModel.errorMessage!,
+              style: const TextStyle(color: kGray),
+            ),
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: _viewModel.loadProducts,
@@ -223,14 +233,23 @@ class _AssignProductToPackageScreenState
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.inventory_2_outlined, size: 48, color: Color(0xFFD1D5DB)),
+            const Icon(
+              Icons.inventory_2_outlined,
+              size: 48,
+              color: Color(0xFFD1D5DB),
+            ),
             const SizedBox(height: 12),
-            const Text('No unassigned products found.',
-                style: TextStyle(color: kGray, fontSize: 15)),
+            const Text(
+              'No unassigned products found.',
+              style: TextStyle(color: kGray, fontSize: 15),
+            ),
             const SizedBox(height: 4),
             Text(
               'All products are already in a package.',
-              style: TextStyle(color: kGray.withValues(alpha: 0.7), fontSize: 13),
+              style: TextStyle(
+                color: kGray.withValues(alpha: 0.7),
+                fontSize: 13,
+              ),
             ),
           ],
         ),
@@ -262,7 +281,10 @@ class _AssignProductToPackageScreenState
           ),
           boxShadow: const [
             BoxShadow(
-                color: Color(0x0D000000), blurRadius: 6, offset: Offset(0, 2)),
+              color: Color(0x0D000000),
+              blurRadius: 6,
+              offset: Offset(0, 2),
+            ),
           ],
         ),
         child: Row(
@@ -306,14 +328,19 @@ class _AssignProductToPackageScreenState
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 14, color: kTitle),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      color: kTitle,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: p.stock > 0
                               ? const Color(0xFFDCFCE7)
@@ -323,11 +350,12 @@ class _AssignProductToPackageScreenState
                         child: Text(
                           p.stock > 0 ? '${p.stock} in stock' : 'Out of stock',
                           style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: p.stock > 0
-                                  ? const Color(0xFF16A34A)
-                                  : const Color(0xFFDC2626)),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: p.stock > 0
+                                ? const Color(0xFF16A34A)
+                                : const Color(0xFFDC2626),
+                          ),
                         ),
                       ),
                       if (p.brand.isNotEmpty) ...[
@@ -360,7 +388,10 @@ class _AssignProductToPackageScreenState
         border: Border(top: BorderSide(color: kBorder)),
         boxShadow: [
           BoxShadow(
-              color: Color(0x0D000000), blurRadius: 10, offset: Offset(0, -2)),
+            color: Color(0x0D000000),
+            blurRadius: 10,
+            offset: Offset(0, -2),
+          ),
         ],
       ),
       child: SafeArea(
@@ -373,20 +404,28 @@ class _AssignProductToPackageScreenState
               child: Text(
                 '${_viewModel.selectedCount} product(s) selected',
                 style: const TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w600, color: kTitle),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: kTitle,
+                ),
               ),
             ),
             GestureDetector(
               onTap: _viewModel.isAssigning ? null : _assignToPackage,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   gradient: !_viewModel.isAssigning
                       ? const LinearGradient(
-                          colors: [Color(0xFF6D28D9), Color(0xFF5B21B6)])
+                          colors: [Color(0xFF6D28D9), Color(0xFF5B21B6)],
+                        )
                       : null,
-                  color: _viewModel.isAssigning ? const Color(0xFFD1D5DB) : null,
+                  color: _viewModel.isAssigning
+                      ? const Color(0xFFD1D5DB)
+                      : null,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: _viewModel.isAssigning
@@ -394,13 +433,18 @@ class _AssignProductToPackageScreenState
                         width: 16,
                         height: 16,
                         child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white),
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
-                    : const Text('Add to Package',
+                    : const Text(
+                        'Add to Package',
                         style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14)),
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
               ),
             ),
           ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/features/profile/presentation/screens/profile_screen.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
@@ -9,12 +10,16 @@ class AppScreenTopBar extends StatelessWidget {
   final String title;
   final bool showMenuButton;
   final VoidCallback? onMenuTap;
+  final bool showBackButton;
+  final VoidCallback? onBackTap;
 
   const AppScreenTopBar({
     super.key,
     required this.title,
     this.showMenuButton = true,
     this.onMenuTap,
+    this.showBackButton = false,
+    this.onBackTap,
   });
 
   @override
@@ -28,6 +33,18 @@ class AppScreenTopBar extends StatelessWidget {
       ),
       child: Row(
         children: [
+          if (showBackButton)
+            CustomBackButton(
+              onTap:
+                  onBackTap ??
+                  () {
+                    if (Navigator.of(context).canPop()) {
+                      Navigator.of(context).pop();
+                    } else {
+                      navigateToDashboard(context);
+                    }
+                  },
+            ),
           if (showMenuButton)
             Builder(
               builder: (ctx) => IconButton(
@@ -39,6 +56,8 @@ class AppScreenTopBar extends StatelessWidget {
             child: Center(
               child: Text(
                 title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: AppColors.titleColor,
                   fontSize: 17,
@@ -51,7 +70,10 @@ class AppScreenTopBar extends StatelessWidget {
             children: [
               IconButton(
                 onPressed: () {},
-                icon: const Icon(Icons.notifications_outlined, color: AppColors.titleColor),
+                icon: const Icon(
+                  Icons.notifications_outlined,
+                  color: AppColors.titleColor,
+                ),
               ),
               Positioned(
                 right: 8,
@@ -70,9 +92,9 @@ class AppScreenTopBar extends StatelessWidget {
           const SizedBox(width: 4),
           GestureDetector(
             onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const ProfileScreen()),
-              );
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const ProfileScreen()));
             },
             child: ValueListenableBuilder<String>(
               valueListenable: ProfileImageNotifier.instance,
@@ -80,10 +102,14 @@ class AppScreenTopBar extends StatelessWidget {
                 return CircleAvatar(
                   radius: 18,
                   backgroundColor: AppColors.teal,
-                  backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
-                  onBackgroundImageError: imageUrl.isNotEmpty ? (_, __) {
-                    ProfileImageNotifier.instance.update('');
-                  } : null,
+                  backgroundImage: imageUrl.isNotEmpty
+                      ? NetworkImage(imageUrl)
+                      : null,
+                  onBackgroundImageError: imageUrl.isNotEmpty
+                      ? (_, _) {
+                          ProfileImageNotifier.instance.update('');
+                        }
+                      : null,
                   child: imageUrl.isEmpty
                       ? Text(
                           user?.fullName.trim().isNotEmpty == true

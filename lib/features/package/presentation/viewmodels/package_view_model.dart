@@ -15,8 +15,7 @@ class PackageViewModel extends BaseViewModel {
   final String categoryId;
 
   List<PackageEntity> _packages = [];
-  String _search = '';
-  PackageSort _sort = PackageSort.dateNewest;
+  PackageSort _sort = PackageSort.nameAz;
 
   PackageViewModel({
     required PackageRepository repository,
@@ -39,11 +38,7 @@ class PackageViewModel extends BaseViewModel {
   }
 
   List<PackageEntity> get filtered {
-    final q = _search.toLowerCase();
-    final list = _packages.where((p) {
-      return p.name.toLowerCase().contains(q) ||
-          p.code.toLowerCase().contains(q);
-    }).toList();
+    final list = _packages.toList();
 
     list.sort((a, b) {
       switch (_sort) {
@@ -61,13 +56,7 @@ class PackageViewModel extends BaseViewModel {
   }
 
   int get total => _packages.length;
-  String get search => _search;
   PackageSort get sort => _sort;
-
-  void setSearch(String value) {
-    _search = value;
-    notifyListeners();
-  }
 
   void setSort(PackageSort value) {
     _sort = value;

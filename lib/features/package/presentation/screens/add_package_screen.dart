@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/features/category/domain/entities/category.dart';
 import 'package:posfrontend/features/category/data/repositories/category_repository_impl.dart';
-import 'package:posfrontend/shared/widgets/app_drawer.dart';
-import 'package:posfrontend/shared/widgets/app_top_bar.dart';
+import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/features/package/domain/entities/package.dart';
 import 'package:posfrontend/features/package/data/repositories/package_repository_impl.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
@@ -12,11 +11,7 @@ import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 class AddPackageScreen extends StatefulWidget {
   final Category? category;
   final PackageEntity? existingPackage;
-  const AddPackageScreen({
-    super.key,
-    this.category,
-    this.existingPackage,
-  });
+  const AddPackageScreen({super.key, this.category, this.existingPackage});
 
   bool get isEditing => existingPackage != null;
 
@@ -25,9 +20,10 @@ class AddPackageScreen extends StatefulWidget {
 }
 
 class _AddPackageScreenState extends State<AddPackageScreen> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _amountController = TextEditingController(text: '0');
+  final TextEditingController _amountController = TextEditingController(
+    text: '0',
+  );
   final TextEditingController _descController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
 
@@ -44,7 +40,9 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
     if (widget.existingPackage != null) {
       final p = widget.existingPackage!;
       _nameController.text = p.name;
-      _amountController.text = p.productLimit > 0 ? p.productLimit.toString() : '0';
+      _amountController.text = p.productLimit > 0
+          ? p.productLimit.toString()
+          : '0';
       _descController.text = p.spec;
       _locationController.text = p.location;
     }
@@ -146,8 +144,9 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
   @override
   Widget build(BuildContext context) {
     final categoryLabels = _categoryObjects.map(_labelOf).toList();
-    final selectedLabel =
-        _selectedCategory == null ? null : _labelOf(_selectedCategory!);
+    final selectedLabel = _selectedCategory == null
+        ? null
+        : _labelOf(_selectedCategory!);
 
     return LayoutBuilder(
       builder: (ctx, constraints) {
@@ -155,26 +154,9 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
         final body = _content(categoryLabels, selectedLabel);
 
         if (isWide) {
-          return Scaffold(
-            backgroundColor: Colors.white,
-            body: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(
-                  width: 240,
-                    child: AppDrawer(activeItem: 'Inventory'),
-                ),
-                Expanded(child: body),
-              ],
-            ),
-          );
+          return Scaffold(backgroundColor: Colors.white, body: body);
         }
-        return Scaffold(
-          key: _scaffoldKey,
-          backgroundColor: Colors.white,
-          drawer: AppDrawer(activeItem: 'Inventory'),
-          body: body,
-        );
+        return Scaffold(backgroundColor: Colors.white, body: body);
       },
     );
   }
@@ -182,106 +164,118 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
   Widget _content(List<String> categoryLabels, String? selectedLabel) {
     final isEdit = widget.isEditing;
     return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AppTopBar(
-              title: isEdit ? 'Edit Package' : 'Add Package',
-              showMenuButton: false,
-              showBackButton: true,
-            ),
-            const SizedBox(height: 20),
-            Breadcrumb([
-              const BreadcrumbItem('Dashboard', false),
-              const BreadcrumbItem('Inventory', false),
-              const BreadcrumbItem('Packages', false),
-              BreadcrumbItem(isEdit ? 'Edit Package' : 'Add Package', true),
-            ]),
-            const SizedBox(height: 24),
-            Text(
-              isEdit ? 'Edit Package' : 'Package Information',
-              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: kTitle),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              isEdit
-                  ? 'Update the details for this package.'
-                  : 'Provide the details for your new inventory package.',
-              style: const TextStyle(fontSize: 16, color: kGray),
-            ),
-            const SizedBox(height: 24),
-            FormCard(
-              label: 'Category',
-              required: true,
-              helper: 'Select the category for this package.',
-              child: DropdownField(
-                value: selectedLabel,
-                hint: 'Select category',
-                items: categoryLabels,
-                onChanged: (v) => setState(() {
-                  _selectedCategory = _categoryObjects.firstWhere(
-                    (c) => _labelOf(c) == v,
-                    orElse: () => _selectedCategory!,
-                  );
-                }),
+      child: Column(
+        children: [
+          AppScreenTopBar(
+            title: isEdit ? 'Edit Package' : 'Add Package',
+            showMenuButton: false,
+            showBackButton: true,
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Breadcrumb([
+                    const BreadcrumbItem('Dashboard', false),
+                    const BreadcrumbItem('Inventory', false),
+                    const BreadcrumbItem('Packages', false),
+                    BreadcrumbItem(
+                      isEdit ? 'Edit Package' : 'Add Package',
+                      true,
+                    ),
+                  ]),
+                  const SizedBox(height: 24),
+                  Text(
+                    isEdit ? 'Edit Package' : 'Package Information',
+                    style: const TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: kTitle,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    isEdit
+                        ? 'Update the details for this package.'
+                        : 'Provide the details for your new inventory package.',
+                    style: const TextStyle(fontSize: 16, color: kGray),
+                  ),
+                  const SizedBox(height: 24),
+                  FormCard(
+                    label: 'Category',
+                    required: true,
+                    helper: 'Select the category for this package.',
+                    child: DropdownField(
+                      value: selectedLabel,
+                      hint: 'Select category',
+                      items: categoryLabels,
+                      onChanged: (v) => setState(() {
+                        _selectedCategory = _categoryObjects.firstWhere(
+                          (c) => _labelOf(c) == v,
+                          orElse: () => _selectedCategory!,
+                        );
+                      }),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  FormCard(
+                    label: 'Package Name',
+                    required: true,
+                    helper: 'Enter a name for this package.',
+                    child: CounterTextField(
+                      controller: _nameController,
+                      hint: 'Enter package name',
+                      max: 100,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  FormCard(
+                    label: 'Amount of Products (Limit)',
+                    required: true,
+                    helper: 'Maximum number of products this package can hold.',
+                    child: TextField(
+                      controller: _amountController,
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.right,
+                      decoration: fieldDecoration('Enter amount of products'),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  FormCard(
+                    label: 'Description',
+                    helper: 'Enter a brief description of this package.',
+                    child: CounterTextField(
+                      controller: _descController,
+                      hint: 'Enter package description',
+                      max: 300,
+                      maxLines: 4,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  FormCard(
+                    label: 'Location',
+                    helper: 'Specify where this package is stored.',
+                    child: CounterTextField(
+                      controller: _locationController,
+                      hint: 'Enter location (e.g., Aisle 1, Shelf 2)',
+                      max: 100,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  FormActions(
+                    onCancel: () => Navigator.of(context).pop(),
+                    onSave: _save,
+                    saveLabel: isEdit ? 'Update Package' : 'Save Package',
+                    loading: _saving,
+                  ),
+                  const SizedBox(height: 16),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
-            FormCard(
-              label: 'Package Name',
-              required: true,
-              helper: 'Enter a name for this package.',
-              child: CounterTextField(
-                controller: _nameController,
-                hint: 'Enter package name',
-                max: 100,
-              ),
-            ),
-            const SizedBox(height: 16),
-            FormCard(
-              label: 'Amount of Products (Limit)',
-              required: true,
-              helper: 'Maximum number of products this package can hold.',
-              child: TextField(
-                controller: _amountController,
-                keyboardType: TextInputType.number,
-                textAlign: TextAlign.right,
-                decoration: fieldDecoration('Enter amount of products'),
-              ),
-            ),
-            const SizedBox(height: 16),
-            FormCard(
-              label: 'Description',
-              helper: 'Enter a brief description of this package.',
-              child: CounterTextField(
-                controller: _descController,
-                hint: 'Enter package description',
-                max: 300,
-                maxLines: 4,
-              ),
-            ),
-            const SizedBox(height: 16),
-            FormCard(
-              label: 'Location',
-              helper: 'Specify where this package is stored.',
-              child: CounterTextField(
-                controller: _locationController,
-                hint: 'Enter location (e.g., Aisle 1, Shelf 2)',
-                max: 100,
-              ),
-            ),
-            const SizedBox(height: 16),
-            FormActions(
-              onCancel: () => Navigator.of(context).pop(),
-              onSave: _save,
-              saveLabel: isEdit ? 'Update Package' : 'Save Package',
-              loading: _saving,
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -4,7 +4,7 @@ import 'package:posfrontend/features/cart/domain/entities/cart_card_entity.dart'
 import 'package:posfrontend/features/cart/presentation/widgets/cart_item_row.dart';
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
 import 'package:posfrontend/features/sale/presentation/screens/new_sale_screen.dart';
-import 'package:posfrontend/shared/widgets/app_top_bar.dart';
+import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
 
 class CartCardScreen extends StatefulWidget {
@@ -23,24 +23,24 @@ class _CartCardScreenState extends State<CartCardScreen> {
 
   Future<void> _goCheckout() async {
     final items = widget.card.items
-        .map((e) => SaleItemEntity(
-              productId: e.productId,
-              productName: e.productName,
-              imageUrl: e.imageUrl,
-              unitPrice: e.unitPrice,
-              quantity: e.quantity,
-              size: e.size,
-              color: e.color,
-              category: e.category,
-            ))
+        .map(
+          (e) => SaleItemEntity(
+            productId: e.productId,
+            productName: e.productName,
+            imageUrl: e.imageUrl,
+            unitPrice: e.unitPrice,
+            quantity: e.quantity,
+            size: e.size,
+            color: e.color,
+            category: e.category,
+          ),
+        )
         .toList();
     final orderId = widget.card.orderId.isNotEmpty ? widget.card.orderId : null;
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => NewSaleScreen(
-          initialItems: items,
-          existingOrderId: orderId,
-        ),
+        builder: (_) =>
+            NewSaleScreen(initialItems: items, existingOrderId: orderId),
       ),
     );
     if (!mounted) return;
@@ -56,13 +56,17 @@ class _CartCardScreenState extends State<CartCardScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              child: AppTopBar(title: 'Checkout', showMenuButton: false, showBackButton: true),
+            const AppScreenTopBar(
+              title: 'Checkout',
+              showMenuButton: false,
+              showBackButton: true,
             ),
             Expanded(
               child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 itemCount: widget.card.items.length,
                 separatorBuilder: (ctx, index) => const SizedBox(height: 10),
                 itemBuilder: (ctx, index) {
@@ -130,7 +134,10 @@ class _CartCardScreenState extends State<CartCardScreen> {
             GestureDetector(
               onTap: _goCheckout,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [Color(0xFF6D28D9), Color(0xFF5B21B6)],
@@ -140,7 +147,11 @@ class _CartCardScreenState extends State<CartCardScreen> {
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.check_circle_outline, color: Colors.white, size: 18),
+                    Icon(
+                      Icons.check_circle_outline,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                     SizedBox(width: 6),
                     Text(
                       'Checkout',

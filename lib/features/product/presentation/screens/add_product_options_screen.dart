@@ -4,13 +4,14 @@ import 'package:posfrontend/features/product/presentation/screens/quick_add_prod
 import 'package:posfrontend/features/product/presentation/screens/stock_add_screen.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
-import 'package:posfrontend/shared/widgets/app_top_bar.dart';
+import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 
 class AddProductOptionsScreen extends StatefulWidget {
   const AddProductOptionsScreen({super.key});
 
   @override
-  State<AddProductOptionsScreen> createState() => _AddProductOptionsScreenState();
+  State<AddProductOptionsScreen> createState() =>
+      _AddProductOptionsScreenState();
 }
 
 class _AddProductOptionsScreenState extends State<AddProductOptionsScreen> {
@@ -23,54 +24,58 @@ class _AddProductOptionsScreenState extends State<AddProductOptionsScreen> {
       backgroundColor: Colors.white,
       drawer: const AppDrawer(activeItem: 'Add Product'),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AppTopBar(
-                title: 'Add Product',
-                showMenuButton: true,
-                showBackButton: false,
-                onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Choose how you want to add a product',
-                style: TextStyle(
-                  color: AppColors.gray,
-                  fontSize: 14,
+        child: Column(
+          children: [
+            AppScreenTopBar(
+              title: 'Add Product',
+              showMenuButton: true,
+              onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Choose how you want to add a product',
+                      style: TextStyle(color: AppColors.gray, fontSize: 14),
+                    ),
+                    const SizedBox(height: 32),
+                    _OptionCard(
+                      icon: Icons.flash_on_rounded,
+                      iconBgColor: const Color(0xFFFFF7ED),
+                      iconColor: const Color(0xFFEA580C),
+                      title: 'Quick Add',
+                      subtitle:
+                          'Add a product with minimal details — name, price, and stock only.',
+                      onTap: () => _navigateTo(context, 'quick'),
+                    ),
+                    const SizedBox(height: 16),
+                    _OptionCard(
+                      icon: Icons.inventory_2_outlined,
+                      iconBgColor: const Color(0xFFF0FDF4),
+                      iconColor: const Color(0xFF16A34A),
+                      title: 'Stock Add',
+                      subtitle:
+                          'Add stock to an existing product or create with detailed inventory tracking.',
+                      onTap: () => _navigateTo(context, 'stock'),
+                    ),
+                    const SizedBox(height: 16),
+                    _OptionCard(
+                      icon: Icons.edit_note_rounded,
+                      iconBgColor: const Color(0xFFF5F0FF),
+                      iconColor: const Color(0xFF7C3AED),
+                      title: 'Normal Add',
+                      subtitle:
+                          'Full product creation with all details — image, variants, categories, and supply chain.',
+                      onTap: () => _navigateTo(context, 'normal'),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 32),
-              _OptionCard(
-                icon: Icons.flash_on_rounded,
-                iconBgColor: const Color(0xFFFFF7ED),
-                iconColor: const Color(0xFFEA580C),
-                title: 'Quick Add',
-                subtitle: 'Add a product with minimal details — name, price, and stock only.',
-                onTap: () => _navigateTo(context, 'quick'),
-              ),
-              const SizedBox(height: 16),
-              _OptionCard(
-                icon: Icons.inventory_2_outlined,
-                iconBgColor: const Color(0xFFF0FDF4),
-                iconColor: const Color(0xFF16A34A),
-                title: 'Stock Add',
-                subtitle: 'Add stock to an existing product or create with detailed inventory tracking.',
-                onTap: () => _navigateTo(context, 'stock'),
-              ),
-              const SizedBox(height: 16),
-              _OptionCard(
-                icon: Icons.edit_note_rounded,
-                iconBgColor: const Color(0xFFF5F0FF),
-                iconColor: const Color(0xFF7C3AED),
-                title: 'Normal Add',
-                subtitle: 'Full product creation with all details — image, variants, categories, and supply chain.',
-                onTap: () => _navigateTo(context, 'normal'),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -82,9 +87,7 @@ class _AddProductOptionsScreenState extends State<AddProductOptionsScreen> {
       'stock' => const StockAddScreen(),
       _ => const AddProductScreen(),
     };
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => screen),
-    );
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
   }
 }
 

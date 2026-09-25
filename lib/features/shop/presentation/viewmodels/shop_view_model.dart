@@ -1,8 +1,8 @@
 import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/core/base/form_validation_mixin.dart';
 import 'package:posfrontend/core/network/api_client.dart';
-import 'package:posfrontend/features/shop/domain/entities/shop.dart' as old_shop;
-import 'package:posfrontend/features/shop/domain/repositories/shop_repository.dart';
+import 'package:posfrontend/features/shop/domain/entities/shop.dart'
+    as old_shop;
 import 'package:posfrontend/features/shop/domain/repositories/shop_repository.dart';
 
 class ShopViewModel extends BaseViewModel with FormValidationMixin {
@@ -12,8 +12,8 @@ class ShopViewModel extends BaseViewModel with FormValidationMixin {
   ShopViewModel({
     required ShopLocalRepository localRepository,
     required ShopApiRepository apiRepository,
-  })  : _localRepository = localRepository,
-        _apiRepository = apiRepository;
+  }) : _localRepository = localRepository,
+       _apiRepository = apiRepository;
 
   String? _logoData;
   String? get logoData => _logoData;
@@ -50,14 +50,14 @@ class ShopViewModel extends BaseViewModel with FormValidationMixin {
   void setMode(String mode) {
     if (_mode == mode) return;
     _mode = mode;
-    if (mode == 'existing') {
-      loadShops();
-    }
     notifyListeners();
   }
 
   List<old_shop.Shop> _shops = const [];
   List<old_shop.Shop> get shops => _shops;
+
+  bool _shopsLoaded = false;
+  bool get shopsLoaded => _shopsLoaded;
 
   bool _isLoadingShops = false;
   bool get isLoadingShops => _isLoadingShops;
@@ -70,19 +70,63 @@ class ShopViewModel extends BaseViewModel with FormValidationMixin {
     notifyListeners();
   }
 
-  Future<void> loadShops() async {
+  void reset() {
+    _logoData = null;
+    _logoUrl = null;
+    _name = '';
+    _type = null;
+    _physicalAddress = '';
+    _ownerName = '';
+    _ownerEmail = '';
+    _ownerPhone = '';
+    _isShopCreated = false;
+    _mode = 'create';
+    _shopsRequestId++;
+    _shops = const [];
+    _shopsLoaded = false;
+    _selectedOldShop = null;
+    resetError();
+    clearAllFieldErrors();
+    notifyListeners();
+  }
+
+  int _shopsRequestId = 0;
+
+  Future<void> loadShops({String? query}) async {
+    _shopsRequestId++;
+    final requestId = _shopsRequestId;
     _isLoadingShops = true;
     notifyListeners();
     try {
-      _shops = await _apiRepository.getShops(cancelToken: cancelToken);
+      final result = await _apiRepository.getShops(
+        query: query,
+        cancelToken: cancelToken,
+      );
+      if (requestId != _shopsRequestId) return;
+      _shops = result;
+      _shopsLoaded = true;
     } on ApiException catch (e) {
+      if (requestId != _shopsRequestId) return;
       setError(e.message);
     } catch (e) {
+      if (requestId != _shopsRequestId) return;
       setError('Failed to load shops: $e');
     } finally {
-      _isLoadingShops = false;
-      notifyListeners();
+      if (requestId == _shopsRequestId) {
+        _isLoadingShops = false;
+        notifyListeners();
+      }
     }
+  }
+
+  void clearShops() {
+    _shopsRequestId++;
+    _shops = const [];
+    _shopsLoaded = false;
+    _isLoadingShops = false;
+    _selectedOldShop = null;
+    resetError();
+    notifyListeners();
   }
 
   Future<void> saveSelectedShop() async {
@@ -192,29 +236,6 @@ class ShopViewModel extends BaseViewModel with FormValidationMixin {
     } catch (e) {
       setError('Failed to save shop locally: $e');
       return false;
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  Future<void> loadSavedShop() async {
-    setLoading(true);
-    try {
-      final shop = await _localRepository.getShop();
-      if (shop != null) {
-        _logoData = shop.logoData;
-        _logoUrl = shop.logoUrl;
-        _name = shop.name;
-        _type = shop.type;
-        _physicalAddress = shop.physicalAddress;
-        _ownerName = shop.ownerInformation.name;
-        _ownerEmail = shop.ownerInformation.email;
-        _ownerPhone = shop.ownerInformation.phone;
-        _isShopCreated = true;
-        notifyListeners();
-      }
-    } catch (e) {
-      setError('Failed to load saved shop: $e');
     } finally {
       setLoading(false);
     }

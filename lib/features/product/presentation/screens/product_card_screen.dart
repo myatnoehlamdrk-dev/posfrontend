@@ -4,7 +4,6 @@ import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart';
 import 'package:posfrontend/features/product/presentation/screens/product_detail_screen.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
-import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/shared/widgets/search_input_bar.dart';
@@ -18,7 +17,6 @@ class ProductCardScreen extends StatefulWidget {
 }
 
 class _ProductCardScreenState extends State<ProductCardScreen> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _search = TextEditingController();
   final ScrollController _scrollCtrl = ScrollController();
 
@@ -125,20 +123,12 @@ class _ProductCardScreenState extends State<ProductCardScreen> {
                 return Scaffold(
                   backgroundColor: bg,
                   body: SafeArea(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(width: 240, child: AppDrawer(activeItem: 'Product')),
-                        Expanded(child: _buildContent(filtered)),
-                      ],
-                    ),
+                    child: _buildContent(filtered),
                   ),
                 );
               }
               return Scaffold(
-                key: _scaffoldKey,
                 backgroundColor: bg,
-                drawer: const AppDrawer(activeItem: 'Product'),
                 body: SafeArea(child: _buildContent(filtered)),
               );
             },
@@ -153,8 +143,7 @@ class _ProductCardScreenState extends State<ProductCardScreen> {
       children: [
         AppScreenTopBar(
           title: 'Products',
-          showMenuButton: true,
-          onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+          showBackButton: true,
         ),
         Expanded(
           child: RefreshIndicator(

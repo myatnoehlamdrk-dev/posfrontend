@@ -3,8 +3,7 @@ import 'package:get_it/get_it.dart';
 import 'package:posfrontend/features/category/domain/entities/category.dart';
 import 'package:posfrontend/features/category/domain/repositories/category_repository.dart';
 import 'package:posfrontend/features/category/presentation/viewmodels/add_category_view_model.dart';
-import 'package:posfrontend/shared/widgets/app_drawer.dart';
-import 'package:posfrontend/shared/widgets/app_top_bar.dart';
+import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
@@ -24,7 +23,6 @@ class AddCategoryScreen extends StatefulWidget {
 }
 
 class _AddCategoryScreenState extends State<AddCategoryScreen> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
@@ -60,7 +58,10 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
       inventoryType: widget.inventoryType,
     );
     if (success && mounted) {
-      showSuccessSnackBar(context, widget.isEditing ? 'Category updated' : 'Category created');
+      showSuccessSnackBar(
+        context,
+        widget.isEditing ? 'Category updated' : 'Category created',
+      );
       Navigator.of(context).pop(_viewModel.result);
     } else if (_viewModel.hasError && mounted) {
       showErrorSnackBar(context, _viewModel.errorMessage!);
@@ -84,26 +85,9 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
         final body = _content();
 
         if (isWide) {
-          return Scaffold(
-            backgroundColor: Colors.white,
-            body: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(
-                  width: 240,
-                    child: AppDrawer(activeItem: 'Inventory'),
-                ),
-                Expanded(child: body),
-              ],
-            ),
-          );
+          return Scaffold(backgroundColor: Colors.white, body: body);
         }
-        return Scaffold(
-          key: _scaffoldKey,
-          backgroundColor: Colors.white,
-          drawer: AppDrawer(activeItem: 'Inventory'),
-          body: body,
-        );
+        return Scaffold(backgroundColor: Colors.white, body: body);
       },
     );
   }
@@ -111,82 +95,94 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
   Widget _content() {
     final isEdit = widget.isEditing;
     return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AppTopBar(
-              title: isEdit ? 'Edit Category' : 'Add Category',
-              showMenuButton: false,
-              showBackButton: true,
-            ),
-            const SizedBox(height: 20),
-            Breadcrumb([
-              const BreadcrumbItem('Dashboard', false),
-              const BreadcrumbItem('Inventory', false),
-              const BreadcrumbItem('Categories', false),
-              BreadcrumbItem(isEdit ? 'Edit Category' : 'Add Category', true),
-            ]),
-            const SizedBox(height: 24),
-            Text(
-              isEdit ? 'Edit Category' : 'Category Information',
-              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: kTitle),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              isEdit
-                  ? 'Update the details for this category.'
-                  : 'Provide the details for your new inventory category.',
-              style: const TextStyle(fontSize: 16, color: kGray),
-            ),
-            const SizedBox(height: 24),
-            FormCard(
-              label: 'Category Name',
-              required: true,
-              helper: 'Enter a name for this category.',
-              child: CounterTextField(
-                controller: _nameController,
-                hint: 'Enter category name',
-                max: 100,
-                onChanged: _viewModel.setName,
+      child: Column(
+        children: [
+          AppScreenTopBar(
+            title: isEdit ? 'Edit Category' : 'Add Category',
+            showMenuButton: false,
+            showBackButton: true,
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Breadcrumb([
+                    const BreadcrumbItem('Dashboard', false),
+                    const BreadcrumbItem('Inventory', false),
+                    const BreadcrumbItem('Categories', false),
+                    BreadcrumbItem(
+                      isEdit ? 'Edit Category' : 'Add Category',
+                      true,
+                    ),
+                  ]),
+                  const SizedBox(height: 24),
+                  Text(
+                    isEdit ? 'Edit Category' : 'Category Information',
+                    style: const TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: kTitle,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    isEdit
+                        ? 'Update the details for this category.'
+                        : 'Provide the details for your new inventory category.',
+                    style: const TextStyle(fontSize: 16, color: kGray),
+                  ),
+                  const SizedBox(height: 24),
+                  FormCard(
+                    label: 'Category Name',
+                    required: true,
+                    helper: 'Enter a name for this category.',
+                    child: CounterTextField(
+                      controller: _nameController,
+                      hint: 'Enter category name',
+                      max: 100,
+                      onChanged: _viewModel.setName,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  FormCard(
+                    label: 'Amount of Packages (Limit)',
+                    helper:
+                        'Maximum number of packages this category can hold.',
+                    child: CounterTextField(
+                      controller: _amountController,
+                      hint: '0',
+                      max: 11,
+                      keyboardType: TextInputType.number,
+                      onChanged: _viewModel.setPackageLimit,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  FormCard(
+                    label: 'Description',
+                    helper: 'Enter a brief description of this category.',
+                    child: CounterTextField(
+                      controller: _descController,
+                      hint: 'Enter category description',
+                      max: 300,
+                      maxLines: 4,
+                      onChanged: _viewModel.setDescription,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  FormActions(
+                    onCancel: () => Navigator.of(context).pop(),
+                    onSave: _viewModel.isSaving ? null : _save,
+                    saveLabel: isEdit ? 'Update Category' : 'Save Category',
+                    loading: _viewModel.isSaving,
+                  ),
+                  const SizedBox(height: 16),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
-            FormCard(
-              label: 'Amount of Packages (Limit)',
-              helper:
-                  'Maximum number of packages this category can hold.',
-              child: CounterTextField(
-                controller: _amountController,
-                hint: '0',
-                max: 11,
-                keyboardType: TextInputType.number,
-                onChanged: _viewModel.setPackageLimit,
-              ),
-            ),
-            const SizedBox(height: 16),
-            FormCard(
-              label: 'Description',
-              helper: 'Enter a brief description of this category.',
-              child: CounterTextField(
-                controller: _descController,
-                hint: 'Enter category description',
-                max: 300,
-                maxLines: 4,
-                onChanged: _viewModel.setDescription,
-              ),
-            ),
-            const SizedBox(height: 24),
-            FormActions(
-              onCancel: () => Navigator.of(context).pop(),
-              onSave: _viewModel.isSaving ? null : _save,
-              saveLabel: isEdit ? 'Update Category' : 'Save Category',
-              loading: _viewModel.isSaving,
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

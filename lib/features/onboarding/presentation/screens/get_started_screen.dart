@@ -108,13 +108,13 @@ class GetStartedScreen extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 72,
-                  height: 72,
+                  width: 120,
+                  height: 120,
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(24),
                   ),
-                  padding: const EdgeInsets.all(14),
                   child: _buildAppIcon(),
                 ),
                 const SizedBox(height: 24),
@@ -158,26 +158,11 @@ class GetStartedScreen extends StatelessWidget {
   }
 
   Widget _buildAppIcon() {
-    return GridView.count(
-      crossAxisCount: 2,
-      mainAxisSpacing: 5,
-      crossAxisSpacing: 5,
-      physics: const NeverScrollableScrollPhysics(),
-      children: [
-        _buildIconSquare(const Color(0xFFE9D5FF)),
-        _buildIconSquare(const Color(0xFFA7F3D0)),
-        _buildIconSquare(const Color(0xFFDDD6FE)),
-        _buildIconSquare(const Color(0xFFC4B5FD)),
-      ],
-    );
-  }
-
-  Widget _buildIconSquare(Color color) {
-    return Container(
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(5),
-      ),
+    return Image.asset(
+      'assets/shop.png',
+      fit: BoxFit.contain,
+      cacheWidth: 300,
+      cacheHeight: 300,
     );
   }
 
@@ -227,22 +212,7 @@ class GetStartedScreen extends StatelessWidget {
 
   void _navigateToLogin(BuildContext context) {
     Navigator.of(context).pushAndRemoveUntil(
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 350),
-        reverseTransitionDuration: const Duration(milliseconds: 350),
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            const LoginScreen(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          final slideTween = Tween<Offset>(
-            begin: const Offset(1.0, 0.0),
-            end: Offset.zero,
-          ).chain(CurveTween(curve: Curves.easeOutCubic));
-          return SlideTransition(
-            position: animation.drive(slideTween),
-            child: child,
-          );
-        },
-      ),
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
       (route) => false,
     );
   }
@@ -310,6 +280,7 @@ class _SwipeToUnlockState extends State<SwipeToUnlock>
                     _completed = true;
                     _dragPercent = 1.0;
                   });
+                  _pulseController.stop();
                   widget.onComplete();
                 } else {
                   setState(() => _dragPercent = 0.0);

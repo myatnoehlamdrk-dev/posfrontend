@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/features/category/domain/entities/category.dart';
-import 'package:posfrontend/shared/widgets/app_drawer.dart';
-import 'package:posfrontend/shared/widgets/app_top_bar.dart';
+import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/features/package/domain/entities/package.dart';
 import 'package:posfrontend/features/package/presentation/viewmodels/package_detail_view_model.dart';
-import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart' hide ProductVariant;
+import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart'
+    hide ProductVariant;
 import 'package:posfrontend/features/product/data/repositories/product_repository_impl.dart';
 import 'package:posfrontend/features/package/presentation/screens/assign_product_to_package_screen.dart';
 import 'package:posfrontend/features/product/presentation/screens/product_detail_screen.dart';
@@ -27,7 +27,6 @@ class PackageDetailsScreen extends StatefulWidget {
 }
 
 class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _search = TextEditingController();
   late final PackageDetailViewModel _viewModel;
 
@@ -109,9 +108,11 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
     final q = _search.text.toLowerCase();
     if (q.isEmpty) return _viewModel.products;
     return _viewModel.products
-        .where((p) =>
-            p.name.toLowerCase().contains(q) ||
-            p.brand.toLowerCase().contains(q))
+        .where(
+          (p) =>
+              p.name.toLowerCase().contains(q) ||
+              p.brand.toLowerCase().contains(q),
+        )
         .toList();
   }
 
@@ -132,32 +133,25 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                   onPressed: _openAddProduct,
                   backgroundColor: const Color(0xFF4FD1D9),
                   icon: const Icon(Icons.add, color: Colors.white),
-                  label: const Text('Add Product', style: TextStyle(color: Colors.white)),
-                ),
-                body: SafeArea(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      SizedBox(
-                        width: 240,
-                        child: AppDrawer(activeItem: 'Inventory'),
-                      ),
-                      Expanded(child: _content()),
-                    ],
+                  label: const Text(
+                    'Add Product',
+                    style: TextStyle(color: Colors.white),
                   ),
                 ),
+                body: SafeArea(child: _content()),
               );
             }
             return Scaffold(
-              key: _scaffoldKey,
               backgroundColor: Colors.white,
               floatingActionButton: FloatingActionButton.extended(
                 onPressed: _openAddProduct,
                 backgroundColor: const Color(0xFF4FD1D9),
                 icon: const Icon(Icons.add, color: Colors.white),
-                label: const Text('Add Product', style: TextStyle(color: Colors.white)),
+                label: const Text(
+                  'Add Product',
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
-              drawer: AppDrawer(activeItem: 'Inventory'),
               body: SafeArea(child: body),
             );
           },
@@ -180,7 +174,10 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(_viewModel.errorMessage!, style: const TextStyle(color: Colors.red)),
+            Text(
+              _viewModel.errorMessage!,
+              style: const TextStyle(color: Colors.red),
+            ),
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: _viewModel.load,
@@ -192,57 +189,67 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
     }
 
     return ListenableBuilder(
-        listenable: _search,
-        builder: (context, _) {
-          final products = _filtered;
-          return RefreshableBody(
-            onRefresh: _viewModel.load,
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  AppTopBar(
-                    title: 'Package Details',
-                    showMenuButton: false,
-                    showBackButton: true,
+      listenable: _search,
+      builder: (context, _) {
+        final products = _filtered;
+        return Column(
+          children: [
+            AppScreenTopBar(
+              title: 'Package Details',
+              showMenuButton: false,
+              showBackButton: true,
+            ),
+            Expanded(
+              child: RefreshableBody(
+                onRefresh: _viewModel.load,
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Breadcrumb([
+                        const BreadcrumbItem('Dashboard', false),
+                        const BreadcrumbItem('Inventory', false),
+                        BreadcrumbItem(widget.category.name, false),
+                        BreadcrumbItem(widget.package.name, false),
+                        const BreadcrumbItem('Package Detail', true),
+                      ]),
+                      const SizedBox(height: 24),
+                      _summaryCard(p, c),
+                      const SizedBox(height: 16),
+                      _stockSection(p),
+                      const SizedBox(height: 24),
+                      _productsHeader(),
+                      const SizedBox(height: 12),
+                      if (products.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24),
+                          child: Center(
+                            child: Text(
+                              'No products found.',
+                              style: TextStyle(color: kGray),
+                            ),
+                          ),
+                        )
+                      else
+                        Column(
+                          children: products
+                              .map(
+                                (pr) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: _productRow(pr),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                    ],
                   ),
-                  const SizedBox(height: 20),
-                  Breadcrumb([
-                    const BreadcrumbItem('Dashboard', false),
-                    const BreadcrumbItem('Inventory', false),
-                    BreadcrumbItem(widget.category.name, false),
-                    BreadcrumbItem(widget.package.name, false),
-                    const BreadcrumbItem('Package Detail', true),
-                  ]),
-                  const SizedBox(height: 24),
-                  _summaryCard(p, c),
-                  const SizedBox(height: 16),
-                  _stockSection(p),
-                  const SizedBox(height: 24),
-                  _productsHeader(),
-                  const SizedBox(height: 12),
-                  if (products.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
-                      child: Center(
-                        child: Text('No products found.', style: TextStyle(color: kGray)),
-                      ),
-                    )
-                  else
-                    Column(
-                      children: products
-                          .map((pr) => Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: _productRow(pr),
-                              ))
-                          .toList(),
-                    ),
-                ],
+                ),
               ),
             ),
-          );
-        },
+          ],
+        );
+      },
     );
   }
 
@@ -254,7 +261,11 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: kBorder),
         boxShadow: const [
-          BoxShadow(color: Color(0x0D000000), blurRadius: 10, offset: Offset(0, 2)),
+          BoxShadow(
+            color: Color(0x0D000000),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
         ],
       ),
       child: Column(
@@ -270,8 +281,12 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                   borderRadius: BorderRadius.circular(14),
                   gradient: LinearGradient(
                     colors: [
-                      (c.iconColor ?? const Color(0xFF6D28D9)).withValues(alpha: 0.85),
-                      (c.iconColor ?? const Color(0xFF6D28D9)).withValues(alpha: 0.55),
+                      (c.iconColor ?? const Color(0xFF6D28D9)).withValues(
+                        alpha: 0.85,
+                      ),
+                      (c.iconColor ?? const Color(0xFF6D28D9)).withValues(
+                        alpha: 0.55,
+                      ),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -407,7 +422,11 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
     final blocks = [
       _infoBlock(Icons.monitor, 'Category', c.name),
       _infoBlock(Icons.location_on_outlined, 'Location', p.location),
-      _infoBlock(Icons.inventory_2, 'Amount of Products', '${p.quantity} Units'),
+      _infoBlock(
+        Icons.inventory_2,
+        'Amount of Products',
+        '${p.quantity} Units',
+      ),
       if (p.createdBy.isNotEmpty)
         _infoBlock(Icons.person_add, 'Created By', p.createdBy),
       if (p.updatedBy.isNotEmpty)
@@ -418,10 +437,12 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
         if (constraints.maxWidth < 520) {
           return Column(
             children: blocks
-                .map((b) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: b,
-                    ))
+                .map(
+                  (b) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: b,
+                  ),
+                )
                 .toList(),
           );
         }
@@ -447,7 +468,11 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: kBorder),
         boxShadow: const [
-          BoxShadow(color: Color(0x0D000000), blurRadius: 10, offset: Offset(0, 2)),
+          BoxShadow(
+            color: Color(0x0D000000),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
         ],
       ),
       child: Column(
@@ -467,7 +492,10 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: stockBg(p.status),
                   borderRadius: BorderRadius.circular(20),
@@ -569,9 +597,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
     return GestureDetector(
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (_) => ProductDetailScreen(
-            productId: pr.id,
-          ),
+          builder: (_) => ProductDetailScreen(productId: pr.id),
         ),
       ),
       child: Container(
@@ -641,7 +667,10 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
             Column(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF3E8FF),
                     borderRadius: BorderRadius.circular(20),
@@ -668,17 +697,23 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                         )
                       : const Icon(Icons.more_vert, color: kGray, size: 20),
                   tooltip: 'Actions',
-                  onSelected: _removingProductId ? null : (value) {
-                    if (value == 'remove') {
-                      _removeProductFromPackage(pr);
-                    }
-                  },
+                  onSelected: _removingProductId
+                      ? null
+                      : (value) {
+                          if (value == 'remove') {
+                            _removeProductFromPackage(pr);
+                          }
+                        },
                   itemBuilder: (ctx) => [
                     const PopupMenuItem(
                       value: 'remove',
                       child: Row(
                         children: [
-                          Icon(Icons.remove_circle_outline, color: Colors.red, size: 18),
+                          Icon(
+                            Icons.remove_circle_outline,
+                            color: Colors.red,
+                            size: 18,
+                          ),
                           SizedBox(width: 8),
                           Text('Remove from package'),
                         ],

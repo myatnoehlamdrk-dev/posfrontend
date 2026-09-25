@@ -58,7 +58,7 @@ class AppDrawer extends StatelessWidget {
                         radius: 28,
                         backgroundColor: Colors.white.withValues(alpha: 0.25),
                         backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
-                        onBackgroundImageError: imageUrl.isNotEmpty ? (_, __) {
+                        onBackgroundImageError: imageUrl.isNotEmpty ? (error, stackTrace) {
                           ProfileImageNotifier.instance.update('');
                         } : null,
                         child: imageUrl.isEmpty
@@ -111,15 +111,15 @@ class AppDrawer extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                 child: Column(
                   children: [
-                    _navItem(context, 'Dashboard', Icons.dashboard_outlined),
-                    _navItem(context, 'Product', Icons.category_outlined),
-                    _navItem(context, 'Add Product', Icons.add_circle_outline),
-                    _navItem(context, 'Add to Cart', Icons.shopping_cart_outlined),
-                    _navItem(context, 'Inventory', Icons.inventory_2_outlined),
-                    _navItem(context, 'Sale Item', Icons.receipt_long_outlined),
+                    _navItem(context, 'Dashboard', Icons.dashboard_outlined, const Color(0xFF6D28D9)),
+                    _navItem(context, 'Product', Icons.category_outlined, const Color(0xFF0D9488)),
+                    _navItem(context, 'Add Product', Icons.add_circle_outline, const Color(0xFF16A34A)),
+                    _navItem(context, 'Add to Cart', Icons.shopping_cart_outlined, const Color(0xFFF97316)),
+                    _navItem(context, 'Inventory', Icons.inventory_2_outlined, const Color(0xFF2563EB)),
+                    _navItem(context, 'Sale Item', Icons.receipt_long_outlined, const Color(0xFFDB2777)),
                     
-                    _navItem(context, 'Purchase Item', Icons.local_shipping_outlined),
-                    _navItem(context, 'Setting', Icons.settings_outlined)
+                    _navItem(context, 'Purchase Item', Icons.local_shipping_outlined, const Color(0xFF4F46E5)),
+                    _navItem(context, 'Setting', Icons.settings_outlined, const Color(0xFF64748B))
                     ],
                 ),
               ),
@@ -140,7 +140,12 @@ class AppDrawer extends StatelessWidget {
     return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 
-  Widget _navItem(BuildContext context, String label, IconData icon) {
+  Widget _navItem(
+    BuildContext context,
+    String label,
+    IconData icon,
+    Color iconColor,
+  ) {
     final active = label == activeItem;
     return Container(
       margin: const EdgeInsets.only(bottom: 4),
@@ -151,10 +156,18 @@ class AppDrawer extends StatelessWidget {
             )
           : null,
       child: ListTile(
-        leading: Icon(
-          icon,
-          color: active ? purple : gray,
-          size: 22,
+        leading: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: active ? iconColor : iconColor.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            icon,
+            color: active ? Colors.white : iconColor,
+            size: 20,
+          ),
         ),
         title: Text(
           label,

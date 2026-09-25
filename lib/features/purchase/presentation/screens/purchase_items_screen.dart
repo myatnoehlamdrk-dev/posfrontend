@@ -8,7 +8,6 @@ import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/filter_tabs.dart';
-import 'package:posfrontend/shared/widgets/search_input_bar.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 
 class PurchaseItemsScreen extends StatefulWidget {
@@ -20,7 +19,6 @@ class PurchaseItemsScreen extends StatefulWidget {
 
 class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
   int _selectedTab = 0;
-  final _searchController = TextEditingController();
   late final PurchaseItemViewModel _viewModel;
 
   @override
@@ -36,7 +34,6 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
   @override
   void dispose() {
     _viewModel.dispose();
-    _searchController.dispose();
     super.dispose();
   }
 
@@ -121,12 +118,6 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                 onTabChanged: (i) => setState(() => _selectedTab = i),
               ),
               const SizedBox(height: 16),
-              SearchInputBar(
-                controller: _searchController,
-                hintText: 'Search item, order ID, supplier...',
-                onChanged: (_) {},
-              ),
-              const SizedBox(height: 16),
               ..._filteredOrders.map((order) => _buildOrderCard(order)),
               if (_viewModel.isLoading && _viewModel.purchaseItems.isNotEmpty)
                 const Padding(
@@ -159,13 +150,6 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
       list = list.where((o) => o.status == PurchaseStatus.completed).toList();
     } else if (_selectedTab == 2) {
       list = list.where((o) => o.status == PurchaseStatus.pending).toList();
-    }
-    final query = _searchController.text.toLowerCase();
-    if (query.isNotEmpty) {
-      list = list.where((o) =>
-          o.orderId.toLowerCase().contains(query) ||
-          o.productName.toLowerCase().contains(query) ||
-          o.supplierName.toLowerCase().contains(query)).toList();
     }
     return list;
   }

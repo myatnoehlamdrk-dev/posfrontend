@@ -137,6 +137,33 @@ class ProductCreateVariant {
     this.price = 0.0,
   });
 
+  ProductCreateVariant copyWith({
+    String? size,
+    String? color,
+    int? quantity,
+    double? price,
+  }) {
+    return ProductCreateVariant(
+      size: size ?? this.size,
+      color: color ?? this.color,
+      quantity: quantity ?? this.quantity,
+      price: price ?? this.price,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is ProductCreateVariant &&
+        other.size == size &&
+        other.color == color &&
+        other.quantity == quantity &&
+        other.price == price;
+  }
+
+  @override
+  int get hashCode => Object.hash(size, color, quantity, price);
+
   Map<String, dynamic> toJson() => {
         'size': size,
         'color': color,

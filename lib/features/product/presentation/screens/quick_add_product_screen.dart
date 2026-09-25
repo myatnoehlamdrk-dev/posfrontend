@@ -7,7 +7,7 @@ import 'package:posfrontend/core/network/app_exceptions.dart';
 import 'package:posfrontend/features/product/data/models/product_create_models.dart';
 import 'package:posfrontend/features/product/data/repositories/product_create_repository_impl.dart';
 import 'package:posfrontend/shared/repositories/imgbb_repository_impl.dart';
-import 'package:posfrontend/shared/widgets/app_top_bar.dart';
+import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
@@ -96,7 +96,10 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
       _uploading = true;
     });
     try {
-      final result = await ImgbbRepositoryImpl().uploadImage(bytes, fileName: xfile.name);
+      final result = await ImgbbRepositoryImpl().uploadImage(
+        bytes,
+        fileName: xfile.name,
+      );
       if (!mounted) return;
       setState(() {
         _imageUrl = result.url;
@@ -111,7 +114,12 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
     }
   }
 
-  Widget _sheetOption(BuildContext ctx, IconData icon, String label, ImageSource source) {
+  Widget _sheetOption(
+    BuildContext ctx,
+    IconData icon,
+    String label,
+    ImageSource source,
+  ) {
     return ListTile(
       leading: Icon(icon, color: kPurple700),
       title: Text(label, style: const TextStyle(fontSize: 15, color: kTitle)),
@@ -147,9 +155,7 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
           name: name,
           imageUrl: _imageUrl ?? '',
           stock: stock,
-          variants: [
-            ProductCreateVariant(quantity: stock, price: price),
-          ],
+          variants: [ProductCreateVariant(quantity: stock, price: price)],
           imageDeleteUrl: _imageDeleteUrl ?? '',
         ),
       );
@@ -167,41 +173,63 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8F9FC),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const AppTopBar(
-                title: 'Quick Add Product',
-                showMenuButton: false,
-                showBackButton: true,
-              ),
-              const SizedBox(height: 20),
-              FormCard(
-                label: 'Product Image',
-                helper: 'Take a photo or upload an image.',
-                child: _imageSection(),
-              ),
-              const SizedBox(height: 16),
-              FormCard(
-                label: 'Basic Info',
+        child: Column(
+          children: [
+            const AppScreenTopBar(
+              title: 'Quick Add Product',
+              showMenuButton: false,
+              showBackButton: true,
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _field('Product Name', _name, 'e.g. Wireless Headphones Pro', req: true),
+                    FormCard(
+                      label: 'Product Image',
+                      helper: 'Take a photo or upload an image.',
+                      child: _imageSection(),
+                    ),
                     const SizedBox(height: 16),
-                    _field('Stock', _stock, 'e.g. 50', req: true, number: true),
-                    const SizedBox(height: 16),
-                    _field('Price', _price, 'e.g. 25000', req: true, decimal: true),
+                    FormCard(
+                      label: 'Basic Info',
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _field(
+                            'Product Name',
+                            _name,
+                            'e.g. Wireless Headphones Pro',
+                            req: true,
+                          ),
+                          const SizedBox(height: 16),
+                          _field(
+                            'Stock',
+                            _stock,
+                            'e.g. 50',
+                            req: true,
+                            number: true,
+                          ),
+                          const SizedBox(height: 16),
+                          _field(
+                            'Price',
+                            _price,
+                            'e.g. 25000',
+                            req: true,
+                            number: true,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 100),
                   ],
                 ),
               ),
-              const SizedBox(height: 100),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
       bottomNavigationBar: _submitButton(),
@@ -231,23 +259,29 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
                       ),
               )
             : _uploading
-                ? const CircularProgressIndicator(color: kPurple700)
-                : Column(
-                    children: const [
-                      Icon(Icons.add_a_photo_outlined, size: 42, color: kPurple700),
-                      SizedBox(height: 10),
-                      Text(
-                        'Take a photo or choose an image',
-                        style: TextStyle(fontSize: 14, color: kGray),
-                      ),
-                    ],
+            ? const CircularProgressIndicator(color: kPurple700)
+            : Column(
+                children: const [
+                  Icon(Icons.add_a_photo_outlined, size: 42, color: kPurple700),
+                  SizedBox(height: 10),
+                  Text(
+                    'Take a photo or choose an image',
+                    style: TextStyle(fontSize: 14, color: kGray),
                   ),
+                ],
+              ),
       ),
     );
   }
 
-  Widget _field(String label, TextEditingController c, String hint,
-      {bool req = false, bool number = false, bool decimal = false}) {
+  Widget _field(
+    String label,
+    TextEditingController c,
+    String hint, {
+    bool req = false,
+    bool number = false,
+    bool decimal = false,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -271,15 +305,17 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
           keyboardType: decimal
               ? const TextInputType.numberWithOptions(decimal: true)
               : number
-                  ? TextInputType.number
-                  : TextInputType.text,
+              ? TextInputType.number
+              : TextInputType.text,
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: const TextStyle(color: kGray, fontSize: 14),
             filled: true,
             fillColor: kBg,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 12,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: kBorder),
@@ -304,7 +340,11 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
       decoration: const BoxDecoration(
         color: Colors.white,
         boxShadow: [
-          BoxShadow(color: Color(0x0D000000), blurRadius: 8, offset: Offset(0, -2)),
+          BoxShadow(
+            color: Color(0x0D000000),
+            blurRadius: 8,
+            offset: Offset(0, -2),
+          ),
         ],
       ),
       child: Container(

@@ -40,12 +40,12 @@ class AppTopBar extends StatelessWidget {
           CustomBackButton(
             onTap: onBackTap ??
                 () {
-              if (Navigator.of(context).canPop()) {
-                Navigator.of(context).pop();
-              } else {
-                navigateToDashboard(context);
-              }
-            },
+                  if (Navigator.of(context).canPop()) {
+                    Navigator.of(context).pop();
+                  } else {
+                    navigateToDashboard(context);
+                  }
+                },
           ),
         Expanded(
           child: Text(

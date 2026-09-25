@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:posfrontend/core/extensions/datetime_extensions.dart';
+import 'package:posfrontend/features/cart/data/cart_store.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/shop_scope.dart';
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
@@ -13,8 +14,7 @@ import 'package:posfrontend/shared/services/voucher_pdf_service.dart';
 import 'package:posfrontend/features/sale/presentation/screens/sale_items_screen.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
-import 'package:posfrontend/shared/widgets/app_drawer.dart';
-import 'package:posfrontend/shared/widgets/app_top_bar.dart';
+import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 import 'package:printing/printing.dart';
 
@@ -38,10 +38,11 @@ class NewSaleScreen extends StatefulWidget {
 }
 
 class _NewSaleScreenState extends State<NewSaleScreen> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _discountCtrl = TextEditingController(text: '0');
   final TextEditingController _notesCtrl = TextEditingController();
-  final TextEditingController _customerNameCtrl = TextEditingController(text: 'Customer');
+  final TextEditingController _customerNameCtrl = TextEditingController(
+    text: 'Customer',
+  );
   final TextEditingController _customerPhoneCtrl = TextEditingController();
   final TextEditingController _customerLocationCtrl = TextEditingController();
   late final SaleViewModel _viewModel;
@@ -108,20 +109,43 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     );
     if (!success) {
       if (!mounted) return;
-      showErrorSnackBar(context, Exception(_viewModel.errorMessage ?? 'Failed to save sale'));
+      showErrorSnackBar(
+        context,
+        Exception(_viewModel.errorMessage ?? 'Failed to save sale'),
+      );
       return;
     }
     if (!mounted) return;
-    showSuccessMessage(context, 'Sale saved successfully!');
 
     final itemsSnapshot = List<SaleItemEntity>.from(_viewModel.items);
     final customerName = _customerNameCtrl.text;
-    final customerPhone = _customerPhoneCtrl.text.isNotEmpty ? _customerPhoneCtrl.text : null;
-    final customerLocation = _customerLocationCtrl.text.isNotEmpty ? _customerLocationCtrl.text : null;
+    final customerPhone = _customerPhoneCtrl.text.isNotEmpty
+        ? _customerPhoneCtrl.text
+        : null;
+    final customerLocation = _customerLocationCtrl.text.isNotEmpty
+        ? _customerLocationCtrl.text
+        : null;
     final paymentMethod = _viewModel.paymentMethod;
     final notes = _notesCtrl.text.isNotEmpty ? _notesCtrl.text : null;
     final voucherNo = 'INV-${_viewModel.voucherRandom}';
     final orderId = widget.existingOrderId ?? 'ORD-${_viewModel.orderRandom}';
+    final saleArgs = _buildSaleArgs(
+      customerName,
+      customerPhone,
+      customerLocation,
+      staffName,
+      voucherNo,
+      orderId,
+      itemsSnapshot,
+      _viewModel.discountPercent,
+      _viewModel.subtotal,
+      _viewModel.discountAmount,
+      _viewModel.totalPayable,
+      paymentMethod,
+      notes,
+    );
+
+    final messenger = ScaffoldMessenger.of(context);
 
     setState(() {
       _customerNameCtrl.text = 'Customer';
@@ -132,11 +156,39 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     });
     _viewModel.clearCart();
 
+    if (widget.existingOrderId != null) {
+      final draft = CartStore.instance.value
+          .where((c) => c.orderId == widget.existingOrderId)
+          .toList();
+      for (final card in draft) {
+        await CartStore.instance.removeCard(card.id);
+      }
+    }
+
     if (_pdfExportEnabled || _printVoucherEnabled) {
-      final saleArgs = _buildSaleArgs(customerName, customerPhone, customerLocation, staffName, voucherNo, orderId, itemsSnapshot, _viewModel.discountPercent, _viewModel.totalPayable, paymentMethod, notes);
       if (_pdfExportEnabled) _autoExportPdf(saleArgs);
       if (_printVoucherEnabled) _autoPrintVoucher(saleArgs);
     }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !messenger.mounted) return;
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: const AppMessageBanner(
+              message: 'Sale saved successfully!',
+              kind: AppMessageKind.success,
+            ),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            behavior: SnackBarBehavior.floating,
+            padding: EdgeInsets.zero,
+            margin: const EdgeInsets.all(16),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+    });
   }
 
   @override
@@ -160,21 +212,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             final isWide = constraints.maxWidth >= 768;
             final body = _content(isWide);
 
-            return Scaffold(
-              key: _scaffoldKey,
-              backgroundColor: kBg,
-              drawer: isWide ? null : const AppDrawer(activeItem: 'Sale'),
-              body: isWide
-                  ? Row(
-                      children: [
-                        const SizedBox(
-                            width: 240,
-                            child: AppDrawer(activeItem: 'Sale')),
-                        Expanded(child: body),
-                      ],
-                    )
-                  : body,
-            );
+            return Scaffold(backgroundColor: kBg, body: body);
           },
         );
       },
@@ -183,38 +221,44 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
 
   Widget _content(bool isWide) {
     return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AppTopBar(
-              title: 'New Sale',
-              showMenuButton: false,
-              showBackButton: true,
+      child: Column(
+        children: [
+          AppScreenTopBar(
+            title: 'New Sale',
+            showMenuButton: false,
+            showBackButton: true,
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _infoCard(),
+                  const SizedBox(height: 24),
+                  _itemsSection(),
+                  const SizedBox(height: 24),
+                  _summaryCard(),
+                  const SizedBox(height: 24),
+                  _optionalFields(),
+                  const SizedBox(height: 24),
+                  _actionButtons(),
+                  const SizedBox(height: 16),
+                  _footerActions(),
+                  const SizedBox(height: 24),
+                ],
+              ),
             ),
-            const SizedBox(height: 20),
-            _infoCard(),
-            const SizedBox(height: 24),
-            _itemsSection(),
-            const SizedBox(height: 24),
-            _summaryCard(),
-            const SizedBox(height: 24),
-            _optionalFields(),
-            const SizedBox(height: 24),
-            _actionButtons(),
-            const SizedBox(height: 16),
-            _footerActions(),
-            const SizedBox(height: 24),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _infoCard() {
     final now = DateTime.now();
-    final dateStr = '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
+    final dateStr =
+        '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
     final timeStr = _formatTime(now);
     return _card(
       child: Row(
@@ -227,11 +271,14 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                   children: [
                     const Icon(Icons.calendar_today, size: 14, color: kGray),
                     const SizedBox(width: 6),
-                    Text(dateStr,
-                        style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: kTitle)),
+                    Text(
+                      dateStr,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: kTitle,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 6),
@@ -239,9 +286,14 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                   children: [
                     const Icon(Icons.access_time, size: 14, color: kGray),
                     const SizedBox(width: 6),
-                    Text(timeStr,
-                        style: const TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w500, color: kGray)),
+                    Text(
+                      timeStr,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: kGray,
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -263,11 +315,14 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       children: [
         Row(
           children: [
-            const Text('Items',
-                style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: kTitle)),
+            const Text(
+              'Items',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: kTitle,
+              ),
+            ),
             const Spacer(),
           ],
         ),
@@ -276,15 +331,22 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           const Center(
             child: Padding(
               padding: EdgeInsets.symmetric(vertical: 32),
-              child: Text('No items added yet.',
-                  style: TextStyle(color: kGray, fontSize: 14)),
+              child: Text(
+                'No items added yet.',
+                style: TextStyle(color: kGray, fontSize: 14),
+              ),
             ),
           )
         else
-          ...List.generate(_viewModel.items.length, (i) => KeyedSubtree(
-            key: ValueKey('sale_${_viewModel.items[i].productId}_${_viewModel.items[i].size}_${_viewModel.items[i].color}'),
-            child: _itemRow(i),
-          )),
+          ...List.generate(
+            _viewModel.items.length,
+            (i) => KeyedSubtree(
+              key: ValueKey(
+                'sale_${i}_${_viewModel.items[i].productId}_${_viewModel.items[i].size}_${_viewModel.items[i].color}',
+              ),
+              child: _itemRow(i),
+            ),
+          ),
       ],
     );
   }
@@ -300,7 +362,10 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         border: Border.all(color: kBorder),
         boxShadow: const [
           BoxShadow(
-              color: Color(0x0D000000), blurRadius: 8, offset: Offset(0, 2)),
+            color: Color(0x0D000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
         ],
       ),
       child: Column(
@@ -332,9 +397,10 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                          color: kTitle),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        color: kTitle,
+                      ),
                     ),
                     if (item.category.isNotEmpty) ...[
                       const SizedBox(height: 2),
@@ -345,11 +411,13 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                         style: const TextStyle(fontSize: 11, color: kGray),
                       ),
                     ],
-                    if (item.size != null || (item.color?.isNotEmpty == true)) ...[
+                    if (item.size != null ||
+                        (item.color?.isNotEmpty == true)) ...[
                       const SizedBox(height: 2),
                       Text(
                         [
-                          if (item.size != null && item.size != 'Regular') item.size,
+                          if (item.size != null && item.size != 'Regular')
+                            item.size,
                           if (item.color?.isNotEmpty == true) item.color,
                         ].where((e) => e != null && e.isNotEmpty).join(' | '),
                         maxLines: 1,
@@ -364,12 +432,15 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  PriceText(item.unitPrice,
-                      maxLength: 10,
-                      style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: kTitle)),
+                  PriceText(
+                    item.unitPrice,
+                    maxLength: 10,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: kTitle,
+                    ),
+                  ),
                   const SizedBox(height: 4),
                 ],
               ),
@@ -380,15 +451,20 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             children: [
               _qtyLabel(index),
               const Spacer(),
-              const Text('Total:',
-                  style: TextStyle(fontSize: 11, color: kGray)),
+              const Text(
+                'Total:',
+                style: TextStyle(fontSize: 11, color: kGray),
+              ),
               const SizedBox(width: 4),
-              PriceText(item.subtotal,
-                  maxLength: 12,
-                  style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: kTitle)),
+              PriceText(
+                item.subtotal,
+                maxLength: 12,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: kTitle,
+                ),
+              ),
             ],
           ),
         ],
@@ -407,13 +483,15 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('Qty: ',
-              style: TextStyle(fontSize: 13, color: kGray)),
-          Text('$qty',
-              style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: kTitle)),
+          const Text('Qty: ', style: TextStyle(fontSize: 13, color: kGray)),
+          Text(
+            '$qty',
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: kTitle,
+            ),
+          ),
         ],
       ),
     );
@@ -429,32 +507,42 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           const SizedBox(height: 12),
           Row(
             children: [
-              const Text('Discount',
-                  style: TextStyle(fontSize: 14, color: kGray)),
+              const Text(
+                'Discount',
+                style: TextStyle(fontSize: 14, color: kGray),
+              ),
               const Spacer(),
               SizedBox(
                 width: _valueColW,
                 child: TextField(
                   controller: _discountCtrl,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  onChanged: (v) => _viewModel.setDiscountPercent(double.tryParse(v) ?? 0),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  onChanged: (v) =>
+                      _viewModel.setDiscountPercent(double.tryParse(v) ?? 0),
                   textAlign: TextAlign.right,
                   style: const TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w500, color: kTitle),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: kTitle,
+                  ),
                   decoration: InputDecoration(
                     isDense: true,
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 6,
+                    ),
                     border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: kBorder)),
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: kBorder),
+                    ),
                     enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: kBorder)),
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: kBorder),
+                    ),
                     suffixText: '%',
-                    suffixStyle:
-                        const TextStyle(fontSize: 12, color: kGray),
+                    suffixStyle: const TextStyle(fontSize: 12, color: kGray),
                   ),
                 ),
               ),
@@ -465,22 +553,28 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           const Divider(height: 24, color: kBorder),
           Row(
             children: [
-              const Text('Total Payable',
-                  style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: kTitle)),
+              const Text(
+                'Total Payable',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: kTitle,
+                ),
+              ),
               const Spacer(),
               SizedBox(
                 width: _valueColW,
                 child: Align(
                   alignment: Alignment.centerRight,
-                  child: PriceText(_viewModel.totalPayable,
-                      maxLength: 12,
-                      style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF2563EB))),
+                  child: PriceText(
+                    _viewModel.totalPayable,
+                    maxLength: 12,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2563EB),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -499,12 +593,17 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           width: _valueColW,
           child: Align(
             alignment: Alignment.centerRight,
-            child: Text(value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.end,
-                style: const TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w600, color: kTitle)),
+            child: Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.end,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: kTitle,
+              ),
+            ),
           ),
         ),
       ],
@@ -520,10 +619,15 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           width: _valueColW,
           child: Align(
             alignment: Alignment.centerRight,
-            child: PriceText(amount,
-                maxLength: 12,
-                style: const TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w600, color: kTitle)),
+            child: PriceText(
+              amount,
+              maxLength: 12,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: kTitle,
+              ),
+            ),
           ),
         ),
       ],
@@ -537,8 +641,10 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           child: Row(
             children: [
               const Expanded(
-                child: Text('Payment Method',
-                    style: TextStyle(fontSize: 14, color: kGray)),
+                child: Text(
+                  'Payment Method',
+                  style: TextStyle(fontSize: 14, color: kGray),
+                ),
               ),
               Expanded(
                 flex: 2,
@@ -556,7 +662,10 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                       items: const [
                         DropdownMenuItem(value: 'Cash', child: Text('Cash')),
                         DropdownMenuItem(value: 'Card', child: Text('Card')),
-                        DropdownMenuItem(value: 'Mobile Pay', child: Text('Mobile Pay')),
+                        DropdownMenuItem(
+                          value: 'Mobile Pay',
+                          child: Text('Mobile Pay'),
+                        ),
                         DropdownMenuItem(value: 'Other', child: Text('Other')),
                       ],
                       onChanged: (v) {
@@ -574,8 +683,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Notes',
-                  style: TextStyle(fontSize: 14, color: kGray)),
+              const Text('Notes', style: TextStyle(fontSize: 14, color: kGray)),
               const SizedBox(height: 8),
               TextField(
                 controller: _notesCtrl,
@@ -586,11 +694,13 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                   hintText: 'Enter notes...',
                   hintStyle: const TextStyle(color: Color(0xFFD1D5DB)),
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: kBorder)),
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: kBorder),
+                  ),
                   enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: kBorder)),
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: kBorder),
+                  ),
                   contentPadding: const EdgeInsets.all(12),
                 ),
               ),
@@ -605,44 +715,61 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     return Row(
       children: [
         Expanded(
-          child: _outlineBtn('Preview', Icons.visibility_outlined, false, () async {
-            if (_viewModel.items.isEmpty) return;
-            ShopScope.loadShop(
-              context,
-              shopId: AuthScope.userOf(context)?.shopId ?? '',
-            );
-            if (!mounted) return;
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => SalePreviewScreen(
-                  customerName: _customerNameCtrl.text,
-                  customerPhone: _customerPhoneCtrl.text.isNotEmpty ? _customerPhoneCtrl.text : null,
-                  customerLocation: _customerLocationCtrl.text.isNotEmpty ? _customerLocationCtrl.text : null,
-                  staffName: AuthScope.userOf(context)?.fullName ?? 'Staff',
-                  voucherNo: 'INV-${_viewModel.voucherRandom}',
-                  orderId: 'ORD-${_viewModel.orderRandom}',
-                  dateTime: DateTime.now(),
-                  items: List<SaleItemEntity>.from(_viewModel.items),
-                  discountPct: _viewModel.discountPercent,
-                  subtotal: _viewModel.subtotal,
-                  discountAmt: _viewModel.discountAmount,
-                  totalPayable: _viewModel.totalPayable,
-                  paymentMethod: _viewModel.paymentMethod,
-                  notes: _notesCtrl.text.isNotEmpty ? _notesCtrl.text : null,
-                  shopName: ShopScope.shopOf(context)?.name,
-                  shopAddress: ShopScope.shopOf(context)?.physicalAddress,
-                  shopPhone: ShopScope.shopOf(context)?.ownerInformation.phone,
-                  shopEmail: ShopScope.shopOf(context)?.ownerInformation.email,
-                  shopImage: ShopScope.shopOf(context)?.logoData ?? ShopScope.shopOf(context)?.logoUrl,
+          child: _outlineBtn(
+            'Preview',
+            Icons.visibility_outlined,
+            false,
+            () async {
+              if (_viewModel.items.isEmpty) return;
+              ShopScope.loadShop(
+                context,
+                shopId: AuthScope.userOf(context)?.shopId ?? '',
+              );
+              if (!mounted) return;
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => SalePreviewScreen(
+                    customerName: _customerNameCtrl.text,
+                    customerPhone: _customerPhoneCtrl.text.isNotEmpty
+                        ? _customerPhoneCtrl.text
+                        : null,
+                    customerLocation: _customerLocationCtrl.text.isNotEmpty
+                        ? _customerLocationCtrl.text
+                        : null,
+                    staffName: AuthScope.userOf(context)?.fullName ?? 'Staff',
+                    voucherNo: 'INV-${_viewModel.voucherRandom}',
+                    orderId: 'ORD-${_viewModel.orderRandom}',
+                    dateTime: DateTime.now(),
+                    items: List<SaleItemEntity>.from(_viewModel.items),
+                    discountPct: _viewModel.discountPercent,
+                    subtotal: _viewModel.subtotal,
+                    discountAmt: _viewModel.discountAmount,
+                    totalPayable: _viewModel.totalPayable,
+                    paymentMethod: _viewModel.paymentMethod,
+                    notes: _notesCtrl.text.isNotEmpty ? _notesCtrl.text : null,
+                    shopName: ShopScope.shopOf(context)?.name,
+                    shopAddress: ShopScope.shopOf(context)?.physicalAddress,
+                    shopPhone: ShopScope.shopOf(
+                      context,
+                    )?.ownerInformation.phone,
+                    shopEmail: ShopScope.shopOf(
+                      context,
+                    )?.ownerInformation.email,
+                    shopImage:
+                        ShopScope.shopOf(context)?.logoData ??
+                        ShopScope.shopOf(context)?.logoUrl,
+                  ),
                 ),
-              ),
-            );
-          }),
+              );
+            },
+          ),
         ),
         const SizedBox(width: 10),
         Expanded(
           child: GestureDetector(
-            onTap: (_viewModel.isSubmitting || _viewModel.items.isEmpty) ? null : _submitSale,
+            onTap: (_viewModel.isSubmitting || _viewModel.items.isEmpty)
+                ? null
+                : _submitSale,
             child: Container(
               height: 48,
               decoration: BoxDecoration(
@@ -651,7 +778,9 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                     : const LinearGradient(
                         colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
                       ),
-                color: (_viewModel.isSubmitting || _viewModel.items.isEmpty) ? kGray : null,
+                color: (_viewModel.isSubmitting || _viewModel.items.isEmpty)
+                    ? kGray
+                    : null,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -662,17 +791,25 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
                   else
-                    const Icon(Icons.check_circle_outline,
-                        color: Colors.white, size: 18),
+                    const Icon(
+                      Icons.check_circle_outline,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                   const SizedBox(width: 6),
-                  Text(_viewModel.isSubmitting ? 'Saving...' : 'Sale',
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13)),
+                  Text(
+                    _viewModel.isSubmitting ? 'Saving...' : 'Sale',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -682,13 +819,20 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     );
   }
 
-  Widget _outlineBtn(String label, IconData icon, bool loading, VoidCallback onTap) {
+  Widget _outlineBtn(
+    String label,
+    IconData icon,
+    bool loading,
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
       onTap: loading ? null : onTap,
       child: Container(
         height: 48,
         decoration: BoxDecoration(
-          border: Border.all(color: loading ? kBorder : const Color(0xFF2563EB)),
+          border: Border.all(
+            color: loading ? kBorder : const Color(0xFF2563EB),
+          ),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -706,18 +850,35 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             else
               Icon(icon, color: const Color(0xFF2563EB), size: 18),
             const SizedBox(width: 6),
-            Text(label,
-                style: TextStyle(
-                    color: loading ? kGray : const Color(0xFF2563EB),
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13)),
+            Text(
+              label,
+              style: TextStyle(
+                color: loading ? kGray : const Color(0xFF2563EB),
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Map<String, dynamic> _buildSaleArgs(String customerName, String? customerPhone, String? customerLocation, String staffName, String voucherNo, String orderId, List<SaleItemEntity> items, double discountPct, double totalPayable, String paymentMethod, String? notes) {
+  Map<String, dynamic> _buildSaleArgs(
+    String customerName,
+    String? customerPhone,
+    String? customerLocation,
+    String staffName,
+    String voucherNo,
+    String orderId,
+    List<SaleItemEntity> items,
+    double discountPct,
+    double subtotal,
+    double discountAmt,
+    double totalPayable,
+    String paymentMethod,
+    String? notes,
+  ) {
     final shop = ShopScope.shopOf(context);
     return {
       'customerName': customerName,
@@ -729,8 +890,8 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       'dateTime': DateTime.now(),
       'items': items,
       'discountPct': discountPct,
-      'subtotal': _viewModel.subtotal,
-      'discountAmt': _viewModel.discountAmount,
+      'subtotal': subtotal,
+      'discountAmt': discountAmt,
       'totalPayable': totalPayable,
       'paymentMethod': paymentMethod,
       'notes': notes,
@@ -763,10 +924,13 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         shopImage: args['shopImage'],
       );
       if (mounted) {
-        await Printing.sharePdf(bytes: pdfBytes, filename: 'Voucher_${args['voucherNo']}.pdf');
+        await Printing.sharePdf(
+          bytes: pdfBytes,
+          filename: 'Voucher_${args['voucherNo']}.pdf',
+        );
       }
-    } catch (_) {
-      // PDF export failure is non-critical
+    } catch (e) {
+      if (mounted) showErrorMessage(context, 'PDF export failed: $e');
     }
   }
 
@@ -816,8 +980,8 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           shopImage: args['shopImage'],
         );
       }
-    } catch (_) {
-      // Print voucher failure is non-critical
+    } catch (e) {
+      if (mounted) showErrorMessage(context, 'Thermal printing failed: $e');
     }
   }
 
@@ -832,7 +996,9 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         return StatefulBuilder(
           builder: (ctx, setSheetState) {
             return Padding(
-              padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(ctx).viewInsets.bottom,
+              ),
               child: Container(
                 padding: const EdgeInsets.all(20),
                 child: SingleChildScrollView(
@@ -844,15 +1010,28 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                         child: Container(
                           width: 40,
                           height: 4,
-                          decoration: BoxDecoration(color: kBorder, borderRadius: BorderRadius.circular(2)),
+                          decoration: BoxDecoration(
+                            color: kBorder,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 16),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Print Settings', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: kTitle)),
-                          GestureDetector(onTap: () => Navigator.pop(ctx), child: const Icon(Icons.close, color: kGray)),
+                          const Text(
+                            'Print Settings',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: kTitle,
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () => Navigator.pop(ctx),
+                            child: const Icon(Icons.close, color: kGray),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 24),
@@ -881,24 +1060,61 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                       ),
                       if (_printVoucherEnabled) ...[
                         const SizedBox(height: 20),
-                        const Text('Print Format', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: kTitle)),
+                        const Text(
+                          'Print Format',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: kTitle,
+                          ),
+                        ),
                         const SizedBox(height: 10),
-                        _formatOption(ctx, setSheetState, 'Thermal Paper', 'thermal', Icons.receipt_long),
+                        _formatOption(
+                          ctx,
+                          setSheetState,
+                          'Thermal Paper',
+                          'thermal',
+                          Icons.receipt_long,
+                        ),
                         const SizedBox(height: 8),
-                        _formatOption(ctx, setSheetState, 'A4 Paper', 'a4', Icons.description_outlined),
+                        _formatOption(
+                          ctx,
+                          setSheetState,
+                          'A4 Paper',
+                          'a4',
+                          Icons.description_outlined,
+                        ),
                       ],
-                      if (_printVoucherEnabled && _printFormat == 'thermal') ...[
+                      if (_printVoucherEnabled &&
+                          _printFormat == 'thermal') ...[
                         const SizedBox(height: 20),
-                        const Text('Paper Size', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: kTitle)),
+                        const Text(
+                          'Paper Size',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: kTitle,
+                          ),
+                        ),
                         const SizedBox(height: 10),
                         Row(
                           children: [
                             Expanded(
-                              child: _paperSizeOption(ctx, setSheetState, '58mm', Icons.crop_free),
+                              child: _paperSizeOption(
+                                ctx,
+                                setSheetState,
+                                '58mm',
+                                Icons.crop_free,
+                              ),
                             ),
                             const SizedBox(width: 10),
                             Expanded(
-                              child: _paperSizeOption(ctx, setSheetState, '80mm', Icons.aspect_ratio),
+                              child: _paperSizeOption(
+                                ctx,
+                                setSheetState,
+                                '80mm',
+                                Icons.aspect_ratio,
+                              ),
                             ),
                           ],
                         ),
@@ -915,7 +1131,13 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     );
   }
 
-  Widget _formatOption(BuildContext ctx, StateSetter setSheetState, String label, String value, IconData icon) {
+  Widget _formatOption(
+    BuildContext ctx,
+    StateSetter setSheetState,
+    String label,
+    String value,
+    IconData icon,
+  ) {
     final isSelected = _printFormat == value;
     return GestureDetector(
       onTap: () {
@@ -934,15 +1156,30 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           children: [
             Icon(icon, color: isSelected ? kPurple : kGray, size: 20),
             const SizedBox(width: 10),
-            Expanded(child: Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: isSelected ? kPurple : kTitle))),
-            if (isSelected) const Icon(Icons.check_circle, color: kPurple, size: 20),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: isSelected ? kPurple : kTitle,
+                ),
+              ),
+            ),
+            if (isSelected)
+              const Icon(Icons.check_circle, color: kPurple, size: 20),
           ],
         ),
       ),
     );
   }
 
-  Widget _paperSizeOption(BuildContext ctx, StateSetter setSheetState, String label, IconData icon) {
+  Widget _paperSizeOption(
+    BuildContext ctx,
+    StateSetter setSheetState,
+    String label,
+    IconData icon,
+  ) {
     final isSelected = _paperSize == label;
     return GestureDetector(
       onTap: () {
@@ -962,7 +1199,14 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           children: [
             Icon(icon, color: isSelected ? kPurple : kGray, size: 20),
             const SizedBox(width: 8),
-            Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: isSelected ? kPurple : kTitle)),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: isSelected ? kPurple : kTitle,
+              ),
+            ),
             if (isSelected) ...[
               const SizedBox(width: 6),
               const Icon(Icons.check_circle, color: kPurple, size: 18),
@@ -992,7 +1236,10 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           Container(
             width: 40,
             height: 40,
-            decoration: BoxDecoration(color: const Color(0xFFF3F4F6), borderRadius: BorderRadius.circular(10)),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF3F4F6),
+              borderRadius: BorderRadius.circular(10),
+            ),
             child: Icon(icon, color: kGray, size: 20),
           ),
           const SizedBox(width: 12),
@@ -1000,9 +1247,19 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: kTitle)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: kTitle,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(subtitle, style: const TextStyle(fontSize: 12, color: kGray)),
+                Text(
+                  subtitle,
+                  style: const TextStyle(fontSize: 12, color: kGray),
+                ),
               ],
             ),
           ),
@@ -1035,11 +1292,9 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         ),
         GestureDetector(
           onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => SaleItemScreen(),
-              ),
-            );
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => SaleItemScreen()));
           },
           child: _footerBtn(Icons.history, 'Recent Sales'),
         ),
@@ -1052,8 +1307,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       children: [
         Icon(icon, color: kGray, size: 18),
         const SizedBox(width: 6),
-        Text(label,
-            style: const TextStyle(fontSize: 13, color: kGray)),
+        Text(label, style: const TextStyle(fontSize: 13, color: kGray)),
       ],
     );
   }
@@ -1068,7 +1322,10 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         border: Border.all(color: kBorder),
         boxShadow: const [
           BoxShadow(
-              color: Color(0x0D000000), blurRadius: 10, offset: Offset(0, 2)),
+            color: Color(0x0D000000),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
         ],
       ),
       child: child,

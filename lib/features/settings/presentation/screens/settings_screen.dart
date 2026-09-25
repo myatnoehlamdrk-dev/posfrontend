@@ -2,10 +2,14 @@ import 'package:flutter/material.dart' hide ThemeMode;
 import 'package:image_picker/image_picker.dart';
 import 'package:posfrontend/core/auth/token_storage.dart';
 import 'package:posfrontend/core/network/api_client.dart';
+import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
-import 'package:posfrontend/shared/widgets/custom_back_button.dart';
+import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 import 'package:posfrontend/features/auth/presentation/screens/login_screen.dart';
 import 'package:posfrontend/features/settings/domain/entities/settings.dart';
+import 'package:posfrontend/features/settings/presentation/screens/privacy_policy_screen.dart';
+import 'package:posfrontend/features/settings/presentation/screens/terms_of_service_screen.dart';
 import 'package:posfrontend/features/settings/presentation/viewmodels/settings_view_model.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
@@ -17,6 +21,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late final SettingsViewModel _viewModel;
   bool _isLoggingOut = false;
 
@@ -56,98 +61,73 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: _viewModel,
-      builder: (context, _) {
-        return Scaffold(
-          backgroundColor: Colors.white,
-          body: SafeArea(
-            child: _viewModel.isLoading && !_viewModel.isInitialized
-                ? const Center(child: CircularProgressIndicator(color: orange))
-                : Column(
-                    children: [
-                      _buildTopBar(),
-                      Expanded(
-                        child: RefreshIndicator(
-                          onRefresh: () => _viewModel.loadSettings(),
-                          child: SingleChildScrollView(
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 8),
-                                const Text(
-                                  'Settings',
-                                  style: TextStyle(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.bold,
-                                    color: titleColor,
-                                  ),
-                                ),
-                                const SizedBox(height: 20),
-                                _buildProfileCard(),
-                                const SizedBox(height: 28),
-                                _sectionHeader('APPEARANCE'),
-                                const SizedBox(height: 10),
-                                _buildAppearanceCard(),
-                                const SizedBox(height: 28),
-                                _sectionHeader('REGIONAL'),
-                                const SizedBox(height: 10),
-                                _buildRegionalCard(),
-                                const SizedBox(height: 28),
-                                _sectionHeader('BUSINESS'),
-                                const SizedBox(height: 10),
-                                _buildShopImageCard(),
-                                const SizedBox(height: 12),
-                                _buildBusinessCard(),
-                                const SizedBox(height: 28),
-                                _sectionHeader('SUPPORT'),
-                                const SizedBox(height: 10),
-                                _buildSupportCard(),
-                                const SizedBox(height: 28),
-                                _sectionHeader('ABOUT'),
-                                const SizedBox(height: 10),
-                                _buildAboutCard(),
-                                const SizedBox(height: 32),
-                                _buildSignOutButton(),
-                                const SizedBox(height: 32),
-                              ],
-                            ),
-                          ),
-                        ),
+    return Scaffold(
+      key: _scaffoldKey,
+      backgroundColor: Colors.white,
+      drawer: const AppDrawer(activeItem: 'Setting'),
+      body: SafeArea(
+        child: Column(
+          children: [
+            AppScreenTopBar(
+              title: 'Setting',
+              showMenuButton: true,
+              onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+            ),
+            Expanded(
+              child: ListenableBuilder(
+                listenable: _viewModel,
+                builder: (context, _) {
+                  return RefreshableBody(
+                    onRefresh: () => _viewModel.loadSettings(),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (_viewModel.isLoading && !_viewModel.isInitialized)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 60),
+                              child: Center(
+                                child: CircularProgressIndicator(color: orange),
+                              ),
+                            )
+                          else ...[
+                            _buildProfileCard(),
+                            const SizedBox(height: 28),
+                            _sectionHeader('APPEARANCE'),
+                            const SizedBox(height: 10),
+                            _buildAppearanceCard(),
+                            const SizedBox(height: 28),
+                            _sectionHeader('REGIONAL'),
+                            const SizedBox(height: 10),
+                            _buildRegionalCard(),
+                            const SizedBox(height: 28),
+                            _sectionHeader('BUSINESS'),
+                            const SizedBox(height: 10),
+                            _buildShopImageCard(),
+                            const SizedBox(height: 12),
+                            _buildBusinessCard(),
+                            const SizedBox(height: 28),
+                            _sectionHeader('SUPPORT'),
+                            const SizedBox(height: 10),
+                            _buildSupportCard(),
+                            const SizedBox(height: 28),
+                            _sectionHeader('ABOUT'),
+                            const SizedBox(height: 10),
+                            _buildAboutCard(),
+                            const SizedBox(height: 32),
+                            _buildSignOutButton(),
+                            const SizedBox(height: 32),
+                          ],
+                        ],
                       ),
-                    ],
-                  ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildTopBar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: border, width: 1)),
-      ),
-      child: Row(
-        children: [
-          const CustomBackButton(),
-          const Expanded(
-            child: Center(
-              child: Text(
-                'Settings',
-                style: TextStyle(
-                  color: titleColor,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
+                    ),
+                  );
+                },
               ),
             ),
-          ),
-          const SizedBox(width: 48),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -353,7 +333,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: Image.network(
                           shopImage,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _imagePlaceholder(),
+                          errorBuilder: (context, error, stackTrace) =>
+                              _imagePlaceholder(),
                         ),
                       )
                     : _imagePlaceholder(),
@@ -814,11 +795,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _aboutRow('App Name', 'POS Frontend'),
+              _aboutRow('App Name', 'Inventory'),
               const SizedBox(height: 8),
               _aboutRow('Version', _viewModel.settings.appVersion),
               const SizedBox(height: 8),
-              _aboutRow('Developer', 'POS Team'),
+              _aboutRow('Developer', 'MDRK Mobile Team'),
             ],
           ),
           actions: [
@@ -843,54 +824,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showPrivacyPolicy() {
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Privacy Policy', style: TextStyle(fontWeight: FontWeight.w600, color: titleColor)),
-          content: const SingleChildScrollView(
-            child: Text(
-              'This application collects minimal data necessary for providing point-of-sale services. '
-              'We do not share personal information with third parties. '
-              'Your data is stored securely and only used to enhance your experience.',
-              style: TextStyle(color: gray, fontSize: 14, height: 1.5),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Close', style: TextStyle(color: orange)),
-            ),
-          ],
-        );
-      },
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen()),
     );
   }
 
   void _showTermsOfService() {
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Terms of Service', style: TextStyle(fontWeight: FontWeight.w600, color: titleColor)),
-          content: const SingleChildScrollView(
-            child: Text(
-              'By using this application, you agree to comply with and be bound by these Terms of Service. '
-              'The application is provided as-is for business management purposes. '
-              'We reserve the right to modify these terms at any time.',
-              style: TextStyle(color: gray, fontSize: 14, height: 1.5),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Close', style: TextStyle(color: orange)),
-            ),
-          ],
-        );
-      },
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const TermsOfServiceScreen()),
     );
   }
 

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:posfrontend/shared/widgets/app_drawer.dart';
-import 'package:posfrontend/shared/widgets/app_top_bar.dart';
+import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart';
 import 'package:posfrontend/features/product/data/repositories/product_repository_impl.dart';
 import 'package:posfrontend/features/product/presentation/screens/add_product_screen.dart';
@@ -12,17 +11,13 @@ import 'package:posfrontend/shared/widgets/price_text.dart';
 class ProductDetailScreen extends StatefulWidget {
   final String productId;
 
-  const ProductDetailScreen({
-    super.key,
-    required this.productId,
-  });
+  const ProductDetailScreen({super.key, required this.productId});
 
   @override
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
 }
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late final ProductDetailViewModel _viewModel;
 
   @override
@@ -52,23 +47,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             final body = _content(isWide: isWide);
 
             return Scaffold(
-              key: _scaffoldKey,
               backgroundColor: Colors.white,
-              drawer: isWide ? null : AppDrawer(activeItem: 'Inventory'),
-              body: SafeArea(
-                child: isWide
-                    ? Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          SizedBox(
-                            width: 240,
-                            child: AppDrawer(activeItem: 'Inventory'),
-                          ),
-                          Expanded(child: _content(isWide: isWide)),
-                        ],
-                      )
-                    : body,
-              ),
+              body: SafeArea(child: body),
             );
           },
         );
@@ -79,18 +59,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget _content({required bool isWide}) {
     return Column(
       children: [
+        AppScreenTopBar(
+          title: 'Product Detail',
+          showBackButton: true,
+          showMenuButton: false,
+        ),
         Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              AppTopBar(
-                title: 'Product Detail',
-                showMenuButton: !isWide,
-                showBackButton: false,
-                onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
-              ),
-              const SizedBox(height: 20),
               const Breadcrumb([
                 BreadcrumbItem('Dashboard', false),
                 BreadcrumbItem('Inventory', false),
@@ -107,49 +85,56 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ? const SizedBox(
                     height: 300,
                     child: Center(
-                      child: CircularProgressIndicator(color: Color(0xFF6D28D9)),
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF6D28D9),
+                      ),
                     ),
                   )
                 : _viewModel.hasError
-                    ? SizedBox(
-                        height: 300,
-                        child: Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(_viewModel.errorMessage!, style: const TextStyle(color: Colors.red)),
-                              const SizedBox(height: 12),
-                              ElevatedButton(
-                                onPressed: _viewModel.load,
-                                child: const Text('Retry'),
-                              ),
-                            ],
+                ? SizedBox(
+                    height: 300,
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _viewModel.errorMessage!,
+                            style: const TextStyle(color: Colors.red),
                           ),
-                        ),
-                      )
-                    : _viewModel.detail == null
-                        ? const SizedBox(
-                            height: 300,
-                            child: Center(
-                              child: CircularProgressIndicator(color: Color(0xFF6D28D9)),
-                            ),
-                          )
-                        : Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _heroImage(),
-                                const SizedBox(height: 16),
-                                _summaryCard(),
-                                const SizedBox(height: 16),
-                                _segmented(),
-                                const SizedBox(height: 16),
-                                _tabContent(),
-                                const SizedBox(height: 16),
-                              ],
-                            ),
+                          const SizedBox(height: 12),
+                          ElevatedButton(
+                            onPressed: _viewModel.load,
+                            child: const Text('Retry'),
                           ),
+                        ],
+                      ),
+                    ),
+                  )
+                : _viewModel.detail == null
+                ? const SizedBox(
+                    height: 300,
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF6D28D9),
+                      ),
+                    ),
+                  )
+                : Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _heroImage(),
+                        const SizedBox(height: 16),
+                        _summaryCard(),
+                        const SizedBox(height: 16),
+                        _segmented(),
+                        const SizedBox(height: 16),
+                        _tabContent(),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
           ),
         ),
       ],
@@ -206,9 +191,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             onTap: () async {
               await Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => AddProductScreen(
-                    existingProduct: _viewModel.detail,
-                  ),
+                  builder: (_) =>
+                      AddProductScreen(existingProduct: _viewModel.detail),
                 ),
               );
               if (mounted) _viewModel.load();
@@ -259,7 +243,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: kBorder),
         boxShadow: const [
-          BoxShadow(color: Color(0x0D000000), blurRadius: 10, offset: Offset(0, 2)),
+          BoxShadow(
+            color: Color(0x0D000000),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
         ],
       ),
       child: Row(
@@ -378,7 +366,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       children: [
         const Text(
           'Identification',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: kTitle),
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: kTitle,
+          ),
         ),
         const SizedBox(height: 12),
         _card([
@@ -388,7 +380,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         const SizedBox(height: 24),
         const Text(
           'Attributes',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: kTitle),
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: kTitle,
+          ),
         ),
         const SizedBox(height: 12),
         _card([
@@ -405,7 +401,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           const SizedBox(height: 24),
           const Text(
             'Audit Information',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: kTitle),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: kTitle,
+            ),
           ),
           const SizedBox(height: 12),
           _card([
@@ -423,66 +423,81 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           const SizedBox(height: 24),
           const Text(
             'Variants',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: kTitle),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: kTitle,
+            ),
           ),
           const SizedBox(height: 12),
-          ...variants.map((v) => Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF5F0FF),
-                      borderRadius: BorderRadius.circular(10),
+          ...variants.map(
+            (v) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF5F0FF),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.inventory_2,
+                        color: Color(0xFF6D28D9),
+                        size: 20,
+                      ),
                     ),
-                    child: const Icon(Icons.inventory_2, color: Color(0xFF6D28D9), size: 20),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          v.size.isNotEmpty ? v.size : (v.color.isNotEmpty ? v.color : 'Default'),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                            color: kTitle,
-                          ),
-                        ),
-                        if (v.color.isNotEmpty && v.size.isNotEmpty)
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           Text(
-                            v.color,
+                            v.size.isNotEmpty
+                                ? v.size
+                                : (v.color.isNotEmpty ? v.color : 'Default'),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                              color: kTitle,
+                            ),
+                          ),
+                          if (v.color.isNotEmpty && v.size.isNotEmpty)
+                            Text(
+                              v.color,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: kGray,
+                              ),
+                            ),
+                          Text(
+                            'Qty: ${v.quantity}',
                             style: const TextStyle(fontSize: 12, color: kGray),
                           ),
-                        Text(
-                          'Qty: ${v.quantity}',
-                          style: const TextStyle(fontSize: 12, color: kGray),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  PriceText(
-                    v.price,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                      color: Color(0xFF6D28D9),
+                    PriceText(
+                      v.price,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        color: Color(0xFF6D28D9),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          )),
+          ),
         ],
       ],
     );
@@ -494,10 +509,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final color = d.stockStatus == 'High Stock'
         ? const Color(0xFF16A34A)
         : (d.stockStatus == 'Mid-Cap Stock'
-            ? const Color(0xFF2563EB)
-            : (d.stockStatus == 'Low Stock'
-                ? const Color(0xFFD97706)
-                : const Color(0xFFDC2626)));
+              ? const Color(0xFF2563EB)
+              : (d.stockStatus == 'Low Stock'
+                    ? const Color(0xFFD97706)
+                    : const Color(0xFFDC2626)));
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -508,7 +523,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: kBorder),
             boxShadow: const [
-              BoxShadow(color: Color(0x0D000000), blurRadius: 10, offset: Offset(0, 2)),
+              BoxShadow(
+                color: Color(0x0D000000),
+                blurRadius: 10,
+                offset: Offset(0, 2),
+              ),
             ],
           ),
           child: Row(
@@ -543,7 +562,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFDCFCE7),
                   borderRadius: BorderRadius.circular(20),
@@ -563,7 +585,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         const SizedBox(height: 24),
         const Text(
           'Stock Info',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: kTitle),
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: kTitle,
+          ),
         ),
         const SizedBox(height: 12),
         _card([
@@ -579,7 +605,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: kBorder),
             boxShadow: const [
-              BoxShadow(color: Color(0x0D000000), blurRadius: 10, offset: Offset(0, 2)),
+              BoxShadow(
+                color: Color(0x0D000000),
+                blurRadius: 10,
+                offset: Offset(0, 2),
+              ),
             ],
           ),
           child: Column(
@@ -623,7 +653,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       children: [
         const Text(
           'Supplier Information',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: kTitle),
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: kTitle,
+          ),
         ),
         const SizedBox(height: 12),
         _card([
@@ -643,7 +677,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: kBorder),
         boxShadow: const [
-          BoxShadow(color: Color(0x0D000000), blurRadius: 10, offset: Offset(0, 2)),
+          BoxShadow(
+            color: Color(0x0D000000),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
         ],
       ),
       child: Column(

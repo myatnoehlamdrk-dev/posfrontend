@@ -64,25 +64,50 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
                       ]),
                       const SizedBox(height: 12),
                       _buildInfoCard('Supplier Information', [
-                        _infoRow('Supplier Name', _order.supplierName.isNotEmpty ? _order.supplierName : '-'),
-                        _infoRow('Supplier ID', _order.supplierId.isNotEmpty ? _order.supplierId : '-'),
+                        _infoRow(
+                          'Supplier Name',
+                          _order.supplierName.isNotEmpty
+                              ? _order.supplierName
+                              : '-',
+                        ),
+                        _infoRow(
+                          'Supplier ID',
+                          _order.supplierId.isNotEmpty
+                              ? _order.supplierId
+                              : '-',
+                        ),
                       ]),
                       const SizedBox(height: 12),
                       _buildInfoCard('Product Details', [
-                        _infoRow('Product Name', _order.productName.isNotEmpty ? _order.productName : '-'),
+                        _infoRow(
+                          'Product Name',
+                          _order.productName.isNotEmpty
+                              ? _order.productName
+                              : '-',
+                        ),
                         _infoRow('Quantity', 'x${_order.quantity}'),
-                        _infoRow('Unit Price', 'MMK ${_order.unitPrice.withCommas()}'),
+                        _infoRow(
+                          'Unit Price',
+                          'MMK ${_order.unitPrice.withCommas()}',
+                        ),
                         const SizedBox(height: 8),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Total Amount', style: TextStyle(fontSize: 13, color: gray)),
+                            const Text(
+                              'Total Amount',
+                              style: TextStyle(fontSize: 13, color: gray),
+                            ),
                             const SizedBox(width: 12),
                             Flexible(
                               child: PriceText(
                                 _order.totalAmount.toDouble(),
                                 maxLength: 14,
-                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: titleColor),
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: titleColor,
+                                ),
                               ),
                             ),
                           ],
@@ -91,13 +116,22 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
                       if (_order.notes.isNotEmpty) ...[
                         const SizedBox(height: 12),
                         _buildInfoCard('Notes', [
-                          Text(_order.notes, style: const TextStyle(fontSize: 13, color: titleColor)),
+                          Text(
+                            _order.notes,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: titleColor,
+                            ),
+                          ),
                         ]),
                       ],
                       const SizedBox(height: 12),
                       _buildInfoCard('Order Status & History', [
                         _infoRow('Order Date', _formatDate(_order.date)),
-                        _infoRow('Order Status', isCompleted ? 'Completed' : 'Pending'),
+                        _infoRow(
+                          'Order Status',
+                          isCompleted ? 'Completed' : 'Pending',
+                        ),
                         _infoRow('Order ID', '#${_order.orderId}'),
                       ]),
                       const SizedBox(height: 24),
@@ -114,7 +148,7 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
 
   Widget _buildTopBar(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(bottom: BorderSide(color: border, width: 1)),
@@ -170,7 +204,10 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: isCompleted ? greenBg : orangeBg,
                   borderRadius: BorderRadius.circular(8),

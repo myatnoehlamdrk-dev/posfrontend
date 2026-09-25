@@ -11,8 +11,16 @@ import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
 
 String _fmtPrice(double value) => value.withCommas();
 
-TextStyle _monoStyle({double fontSize = 13, FontWeight fontWeight = FontWeight.normal, Color? color}) {
-  return GoogleFonts.robotoMono(fontSize: fontSize, fontWeight: fontWeight, color: color);
+TextStyle _monoStyle({
+  double fontSize = 13,
+  FontWeight fontWeight = FontWeight.normal,
+  Color? color,
+}) {
+  return GoogleFonts.robotoMono(
+    fontSize: fontSize,
+    fontWeight: fontWeight,
+    color: color,
+  );
 }
 
 class SalePreviewScreen extends StatelessWidget {
@@ -67,8 +75,14 @@ class SalePreviewScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: const CustomBackButton(),
-        title: const Text('Invoice Preview',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: kTitle)),
+        title: const Text(
+          'Invoice Preview',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: kTitle,
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.print, color: kPurple),
@@ -87,7 +101,11 @@ class SalePreviewScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: kBorder),
                 boxShadow: const [
-                  BoxShadow(color: Color(0x0D000000), blurRadius: 10, offset: Offset(0, 2)),
+                  BoxShadow(
+                    color: Color(0x0D000000),
+                    blurRadius: 10,
+                    offset: Offset(0, 2),
+                  ),
                 ],
               ),
               child: Column(
@@ -129,6 +147,7 @@ class SalePreviewScreen extends StatelessWidget {
         ),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (shopImage?.isNotEmpty == true)
             ClipRRect(
@@ -139,7 +158,7 @@ class SalePreviewScreen extends StatelessWidget {
                       width: 64,
                       height: 64,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _shopPlaceholder(),
+                      errorBuilder: (_, _, _) => _shopPlaceholder(),
                     )
                   : _base64Image(shopImage!),
             )
@@ -159,20 +178,14 @@ class SalePreviewScreen extends StatelessWidget {
           if (shopAddress?.isNotEmpty == true)
             Text(
               shopAddress!,
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 11,
-              ),
+              style: const TextStyle(color: Colors.white70, fontSize: 11),
             ),
           if (shopPhone?.isNotEmpty == true)
             Padding(
               padding: const EdgeInsets.only(top: 2),
               child: Text(
                 shopPhone!,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 11,
-                ),
+                style: const TextStyle(color: Colors.white70, fontSize: 11),
               ),
             ),
           if (shopEmail?.isNotEmpty == true)
@@ -180,10 +193,7 @@ class SalePreviewScreen extends StatelessWidget {
               padding: const EdgeInsets.only(top: 2),
               child: Text(
                 shopEmail!,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 11,
-                ),
+                style: const TextStyle(color: Colors.white70, fontSize: 11),
               ),
             ),
           const SizedBox(height: 10),
@@ -244,7 +254,14 @@ class SalePreviewScreen extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: _monoStyle(fontSize: 13, color: kGray)),
-        Text(value, style: _monoStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kTitle)),
+        Text(
+          value,
+          style: _monoStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: kTitle,
+          ),
+        ),
       ],
     );
   }
@@ -270,19 +287,32 @@ class SalePreviewScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Customer', style: TextStyle(fontSize: 11, color: kGray)),
+                    const Text(
+                      'Customer',
+                      style: TextStyle(fontSize: 11, color: kGray),
+                    ),
                     const SizedBox(height: 2),
-                    Text(customerName,
-                        style: _monoStyle(fontSize: 14, fontWeight: FontWeight.w600, color: kTitle)),
+                    Text(
+                      customerName,
+                      style: _monoStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: kTitle,
+                      ),
+                    ),
                     if (customerPhone?.isNotEmpty == true) ...[
                       const SizedBox(height: 2),
-                      Text(customerPhone!,
-                          style: _monoStyle(fontSize: 12, color: kGray)),
+                      Text(
+                        customerPhone!,
+                        style: _monoStyle(fontSize: 12, color: kGray),
+                      ),
                     ],
                     if (customerLocation?.isNotEmpty == true) ...[
                       const SizedBox(height: 2),
-                      Text(customerLocation!,
-                          style: _monoStyle(fontSize: 12, color: kGray)),
+                      Text(
+                        customerLocation!,
+                        style: _monoStyle(fontSize: 12, color: kGray),
+                      ),
                     ],
                   ],
                 ),
@@ -301,22 +331,50 @@ class SalePreviewScreen extends StatelessWidget {
         children: [
           Expanded(
             flex: 4,
-            child: Text('Item', style: _monoStyle(fontSize: 11, fontWeight: FontWeight.w600, color: kGray)),
+            child: Text(
+              'Item',
+              style: _monoStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: kGray,
+              ),
+            ),
           ),
           Expanded(
             flex: 1,
-            child: Text('Qty', textAlign: TextAlign.center,
-                style: _monoStyle(fontSize: 11, fontWeight: FontWeight.w600, color: kGray)),
+            child: Text(
+              'Qty',
+              textAlign: TextAlign.center,
+              style: _monoStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: kGray,
+              ),
+            ),
           ),
           Expanded(
             flex: 2,
-            child: Text('Price', textAlign: TextAlign.right,
-                style: _monoStyle(fontSize: 11, fontWeight: FontWeight.w600, color: kGray)),
+            child: Text(
+              'Price',
+              textAlign: TextAlign.right,
+              style: _monoStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: kGray,
+              ),
+            ),
           ),
           Expanded(
             flex: 2,
-            child: Text('Total', textAlign: TextAlign.right,
-                style: _monoStyle(fontSize: 11, fontWeight: FontWeight.w600, color: kGray)),
+            child: Text(
+              'Total',
+              textAlign: TextAlign.right,
+              style: _monoStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: kGray,
+              ),
+            ),
           ),
         ],
       ),
@@ -338,7 +396,9 @@ class SalePreviewScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 10),
             decoration: i < items.length - 1
                 ? const BoxDecoration(
-                    border: Border(bottom: BorderSide(color: kBorder, width: 0.5)),
+                    border: Border(
+                      bottom: BorderSide(color: kBorder, width: 0.5),
+                    ),
                   )
                 : null,
             child: Row(
@@ -349,32 +409,53 @@ class SalePreviewScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(item.productName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: _monoStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kTitle)),
+                      Text(
+                        item.productName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: _monoStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: kTitle,
+                        ),
+                      ),
                       if (variant.isNotEmpty) ...[
                         const SizedBox(height: 2),
-                        Text(variant,
-                            style: _monoStyle(fontSize: 11, color: kGray)),
+                        Text(
+                          variant,
+                          style: _monoStyle(fontSize: 11, color: kGray),
+                        ),
                       ],
                     ],
                   ),
                 ),
                 Expanded(
                   flex: 1,
-                  child: Text('${item.quantity}', textAlign: TextAlign.center,
-                      style: _monoStyle(fontSize: 13, color: kTitle)),
+                  child: Text(
+                    '${item.quantity}',
+                    textAlign: TextAlign.center,
+                    style: _monoStyle(fontSize: 13, color: kTitle),
+                  ),
                 ),
                 Expanded(
                   flex: 2,
-                  child: Text(_fmtPrice(item.unitPrice), textAlign: TextAlign.right,
-                      style: _monoStyle(fontSize: 12, color: kTitle)),
+                  child: Text(
+                    _fmtPrice(item.unitPrice),
+                    textAlign: TextAlign.right,
+                    style: _monoStyle(fontSize: 12, color: kTitle),
+                  ),
                 ),
                 Expanded(
                   flex: 2,
-                  child: Text(_fmtPrice(item.subtotal), textAlign: TextAlign.right,
-                      style: _monoStyle(fontSize: 12, fontWeight: FontWeight.w600, color: kTitle)),
+                  child: Text(
+                    _fmtPrice(item.subtotal),
+                    textAlign: TextAlign.right,
+                    style: _monoStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: kTitle,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -395,10 +476,19 @@ class SalePreviewScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Discount ($discountPct%)',
-                    style: _monoStyle(fontSize: 13, color: kGray)),
-                Text('-${_fmtPrice(discountAmt)}', textAlign: TextAlign.right,
-                    style: _monoStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kRed)),
+                Text(
+                  'Discount ($discountPct%)',
+                  style: _monoStyle(fontSize: 13, color: kGray),
+                ),
+                Text(
+                  '-${_fmtPrice(discountAmt)}',
+                  textAlign: TextAlign.right,
+                  style: _monoStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: kRed,
+                  ),
+                ),
               ],
             ),
           ],
@@ -409,10 +499,23 @@ class SalePreviewScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Total Payable',
-                  style: _monoStyle(fontSize: 15, fontWeight: FontWeight.w700, color: kTitle)),
-              Text(_fmtPrice(totalPayable), textAlign: TextAlign.right,
-                  style: _monoStyle(fontSize: 17, fontWeight: FontWeight.bold, color: const Color(0xFF7C3AED))),
+              Text(
+                'Total Payable',
+                style: _monoStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: kTitle,
+                ),
+              ),
+              Text(
+                _fmtPrice(totalPayable),
+                textAlign: TextAlign.right,
+                style: _monoStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF7C3AED),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -426,9 +529,18 @@ class SalePreviewScreen extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Payment Method', style: TextStyle(fontSize: 13, color: kGray)),
-                Text(paymentMethod,
-                    style: _monoStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kPurple)),
+                const Text(
+                  'Payment Method',
+                  style: TextStyle(fontSize: 13, color: kGray),
+                ),
+                Text(
+                  paymentMethod,
+                  style: _monoStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: kPurple,
+                  ),
+                ),
               ],
             ),
           ),
@@ -442,8 +554,15 @@ class SalePreviewScreen extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: _monoStyle(fontSize: 13, color: kGray)),
-        Text(_fmtPrice(amount), textAlign: TextAlign.right,
-            style: _monoStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kTitle)),
+        Text(
+          _fmtPrice(amount),
+          textAlign: TextAlign.right,
+          style: _monoStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: kTitle,
+          ),
+        ),
       ],
     );
   }
@@ -461,10 +580,19 @@ class SalePreviewScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Notes',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF92400E))),
+            const Text(
+              'Notes',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF92400E),
+              ),
+            ),
             const SizedBox(height: 4),
-            Text(notes!, style: const TextStyle(fontSize: 12, color: Color(0xFF78350F))),
+            Text(
+              notes!,
+              style: const TextStyle(fontSize: 12, color: Color(0xFF78350F)),
+            ),
           ],
         ),
       ),
@@ -486,11 +614,19 @@ class SalePreviewScreen extends StatelessWidget {
         children: [
           const Icon(Icons.check_circle, color: Color(0xFF16A34A), size: 32),
           const SizedBox(height: 8),
-          const Text('Thank you for your purchase!',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kTitle)),
+          const Text(
+            'Thank you for your purchase!',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: kTitle,
+            ),
+          ),
           const SizedBox(height: 4),
-          Text('Total Items: ${items.length}',
-              style: const TextStyle(fontSize: 12, color: kGray)),
+          Text(
+            'Total Items: ${items.length}',
+            style: const TextStyle(fontSize: 12, color: kGray),
+          ),
         ],
       ),
     );
@@ -527,7 +663,8 @@ class DashedDivider extends StatelessWidget {
       builder: (context, constraints) {
         final dashWidth = 4.0;
         final dashSpace = 4.0;
-        final dashCount = (constraints.maxWidth / (dashWidth + dashSpace)).floor();
+        final dashCount = (constraints.maxWidth / (dashWidth + dashSpace))
+            .floor();
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: List.generate(dashCount, (_) {

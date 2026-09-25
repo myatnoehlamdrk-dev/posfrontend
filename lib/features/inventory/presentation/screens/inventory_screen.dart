@@ -5,6 +5,7 @@ import 'package:posfrontend/features/inventory/data/repositories/inventory_repos
 import 'package:posfrontend/features/category/presentation/screens/category_screen.dart';
 import 'package:posfrontend/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 
@@ -78,41 +79,46 @@ class _InventoryScreenState extends State<InventoryScreen> {
   Widget _buildContent({required bool isWide}) {
     final options = _viewModel.options;
     return SafeArea(
-      child: RefreshableBody(
-        onRefresh: () async {},
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AppTopBar(
-                title: 'Inventory',
-                showMenuButton: !isWide,
-                onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
-              ),
-              const SizedBox(height: 24),
-              _breadcrumb(),
-              const SizedBox(height: 16),
-              const Text(
-                'Inventory',
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
-                  color: title,
+      child: Column(
+        children: [
+          AppScreenTopBar(
+            title: 'Inventory',
+            showMenuButton: !isWide,
+            onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+          ),
+          Expanded(
+            child: RefreshableBody(
+              onRefresh: () async {},
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _breadcrumb(),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Inventory',
+                      style: TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.bold,
+                        color: title,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Choose an inventory to manage your items.',
+                      style: TextStyle(fontSize: 16, color: gray),
+                    ),
+                    const SizedBox(height: 32),
+                    _buildOptionCards(options, isWide: isWide),
+                    const SizedBox(height: 32),
+                    _infoCard(),
+                  ],
                 ),
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'Choose an inventory to manage your items.',
-                style: TextStyle(fontSize: 16, color: gray),
-              ),
-              const SizedBox(height: 32),
-              _buildOptionCards(options, isWide: isWide),
-              const SizedBox(height: 32),
-              _infoCard(),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

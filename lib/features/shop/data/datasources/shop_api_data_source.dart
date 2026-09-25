@@ -7,7 +7,10 @@ class ShopApiDataSource {
 
   ShopApiDataSource({Dio? dio}) : _dio = dio ?? ApiClient.create();
 
-  Future<ShopApiModel> createShop(ShopApiModel shop, {CancelToken? cancelToken}) async {
+  Future<ShopApiModel> createShop(
+    ShopApiModel shop, {
+    CancelToken? cancelToken,
+  }) async {
     try {
       final response = await _dio.post(
         '/api/shops',
@@ -20,9 +23,18 @@ class ShopApiDataSource {
     }
   }
 
-  Future<List<ShopApiModel>> getShops({CancelToken? cancelToken}) async {
+  Future<List<ShopApiModel>> getShops({
+    String? query,
+    CancelToken? cancelToken,
+  }) async {
     try {
-      final response = await _dio.get('/api/shops', cancelToken: cancelToken);
+      final response = await _dio.get(
+        '/api/shops',
+        queryParameters: (query == null || query.trim().isEmpty)
+            ? null
+            : {'q': query.trim()},
+        cancelToken: cancelToken,
+      );
       final payload = response.data;
       final list = payload is Map<String, dynamic>
           ? (payload['data'] as List? ?? const [])
@@ -35,16 +47,26 @@ class ShopApiDataSource {
     }
   }
 
-  Future<ShopApiModel> getShopById(String id, {CancelToken? cancelToken}) async {
+  Future<ShopApiModel> getShopById(
+    String id, {
+    CancelToken? cancelToken,
+  }) async {
     try {
-      final response = await _dio.get('/api/shops/$id', cancelToken: cancelToken);
+      final response = await _dio.get(
+        '/api/shops/$id',
+        cancelToken: cancelToken,
+      );
       return ShopApiModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
   }
 
-  Future<ShopApiModel> updateShop(String id, ShopApiModel shop, {CancelToken? cancelToken}) async {
+  Future<ShopApiModel> updateShop(
+    String id,
+    ShopApiModel shop, {
+    CancelToken? cancelToken,
+  }) async {
     try {
       final response = await _dio.patch(
         '/api/shops/$id',

@@ -9,6 +9,7 @@ import 'package:posfrontend/features/profile/presentation/viewmodels/profile_vie
 import 'package:posfrontend/features/shop/data/repositories/shop_api_repository_impl.dart';
 import 'package:posfrontend/shared/repositories/imgbb_repository_impl.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
+import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -146,8 +147,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
       if (!mounted) return;
       _viewModel.setImageUrl(result.url);
-      ProfileImageNotifier.instance
-          .update(resolveMediaUrl(result.url) ?? result.url);
+      ProfileImageNotifier.instance.update(
+        resolveMediaUrl(result.url) ?? result.url,
+      );
       final success = await _viewModel.saveProfile();
       if (success && mounted) {
         showSuccessSnackBar(context, 'Profile updated successfully');
@@ -349,9 +351,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             obscureText: _obscureCurrent,
                             decoration: InputDecoration(
                               hintText: 'Current password',
-                              errorText: _viewModel.getFieldError('currentPassword'),
+                              errorText: _viewModel.getFieldError(
+                                'currentPassword',
+                              ),
                               hintStyle: const TextStyle(color: hintColor),
-                              prefixIcon: const Icon(Icons.lock_outline, color: primary, size: 20),
+                              prefixIcon: const Icon(
+                                Icons.lock_outline,
+                                color: primary,
+                                size: 20,
+                              ),
                               suffixIcon: IconButton(
                                 icon: Icon(
                                   _obscureCurrent
@@ -361,16 +369,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   size: 20,
                                 ),
                                 onPressed: () => setDialogState(
-                                    () => _obscureCurrent = !_obscureCurrent),
+                                  () => _obscureCurrent = !_obscureCurrent,
+                                ),
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(color: primary, width: 1.5),
+                                borderSide: const BorderSide(
+                                  color: primary,
+                                  width: 1.5,
+                                ),
                               ),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -379,9 +394,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             obscureText: _obscureNew,
                             decoration: InputDecoration(
                               hintText: 'New password',
-                              errorText: _viewModel.getFieldError('newPassword'),
+                              errorText: _viewModel.getFieldError(
+                                'newPassword',
+                              ),
                               hintStyle: const TextStyle(color: hintColor),
-                              prefixIcon: const Icon(Icons.lock_outline, color: primary, size: 20),
+                              prefixIcon: const Icon(
+                                Icons.lock_outline,
+                                color: primary,
+                                size: 20,
+                              ),
                               suffixIcon: IconButton(
                                 icon: Icon(
                                   _obscureNew
@@ -391,16 +412,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   size: 20,
                                 ),
                                 onPressed: () => setDialogState(
-                                    () => _obscureNew = !_obscureNew),
+                                  () => _obscureNew = !_obscureNew,
+                                ),
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(color: primary, width: 1.5),
+                                borderSide: const BorderSide(
+                                  color: primary,
+                                  width: 1.5,
+                                ),
                               ),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -409,9 +437,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             obscureText: _obscureConfirm,
                             decoration: InputDecoration(
                               hintText: 'Confirm new password',
-                              errorText: _viewModel.getFieldError('confirmPassword'),
+                              errorText: _viewModel.getFieldError(
+                                'confirmPassword',
+                              ),
                               hintStyle: const TextStyle(color: hintColor),
-                              prefixIcon: const Icon(Icons.lock_outline, color: primary, size: 20),
+                              prefixIcon: const Icon(
+                                Icons.lock_outline,
+                                color: primary,
+                                size: 20,
+                              ),
                               suffixIcon: IconButton(
                                 icon: Icon(
                                   _obscureConfirm
@@ -421,16 +455,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   size: 20,
                                 ),
                                 onPressed: () => setDialogState(
-                                    () => _obscureConfirm = !_obscureConfirm),
+                                  () => _obscureConfirm = !_obscureConfirm,
+                                ),
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(color: primary, width: 1.5),
+                                borderSide: const BorderSide(
+                                  color: primary,
+                                  width: 1.5,
+                                ),
                               ),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
                             ),
                           ),
                         ],
@@ -440,21 +481,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(ctx),
-                      child: const Text('Cancel', style: TextStyle(color: hintColor)),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(color: hintColor),
+                      ),
                     ),
                     ElevatedButton(
                       onPressed: _viewModel.isChangingPassword
                           ? null
                           : () async {
                               final success = await _viewModel.changePassword(
-                                currentPassword: _currentPasswordController.text,
+                                currentPassword:
+                                    _currentPasswordController.text,
                                 newPassword: _newPasswordController.text,
-                                confirmPassword: _confirmPasswordController.text,
+                                confirmPassword:
+                                    _confirmPasswordController.text,
                               );
                               if (success && ctx.mounted) {
                                 Navigator.pop(ctx);
                                 if (mounted) {
-                                  showSuccessSnackBar(context, 'Password changed successfully');
+                                  showSuccessSnackBar(
+                                    context,
+                                    'Password changed successfully',
+                                  );
                                 }
                               }
                             },
@@ -464,7 +513,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
                       ),
                       child: _viewModel.isChangingPassword
                           ? const SizedBox(
@@ -497,7 +549,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       lastDate: DateTime.now(),
     );
     if (picked != null) {
-      final formatted = '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+      final formatted =
+          '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
       _viewModel.setDateOfBirth(formatted);
       _dobController.text = formatted;
     }
@@ -538,6 +591,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Future<void> _refresh() async {
+    final shopId = AuthScope.userOf(context)?.shopId ?? '';
+    await Future.wait([_viewModel.loadProfile(), _viewModel.loadShop(shopId)]);
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -550,140 +608,145 @@ class _ProfileScreenState extends State<ProfileScreen> {
         return Scaffold(
           backgroundColor: Colors.white,
           body: SafeArea(
-            child: loading
+            child: loading && _viewModel.profile == null
                 ? const Center(child: CircularProgressIndicator(color: primary))
                 : Column(
                     children: [
                       _buildTopBar(),
                       Expanded(
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.all(20),
-                          child: Form(
-                            key: _formKey,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildProfileHeader(),
-                                const SizedBox(height: 24),
-                                _sectionTitle('Personal Information'),
-                                const SizedBox(height: 12),
-                                _buildTextField(
-                                  controller: _nameController,
-                                  label: 'Full Name',
-                                  icon: Icons.person_outline,
-                                  errorText: errors['name'],
-                                  onChanged: _viewModel.setName,
-                                ),
-                                const SizedBox(height: 16),
-                                _buildTextField(
-                                  controller: _emailController,
-                                  label: 'Email',
-                                  icon: Icons.email_outlined,
-                                  keyboardType: TextInputType.emailAddress,
-                                  errorText: errors['email'],
-                                  onChanged: _viewModel.setEmail,
-                                ),
-                                const SizedBox(height: 16),
-                                _buildTextField(
-                                  controller: _phoneController,
-                                  label: 'Phone',
-                                  icon: Icons.phone_outlined,
-                                  keyboardType: TextInputType.phone,
-                                  onChanged: _viewModel.setPhone,
-                                ),
-                                const SizedBox(height: 16),
-                                _buildTextField(
-                                  controller: _socialController,
-                                  label: 'Social Media',
-                                  icon: Icons.link,
-                                  onChanged: _viewModel.setSocial,
-                                ),
-                                const SizedBox(height: 24),
-                                _sectionTitle('Account Details'),
-                                const SizedBox(height: 12),
-                                _buildTextField(
-                                  controller: _typeController,
-                                  label: 'Type',
-                                  icon: Icons.category_outlined,
-                                  onChanged: _viewModel.setType,
-                                ),
-                                const SizedBox(height: 16),
-                                _buildTextField(
-                                  controller: _roleController,
-                                  label: 'Role',
-                                  icon: Icons.admin_panel_settings_outlined,
-                                  onChanged: _viewModel.setRole,
-                                ),
-                                const SizedBox(height: 16),
-                                _buildTextField(
-                                  controller: _nrcNoController,
-                                  label: 'NRC No',
-                                  icon: Icons.badge_outlined,
-                                  onChanged: _viewModel.setNrcNo,
-                                ),
-                                const SizedBox(height: 16),
-                                _buildTextField(
-                                  controller: _billingWayController,
-                                  label: 'Billing Way for Service',
-                                  icon: Icons.receipt_long_outlined,
-                                  onChanged: _viewModel.setBillingWay,
-                                ),
-                                const SizedBox(height: 24),
-                                _sectionTitle('Personal Details'),
-                                const SizedBox(height: 12),
-                                _buildTextField(
-                                  controller: _dobController,
-                                  label: 'Date of Birth',
-                                  icon: Icons.cake_outlined,
-                                  readOnly: true,
-                                  onTap: _pickDob,
-                                ),
-                                const SizedBox(height: 16),
-                                _buildTextField(
-                                  controller: _genderController,
-                                  label: 'Gender',
-                                  icon: Icons.wc_outlined,
-                                  onChanged: _viewModel.setGender,
-                                ),
-                                const SizedBox(height: 16),
-                                _buildTextField(
-                                  controller: _addressController,
-                                  label: 'Address',
-                                  icon: Icons.location_on_outlined,
-                                  maxLines: 2,
-                                  onChanged: _viewModel.setAddress,
-                                ),
-                                const SizedBox(height: 24),
-                                _sectionTitle('About Shop'),
-                                const SizedBox(height: 12),
-                                ..._buildShopFields(),
-                                const SizedBox(height: 24),
-                                _gradientButton(
-                                  label: 'Change Password',
-                                  icon: Icons.vpn_key_outlined,
-                                  loading: false,
-                                  onTap: _showChangePasswordDialog,
-                                ),
-                                const SizedBox(height: 32),
-                                if (_viewModel.hasError)
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 12),
-                                    child: Text(
-                                      _viewModel.errorMessage!,
-                                      style: const TextStyle(
-                                        color: Colors.red,
-                                        fontSize: 13,
+                        child: RefreshableBody(
+                          onRefresh: _refresh,
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Form(
+                              key: _formKey,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildProfileHeader(),
+                                  const SizedBox(height: 24),
+                                  _sectionTitle('Personal Information'),
+                                  const SizedBox(height: 12),
+                                  _buildTextField(
+                                    controller: _nameController,
+                                    label: 'Full Name',
+                                    icon: Icons.person_outline,
+                                    errorText: errors['name'],
+                                    onChanged: _viewModel.setName,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  _buildTextField(
+                                    controller: _emailController,
+                                    label: 'Email',
+                                    icon: Icons.email_outlined,
+                                    keyboardType: TextInputType.emailAddress,
+                                    errorText: errors['email'],
+                                    onChanged: _viewModel.setEmail,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  _buildTextField(
+                                    controller: _phoneController,
+                                    label: 'Phone',
+                                    icon: Icons.phone_outlined,
+                                    keyboardType: TextInputType.phone,
+                                    onChanged: _viewModel.setPhone,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  _buildTextField(
+                                    controller: _socialController,
+                                    label: 'Social Media',
+                                    icon: Icons.link,
+                                    onChanged: _viewModel.setSocial,
+                                  ),
+                                  const SizedBox(height: 24),
+                                  _sectionTitle('Account Details'),
+                                  const SizedBox(height: 12),
+                                  _buildTextField(
+                                    controller: _typeController,
+                                    label: 'Type',
+                                    icon: Icons.category_outlined,
+                                    onChanged: _viewModel.setType,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  _buildTextField(
+                                    controller: _roleController,
+                                    label: 'Role',
+                                    icon: Icons.admin_panel_settings_outlined,
+                                    onChanged: _viewModel.setRole,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  _buildTextField(
+                                    controller: _nrcNoController,
+                                    label: 'NRC No',
+                                    icon: Icons.badge_outlined,
+                                    onChanged: _viewModel.setNrcNo,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  _buildTextField(
+                                    controller: _billingWayController,
+                                    label: 'Billing Way for Service',
+                                    icon: Icons.receipt_long_outlined,
+                                    onChanged: _viewModel.setBillingWay,
+                                  ),
+                                  const SizedBox(height: 24),
+                                  _sectionTitle('Personal Details'),
+                                  const SizedBox(height: 12),
+                                  _buildTextField(
+                                    controller: _dobController,
+                                    label: 'Date of Birth',
+                                    icon: Icons.cake_outlined,
+                                    readOnly: true,
+                                    onTap: _pickDob,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  _buildTextField(
+                                    controller: _genderController,
+                                    label: 'Gender',
+                                    icon: Icons.wc_outlined,
+                                    onChanged: _viewModel.setGender,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  _buildTextField(
+                                    controller: _addressController,
+                                    label: 'Address',
+                                    icon: Icons.location_on_outlined,
+                                    maxLines: 2,
+                                    onChanged: _viewModel.setAddress,
+                                  ),
+                                  const SizedBox(height: 24),
+                                  _sectionTitle('About Shop'),
+                                  const SizedBox(height: 12),
+                                  ..._buildShopFields(),
+                                  const SizedBox(height: 24),
+                                  _gradientButton(
+                                    label: 'Change Password',
+                                    icon: Icons.vpn_key_outlined,
+                                    loading: false,
+                                    onTap: _showChangePasswordDialog,
+                                  ),
+                                  const SizedBox(height: 32),
+                                  if (_viewModel.hasError)
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                        bottom: 12,
+                                      ),
+                                      child: Text(
+                                        _viewModel.errorMessage!,
+                                        style: const TextStyle(
+                                          color: Colors.red,
+                                          fontSize: 13,
+                                        ),
                                       ),
                                     ),
+                                  _gradientButton(
+                                    label: 'Save Profile',
+                                    icon: Icons.save_outlined,
+                                    loading: saving,
+                                    onTap: _save,
                                   ),
-                                _gradientButton(
-                                  label: 'Save Profile',
-                                  icon: Icons.save_outlined,
-                                  loading: saving,
-                                  onTap: _save,
-                                ),
-                                const SizedBox(height: 24),
-                              ],
+                                  const SizedBox(height: 24),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -698,12 +761,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildTopBar() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(
-          bottom: BorderSide(color: borderColor, width: 1),
-        ),
+        border: Border(bottom: BorderSide(color: borderColor, width: 1)),
       ),
       child: Row(
         children: [
@@ -738,8 +799,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 CircleAvatar(
                   radius: 50,
                   backgroundColor: const Color(0xFFE9D5FF),
-                  backgroundImage:
-                      image.isNotEmpty ? NetworkImage(image) : null,
+                  backgroundImage: image.isNotEmpty
+                      ? NetworkImage(image)
+                      : null,
                   onBackgroundImageError: image.isNotEmpty
                       ? (e, s) {
                           _viewModel.setImageUrl('');
@@ -796,10 +858,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 4),
           Text(
             _viewModel.email.isNotEmpty ? _viewModel.email : 'your@email.com',
-            style: const TextStyle(
-              fontSize: 14,
-              color: hintColor,
-            ),
+            style: const TextStyle(fontSize: 14, color: hintColor),
           ),
         ],
       ),

@@ -5,7 +5,6 @@ import 'package:posfrontend/features/sale/presentation/screens/new_sale_screen.d
 import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
 
-
 class SaleDetailScreen extends StatefulWidget {
   final SaleOrderEntity order;
 
@@ -53,46 +52,93 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                     children: [
                       _buildOrderHeader(isAlreadySale),
                       const SizedBox(height: 12),
-                       _buildInfoCard('Customer Information', [
-                         _infoRow('Customer Name', _order.customerName.isNotEmpty ? _order.customerName : '-'),
-                         _infoRow('Phone', _order.customerPhone.isNotEmpty ? _order.customerPhone : '-'),
-                         if (_order.customerLocation.isNotEmpty)
-                           _infoRow('Location', _order.customerLocation),
-                       ]),
-                       const SizedBox(height: 12),
-                       if (_order.createdBy.isNotEmpty)
-                         _buildInfoCard('Saler Information', [
-                           _infoRow('Saler Name', _order.createdBy),
-                           if (_order.createdAt.isNotEmpty)
-                             _infoRow('Created At', _formatDate(_order.createdAt)),
-                         ]),
-                       const SizedBox(height: 12),
-                      if (_order.saleItems.isNotEmpty) ...[
-                        _buildInfoCard('Ordered Items (${_order.saleItems.length})', _order.saleItems.map((item) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(item.productName, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: titleColor)),
-                                      if (item.size.isNotEmpty || item.color.isNotEmpty)
-                                        Text(
-                                          [if (item.size.isNotEmpty) 'Size: ${item.size}', if (item.color.isNotEmpty) 'Color: ${item.color}'].join(' | '),
-                                          style: const TextStyle(fontSize: 11, color: gray),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                                Text('x${item.quantity}', style: const TextStyle(fontSize: 12, color: gray)),
-                                const SizedBox(width: 8),
-                                PriceText(item.subtotal.toDouble(), maxLength: 14, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: titleColor)),
-                              ],
+                      _buildInfoCard('Customer Information', [
+                        _infoRow(
+                          'Customer Name',
+                          _order.customerName.isNotEmpty
+                              ? _order.customerName
+                              : '-',
+                        ),
+                        _infoRow(
+                          'Phone',
+                          _order.customerPhone.isNotEmpty
+                              ? _order.customerPhone
+                              : '-',
+                        ),
+                        if (_order.customerLocation.isNotEmpty)
+                          _infoRow('Location', _order.customerLocation),
+                      ]),
+                      const SizedBox(height: 12),
+                      if (_order.createdBy.isNotEmpty)
+                        _buildInfoCard('Saler Information', [
+                          _infoRow('Saler Name', _order.createdBy),
+                          if (_order.createdAt.isNotEmpty)
+                            _infoRow(
+                              'Created At',
+                              _formatDate(_order.createdAt),
                             ),
-                          );
-                        }).toList()),
+                        ]),
+                      const SizedBox(height: 12),
+                      if (_order.saleItems.isNotEmpty) ...[
+                        _buildInfoCard(
+                          'Ordered Items (${_order.saleItems.length})',
+                          _order.saleItems.map((item) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          item.productName,
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w500,
+                                            color: titleColor,
+                                          ),
+                                        ),
+                                        if (item.size.isNotEmpty ||
+                                            item.color.isNotEmpty)
+                                          Text(
+                                            [
+                                              if (item.size.isNotEmpty)
+                                                'Size: ${item.size}',
+                                              if (item.color.isNotEmpty)
+                                                'Color: ${item.color}',
+                                            ].join(' | '),
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              color: gray,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                  Text(
+                                    'x${item.quantity}',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: gray,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  PriceText(
+                                    item.subtotal.toDouble(),
+                                    maxLength: 14,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: titleColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
                       ] else ...[
                         _buildInfoCard('Ordered Items', [
                           _infoRow('Product', _order.productName),
@@ -102,15 +148,34 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                       ],
                       const SizedBox(height: 12),
                       _buildInfoCard('Payment Information', [
-                        _infoRow('Payment Method', _order.payMethod.isNotEmpty ? _order.payMethod : 'Cash'),
-                        _infoRow('Payment Status', isAlreadySale ? 'Paid' : 'Pending'),
+                        _infoRow(
+                          'Payment Method',
+                          _order.payMethod.isNotEmpty
+                              ? _order.payMethod
+                              : 'Cash',
+                        ),
+                        _infoRow(
+                          'Payment Status',
+                          isAlreadySale ? 'Paid' : 'Pending',
+                        ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Total Amount', style: TextStyle(fontSize: 13, color: gray)),
+                            const Text(
+                              'Total Amount',
+                              style: TextStyle(fontSize: 13, color: gray),
+                            ),
                             const SizedBox(width: 12),
                             Flexible(
-                              child: PriceText(_order.amount.toDouble(), maxLength: 14, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: titleColor)),
+                              child: PriceText(
+                                _order.amount.toDouble(),
+                                maxLength: 14,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: titleColor,
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -118,8 +183,16 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                       const SizedBox(height: 12),
                       _buildInfoCard('Order Status & History', [
                         _infoRow('Order Date', _formatDate(_order.date)),
-                        _infoRow('Order Status', isAlreadySale ? 'Completed' : 'Pending'),
-                        _infoRow('Voucher Ref', _order.voucherNo.isNotEmpty ? '#${_order.voucherNo}' : '#${_order.orderId}'),
+                        _infoRow(
+                          'Order Status',
+                          isAlreadySale ? 'Completed' : 'Pending',
+                        ),
+                        _infoRow(
+                          'Voucher Ref',
+                          _order.voucherNo.isNotEmpty
+                              ? '#${_order.voucherNo}'
+                              : '#${_order.orderId}',
+                        ),
                       ]),
                       if (_order.createdBy.isNotEmpty) ...[
                         const SizedBox(height: 12),
@@ -127,9 +200,15 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                           if (_order.createdBy.isNotEmpty)
                             _infoRow('Created By', _order.createdBy),
                           if (_order.createdAt.isNotEmpty)
-                            _infoRow('Created At', _formatDate(_order.createdAt)),
+                            _infoRow(
+                              'Created At',
+                              _formatDate(_order.createdAt),
+                            ),
                           if (_order.updatedAt.isNotEmpty)
-                            _infoRow('Updated At', _formatDate(_order.updatedAt)),
+                            _infoRow(
+                              'Updated At',
+                              _formatDate(_order.updatedAt),
+                            ),
                         ]),
                       ],
                       if (!isAlreadySale) ...[
@@ -138,13 +217,18 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                           width: double.infinity,
                           child: ElevatedButton.icon(
                             onPressed: _upToSale,
-                            icon: const Icon(Icons.shopping_cart_outlined, size: 18),
+                            icon: const Icon(
+                              Icons.shopping_cart_outlined,
+                              size: 18,
+                            ),
                             label: const Text('Up to Sale'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF6D28D9),
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                           ),
                         ),
@@ -163,7 +247,7 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
 
   Widget _buildTopBar(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(bottom: BorderSide(color: border, width: 1)),
@@ -210,7 +294,9 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
             children: [
               Expanded(
                 child: Text(
-                  _order.voucherNo.isNotEmpty ? _order.voucherNo : 'Order #${_order.orderId}',
+                  _order.voucherNo.isNotEmpty
+                      ? _order.voucherNo
+                      : 'Order #${_order.orderId}',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -219,7 +305,10 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: isAlreadySale ? greenBg : orangeBg,
                   borderRadius: BorderRadius.circular(8),
@@ -246,7 +335,10 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
           ),
           if (_order.description.isNotEmpty) ...[
             const SizedBox(height: 4),
-            Text(_order.description, style: const TextStyle(fontSize: 13, color: gray)),
+            Text(
+              _order.description,
+              style: const TextStyle(fontSize: 13, color: gray),
+            ),
           ],
           const SizedBox(height: 12),
           const Divider(color: border, height: 1),
@@ -342,31 +434,33 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
   void _upToSale() {
     final saleItems = _order.saleItems
         .where((item) => item.productId.isNotEmpty)
-        .map((item) => SaleItemEntity(
-              productId: item.productId,
-              productName: item.productName,
-              unitPrice: item.unitPrice.toDouble(),
-              quantity: item.quantity,
-              size: item.size.isNotEmpty ? item.size : null,
-              color: item.color.isNotEmpty ? item.color : null,
-            ))
+        .map(
+          (item) => SaleItemEntity(
+            productId: item.productId,
+            productName: item.productName,
+            unitPrice: item.unitPrice.toDouble(),
+            quantity: item.quantity,
+            size: item.size.isNotEmpty ? item.size : null,
+            color: item.color.isNotEmpty ? item.color : null,
+          ),
+        )
         .toList();
 
     Navigator.of(context)
         .push(
-      MaterialPageRoute(
-        builder: (_) => NewSaleScreen(
-          initialItems: saleItems,
-          initialCustomerName: _order.customerName,
-          initialCustomerPhone: _order.customerPhone,
-          initialPaymentMethod: _order.payMethod,
-          existingOrderId: _order.orderId,
-        ),
-      ),
-    )
+          MaterialPageRoute(
+            builder: (_) => NewSaleScreen(
+              initialItems: saleItems,
+              initialCustomerName: _order.customerName,
+              initialCustomerPhone: _order.customerPhone,
+              initialPaymentMethod: _order.payMethod,
+              existingOrderId: _order.orderId,
+            ),
+          ),
+        )
         .then((_) {
-      if (mounted) Navigator.of(context).pop();
-    });
+          if (mounted) Navigator.of(context).pop();
+        });
   }
 
   String _formatDate(String dateStr) {

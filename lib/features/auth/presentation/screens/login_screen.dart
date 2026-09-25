@@ -237,6 +237,8 @@ class _LoginScreenState extends State<LoginScreen> {
       height: 220,
       width: 220,
       fit: BoxFit.contain,
+      cacheWidth: 600,
+      cacheHeight: 600,
     );
   }
 

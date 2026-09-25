@@ -6,7 +6,7 @@ import 'package:posfrontend/features/dashboard/domain/entities/dashboard.dart';
 import 'package:posfrontend/features/dashboard/data/repositories/dashboard_repository_impl.dart';
 import 'package:posfrontend/features/dashboard/presentation/viewmodels/dashboard_view_model.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
-import 'package:posfrontend/shared/widgets/app_top_bar.dart';
+import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
 import 'package:posfrontend/shared/widgets/shop_scope.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
@@ -41,7 +41,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _loadProfileImage() async {
     try {
       final dio = ApiClient.create();
-      final resp = await dio.get('/api/auth/profile', cancelToken: _cancelToken);
+      final resp = await dio.get(
+        '/api/auth/profile',
+        cancelToken: _cancelToken,
+      );
       final data = resp.data;
       final image = (data is Map<String, dynamic>) ? (data['image'] ?? '') : '';
       if (image is String && image.isNotEmpty && mounted) {
@@ -66,103 +69,119 @@ class _DashboardScreenState extends State<DashboardScreen> {
       backgroundColor: bg,
       drawer: const AppDrawer(activeItem: 'Dashboard'),
       body: SafeArea(
-        child: ListenableBuilder(
-          listenable: _viewModel,
-          builder: (context, _) {
-            return RefreshableBody(
-              onRefresh: () => _viewModel.load(),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AppTopBar(
-                      title: 'Dashboard',
-                      showMenuButton: true,
-                      onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
-                    ),
-                    const SizedBox(height: 24),
-                    if (_viewModel.isLoading)
-                      const SizedBox(
-                        height: 300,
-                        child: Center(child: CircularProgressIndicator()),
-                      )
-                    else if (_viewModel.hasError)
-                      SizedBox(
-                        height: 300,
-                        child: Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.error_outline, color: Color(0xFFEF4444), size: 48),
-                              const SizedBox(height: 12),
-                              Text(
-                                _viewModel.errorMessage ?? 'Something went wrong',
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(fontSize: 14, color: grayText),
-                              ),
-                              const SizedBox(height: 16),
-                              ElevatedButton.icon(
-                                onPressed: () => _viewModel.load(),
-                                icon: const Icon(Icons.refresh, size: 18),
-                                label: const Text('Retry'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: purpleAction,
-                                  foregroundColor: Colors.white,
+        child: Column(
+          children: [
+            AppScreenTopBar(
+              title: 'Dashboard',
+              showMenuButton: true,
+              onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+            ),
+            Expanded(
+              child: ListenableBuilder(
+                listenable: _viewModel,
+                builder: (context, _) {
+                  return RefreshableBody(
+                    onRefresh: () => _viewModel.load(),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 24,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (_viewModel.isLoading)
+                            const SizedBox(
+                              height: 300,
+                              child: Center(child: CircularProgressIndicator()),
+                            )
+                          else if (_viewModel.hasError)
+                            SizedBox(
+                              height: 300,
+                              child: Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.error_outline,
+                                      color: Color(0xFFEF4444),
+                                      size: 48,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      _viewModel.errorMessage ??
+                                          'Something went wrong',
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: grayText,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    ElevatedButton.icon(
+                                      onPressed: () => _viewModel.load(),
+                                      icon: const Icon(Icons.refresh, size: 18),
+                                      label: const Text('Retry'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: purpleAction,
+                                        foregroundColor: Colors.white,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                      )
-                    else if (_viewModel.data == null)
-                      const SizedBox(
-                        height: 300,
-                        child: Center(child: CircularProgressIndicator()),
-                      )
-                    else ...[
-                      const Text(
-                        'Summary',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: labelColor,
-                        ),
+                            )
+                          else if (_viewModel.data == null)
+                            const SizedBox(
+                              height: 300,
+                              child: Center(child: CircularProgressIndicator()),
+                            )
+                          else ...[
+                            const Text(
+                              'Summary',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: labelColor,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            _buildSummaryGrid(_viewModel.data!.metrics),
+                            const SizedBox(height: 24),
+                            _buildCategoryDistributionSection(
+                              _viewModel.data!.categoryDistribution,
+                            ),
+                            const SizedBox(height: 24),
+                            _buildCategoryQuantitySection(
+                              _viewModel.data!.categoryQuantity,
+                            ),
+                            const SizedBox(height: 24),
+                            _buildMonthlySalesSection(),
+                            const SizedBox(height: 24),
+                            const Text(
+                              'Product Trend',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: labelColor,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            _buildProductTrendSection(
+                              _viewModel.data!.mostBought,
+                              _viewModel.data!.leastBought,
+                              _viewModel.data!.noBought,
+                            ),
+                          ],
+                          const SizedBox(height: 24),
+                        ],
                       ),
-                      const SizedBox(height: 12),
-                      _buildSummaryGrid(_viewModel.data!.metrics),
-                      const SizedBox(height: 24),
-                      _buildCategoryDistributionSection(
-                        _viewModel.data!.categoryDistribution,
-                      ),
-                      const SizedBox(height: 24),
-                      _buildCategoryQuantitySection(
-                        _viewModel.data!.categoryQuantity,
-                      ),
-                      const SizedBox(height: 24),
-                      _buildMonthlySalesSection(),
-                      const SizedBox(height: 24),
-                      const Text(
-                        'Product Trend',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: labelColor,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      _buildProductTrendSection(
-                        _viewModel.data!.mostBought,
-                        _viewModel.data!.leastBought,
-                        _viewModel.data!.noBought,
-                      ),
-                    ],
-                    const SizedBox(height: 24),
-                  ],
-                ),
+                    ),
+                  );
+                },
               ),
-            );
-          },
+            ),
+          ],
         ),
       ),
     );
@@ -176,7 +195,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: cardBorder),
         boxShadow: const [
-          BoxShadow(color: Color(0x0A000000), blurRadius: 12, offset: Offset(0, 2)),
+          BoxShadow(
+            color: Color(0x0A000000),
+            blurRadius: 12,
+            offset: Offset(0, 2),
+          ),
         ],
       ),
       child: Column(
@@ -189,25 +212,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
-              IconData(int.parse(m.iconCodePoint), fontFamily: m.iconFontFamily),
+              IconData(
+                int.parse(m.iconCodePoint),
+                fontFamily: m.iconFontFamily,
+              ),
               color: Color(m.iconColorValue),
               size: 24,
             ),
           ),
           const SizedBox(height: 12),
-          Text(
-            m.label,
-            style: const TextStyle(fontSize: 13, color: grayText),
-          ),
+          Text(m.label, style: const TextStyle(fontSize: 13, color: grayText)),
           const SizedBox(height: 6),
           GestureDetector(
             onTap: () {
               showDialog(
                 context: context,
                 builder: (_) => AlertDialog(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  title: Text(m.label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: grayText)),
-                  content: Text(m.value, textAlign: TextAlign.center, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: titleColor)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  title: Text(
+                    m.label,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: grayText,
+                    ),
+                  ),
+                  content: Text(
+                    m.value,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: titleColor,
+                    ),
+                  ),
                 ),
               );
             },
@@ -252,10 +292,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         if (constraints.maxWidth < 360) {
           return Column(
             children: cards
-                .map((c) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: c,
-                    ))
+                .map(
+                  (c) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: c,
+                  ),
+                )
                 .toList(),
           );
         }
@@ -513,11 +555,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: Center(child: CircularProgressIndicator()),
                 )
               : _viewModel.monthlySales.isEmpty
-                  ? const SizedBox(
-                      height: 260,
-                      child: Center(child: Text('No sales data')),
-                    )
-                  : _HorizontalBarChart(items: _viewModel.monthlySales),
+              ? const SizedBox(
+                  height: 260,
+                  child: Center(child: Text('No sales data')),
+                )
+              : _HorizontalBarChart(items: _viewModel.monthlySales),
         ),
       ],
     );
@@ -608,7 +650,11 @@ class _ProductListCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE5E7EB)),
         boxShadow: const [
-          BoxShadow(color: Color(0x0A000000), blurRadius: 12, offset: Offset(0, 2)),
+          BoxShadow(
+            color: Color(0x0A000000),
+            blurRadius: 12,
+            offset: Offset(0, 2),
+          ),
         ],
       ),
       child: Column(
@@ -643,13 +689,19 @@ class _ProductListCard extends StatelessWidget {
                               ? Image.network(
                                   p.image,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Icon(
-                                    IconData(p.iconCodePoint, fontFamily: p.iconFontFamily),
+                                  errorBuilder: (context, error, stackTrace) => Icon(
+                                    IconData(
+                                      p.iconCodePoint,
+                                      fontFamily: p.iconFontFamily,
+                                    ),
                                     color: const Color(0xFF6B7280),
                                   ),
                                 )
                               : Icon(
-                                  IconData(p.iconCodePoint, fontFamily: p.iconFontFamily),
+                                  IconData(
+                                    p.iconCodePoint,
+                                    fontFamily: p.iconFontFamily,
+                                  ),
                                   color: const Color(0xFF6B7280),
                                 ),
                         ),
@@ -702,9 +754,7 @@ class _HorizontalCategoryChart extends StatelessWidget {
     return SizedBox(
       height: chartH,
       width: double.infinity,
-      child: CustomPaint(
-        painter: _HorizontalCategoryChartPainter(items),
-      ),
+      child: CustomPaint(painter: _HorizontalCategoryChartPainter(items)),
     );
   }
 }
@@ -887,9 +937,7 @@ class _HorizontalBarChart extends StatelessWidget {
     return SizedBox(
       height: 300,
       width: double.infinity,
-      child: CustomPaint(
-        painter: _HorizontalBarChartPainter(items),
-      ),
+      child: CustomPaint(painter: _HorizontalBarChartPainter(items)),
     );
   }
 }
@@ -914,13 +962,12 @@ class _HorizontalBarChartPainter extends CustomPainter {
     'Dec',
   ];
 
-static const Color _gridColor = Color(0xFFE5E7EB);
+  static const Color _gridColor = Color(0xFFE5E7EB);
   static const Color _labelColor = Color(0xFF6B7280);
   static const Color _barColor = Color(0xFF6D28D9);
 
   @override
   void paint(Canvas canvas, Size size) {
-
     final sorted = [...items]..sort((a, b) => a.month.compareTo(b.month));
     if (sorted.isEmpty) return;
 
