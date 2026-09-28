@@ -9,6 +9,7 @@ import 'package:posfrontend/features/shop/domain/entities/shop_types.dart';
 import 'package:posfrontend/features/shop/data/repositories/shop_api_repository_impl.dart';
 import 'package:posfrontend/features/shop/data/repositories/shop_local_repository_impl.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_input_decoration.dart';
 import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 import 'package:posfrontend/shared/widgets/gradient_button.dart';
@@ -104,23 +105,25 @@ class _ShopScreenState extends State<ShopScreen> {
     }
   }
 
-  Widget _helperText(String text) {
+  Widget _helperText(BuildContext context, String text) {
+    final p = context.palette;
     return Padding(
       padding: const EdgeInsets.only(top: 6),
       child: Text(
         text,
-        style: TextStyle(color: AppColors.hintColor, fontSize: 12),
+        style: TextStyle(color: p.textMuted, fontSize: 12),
       ),
     );
   }
 
-  Widget _optionalLabel(String text) {
+  Widget _optionalLabel(BuildContext context, String text) {
+    final p = context.palette;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         text,
         style: TextStyle(
-          color: AppColors.labelColor,
+          color: p.textPrimary,
           fontSize: 14,
           fontWeight: FontWeight.w500,
         ),
@@ -142,13 +145,14 @@ class _ShopScreenState extends State<ShopScreen> {
     );
   }
 
-  Widget _sectionTile(String title, List<Widget> children) {
+  Widget _sectionTile(BuildContext context, String title, List<Widget> children) {
+    final p = context.palette;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: AppColors.borderColor),
+        color: p.surface,
+        border: Border.all(color: p.border),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -171,6 +175,7 @@ class _ShopScreenState extends State<ShopScreen> {
     return ListenableBuilder(
       listenable: _viewModel,
       builder: (context, _) {
+        final p = context.palette;
         final errors = _viewModel.fieldErrors;
         return PopScope(
           canPop: true,
@@ -178,7 +183,7 @@ class _ShopScreenState extends State<ShopScreen> {
             if (didPop) _viewModel.reset();
           },
           child: Scaffold(
-            backgroundColor: Colors.white,
+            backgroundColor: p.scaffoldBg,
             body: SafeArea(
               child: Column(
                 children: [
@@ -207,13 +212,14 @@ class _ShopScreenState extends State<ShopScreen> {
                                   onPressed: _onUseExistingShop,
                                 ),
                               ] else ...[
-                                _sectionTile('Shop Info', [
+                                _sectionTile(context, 'Shop Info', [
                                   _buildImageUpload(),
                                   const SizedBox(height: 20),
                                   RequiredLabel('Shop Name'),
                                   TextFormField(
                                     controller: _shopNameController,
                                     decoration: appInputDecoration(
+                                      context,
                                       icon: Icons.store_outlined,
                                       hint: 'Enter shop name',
                                       errorText: errors['name'],
@@ -225,6 +231,7 @@ class _ShopScreenState extends State<ShopScreen> {
                                     initialValue: _viewModel.type,
                                     decoration:
                                         appInputDecoration(
+                                          context,
                                           icon: Icons.category_outlined,
                                           hint: 'Select type',
                                           errorText: errors['type'],
@@ -246,6 +253,7 @@ class _ShopScreenState extends State<ShopScreen> {
                                         _viewModel.setType(value),
                                   ),
                                   _helperText(
+                                    context,
                                     'Allowed types: Shop, Services Center, Store, and Restaurants',
                                   ),
                                   const SizedBox(height: 16),
@@ -254,6 +262,7 @@ class _ShopScreenState extends State<ShopScreen> {
                                     controller: _addressController,
                                     maxLines: 3,
                                     decoration: appInputDecoration(
+                                      context,
                                       icon: Icons.location_on_outlined,
                                       hint: 'Enter physical address',
                                       errorText: errors['physicalAddress'],
@@ -261,11 +270,12 @@ class _ShopScreenState extends State<ShopScreen> {
                                   ),
                                 ]),
                                 const SizedBox(height: 24),
-                                _sectionTile('Owner Info', [
+                                _sectionTile(context, 'Owner Info', [
                                   RequiredLabel("Owner's Name"),
                                   TextFormField(
                                     controller: _ownerNameController,
                                     decoration: appInputDecoration(
+                                      context,
                                       icon: Icons.person_outline,
                                       hint: "Enter owner's name",
                                       errorText: errors['ownerName'],
@@ -277,6 +287,7 @@ class _ShopScreenState extends State<ShopScreen> {
                                     controller: _ownerEmailController,
                                     keyboardType: TextInputType.emailAddress,
                                     decoration: appInputDecoration(
+                                      context,
                                       icon: Icons.email_outlined,
                                       hint: "Enter owner's email",
                                       errorText: errors['ownerEmail'],
@@ -288,6 +299,7 @@ class _ShopScreenState extends State<ShopScreen> {
                                     controller: _ownerPhoneController,
                                     keyboardType: TextInputType.phone,
                                     decoration: appInputDecoration(
+                                      context,
                                       icon: Icons.phone_outlined,
                                       hint: "Enter owner's phone number",
                                       errorText: errors['ownerPhone'],
@@ -332,12 +344,13 @@ class _ShopScreenState extends State<ShopScreen> {
   }
 
   Widget _buildHeader() {
+    final p = context.palette;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: p.surface,
         border: Border(
-          bottom: BorderSide(color: AppColors.borderColor, width: 1),
+          bottom: BorderSide(color: p.border, width: 1),
         ),
       ),
       child: Row(
@@ -351,7 +364,7 @@ class _ShopScreenState extends State<ShopScreen> {
               child: Text(
                 'Create Shop',
                 style: TextStyle(
-                  color: AppColors.labelColor,
+                  color: p.textPrimary,
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                 ),
@@ -365,6 +378,7 @@ class _ShopScreenState extends State<ShopScreen> {
   }
 
   Widget _buildImageUpload() {
+    final p = context.palette;
     final logoData = _viewModel.logoData;
     final logoUrl = _viewModel.logoUrl;
     final hasImage =
@@ -373,14 +387,14 @@ class _ShopScreenState extends State<ShopScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _optionalLabel('Shop Image (optional)'),
+        _optionalLabel(context, 'Shop Image (optional)'),
         GestureDetector(
           onTap: _pickImage,
           child: Container(
             width: double.infinity,
             height: 180,
             decoration: BoxDecoration(
-              color: const Color(0xFFF7F0FB),
+              color: p.surfaceAlt,
               borderRadius: BorderRadius.circular(16),
             ),
             child: ClipRRect(
@@ -429,7 +443,7 @@ class _ShopScreenState extends State<ShopScreen> {
                             Text(
                               'JPG, PNG up to 5MB',
                               style: TextStyle(
-                                color: AppColors.hintColor,
+                                color: p.textMuted,
                                 fontSize: 12,
                               ),
                             ),
@@ -478,6 +492,7 @@ class _ShopScreenState extends State<ShopScreen> {
           controller: _shopSearchController,
           textInputAction: TextInputAction.search,
           decoration: appInputDecoration(
+            context,
             icon: Icons.search,
             hint: 'Search shop by name, address or owner',
             suffixIcon: Row(
@@ -504,14 +519,15 @@ class _ShopScreenState extends State<ShopScreen> {
           onSubmitted: (_) => _performSearch(),
         ),
         const SizedBox(height: 16),
-        _buildSearchBody(),
+        _buildSearchBody(context),
       ],
     );
   }
 
-  Widget _buildSearchBody() {
+  Widget _buildSearchBody(BuildContext context) {
     if (_searchedQuery.isEmpty) {
       return _searchHint(
+        context,
         'Type above, then press the search button to find your shop.',
       );
     }
@@ -524,7 +540,7 @@ class _ShopScreenState extends State<ShopScreen> {
       );
     }
     if (_viewModel.shops.isEmpty) {
-      return _searchHint('No shops match your search.');
+      return _searchHint(context, 'No shops match your search.');
     }
     return ConstrainedBox(
       constraints: const BoxConstraints(maxHeight: 320),
@@ -536,32 +552,34 @@ class _ShopScreenState extends State<ShopScreen> {
         itemBuilder: (context, index) {
           final shop = _viewModel.shops[index];
           final selected = _viewModel.selectedOldShop?.id == shop.id;
-          return _shopResultTile(shop, selected);
+          return _shopResultTile(context, shop, selected);
         },
       ),
     );
   }
 
-  Widget _searchHint(String text) {
+  Widget _searchHint(BuildContext context, String text) {
+    final p = context.palette;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Text(
         text,
-        style: TextStyle(color: AppColors.hintColor, fontSize: 14),
+        style: TextStyle(color: p.textMuted, fontSize: 14),
       ),
     );
   }
 
-  Widget _shopResultTile(old_shop.Shop shop, bool selected) {
+  Widget _shopResultTile(BuildContext context, old_shop.Shop shop, bool selected) {
+    final p = context.palette;
     return GestureDetector(
       onTap: () => _viewModel.selectExistingShop(shop),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFF5F0FF) : Colors.white,
+          color: selected ? p.selectionTint : p.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: selected ? AppColors.primary : AppColors.borderColor,
+            color: selected ? AppColors.primary : p.border,
             width: selected ? 1.5 : 1,
           ),
         ),
@@ -571,7 +589,7 @@ class _ShopScreenState extends State<ShopScreen> {
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: const Color(0xFFF7F0FB),
+                color: p.chipBg,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
@@ -589,10 +607,10 @@ class _ShopScreenState extends State<ShopScreen> {
                     shop.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 15,
-                      color: Color(0xFF111827),
+                      color: p.textPrimary,
                     ),
                   ),
                   if (shop.physicalAddress.isNotEmpty) ...[
@@ -602,7 +620,7 @@ class _ShopScreenState extends State<ShopScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: AppColors.hintColor,
+                        color: p.textMuted,
                         fontSize: 13,
                       ),
                     ),

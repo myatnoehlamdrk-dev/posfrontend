@@ -5,6 +5,8 @@ import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/features/dashboard/domain/entities/dashboard.dart';
 import 'package:posfrontend/features/dashboard/data/repositories/dashboard_repository_impl.dart';
 import 'package:posfrontend/features/dashboard/presentation/viewmodels/dashboard_view_model.dart';
+import 'package:posfrontend/shared/theme/app_palette.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
@@ -23,12 +25,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   late final DashboardViewModel _viewModel;
   final CancelToken _cancelToken = CancelToken();
 
-  static const Color bg = Color(0xFFF8F9FC);
-  static const Color titleColor = Color(0xFF0F172A);
-  static const Color labelColor = Color(0xFF111827);
-  static const Color grayText = Color(0xFF6B7280);
   static const Color purpleAction = Color(0xFF6D28D9);
-  static const Color cardBorder = Color(0xFFE5E7EB);
 
   @override
   void initState() {
@@ -64,9 +61,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: bg,
+      backgroundColor: p.scaffoldBg,
       drawer: const AppDrawer(activeItem: 'Dashboard'),
       body: SafeArea(
         child: Column(
@@ -112,9 +110,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       _viewModel.errorMessage ??
                                           'Something went wrong',
                                       textAlign: TextAlign.center,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 14,
-                                        color: grayText,
+                                        color: p.textSecondary,
                                       ),
                                     ),
                                     const SizedBox(height: 16),
@@ -137,12 +135,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               child: Center(child: CircularProgressIndicator()),
                             )
                           else ...[
-                            const Text(
+                            Text(
                               'Summary',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
-                                color: labelColor,
+                                color: p.textPrimary,
                               ),
                             ),
                             const SizedBox(height: 12),
@@ -158,12 +156,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             const SizedBox(height: 24),
                             _buildMonthlySalesSection(),
                             const SizedBox(height: 24),
-                            const Text(
+                            Text(
                               'Product Trend',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
-                                color: labelColor,
+                                color: p.textPrimary,
                               ),
                             ),
                             const SizedBox(height: 12),
@@ -188,17 +186,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _summaryCard(MetricEntity m) {
+    final p = context.palette;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: p.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cardBorder),
-        boxShadow: const [
+        border: Border.all(color: p.border),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x0A000000),
+            color: p.cardShadow,
             blurRadius: 12,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -221,7 +220,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          Text(m.label, style: const TextStyle(fontSize: 13, color: grayText)),
+          Text(m.label, style: TextStyle(fontSize: 13, color: p.textSecondary)),
           const SizedBox(height: 6),
           GestureDetector(
             onTap: () {
@@ -233,19 +232,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   title: Text(
                     m.label,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: grayText,
+                      color: p.textSecondary,
                     ),
                   ),
                   content: Text(
                     m.value,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: titleColor,
+                      color: p.textPrimary,
                     ),
                   ),
                 ),
@@ -253,10 +252,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             },
             child: Text(
               m.value.length > 12 ? '${m.value.substring(0, 12)}...' : m.value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.w700,
-                color: titleColor,
+                color: p.textPrimary,
               ),
               maxLines: 1,
               overflow: TextOverflow.clip,
@@ -265,9 +264,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(height: 8),
           GestureDetector(
             onTap: () {},
-            child: const Row(
+            child: Row(
               children: [
-                Text(
+                const Text(
                   'View all',
                   style: TextStyle(
                     fontSize: 12,
@@ -275,8 +274,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     color: purpleAction,
                   ),
                 ),
-                SizedBox(width: 2),
-                Icon(Icons.chevron_right, size: 14, color: purpleAction),
+                const SizedBox(width: 2),
+                const Icon(Icons.chevron_right, size: 14, color: purpleAction),
               ],
             ),
           ),
@@ -327,6 +326,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildCategoryDistributionSection(
     List<CategoryDistributionEntity> items,
   ) {
+    final p = context.palette;
     Widget buildPie() {
       return SizedBox(
         width: 220,
@@ -359,10 +359,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: labelColor,
+                  color: p.textPrimary,
                 ),
               ),
             ),
@@ -393,7 +393,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Flexible(
                   child: Text(
                     item.category,
-                    style: const TextStyle(fontSize: 12, color: grayText),
+                    style: TextStyle(fontSize: 12, color: p.textSecondary),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -407,12 +407,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Product Distribution by Category',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: labelColor,
+            color: p.textPrimary,
           ),
         ),
         const SizedBox(height: 12),
@@ -420,14 +420,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: p.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: cardBorder),
-            boxShadow: const [
+            border: Border.all(color: p.border),
+            boxShadow: [
               BoxShadow(
-                color: Color(0x0A000000),
+                color: p.cardShadow,
                 blurRadius: 12,
-                offset: Offset(0, 2),
+                offset: const Offset(0, 2),
               ),
             ],
           ),
@@ -465,15 +465,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildCategoryQuantitySection(List<CategoryQuantityEntity> items) {
+    final p = context.palette;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Quantity Sold by Category',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: labelColor,
+            color: p.textPrimary,
           ),
         ),
         const SizedBox(height: 12),
@@ -481,14 +482,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: p.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: cardBorder),
-            boxShadow: const [
+            border: Border.all(color: p.border),
+            boxShadow: [
               BoxShadow(
-                color: Color(0x0A000000),
+                color: p.cardShadow,
                 blurRadius: 12,
-                offset: Offset(0, 2),
+                offset: const Offset(0, 2),
               ),
             ],
           ),
@@ -497,13 +498,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   height: 200,
                   child: Center(child: Text('No sales data')),
                 )
-              : _HorizontalCategoryChart(items: items),
+              : _HorizontalCategoryChart(items: items, palette: p),
         ),
       ],
     );
   }
 
   Widget _buildMonthlySalesSection() {
+    final p = context.palette;
     var years = _viewModel.years.isEmpty
         ? [DateTime.now().year]
         : _viewModel.years;
@@ -516,13 +518,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
       children: [
         Row(
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
                 'Monthly Sales',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: labelColor,
+                  color: p.textPrimary,
                 ),
               ),
             ),
@@ -538,14 +540,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: p.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: cardBorder),
-            boxShadow: const [
+            border: Border.all(color: p.border),
+            boxShadow: [
               BoxShadow(
-                color: Color(0x0A000000),
+                color: p.cardShadow,
                 blurRadius: 12,
-                offset: Offset(0, 2),
+                offset: const Offset(0, 2),
               ),
             ],
           ),
@@ -559,7 +561,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   height: 260,
                   child: Center(child: Text('No sales data')),
                 )
-              : _HorizontalBarChart(items: _viewModel.monthlySales),
+              : _HorizontalBarChart(
+                  items: _viewModel.monthlySales,
+                  palette: p,
+                ),
         ),
       ],
     );
@@ -570,6 +575,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     List<ProductItemEntity> least,
     List<ProductItemEntity> noBought,
   ) {
+    final p = context.palette;
     final mostCard = _ProductListCard(
       title: 'Most Bought',
       titleColor: const Color(0xFF16A34A),
@@ -582,7 +588,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
     final noBoughtCard = _ProductListCard(
       title: 'No Bought',
-      titleColor: const Color(0xFF64748B),
+      titleColor: p.textSecondary,
       items: noBought,
     );
 
@@ -643,17 +649,18 @@ class _ProductListCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final pal = context.palette;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: pal.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: const [
+        border: Border.all(color: pal.border),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x0A000000),
+            color: pal.cardShadow,
             blurRadius: 12,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -681,7 +688,7 @@ class _ProductListCard extends StatelessWidget {
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF3F4F6),
+                            color: pal.chipBg,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           clipBehavior: Clip.antiAlias,
@@ -694,7 +701,7 @@ class _ProductListCard extends StatelessWidget {
                                       p.iconCodePoint,
                                       fontFamily: p.iconFontFamily,
                                     ),
-                                    color: const Color(0xFF6B7280),
+                                    color: pal.textSecondary,
                                   ),
                                 )
                               : Icon(
@@ -702,7 +709,7 @@ class _ProductListCard extends StatelessWidget {
                                     p.iconCodePoint,
                                     fontFamily: p.iconFontFamily,
                                   ),
-                                  color: const Color(0xFF6B7280),
+                                  color: pal.textSecondary,
                                 ),
                         ),
                         const SizedBox(width: 12),
@@ -712,10 +719,10 @@ class _ProductListCard extends StatelessWidget {
                             children: [
                               Text(
                                 p.name,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: Color(0xFF0F172A),
+                                  color: pal.textPrimary,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -723,9 +730,9 @@ class _ProductListCard extends StatelessWidget {
                               const SizedBox(height: 2),
                               Text(
                                 p.sold,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
-                                  color: Color(0xFF6B7280),
+                                  color: pal.textSecondary,
                                 ),
                               ),
                             ],
@@ -745,8 +752,9 @@ class _ProductListCard extends StatelessWidget {
 
 class _HorizontalCategoryChart extends StatelessWidget {
   final List<CategoryQuantityEntity> items;
+  final AppPalette palette;
 
-  const _HorizontalCategoryChart({required this.items});
+  const _HorizontalCategoryChart({required this.items, required this.palette});
 
   @override
   Widget build(BuildContext context) {
@@ -754,20 +762,20 @@ class _HorizontalCategoryChart extends StatelessWidget {
     return SizedBox(
       height: chartH,
       width: double.infinity,
-      child: CustomPaint(painter: _HorizontalCategoryChartPainter(items)),
+      child: CustomPaint(
+        painter: _HorizontalCategoryChartPainter(items, palette),
+      ),
     );
   }
 }
 
 class _HorizontalCategoryChartPainter extends CustomPainter {
   final List<CategoryQuantityEntity> items;
+  final AppPalette palette;
 
-  _HorizontalCategoryChartPainter(this.items);
+  _HorizontalCategoryChartPainter(this.items, this.palette);
 
-  static const Color _gridColor = Color(0xFFE5E7EB);
-  static const Color _labelColor = Color(0xFF6B7280);
   static const Color _barColor = Color(0xFF6D28D9);
-  static const Color _barValueColor = Color(0xFF111827);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -784,7 +792,7 @@ class _HorizontalCategoryChartPainter extends CustomPainter {
       final tp = TextPainter(
         text: TextSpan(
           text: e.category,
-          style: const TextStyle(fontSize: 11, color: _labelColor),
+          style: TextStyle(fontSize: 11, color: palette.textSecondary),
         ),
         textDirection: TextDirection.ltr,
       )..layout();
@@ -804,7 +812,7 @@ class _HorizontalCategoryChartPainter extends CustomPainter {
     final chartMax = maxVal <= 0 ? 1.0 : maxVal * 1.1;
 
     final gridPaint = Paint()
-      ..color = _gridColor
+      ..color = palette.border
       ..strokeWidth = 1;
 
     const ticks = 4;
@@ -815,7 +823,7 @@ class _HorizontalCategoryChartPainter extends CustomPainter {
       final tp = TextPainter(
         text: TextSpan(
           text: _formatQuantity(value),
-          style: const TextStyle(fontSize: 10, color: _labelColor),
+          style: TextStyle(fontSize: 10, color: palette.textSecondary),
         ),
         textDirection: TextDirection.ltr,
       )..layout();
@@ -835,7 +843,7 @@ class _HorizontalCategoryChartPainter extends CustomPainter {
       final lp = TextPainter(
         text: TextSpan(
           text: e.category,
-          style: const TextStyle(fontSize: 11, color: _labelColor),
+          style: TextStyle(fontSize: 11, color: palette.textSecondary),
         ),
         maxLines: 1,
         ellipsis: '…',
@@ -858,7 +866,7 @@ class _HorizontalCategoryChartPainter extends CustomPainter {
           style: TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w600,
-            color: _barValueColor,
+            color: palette.textPrimary,
           ),
         ),
         textDirection: TextDirection.ltr,
@@ -887,7 +895,7 @@ class _HorizontalCategoryChartPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _HorizontalCategoryChartPainter oldDelegate) =>
-      oldDelegate.items != items;
+      oldDelegate.items != items || oldDelegate.palette != palette;
 }
 
 class _YearDropdown extends StatelessWidget {
@@ -903,18 +911,19 @@ class _YearDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: p.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: p.border),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<int>(
           value: years.contains(value) ? value : years.first,
           icon: const Icon(Icons.keyboard_arrow_down, size: 18),
-          style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+          style: TextStyle(fontSize: 13, color: p.textSecondary),
           items: years
               .map((e) => DropdownMenuItem(value: e, child: Text('$e')))
               .toList(),
@@ -929,23 +938,27 @@ class _YearDropdown extends StatelessWidget {
 
 class _HorizontalBarChart extends StatelessWidget {
   final List<MonthlySalesEntity> items;
+  final AppPalette palette;
 
-  const _HorizontalBarChart({required this.items});
+  const _HorizontalBarChart({required this.items, required this.palette});
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: 300,
       width: double.infinity,
-      child: CustomPaint(painter: _HorizontalBarChartPainter(items)),
+      child: CustomPaint(
+        painter: _HorizontalBarChartPainter(items, palette),
+      ),
     );
   }
 }
 
 class _HorizontalBarChartPainter extends CustomPainter {
   final List<MonthlySalesEntity> items;
+  final AppPalette palette;
 
-  _HorizontalBarChartPainter(this.items);
+  _HorizontalBarChartPainter(this.items, this.palette);
 
   static const List<String> _monthLabels = [
     'Jan',
@@ -962,8 +975,6 @@ class _HorizontalBarChartPainter extends CustomPainter {
     'Dec',
   ];
 
-  static const Color _gridColor = Color(0xFFE5E7EB);
-  static const Color _labelColor = Color(0xFF6B7280);
   static const Color _barColor = Color(0xFF6D28D9);
 
   @override
@@ -987,7 +998,7 @@ class _HorizontalBarChartPainter extends CustomPainter {
     final chartMax = maxVal <= 0 ? 1.0 : maxVal * 1.1;
 
     final gridPaint = Paint()
-      ..color = _gridColor
+      ..color = palette.border
       ..strokeWidth = 1;
 
     const ticks = 4;
@@ -999,7 +1010,7 @@ class _HorizontalBarChartPainter extends CustomPainter {
       final tp = TextPainter(
         text: TextSpan(
           text: label,
-          style: const TextStyle(fontSize: 10, color: _labelColor),
+          style: TextStyle(fontSize: 10, color: palette.textSecondary),
         ),
         textDirection: TextDirection.ltr,
       )..layout();
@@ -1020,7 +1031,7 @@ class _HorizontalBarChartPainter extends CustomPainter {
       final lp = TextPainter(
         text: TextSpan(
           text: label,
-          style: const TextStyle(fontSize: 11, color: _labelColor),
+          style: TextStyle(fontSize: 11, color: palette.textSecondary),
         ),
         textDirection: TextDirection.ltr,
       )..layout();
@@ -1054,5 +1065,5 @@ class _HorizontalBarChartPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _HorizontalBarChartPainter oldDelegate) =>
-      oldDelegate.items != items;
+      oldDelegate.items != items || oldDelegate.palette != palette;
 }

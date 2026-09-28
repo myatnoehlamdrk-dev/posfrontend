@@ -9,6 +9,7 @@ import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/filter_tabs.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class SaleItemScreen extends StatefulWidget {
   const SaleItemScreen({super.key});
@@ -37,8 +38,9 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FC),
+      backgroundColor: p.scaffoldBg,
       drawer: const AppDrawer(activeItem: 'Sale Item'),
       body: SafeArea(
         child: Column(
@@ -57,6 +59,7 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
   }
 
   Widget _buildBody() {
+    final p = context.palette;
     if (_viewModel.isLoading && _viewModel.filteredOrders.isEmpty) {
       return const Center(child: CircularProgressIndicator(color: AppColors.teal));
     }
@@ -67,7 +70,7 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
           children: [
             const Icon(Icons.error_outline, color: Colors.red, size: 48),
             const SizedBox(height: 12),
-            Text(_viewModel.errorMessage!, style: const TextStyle(color: AppColors.gray)),
+            Text(_viewModel.errorMessage!, style: TextStyle(color: p.textSecondary)),
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: () => _viewModel.loadAll(refresh: true),
@@ -95,9 +98,9 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'Products that are already sale and will be sale (Order)',
-                style: TextStyle(fontSize: 13, color: AppColors.gray),
+                style: TextStyle(fontSize: 13, color: p.textSecondary),
               ),
               const SizedBox(height: 16),
               FilterTabs(
@@ -124,12 +127,12 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                   ),
                 ),
               if (!_viewModel.hasMore && _viewModel.filteredOrders.isNotEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   child: Center(
                     child: Text(
                       'No more items',
-                      style: TextStyle(color: AppColors.gray, fontSize: 13),
+                      style: TextStyle(color: p.textSecondary, fontSize: 13),
                     ),
                   ),
                 ),
@@ -153,6 +156,7 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
   }
 
   Widget _buildOrderCard(SaleOrderEntity order) {
+    final p = context.palette;
     final isAlreadySale = order.status == OrderStatus.alreadySale;
     return GestureDetector(
       onTap: () {
@@ -164,11 +168,11 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: p.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: p.cardShadow,
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -180,10 +184,10 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: const Color(0xFFF3F4F6),
+                color: p.chipBg,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.fastfood_outlined, color: AppColors.gray, size: 28),
+              child: Icon(Icons.fastfood_outlined, color: p.textSecondary, size: 28),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -195,9 +199,9 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                       Expanded(
                         child: Text(
                           order.voucherNo.isNotEmpty ? order.voucherNo : 'Order #${order.orderId}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: AppColors.gray,
+                            color: p.textSecondary,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -205,7 +209,7 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: isAlreadySale ? AppColors.greenBg : AppColors.orangeBg,
+                          color: isAlreadySale ? p.successBg : p.warningBg,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -213,7 +217,7 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: isAlreadySale ? AppColors.green : AppColors.orange,
+                            color: isAlreadySale ? p.successFg : p.warningFg,
                           ),
                         ),
                       ),
@@ -227,17 +231,17 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                   const SizedBox(height: 4),
                   Text(
                     order.productName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.titleColor,
+                      color: p.textPrimary,
                     ),
                   ),
                   if (order.customerName.isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Text(
                       order.customerName,
-                      style: const TextStyle(fontSize: 12, color: AppColors.gray),
+                      style: TextStyle(fontSize: 12, color: p.textSecondary),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -246,7 +250,7 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                     const SizedBox(height: 2),
                     Text(
                       'by ${order.createdBy}',
-                      style: const TextStyle(fontSize: 11, color: AppColors.gray, fontStyle: FontStyle.italic),
+                      style: TextStyle(fontSize: 11, color: p.textSecondary, fontStyle: FontStyle.italic),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -256,17 +260,17 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                     children: [
                       Text(
                         'x${order.quantity}',
-                        style: const TextStyle(fontSize: 12, color: AppColors.gray, fontWeight: FontWeight.w500),
+                        style: TextStyle(fontSize: 12, color: p.textSecondary, fontWeight: FontWeight.w500),
                       ),
                       const SizedBox(width: 10),
-                      const Icon(Icons.calendar_today_outlined, size: 12, color: AppColors.gray),
+                      Icon(Icons.calendar_today_outlined, size: 12, color: p.textSecondary),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           _formatDate(order.date),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 11, color: AppColors.gray),
+                          style: TextStyle(fontSize: 11, color: p.textSecondary),
                         ),
                       ),
                       Flexible(
@@ -302,19 +306,20 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
   }
 
   void _confirmDelete(SaleOrderEntity order) {
+    final p = context.palette;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Delete Item', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.titleColor)),
+        title: Text('Delete Item', style: TextStyle(fontWeight: FontWeight.w600, color: p.textPrimary)),
         content: Text(
           'Are you sure you want to delete "${order.productName}"?',
-          style: const TextStyle(color: AppColors.gray),
+          style: TextStyle(color: p.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: AppColors.gray)),
+            child: Text('Cancel', style: TextStyle(color: p.textSecondary)),
           ),
           ElevatedButton(
             onPressed: () async {

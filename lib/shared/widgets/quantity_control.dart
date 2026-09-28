@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class QuantityControl extends StatelessWidget {
   final int quantity;
@@ -19,15 +19,16 @@ class QuantityControl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: p.border),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _qtyBtn(Icons.remove, () => onChanged(quantity - 1)),
+          _qtyBtn(context, Icons.remove, () => onChanged(quantity - 1)),
           SizedBox(
             width: width,
             child: Center(
@@ -37,19 +38,20 @@ class QuantityControl extends StatelessWidget {
               ),
             ),
           ),
-          _qtyBtn(Icons.add, () => onChanged(quantity + 1)),
+          _qtyBtn(context, Icons.add, () => onChanged(quantity + 1)),
         ],
       ),
     );
   }
 
-  Widget _qtyBtn(IconData icon, VoidCallback onTap) {
+  Widget _qtyBtn(BuildContext context, IconData icon, VoidCallback onTap) {
+    final p = context.palette;
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
         width: width,
         height: height,
-        child: Icon(icon, size: iconSize, color: AppColors.gray),
+        child: Icon(icon, size: iconSize, color: p.textSecondary),
       ),
     );
   }

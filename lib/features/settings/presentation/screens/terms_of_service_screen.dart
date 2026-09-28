@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:posfrontend/shared/theme/app_colors.dart';
-import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
+import 'package:posfrontend/shared/widgets/legal_document_screen.dart';
 
 class TermsOfServiceScreen extends StatelessWidget {
   const TermsOfServiceScreen({super.key});
@@ -88,73 +87,10 @@ class TermsOfServiceScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            const AppScreenTopBar(
-              title: 'Terms of Service',
-              showMenuButton: false,
-              showBackButton: true,
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Text(
-                      'Last Updated: September 25, 2026',
-                      style: TextStyle(
-                        color: AppColors.gray,
-                        fontSize: 13,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    for (final (title, paragraphs) in _sections)
-                      _section(title, paragraphs),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _section(String title, List<String> paragraphs) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: AppColors.titleColor,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 8),
-          for (final paragraph in paragraphs)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Text(
-                paragraph,
-                textAlign: TextAlign.justify,
-                style: const TextStyle(
-                  color: AppColors.gray,
-                  fontSize: 14,
-                  height: 1.6,
-                ),
-              ),
-            ),
-        ],
-      ),
+    return const LegalDocumentScreen(
+      title: 'Terms of Service',
+      lastUpdated: 'September 25, 2026',
+      sections: _sections,
     );
   }
 }

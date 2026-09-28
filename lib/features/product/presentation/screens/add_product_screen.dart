@@ -5,6 +5,8 @@ import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/features/product/data/models/product_create_models.dart';
 import 'package:posfrontend/features/product/domain/entities/product_detail.dart';
 import 'package:posfrontend/features/product/presentation/viewmodels/add_product_view_model.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
@@ -12,7 +14,6 @@ import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 const Color kPurple700 = Color(0xFF7C3AED);
 const Color kPurple600 = Color(0xFF6D28D9);
 const Color kPurple900 = Color(0xFF5B21B6);
-const Color kLightPurple = Color(0xFFF5F0FF);
 
 class AddProductScreen extends StatefulWidget {
   final ProductDetailEntity? existingProduct;
@@ -51,18 +52,19 @@ class _AddProductScreenState extends State<AddProductScreen> {
     return ListenableBuilder(
       listenable: _vm,
       builder: (context, _) {
+        final p = context.palette;
         return LayoutBuilder(
           builder: (ctx, constraints) {
             final isWide = constraints.maxWidth >= 768;
             final body = _content();
             final scaffold = isWide
                 ? Scaffold(
-                    backgroundColor: Colors.white,
+                    backgroundColor: p.scaffoldBg,
                     body: body,
                     bottomNavigationBar: _createButton(),
                   )
                 : Scaffold(
-                    backgroundColor: Colors.white,
+                    backgroundColor: p.scaffoldBg,
                     body: body,
                     bottomNavigationBar: _createButton(),
                   );
@@ -132,9 +134,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   Widget _inventoryTypeToggle() {
+    final p = context.palette;
     return Container(
       decoration: BoxDecoration(
-        color: kLightPurple,
+        color: p.selectionTint,
         borderRadius: BorderRadius.circular(12),
       ),
       padding: const EdgeInsets.all(4),
@@ -177,6 +180,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   Widget _imageSection() {
+    final p = context.palette;
     final hasPreview =
         _vm.imageFile != null || (_vm.imageUrl?.isNotEmpty ?? false);
     return Column(
@@ -240,12 +244,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 : _vm.uploading
                 ? const CircularProgressIndicator(color: kPurple700)
                 : Column(
-                    children: const [
-                      Icon(Icons.image_outlined, size: 42, color: kPurple700),
-                      SizedBox(height: 10),
+                    children: [
+                      const Icon(Icons.image_outlined, size: 42, color: kPurple700),
+                      const SizedBox(height: 10),
                       Text(
                         'Tap to choose an image file',
-                        style: TextStyle(fontSize: 14, color: kGray),
+                        style: TextStyle(fontSize: 14, color: p.textSecondary),
                       ),
                     ],
                   ),
@@ -256,7 +260,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
             padding: const EdgeInsets.only(top: 8),
             child: Text(
               _vm.imageUrl!,
-              style: const TextStyle(fontSize: 12, color: kGray),
+              style: TextStyle(fontSize: 12, color: p.textSecondary),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -265,6 +269,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   Widget _basicInfo() {
+    final p = context.palette;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -282,12 +287,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               'Is Set / Bundle',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: kTitle,
+                color: p.textPrimary,
               ),
             ),
             Switch(
@@ -337,6 +342,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   Widget _variantsSection() {
+    final p = context.palette;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -381,7 +387,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            color: kLightPurple,
+            color: p.selectionTint,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
@@ -411,6 +417,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   Widget _supplyChain() {
+    final p = context.palette;
     return Column(
       children: [
         Row(
@@ -425,9 +432,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     child: DropdownButton<String>(
                       isExpanded: true,
                       value: _vm.selectedSupplierId,
-                      hint: const Text(
+                      hint: Text(
                         'Select a supplier...',
-                        style: TextStyle(color: kGray, fontSize: 14),
+                        style: TextStyle(color: p.textSecondary, fontSize: 14),
                       ),
                       items: _vm.suppliers
                           .map(
@@ -491,6 +498,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
+        final p = ctx.palette;
         return StatefulBuilder(
           builder: (ctx, setSheetState) {
             return Padding(
@@ -509,7 +517,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                           width: 40,
                           height: 4,
                           decoration: BoxDecoration(
-                            color: kBorder,
+                            color: p.border,
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
@@ -518,17 +526,17 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
+                          Text(
                             'Add New Supplier',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
-                              color: kTitle,
+                              color: p.textPrimary,
                             ),
                           ),
                           GestureDetector(
                             onTap: () => Navigator.pop(ctx),
-                            child: const Icon(Icons.close, color: kGray),
+                            child: Icon(Icons.close, color: p.textSecondary),
                           ),
                         ],
                       ),
@@ -673,14 +681,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   Widget _label(String text, {bool req = false}) {
+    final p = context.palette;
     return Row(
       children: [
         Text(
           text,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
-            color: kTitle,
+            color: p.textPrimary,
           ),
         ),
         if (req) const Text(' *', style: TextStyle(color: kRed, fontSize: 14)),
@@ -689,19 +698,20 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   InputDecoration _decoration(String hint) {
+    final p = context.palette;
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(color: kGray, fontSize: 14),
+      hintStyle: TextStyle(color: p.textSecondary, fontSize: 14),
       filled: true,
-      fillColor: kBg,
+      fillColor: p.surface,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: kBorder),
+        borderSide: BorderSide(color: p.border),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: kBorder),
+        borderSide: BorderSide(color: p.border),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -711,23 +721,30 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   Widget _createButton() {
+    final p = context.palette;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: p.surface,
         boxShadow: [
           BoxShadow(
-            color: Color(0x0D000000),
+            color: p.cardShadow,
             blurRadius: 8,
-            offset: Offset(0, -2),
+            offset: const Offset(0, -2),
           ),
         ],
       ),
       child: Container(
         height: 52,
         decoration: BoxDecoration(
-          gradient: _saving ? null : kPurpleGradient,
-          color: _saving ? kGray : null,
+          gradient: _saving
+              ? null
+              : LinearGradient(
+                  colors: [AppColors.primaryLight, p.primary],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+          color: _saving ? p.textMuted : null,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Material(
@@ -850,12 +867,13 @@ class _VariantTileState extends State<_VariantTile> {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     final colorLabels = widget.colorOptions.map((c) => c.label).toList();
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        border: Border.all(color: kBorder),
+        border: Border.all(color: p.border),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -864,17 +882,17 @@ class _VariantTileState extends State<_VariantTile> {
             children: [
               Text(
                 'Variant ${widget.index + 1}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: kTitle,
+                  color: p.textPrimary,
                 ),
               ),
               const Spacer(),
               if (widget.onRemove != null)
                 GestureDetector(
                   onTap: widget.onRemove,
-                  child: const Icon(Icons.close, size: 18, color: kGray),
+                  child: Icon(Icons.close, size: 18, color: p.textSecondary),
                 ),
             ],
           ),
@@ -919,10 +937,11 @@ class _VariantTileState extends State<_VariantTile> {
     List<String> items,
     ValueChanged<String?> onChanged,
   ) {
+    final p = context.palette;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, color: kGray)),
+        Text(label, style: TextStyle(fontSize: 12, color: p.textSecondary)),
         const SizedBox(height: 4),
         DropdownField(
           value: value.isEmpty ? null : value,
@@ -935,10 +954,11 @@ class _VariantTileState extends State<_VariantTile> {
   }
 
   Widget _colorDropdown(List<String> colorLabels) {
+    final p = context.palette;
     final swatch = widget.colorOptions
         .firstWhere(
           (c) => c.label == _color,
-          orElse: () => const ProductColorOption('', Color(0xFF9E9E9E)),
+          orElse: () => ProductColorOption('', p.textMuted),
         )
         .color;
     return Column(
@@ -946,7 +966,7 @@ class _VariantTileState extends State<_VariantTile> {
       children: [
         Row(
           children: [
-            Text('Color', style: const TextStyle(fontSize: 12, color: kGray)),
+            Text('Color', style: TextStyle(fontSize: 12, color: p.textSecondary)),
             const SizedBox(width: 6),
             Container(
               width: 14,
@@ -954,7 +974,7 @@ class _VariantTileState extends State<_VariantTile> {
               decoration: BoxDecoration(
                 color: swatch,
                 shape: BoxShape.circle,
-                border: Border.all(color: kBorder),
+                border: Border.all(color: p.border),
               ),
             ),
           ],
@@ -979,10 +999,11 @@ class _VariantTileState extends State<_VariantTile> {
     TextInputType kt,
     VoidCallback onChanged,
   ) {
+    final p = context.palette;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, color: kGray)),
+        Text(label, style: TextStyle(fontSize: 12, color: p.textSecondary)),
         const SizedBox(height: 4),
         TextField(
           controller: c,
@@ -990,20 +1011,20 @@ class _VariantTileState extends State<_VariantTile> {
           onChanged: (_) => onChanged(),
           decoration: InputDecoration(
             hintText: '0',
-            hintStyle: const TextStyle(color: kGray, fontSize: 13),
+            hintStyle: TextStyle(color: p.textSecondary, fontSize: 13),
             filled: true,
-            fillColor: kBg,
+            fillColor: p.surface,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 10,
               vertical: 10,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: kBorder),
+              borderSide: BorderSide(color: p.border),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: kBorder),
+              borderSide: BorderSide(color: p.border),
             ),
           ),
         ),

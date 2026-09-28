@@ -7,7 +7,9 @@ import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/shared/widgets/search_input_bar.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_palette.dart';
 
 class ProductCardScreen extends StatefulWidget {
   const ProductCardScreen({super.key});
@@ -19,8 +21,6 @@ class ProductCardScreen extends StatefulWidget {
 class _ProductCardScreenState extends State<ProductCardScreen> {
   final TextEditingController _search = TextEditingController();
   final ScrollController _scrollCtrl = ScrollController();
-
-  static const Color bg = Color(0xFFF8F9FC);
 
   List<CatalogProductView> _products = [];
   bool _isLoading = true;
@@ -105,6 +105,7 @@ class _ProductCardScreenState extends State<ProductCardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     return ListenableBuilder(
       listenable: _search,
       builder: (context, _) {
@@ -121,15 +122,15 @@ class _ProductCardScreenState extends State<ProductCardScreen> {
               final isWide = constraints.maxWidth >= 768;
               if (isWide) {
                 return Scaffold(
-                  backgroundColor: bg,
+                  backgroundColor: palette.scaffoldBg,
                   body: SafeArea(
-                    child: _buildContent(filtered),
+                    child: _buildContent(filtered, palette),
                   ),
                 );
               }
               return Scaffold(
-                backgroundColor: bg,
-                body: SafeArea(child: _buildContent(filtered)),
+                backgroundColor: palette.scaffoldBg,
+                body: SafeArea(child: _buildContent(filtered, palette)),
               );
             },
           ),
@@ -138,7 +139,7 @@ class _ProductCardScreenState extends State<ProductCardScreen> {
     );
   }
 
-  Widget _buildContent(List<CatalogProductView> products) {
+  Widget _buildContent(List<CatalogProductView> products, AppPalette palette) {
     return Column(
       children: [
         AppScreenTopBar(
@@ -161,7 +162,7 @@ class _ProductCardScreenState extends State<ProductCardScreen> {
                     onChanged: (_) {},
                   ),
                   const SizedBox(height: 20),
-                  _buildProductGrid(products),
+                  _buildProductGrid(products, palette),
                 ],
               ),
             ),
@@ -171,7 +172,7 @@ class _ProductCardScreenState extends State<ProductCardScreen> {
     );
   }
 
-  Widget _buildProductGrid(List<CatalogProductView> products) {
+  Widget _buildProductGrid(List<CatalogProductView> products, AppPalette palette) {
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator(color: AppColors.teal));
     }
@@ -179,9 +180,9 @@ class _ProductCardScreenState extends State<ProductCardScreen> {
       return Center(
         child: Column(
           children: [
-            const Icon(Icons.error_outline, color: Colors.red, size: 48),
+            Icon(Icons.error_outline, color: AppColors.red, size: 48),
             const SizedBox(height: 12),
-            Text(_error!, style: const TextStyle(color: Colors.red)),
+            Text(_error!, style: TextStyle(color: AppColors.red)),
             const SizedBox(height: 12),
             ElevatedButton.icon(
               onPressed: _loadProducts,
@@ -200,11 +201,11 @@ class _ProductCardScreenState extends State<ProductCardScreen> {
       return Center(
         child: Column(
           children: [
-            Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey[300]),
+            Icon(Icons.inventory_2_outlined, size: 64, color: palette.textMuted),
             const SizedBox(height: 16),
             Text(
               'No products found',
-              style: TextStyle(fontSize: 16, color: Colors.grey[500]),
+              style: TextStyle(fontSize: 16, color: palette.textSecondary),
             ),
           ],
         ),
@@ -236,6 +237,7 @@ class _ProductCardScreenState extends State<ProductCardScreen> {
               width: cardW,
               child: _ProductCard(
                 product: p,
+                palette: palette,
                 onTap: () => _openProduct(p),
               ),
             );
@@ -257,18 +259,16 @@ class _ProductCardScreenState extends State<ProductCardScreen> {
 class _ProductCard extends StatelessWidget {
   final CatalogProductView product;
   final VoidCallback? onTap;
+  final AppPalette palette;
 
-  const _ProductCard({required this.product, this.onTap});
-
-  static const Color _titleColor = Color(0xFF111827);
-  static const Color _gray = Color(0xFF6B7280);
+  const _ProductCard({required this.product, required this.palette, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final stock = product.stock;
     final stockColor = stock == 0
-        ? Colors.red
-        : (stock < 10 ? const Color(0xFFD97706) : const Color(0xFF16A34A));
+        ? palette.dangerFg
+        : (stock < 10 ? palette.warningFg : palette.successFg);
     final stockLabel = stock == 0
         ? 'Out of Stock'
         : (stock < 10 ? 'Low Stock' : 'In Stock');
@@ -279,16 +279,10 @@ class _ProductCard extends StatelessWidget {
         cursor: SystemMouseCursors.click,
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: palette.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            border: Border.all(color: palette.border),
+            boxShadow: palette.cardElevation,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -299,7 +293,7 @@ class _ProductCard extends StatelessWidget {
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                    color: const Color(0xFFF3F4F6),
+                    color: palette.surfaceAlt,
                   ),
                   child: ClipRRect(
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
@@ -323,10 +317,10 @@ class _ProductCard extends StatelessWidget {
                       product.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: _titleColor,
+                        color: palette.textPrimary,
                       ),
                     ),
                     if (product.brand.isNotEmpty) ...[
@@ -335,7 +329,7 @@ class _ProductCard extends StatelessWidget {
                         product.brand,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 12, color: _gray),
+                        style: TextStyle(fontSize: 12, color: palette.textSecondary),
                       ),
                     ],
                     const SizedBox(height: 8),
@@ -344,7 +338,7 @@ class _ProductCard extends StatelessWidget {
                         Expanded(
                           child: PriceText(
                             product.price,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
                               color: AppColors.teal,
@@ -374,7 +368,7 @@ class _ProductCard extends StatelessWidget {
                         product.category,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 11, color: _gray),
+                        style: TextStyle(fontSize: 11, color: palette.textSecondary),
                       ),
                     ],
                   ],
@@ -401,9 +395,7 @@ class _ProductCard extends StatelessWidget {
           end: Alignment.bottomRight,
         ),
       ),
-      child: Center(
-        child: Icon(product.icon, color: Colors.white, size: 36),
-      ),
+      child: Center(child: Icon(product.icon, color: Colors.white, size: 36)),
     );
   }
 }

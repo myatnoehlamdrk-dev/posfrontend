@@ -5,6 +5,7 @@ import 'package:posfrontend/features/package/data/repositories/package_repositor
 import 'package:posfrontend/features/package/presentation/screens/add_package_screen.dart';
 import 'package:posfrontend/features/package/presentation/screens/package_details_screen.dart';
 import 'package:posfrontend/features/package/presentation/viewmodels/package_view_model.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/error_snackbar.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
@@ -21,11 +22,7 @@ class PackageScreen extends StatefulWidget {
 class _PackageScreenState extends State<PackageScreen> {
   late final PackageViewModel _viewModel;
 
-  static const Color bg = Color(0xFFFFFFFF);
-  static const Color title = Color(0xFF111827);
-  static const Color gray = Color(0xFF6B7280);
   static const Color purple = Color(0xFF6D28D9);
-  static const Color border = Color(0xFFE5E7EB);
 
   String get _badgeCode {
     final name = widget.category.name;
@@ -127,6 +124,7 @@ class _PackageScreenState extends State<PackageScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return LayoutBuilder(
       builder: (ctx, constraints) {
         final isWide = constraints.maxWidth >= 768;
@@ -134,7 +132,7 @@ class _PackageScreenState extends State<PackageScreen> {
 
         if (isWide) {
           return Scaffold(
-            backgroundColor: bg,
+            backgroundColor: p.surface,
             floatingActionButton: FloatingActionButton(
               onPressed: _openAddPackage,
               backgroundColor: const Color(0xFF4FD1D9),
@@ -145,7 +143,7 @@ class _PackageScreenState extends State<PackageScreen> {
         }
 
         return Scaffold(
-          backgroundColor: bg,
+          backgroundColor: p.surface,
           floatingActionButton: FloatingActionButton(
             onPressed: _openAddPackage,
             backgroundColor: const Color(0xFF4FD1D9),
@@ -159,6 +157,7 @@ class _PackageScreenState extends State<PackageScreen> {
   }
 
   Widget _buildContent({required bool isWide}) {
+    final p = context.palette;
     return SafeArea(
       child: ListenableBuilder(
         listenable: _viewModel,
@@ -197,17 +196,17 @@ class _PackageScreenState extends State<PackageScreen> {
                               child: Text(
                                 _viewModel.errorMessage ??
                                     'Failed to load packages.',
-                                style: const TextStyle(color: gray),
+                                style: TextStyle(color: p.textSecondary),
                               ),
                             ),
                           )
                         else ...[
                           Text(
                             'List of Packages (${_viewModel.total})',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: title,
+                              color: p.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -231,7 +230,8 @@ class _PackageScreenState extends State<PackageScreen> {
   }
 
   Widget _breadcrumb() {
-    const style = TextStyle(fontSize: 13, color: gray);
+    final p = context.palette;
+    final style = TextStyle(fontSize: 13, color: p.textSecondary);
     return Wrap(
       children: [
         GestureDetector(
@@ -241,7 +241,7 @@ class _PackageScreenState extends State<PackageScreen> {
             style: TextStyle(fontSize: 13, color: purple),
           ),
         ),
-        const Text('  >  ', style: style),
+        Text('  >  ', style: style),
         GestureDetector(
           onTap: () {},
           child: const Text(
@@ -249,23 +249,24 @@ class _PackageScreenState extends State<PackageScreen> {
             style: TextStyle(fontSize: 13, color: purple),
           ),
         ),
-        const Text('  >  ', style: style),
+        Text('  >  ', style: style),
         GestureDetector(
           onTap: () {},
-          child: const Text(
+          child: Text(
             'Self Inventory',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 13, color: purple),
+            style: const TextStyle(fontSize: 13, color: purple),
           ),
         ),
-        const Text('  >  ', style: style),
+        Text('  >  ', style: style),
         Text(widget.category.name, style: style),
       ],
     );
   }
 
   Widget _headingRow() {
+    final p = context.palette;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -275,16 +276,16 @@ class _PackageScreenState extends State<PackageScreen> {
             children: [
               Text(
                 widget.category.name,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: title,
+                  color: p.textPrimary,
                 ),
               ),
               const SizedBox(height: 6),
-              const Text(
+              Text(
                 'Manage your category here...',
-                style: TextStyle(fontSize: 16, color: gray),
+                style: TextStyle(fontSize: 16, color: p.textSecondary),
               ),
             ],
           ),
@@ -292,20 +293,20 @@ class _PackageScreenState extends State<PackageScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: p.surface,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: border),
+            border: Border.all(color: p.border),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<PackageSort>(
               value: _viewModel.sort == PackageSort.nameAz
                   ? null
                   : _viewModel.sort,
-              hint: const Text(
+              hint: Text(
                 'Sort',
-                style: TextStyle(color: title, fontSize: 14),
+                style: TextStyle(color: p.textPrimary, fontSize: 14),
               ),
-              style: const TextStyle(color: title, fontSize: 14),
+              style: TextStyle(color: p.textPrimary, fontSize: 14),
               items: [
                 DropdownMenuItem(
                   value: PackageSort.dateNewest,
@@ -325,11 +326,15 @@ class _PackageScreenState extends State<PackageScreen> {
   }
 
   Widget _packageGrid(List<PackageEntity> items, int cols) {
+    final p = context.palette;
     if (items.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 40),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 40),
         child: Center(
-          child: Text('No packages found.', style: TextStyle(color: gray)),
+          child: Text(
+            'No packages found.',
+            style: TextStyle(color: p.textSecondary),
+          ),
         ),
       );
     }
@@ -368,6 +373,7 @@ class _PackageScreenState extends State<PackageScreen> {
 
   Widget _packageCard(PackageEntity p) {
     final c = widget.category;
+    final pal = context.palette;
     return GestureDetector(
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute(
@@ -378,14 +384,14 @@ class _PackageScreenState extends State<PackageScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: pal.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: border),
-          boxShadow: const [
+          border: Border.all(color: pal.border),
+          boxShadow: [
             BoxShadow(
-              color: Color(0x0D000000),
+              color: pal.cardShadow,
               blurRadius: 8,
-              offset: Offset(0, 2),
+              offset: const Offset(0, 2),
             ),
           ],
         ),
@@ -405,10 +411,10 @@ class _PackageScreenState extends State<PackageScreen> {
                           p.code,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: title,
+                            color: pal.textPrimary,
                           ),
                         ),
                       ),
@@ -421,10 +427,10 @@ class _PackageScreenState extends State<PackageScreen> {
                     p.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: title,
+                      color: pal.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -432,7 +438,7 @@ class _PackageScreenState extends State<PackageScreen> {
                     p.spec,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 13, color: gray),
+                    style: TextStyle(fontSize: 13, color: pal.textSecondary),
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -442,18 +448,18 @@ class _PackageScreenState extends State<PackageScreen> {
                           'Qty: ${p.quantity} in ${p.productLimit}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
-                            color: title,
+                            color: pal.textPrimary,
                           ),
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Icon(
+                      Icon(
                         Icons.location_on_outlined,
                         size: 14,
-                        color: gray,
+                        color: pal.textSecondary,
                       ),
                       const SizedBox(width: 4),
                       Expanded(
@@ -461,7 +467,10 @@ class _PackageScreenState extends State<PackageScreen> {
                           p.location,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 13, color: gray),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: pal.textSecondary,
+                          ),
                         ),
                       ),
                     ],
@@ -472,9 +481,9 @@ class _PackageScreenState extends State<PackageScreen> {
                     const SizedBox(height: 6),
                     Text(
                       'by ${p.createdBy}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
-                        color: gray,
+                        color: pal.textMuted,
                         fontStyle: FontStyle.italic,
                       ),
                       maxLines: 1,
@@ -509,11 +518,12 @@ class _PackageScreenState extends State<PackageScreen> {
   }
 
   Widget _catBadge() {
+    final p = context.palette;
     return Flexible(
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
-          color: const Color(0xFFF3E8FF),
+          color: p.selectionTint,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
@@ -589,6 +599,7 @@ class _PackageScreenState extends State<PackageScreen> {
   }
 
   Widget _pkgSingleImage(String url) {
+    final p = context.palette;
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
       child: Image.network(
@@ -600,12 +611,12 @@ class _PackageScreenState extends State<PackageScreen> {
           width: 90,
           height: 90,
           decoration: BoxDecoration(
-            color: const Color(0xFFF3F4F6),
+            color: p.chipBg,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Icon(
+          child: Icon(
             Icons.image_not_supported_outlined,
-            color: gray,
+            color: p.textSecondary,
             size: 28,
           ),
         ),
@@ -655,10 +666,11 @@ class _PackageScreenState extends State<PackageScreen> {
   }
 
   Widget _pkgMosaicTile(String url) {
+    final p = context.palette;
     if (url.isEmpty) {
       return Container(
-        color: const Color(0xFFF3F4F6),
-        child: const Icon(Icons.image_outlined, color: gray, size: 16),
+        color: p.chipBg,
+        child: Icon(Icons.image_outlined, color: p.textSecondary, size: 16),
       );
     }
     return Image.network(
@@ -666,10 +678,10 @@ class _PackageScreenState extends State<PackageScreen> {
       fit: BoxFit.cover,
       width: double.infinity,
       errorBuilder: (_, _, _) => Container(
-        color: const Color(0xFFF3F4F6),
-        child: const Icon(
+        color: p.chipBg,
+        child: Icon(
           Icons.image_not_supported_outlined,
-          color: gray,
+          color: p.textSecondary,
           size: 16,
         ),
       ),

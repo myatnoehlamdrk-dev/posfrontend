@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/features/purchase/presentation/viewmodels/purchase_item_view_model.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class AddSupplierSheet extends StatefulWidget {
   final PurchaseItemViewModel viewModel;
@@ -31,6 +32,7 @@ class _AddSupplierSheetState extends State<AddSupplierSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
@@ -44,29 +46,29 @@ class _AddSupplierSheetState extends State<AddSupplierSheet> {
                 child: Container(
                   width: 40,
                   height: 4,
-                  decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+                  decoration: BoxDecoration(color: p.border, borderRadius: BorderRadius.circular(2)),
                 ),
               ),
               const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Add New Supplier',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.titleColor),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: p.textPrimary),
                   ),
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
-                    child: const Icon(Icons.close, color: AppColors.gray),
+                    child: Icon(Icons.close, color: p.textSecondary),
                   ),
                 ],
               ),
               const SizedBox(height: 20),
-              _inputField('Supplier Name', 'e.g. Golden Harvest Co.', _nameController),
+              _inputField(context, 'Supplier Name', 'e.g. Golden Harvest Co.', _nameController),
               const SizedBox(height: 16),
-              _inputField('Contact / Phone', 'e.g. 09-1234-5678', _phoneController),
+              _inputField(context, 'Contact / Phone', 'e.g. 09-1234-5678', _phoneController),
               const SizedBox(height: 16),
-              _inputField('Address', 'e.g. No.12, Market St, Yangon', _addressController),
+              _inputField(context, 'Address', 'e.g. No.12, Market St, Yangon', _addressController),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
@@ -101,20 +103,21 @@ class _AddSupplierSheetState extends State<AddSupplierSheet> {
     );
   }
 
-  Widget _inputField(String label, String hint, TextEditingController controller, {bool isNumber = false}) {
+  Widget _inputField(BuildContext context, String label, String hint, TextEditingController controller, {bool isNumber = false}) {
+    final p = context.palette;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.titleColor)),
+        Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: p.textPrimary)),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
           keyboardType: isNumber ? TextInputType.number : TextInputType.text,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: AppColors.gray, fontSize: 14),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
+            hintStyle: TextStyle(color: p.textSecondary, fontSize: 14),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: p.border)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: p.border)),
             focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.teal, width: 1.5)),
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           ),

@@ -4,19 +4,17 @@ import 'package:posfrontend/core/auth/auth_redirect.dart';
 import 'package:posfrontend/core/di/injection.dart';
 import 'package:posfrontend/features/onboarding/presentation/screens/get_started_screen.dart';
 import 'package:posfrontend/shared/theme/app_theme.dart';
+import 'package:posfrontend/shared/theme/theme_mode_notifier.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/shop_scope.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await init();
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.black,
-    statusBarIconBrightness: Brightness.light,
-    statusBarBrightness: Brightness.dark,
-    systemNavigationBarColor: Colors.black,
-    systemNavigationBarIconBrightness: Brightness.light,
-  ));
+  // Resolve the theme before the first frame so a dark-mode user never sees a
+  // white flash. The server copy is authoritative but arrives too late for
+  // this; the local mirror is the launch-time source of truth.
+  await ThemeModeNotifier.load();
   runApp(const MyApp());
 }
 
@@ -27,12 +25,42 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return AuthScope(
       child: ShopScope(
-        child: MaterialApp(
-          title: 'Inventory',
-          navigatorKey: navigatorKey,
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.lightTheme,
-          home: const GetStartedScreen(),
+        // Rebuilds MaterialApp when the mode changes, which repaints every
+        // subtree. One-time cost per toggle, and unavoidable: the theme is the
+        // thing being changed.
+        child: ListenableBuilder(
+          listenable: ThemeModeNotifier.instance,
+          builder: (context, _) {
+            return MaterialApp(
+              title: 'Inventory',
+              navigatorKey: navigatorKey,
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: ThemeModeNotifier.instance.value,
+              home: const GetStartedScreen(),
+              builder: (context, child) {
+                // Kept inside the app rather than set once in main() so the
+                // status bar adapts with the theme. A hardcoded light
+                // brightness would be invisible on a dark app bar.
+                final isDark = Theme.of(context).brightness == Brightness.dark;
+                return AnnotatedRegion<SystemUiOverlayStyle>(
+                  value: SystemUiOverlayStyle(
+                    statusBarColor: Colors.transparent,
+                    statusBarIconBrightness:
+                        isDark ? Brightness.light : Brightness.dark,
+                    statusBarBrightness:
+                        isDark ? Brightness.dark : Brightness.light,
+                    systemNavigationBarColor:
+                        Theme.of(context).colorScheme.surface,
+                    systemNavigationBarIconBrightness:
+                        isDark ? Brightness.light : Brightness.dark,
+                  ),
+                  child: child ?? const SizedBox.shrink(),
+                );
+              },
+            );
+          },
         ),
       ),
     );

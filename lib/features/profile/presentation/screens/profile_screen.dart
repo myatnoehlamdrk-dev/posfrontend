@@ -56,7 +56,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   static const Color borderColor = Color(0xFFE0E0E0);
   static const Color labelColor = Color(0xFF1A1A1A);
   static const Color hintColor = Color(0xFF9E9E9E);
-  static const Color red = Color(0xFFEF4444);
 
   @override
   void initState() {

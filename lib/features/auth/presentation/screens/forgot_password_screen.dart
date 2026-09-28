@@ -4,6 +4,7 @@ import 'package:posfrontend/features/auth/domain/usecases/forgot_password.dart';
 import 'package:posfrontend/features/auth/presentation/viewmodels/forgot_password_view_model.dart';
 import 'package:posfrontend/features/auth/presentation/screens/reset_password_screen.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_input_decoration.dart';
 import 'package:posfrontend/shared/widgets/gradient_button.dart';
 import 'package:posfrontend/shared/widgets/required_label.dart';
@@ -67,6 +68,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return ListenableBuilder(
       listenable: _viewModel,
       builder: (context, _) {
@@ -75,7 +77,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         final otpSent = _viewModel.otpSent;
 
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: p.scaffoldBg,
           body: SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
@@ -86,10 +88,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   children: [
                     _buildHeaderIcon(),
                     const SizedBox(height: 20),
-                    const Text(
+                    Text(
                       'Forgot Password?',
                       style: TextStyle(
-                        color: AppColors.labelColor,
+                        color: p.textPrimary,
                         fontSize: 26,
                         fontWeight: FontWeight.bold,
                       ),
@@ -99,8 +101,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       otpSent
                           ? 'Enter the OTP sent to your email'
                           : 'Enter your email to receive a verification code',
-                      style: const TextStyle(
-                        color: AppColors.hintColor,
+                      style: TextStyle(
+                        color: p.textMuted,
                         fontSize: 14,
                       ),
                       textAlign: TextAlign.center,
@@ -116,6 +118,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       textInputAction: TextInputAction.next,
                       enabled: !otpSent,
                       decoration: appInputDecoration(
+                        context,
                         icon: Icons.email_outlined,
                         hint: 'Enter your email',
                         errorText: errors['email'],
@@ -141,6 +144,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         textInputAction: TextInputAction.done,
                         maxLength: 6,
                         decoration: appInputDecoration(
+                          context,
                           icon: Icons.pin_outlined,
                           hint: 'Enter 6-digit OTP',
                           errorText: errors['otp'],
@@ -198,12 +202,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   Widget _buildBackToLogin() {
+    final p = context.palette;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text(
+        Text(
           'Remember your password?',
-          style: TextStyle(color: AppColors.hintColor, fontSize: 14),
+          style: TextStyle(color: p.textMuted, fontSize: 14),
         ),
         const SizedBox(width: 6),
         GestureDetector(

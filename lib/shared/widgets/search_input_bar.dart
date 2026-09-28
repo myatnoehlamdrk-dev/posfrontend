@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class SearchInputBar extends StatelessWidget {
   final TextEditingController controller;
@@ -15,19 +15,20 @@ class SearchInputBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: p.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: p.border),
       ),
       child: TextField(
         controller: controller,
         onChanged: onChanged,
         decoration: InputDecoration(
           hintText: hintText,
-          hintStyle: const TextStyle(color: AppColors.gray, fontSize: 14),
-          prefixIcon: const Icon(Icons.search, color: AppColors.gray, size: 22),
+          hintStyle: TextStyle(color: p.textMuted, fontSize: 14),
+          prefixIcon: Icon(Icons.search, color: p.textMuted, size: 22),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),

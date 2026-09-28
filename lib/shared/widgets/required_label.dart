@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class RequiredLabel extends StatelessWidget {
   final String text;
@@ -8,13 +8,14 @@ class RequiredLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: RichText(
         text: TextSpan(
           text: text,
-          style: const TextStyle(
-            color: AppColors.labelColor,
+          style: TextStyle(
+            color: p.textPrimary,
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),

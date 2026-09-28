@@ -4,12 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:posfrontend/core/network/app_exceptions.dart';
 import 'package:posfrontend/features/product/data/models/product_create_models.dart';
 import 'package:posfrontend/features/product/data/repositories/product_create_repository_impl.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
 const Color kPurple700 = Color(0xFF7C3AED);
-const Color kLightPurple = Color(0xFFF5F0FF);
 const Color kPurple900 = Color(0xFF5B21B6);
 
 class StockAddScreen extends StatefulWidget {
@@ -171,8 +172,9 @@ class _StockAddScreenState extends State<StockAddScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FC),
+      backgroundColor: p.scaffoldBg,
       body: SafeArea(
         child: Column(
           children: [
@@ -229,26 +231,27 @@ class _StockAddScreenState extends State<StockAddScreen> {
   }
 
   Widget _searchField() {
+    final p = context.palette;
     return TextField(
       controller: _search,
       onChanged: _onSearchChanged,
       decoration: InputDecoration(
         hintText: 'Search products...',
-        hintStyle: const TextStyle(color: kGray, fontSize: 14),
-        prefixIcon: const Icon(Icons.search, color: kGray),
+        hintStyle: TextStyle(color: p.textSecondary, fontSize: 14),
+        prefixIcon: Icon(Icons.search, color: p.textSecondary),
         filled: true,
-        fillColor: kBg,
+        fillColor: p.surface,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 14,
           vertical: 12,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: kBorder),
+          borderSide: BorderSide(color: p.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: kBorder),
+          borderSide: BorderSide(color: p.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -259,6 +262,7 @@ class _StockAddScreenState extends State<StockAddScreen> {
   }
 
   Widget _resultTile(ProductSearchResult p) {
+    final palette = context.palette;
     return InkWell(
       onTap: () => _select(p),
       borderRadius: BorderRadius.circular(10),
@@ -266,7 +270,7 @@ class _StockAddScreenState extends State<StockAddScreen> {
         margin: const EdgeInsets.only(top: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          border: Border.all(color: kBorder),
+          border: Border.all(color: palette.border),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -290,29 +294,29 @@ class _StockAddScreenState extends State<StockAddScreen> {
                 children: [
                   Text(
                     p.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: kTitle,
+                      color: palette.textPrimary,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
                   if (p.brand.isNotEmpty)
                     Text(
                       p.brand,
-                      style: const TextStyle(fontSize: 12, color: kGray),
+                      style: TextStyle(fontSize: 12, color: palette.textSecondary),
                       overflow: TextOverflow.ellipsis,
                     ),
                   Text(
                     p.variants.isEmpty
                         ? 'Stock: ${p.stock}'
                         : 'Stock: ${p.stock} · ${p.variants.length} variants',
-                    style: const TextStyle(fontSize: 12, color: kGray),
+                    style: TextStyle(fontSize: 12, color: palette.textSecondary),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: kGray),
+            Icon(Icons.chevron_right_rounded, color: palette.textSecondary),
           ],
         ),
       ),
@@ -320,10 +324,11 @@ class _StockAddScreenState extends State<StockAddScreen> {
   }
 
   Widget _placeholderIcon() {
+    final p = context.palette;
     return Container(
       width: 40,
       height: 40,
-      color: kLightPurple,
+      color: p.selectionTint,
       child: const Icon(
         Icons.inventory_2_outlined,
         color: kPurple700,
@@ -360,6 +365,7 @@ class _StockAddScreenState extends State<StockAddScreen> {
   }
 
   Widget _stockRow(String label, String current, TextEditingController c) {
+    final p = context.palette;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -370,14 +376,17 @@ class _StockAddScreenState extends State<StockAddScreen> {
             children: [
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: kTitle,
+                  color: p.textPrimary,
                 ),
               ),
               const SizedBox(height: 4),
-              Text(current, style: const TextStyle(fontSize: 12, color: kGray)),
+              Text(
+                current,
+                style: TextStyle(fontSize: 12, color: p.textSecondary),
+              ),
             ],
           ),
         ),
@@ -388,20 +397,20 @@ class _StockAddScreenState extends State<StockAddScreen> {
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
               hintText: 'Add',
-              hintStyle: const TextStyle(color: kGray, fontSize: 14),
+              hintStyle: TextStyle(color: p.textSecondary, fontSize: 14),
               filled: true,
-              fillColor: kBg,
+              fillColor: p.surface,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 12,
                 vertical: 12,
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: kBorder),
+                borderSide: BorderSide(color: p.border),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: kBorder),
+                borderSide: BorderSide(color: p.border),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -415,23 +424,30 @@ class _StockAddScreenState extends State<StockAddScreen> {
   }
 
   Widget _submitButton() {
+    final p = context.palette;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: p.surface,
         boxShadow: [
           BoxShadow(
-            color: Color(0x0D000000),
+            color: p.cardShadow,
             blurRadius: 8,
-            offset: Offset(0, -2),
+            offset: const Offset(0, -2),
           ),
         ],
       ),
       child: Container(
         height: 52,
         decoration: BoxDecoration(
-          gradient: _saving ? null : kPurpleGradient,
-          color: _saving ? kGray : null,
+          gradient: _saving
+              ? null
+              : LinearGradient(
+                  colors: [AppColors.primaryLight, p.primary],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+          color: _saving ? p.textMuted : null,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Material(

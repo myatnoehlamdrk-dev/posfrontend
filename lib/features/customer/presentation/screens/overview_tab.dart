@@ -1,21 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/features/customer/domain/entities/customer.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class OverviewTab extends StatelessWidget {
   final CustomerAnalyticsEntity analytics;
 
   const OverviewTab({super.key, required this.analytics});
 
-  static const Color title = Color(0xFF111827);
-  static const Color gray = Color(0xFF6B7280);
   static const Color purple = Color(0xFF6D28D9);
-  static const Color border = Color(0xFFE5E7EB);
   static const Color teal = Color(0xFF4FD1D9);
   static const Color green = Color(0xFF10B981);
   static const Color orange = Color(0xFFF59E0B);
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     final ov = analytics.overview;
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -24,50 +23,51 @@ class OverviewTab extends StatelessWidget {
         children: [
           Row(
             children: [
-              _statCard('Total Customers', '${ov.totalCustomers}', Icons.people, purple),
+              _statCard(context, 'Total Customers', '${ov.totalCustomers}', Icons.people, purple),
               const SizedBox(width: 12),
-              _statCard('New This Month', '${ov.newThisMonth}', Icons.person_add, teal),
+              _statCard(context, 'New This Month', '${ov.newThisMonth}', Icons.person_add, teal),
             ],
           ),
           const SizedBox(height: 12),
           Row(
             children: [
-              _statCard('Returning', '${ov.returningCustomers}', Icons.replay, green),
+              _statCard(context, 'Returning', '${ov.returningCustomers}', Icons.replay, green),
               const SizedBox(width: 12),
-              _statCard('Walk-in', '${ov.walkInCount}', Icons.store, orange),
+              _statCard(context, 'Walk-in', '${ov.walkInCount}', Icons.store, orange),
             ],
           ),
           const SizedBox(height: 24),
-          _newVsReturningCard(),
+          _newVsReturningCard(context),
           const SizedBox(height: 24),
           if (analytics.topCustomers.isNotEmpty) ...[
-            const Text(
+            Text(
               'Top 3 Customers',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: title),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: p.textPrimary),
             ),
             const SizedBox(height: 12),
             ...analytics.topCustomers.take(3).toList().asMap().entries.map((entry) {
               final i = entry.key;
               final c = entry.value;
-              return _topCustomerRow(i, c);
+              return _topCustomerRow(context, i, c);
             }),
             const SizedBox(height: 24),
           ],
-          _behaviorCard(),
+          _behaviorCard(context),
           const SizedBox(height: 24),
         ],
       ),
     );
   }
 
-  Widget _statCard(String label, String value, IconData icon, Color color) {
+  Widget _statCard(BuildContext context, String label, String value, IconData icon, Color color) {
+    final p = context.palette;
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: p.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: border),
+          border: Border.all(color: p.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -83,33 +83,34 @@ class OverviewTab extends StatelessWidget {
             const SizedBox(height: 12),
             Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color)),
             const SizedBox(height: 4),
-            Text(label, style: const TextStyle(fontSize: 13, color: gray)),
+            Text(label, style: TextStyle(fontSize: 13, color: p.textSecondary)),
           ],
         ),
       ),
     );
   }
 
-  Widget _newVsReturningCard() {
+  Widget _newVsReturningCard(BuildContext context) {
+    final p = context.palette;
     final nvr = analytics.newVsReturning;
     final total = nvr.newCount + nvr.returningCount;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: p.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: border),
+        border: Border.all(color: p.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('New vs Returning Customers', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: title)),
+          Text('New vs Returning Customers', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: p.textPrimary)),
           const SizedBox(height: 16),
           Row(
             children: [
-              _nvrStat('New', nvr.newCount, nvr.newPct, teal),
+              _nvrStat(context, 'New', nvr.newCount, nvr.newPct, teal),
               const SizedBox(width: 16),
-              _nvrStat('Returning', nvr.returningCount, nvr.returningPct, purple),
+              _nvrStat(context, 'Returning', nvr.returningCount, nvr.returningPct, purple),
             ],
           ),
           if (total > 0) ...[
@@ -129,12 +130,13 @@ class OverviewTab extends StatelessWidget {
     );
   }
 
-  Widget _nvrStat(String label, int count, int pct, Color color) {
+  Widget _nvrStat(BuildContext context, String label, int count, int pct, Color color) {
+    final p = context.palette;
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontSize: 13, color: gray)),
+          Text(label, style: TextStyle(fontSize: 13, color: p.textSecondary)),
           const SizedBox(height: 4),
           Text('$count', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
           Text('$pct%', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: color)),
@@ -143,16 +145,17 @@ class OverviewTab extends StatelessWidget {
     );
   }
 
-  Widget _topCustomerRow(int rank, TopCustomerEntity c) {
+  Widget _topCustomerRow(BuildContext context, int rank, TopCustomerEntity c) {
+    final p = context.palette;
     final medals = ['🥇', '🥈', '🥉'];
     final medal = rank < 3 ? medals[rank] : '#${rank + 1}';
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: rank == 0 ? const Color(0xFFFDF6E3) : Colors.white,
+        color: rank == 0 ? p.warningBg : p.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: rank == 0 ? const Color(0xFFF59E0B) : border),
+        border: Border.all(color: rank == 0 ? const Color(0xFFF59E0B) : p.border),
       ),
       child: Row(
         children: [
@@ -162,8 +165,8 @@ class OverviewTab extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(c.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: title)),
-                Text('${c.totalOrders} orders', style: const TextStyle(fontSize: 12, color: gray)),
+                Text(c.name, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: p.textPrimary)),
+                Text('${c.totalOrders} orders', style: TextStyle(fontSize: 12, color: p.textSecondary)),
               ],
             ),
           ),
@@ -173,38 +176,40 @@ class OverviewTab extends StatelessWidget {
     );
   }
 
-  Widget _behaviorCard() {
+  Widget _behaviorCard(BuildContext context) {
+    final p = context.palette;
     final b = analytics.purchaseBehavior;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: p.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: border),
+        border: Border.all(color: p.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Purchase Behavior', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: title)),
+          Text('Purchase Behavior', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: p.textPrimary)),
           const SizedBox(height: 12),
-          _behaviorRow(Icons.attach_money, 'Avg. Spending', 'MMK ${b.avgSpendingPerCustomer}'),
+          _behaviorRow(context, Icons.attach_money, 'Avg. Spending', 'MMK ${b.avgSpendingPerCustomer}'),
           const SizedBox(height: 8),
-          _behaviorRow(Icons.calendar_today, 'Most Frequent Day', b.mostFrequentDay.isEmpty ? '-' : b.mostFrequentDay),
+          _behaviorRow(context, Icons.calendar_today, 'Most Frequent Day', b.mostFrequentDay.isEmpty ? '-' : b.mostFrequentDay),
           const SizedBox(height: 8),
-          _behaviorRow(Icons.access_time, 'Most Frequent Hour', b.mostFrequentHour.isEmpty ? '-' : b.mostFrequentHour),
+          _behaviorRow(context, Icons.access_time, 'Most Frequent Hour', b.mostFrequentHour.isEmpty ? '-' : b.mostFrequentHour),
         ],
       ),
     );
   }
 
-  Widget _behaviorRow(IconData icon, String label, String value) {
+  Widget _behaviorRow(BuildContext context, IconData icon, String label, String value) {
+    final p = context.palette;
     return Row(
       children: [
-        Icon(icon, size: 18, color: gray),
+        Icon(icon, size: 18, color: p.textSecondary),
         const SizedBox(width: 10),
-        Text(label, style: const TextStyle(fontSize: 13, color: gray)),
+        Text(label, style: TextStyle(fontSize: 13, color: p.textSecondary)),
         const Spacer(),
-        Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: title)),
+        Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: p.textPrimary)),
       ],
     );
   }

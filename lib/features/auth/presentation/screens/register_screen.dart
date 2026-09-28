@@ -4,6 +4,7 @@ import 'package:posfrontend/features/auth/domain/usecases/register.dart';
 import 'package:posfrontend/features/auth/presentation/viewmodels/register_view_model.dart';
 import 'package:posfrontend/features/auth/presentation/screens/verify_account_screen.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_input_decoration.dart';
 import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 import 'package:posfrontend/shared/widgets/gradient_button.dart';
@@ -86,12 +87,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _optionalLabel(String text) {
+    final p = context.palette;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         text,
         style: TextStyle(
-          color: AppColors.labelColor,
+          color: p.textPrimary,
           fontSize: 14,
           fontWeight: FontWeight.w500,
         ),
@@ -100,11 +102,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _helperText(String text) {
+    final p = context.palette;
     return Padding(
       padding: const EdgeInsets.only(top: 6),
       child: Text(
         text,
-        style: TextStyle(color: AppColors.hintColor, fontSize: 12),
+        style: TextStyle(color: p.textMuted, fontSize: 12),
       ),
     );
   }
@@ -124,12 +127,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _sectionTile(String title, List<Widget> children) {
+    final p = context.palette;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: AppColors.borderColor),
+        color: p.surface,
+        border: Border.all(color: p.border),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -141,12 +145,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return ListenableBuilder(
       listenable: _viewModel,
       builder: (context, _) {
         final errors = _viewModel.fieldErrors;
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: p.scaffoldBg,
           body: SafeArea(
             child: Column(
               children: [
@@ -165,6 +170,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               controller: _nameController,
                               textInputAction: TextInputAction.next,
                               decoration: appInputDecoration(
+                                context,
                                 icon: Icons.person_outline,
                                 hint: 'Enter full name',
                                 errorText: errors['name'],
@@ -177,6 +183,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               keyboardType: TextInputType.emailAddress,
                               textInputAction: TextInputAction.next,
                               decoration: appInputDecoration(
+                                context,
                                 icon: Icons.email_outlined,
                                 hint: 'Enter email address',
                                 errorText: errors['email'],
@@ -188,6 +195,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               controller: _passwordController,
                               obscureText: _obscurePassword,
                               decoration: appInputDecoration(
+                                context,
                                 icon: Icons.lock_outline,
                                 hint: 'Enter password',
                                 errorText: errors['password'],
@@ -201,7 +209,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     _obscurePassword
                                         ? Icons.visibility_outlined
                                         : Icons.visibility_off_outlined,
-                                    color: AppColors.hintColor,
+                                    color: p.textMuted,
                                   ),
                                 ),
                               ),
@@ -234,6 +242,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           }
                                         },
                                         decoration: appInputDecoration(
+                                          context,
                                           icon: Icons.calendar_today_outlined,
                                           hint: 'Select date of birth',
                                         ),
@@ -252,6 +261,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         initialValue: _viewModel.gender,
                                         isExpanded: true,
                                         decoration: appInputDecoration(
+                                          context,
                                           icon: Icons.wc_outlined,
                                           hint: 'Select gender',
                                         ),
@@ -287,6 +297,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         controller: _phoneController,
                                         keyboardType: TextInputType.phone,
                                         decoration: appInputDecoration(
+                                          context,
                                           icon: Icons.phone_outlined,
                                           hint: 'Phone number',
                                         ),
@@ -304,6 +315,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       TextFormField(
                                         controller: _socialController,
                                         decoration: appInputDecoration(
+                                          context,
                                           icon: Icons.chat_outlined,
                                           hint: 'Social (e.g. Telegram, Viber)',
                                         ),
@@ -319,6 +331,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               controller: _addressController,
                               maxLines: 3,
                               decoration: appInputDecoration(
+                                context,
                                 icon: Icons.location_on_outlined,
                                 hint: 'Enter user address',
                               ),
@@ -328,6 +341,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             TextFormField(
                               controller: _nrcController,
                               decoration: appInputDecoration(
+                                context,
                                 icon: Icons.credit_card_outlined,
                                 hint: 'Enter NRC number',
                               ),
@@ -339,6 +353,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             TextFormField(
                               controller: _roleController,
                               decoration: appInputDecoration(
+                                context,
                                 icon: Icons.supervisor_account_outlined,
                                 hint: 'Enter user role',
                               ),
@@ -355,10 +370,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 vertical: 14,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.white,
-                                border: Border.all(
-                                  color: AppColors.borderColor,
-                                ),
+                                color: p.surface,
+                                border: Border.all(color: p.border),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Row(
@@ -375,8 +388,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           'No shop created yet',
                                       style: TextStyle(
                                         color: _viewModel.shopName != null
-                                            ? AppColors.labelColor
-                                            : AppColors.hintColor,
+                                            ? p.textPrimary
+                                            : p.textMuted,
                                         fontSize: 14,
                                       ),
                                     ),
@@ -388,7 +401,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         vertical: 4,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFFF7F0FB),
+                                        color: p.selectionTint,
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Text(
@@ -407,6 +420,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             TextFormField(
                               controller: _billingController,
                               decoration: appInputDecoration(
+                                context,
                                 icon: Icons.payment_outlined,
                                 hint: 'Enter billing way',
                                 errorText: errors['billingWay'],
@@ -461,13 +475,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _buildHeader() {
+    final p = context.palette;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(color: AppColors.borderColor, width: 1),
-        ),
+        color: p.surface,
+        border: Border(bottom: BorderSide(color: p.border, width: 1)),
       ),
       child: Row(
         children: [
@@ -477,7 +490,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: Text(
                 'Register',
                 style: TextStyle(
-                  color: AppColors.labelColor,
+                  color: p.textPrimary,
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                 ),

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 
 const Color kTitle = Color(0xFF111827);
@@ -7,7 +9,6 @@ const Color kPurple = Color(0xFF6D28D9);
 const Color kBorder = Color(0xFFE5E7EB);
 const Color kBg = Color(0xFFFFFFFF);
 const Color kRed = Color(0xFFEF4444);
-const Color kFieldFill = Color(0xFFF9FAFB);
 
 const LinearGradient kPurpleGradient = LinearGradient(
   colors: [Color(0xFF7C3AED), Color(0xFF5B21B6)],
@@ -37,6 +38,33 @@ InputDecoration fieldDecoration(String hint, {bool alignRight = false}) {
   );
 }
 
+InputDecoration fieldDecorationFor(
+  BuildContext context,
+  String hint, {
+  bool alignRight = false,
+}) {
+  final p = context.palette;
+  return InputDecoration(
+    hintText: hint,
+    hintStyle: TextStyle(color: p.textSecondary, fontSize: 14),
+    filled: true,
+    fillColor: p.surface,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+      borderSide: BorderSide(color: p.border),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+      borderSide: BorderSide(color: p.border),
+    ),
+    disabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+      borderSide: BorderSide(color: p.border),
+    ),
+  );
+}
+
 class InventoryHeader extends StatelessWidget {
   final String title;
   final String initials;
@@ -55,6 +83,7 @@ class InventoryHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext ctx) {
+    final p = ctx.palette;
     return Row(
       children: [
         if (showMenu)
@@ -68,17 +97,20 @@ class InventoryHeader extends StatelessWidget {
           child: Text(
             title,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: kTitle,
+              color: p.textPrimary,
             ),
           ),
         ),
         Stack(
           children: [
             IconButton(
-              icon: const Icon(Icons.notifications_none_outlined, color: kTitle),
+              icon: Icon(
+                Icons.notifications_none_outlined,
+                color: p.textPrimary,
+              ),
               onPressed: () {},
             ),
             Positioned(
@@ -125,10 +157,11 @@ class InventoryBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return BottomNavigationBar(
       currentIndex: currentIndex,
       selectedItemColor: kPurple,
-      unselectedItemColor: kGray,
+      unselectedItemColor: p.textSecondary,
       type: BottomNavigationBarType.fixed,
       onTap: onTap,
       items: const [
@@ -154,17 +187,20 @@ class Breadcrumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     final children = <Widget>[];
     for (var i = 0; i < items.length; i++) {
       if (i > 0) {
-        children.add(const Text('  >  ', style: TextStyle(fontSize: 13, color: kGray)));
+        children.add(
+          Text('  >  ', style: TextStyle(fontSize: 13, color: p.textSecondary)),
+        );
       }
       children.add(
         Text(
           items[i].label,
           style: TextStyle(
             fontSize: 13,
-            color: items[i].active ? kGray : kPurple,
+            color: items[i].active ? p.textSecondary : kPurple,
           ),
         ),
       );
@@ -189,12 +225,13 @@ class FormCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: kBg,
+        color: p.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: kBorder),
+        border: Border.all(color: p.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -203,10 +240,10 @@ class FormCard extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: kTitle,
+                  color: p.textPrimary,
                 ),
               ),
               if (required)
@@ -217,7 +254,7 @@ class FormCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               helper!,
-              style: const TextStyle(fontSize: 13, color: kGray),
+              style: TextStyle(fontSize: 13, color: p.textSecondary),
             ),
           ],
           const SizedBox(height: 10),
@@ -242,23 +279,24 @@ class DisabledField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: kFieldFill,
+        color: p.surfaceAlt,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: kBorder),
+        border: Border.all(color: p.border),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: kGray),
+          Icon(icon, size: 18, color: p.textSecondary),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               value,
               textAlign: alignRight ? TextAlign.right : TextAlign.left,
-              style: const TextStyle(fontSize: 14, color: kGray),
+              style: TextStyle(fontSize: 14, color: p.textSecondary),
             ),
           ),
         ],
@@ -287,6 +325,7 @@ class CounterTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -295,7 +334,7 @@ class CounterTextField extends StatelessWidget {
           maxLines: maxLines,
           keyboardType: keyboardType,
           onChanged: onChanged,
-          decoration: fieldDecoration(hint),
+          decoration: fieldDecorationFor(context, hint),
         ),
         const SizedBox(height: 4),
         Align(
@@ -304,7 +343,7 @@ class CounterTextField extends StatelessWidget {
             listenable: controller,
             builder: (context, _) => Text(
               '${controller.text.length} / $max',
-              style: const TextStyle(fontSize: 12, color: kGray),
+              style: TextStyle(fontSize: 12, color: p.textSecondary),
             ),
           ),
         ),
@@ -329,18 +368,19 @@ class DropdownField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: kBg,
+        color: p.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: kBorder),
+        border: Border.all(color: p.border),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
-          hint: Text(hint, style: const TextStyle(color: kGray, fontSize: 14)),
+          hint: Text(hint, style: TextStyle(color: p.textSecondary, fontSize: 14)),
           isExpanded: true,
           items: items
               .map((e) => DropdownMenuItem(value: e, child: Text(e)))
@@ -368,6 +408,7 @@ class FormActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return Row(
       children: [
         Expanded(
@@ -376,15 +417,15 @@ class FormActions extends StatelessWidget {
             child: OutlinedButton(
               onPressed: onCancel,
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: kBorder),
+                side: BorderSide(color: p.border),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text(
+              child: Text(
                 'Cancel',
                 style: TextStyle(
-                  color: kTitle,
+                  color: p.textPrimary,
                   fontWeight: FontWeight.w600,
                   fontSize: 15,
                 ),
@@ -397,13 +438,15 @@ class FormActions extends StatelessWidget {
           child: Container(
             height: 48,
             decoration: BoxDecoration(
-              gradient: kPurpleGradient,
+              gradient: LinearGradient(
+                colors: [AppColors.primaryLight, p.primary],
+              ),
               borderRadius: BorderRadius.circular(12),
-              boxShadow: const [
+              boxShadow: [
                 BoxShadow(
-                  color: Color(0x1A000000),
+                  color: p.cardShadow,
                   blurRadius: 8,
-                  offset: Offset(0, 2),
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
@@ -448,11 +491,12 @@ class InfoBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F0FF),
+        color: p.selectionTint,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -466,16 +510,16 @@ class InfoBox extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: kTitle,
+                    color: p.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   body,
-                  style: const TextStyle(fontSize: 13, color: kGray),
+                  style: TextStyle(fontSize: 13, color: p.textSecondary),
                 ),
               ],
             ),

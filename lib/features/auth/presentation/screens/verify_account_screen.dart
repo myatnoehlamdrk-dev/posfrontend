@@ -4,6 +4,7 @@ import 'package:posfrontend/features/auth/domain/usecases/verify_account.dart';
 import 'package:posfrontend/features/auth/presentation/viewmodels/verify_account_view_model.dart';
 import 'package:posfrontend/features/auth/presentation/screens/login_screen.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_input_decoration.dart';
 import 'package:posfrontend/shared/widgets/gradient_button.dart';
 import 'package:posfrontend/shared/widgets/required_label.dart';
@@ -64,6 +65,7 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return ListenableBuilder(
       listenable: _viewModel,
       builder: (context, _) {
@@ -71,7 +73,7 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
         final loading = _viewModel.isLoading;
 
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: p.scaffoldBg,
           body: SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
@@ -80,10 +82,10 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
                 children: [
                   _buildHeaderIcon(),
                   const SizedBox(height: 20),
-                  const Text(
+                  Text(
                     'Verify Your Email',
                     style: TextStyle(
-                      color: AppColors.labelColor,
+                      color: p.textPrimary,
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
                     ),
@@ -91,8 +93,8 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
                   const SizedBox(height: 8),
                   Text(
                     'We sent a 6-digit verification code to',
-                    style: const TextStyle(
-                      color: AppColors.hintColor,
+                    style: TextStyle(
+                      color: p.textMuted,
                       fontSize: 14,
                     ),
                     textAlign: TextAlign.center,
@@ -119,6 +121,7 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
                     maxLength: 6,
                     onFieldSubmitted: (_) => _handleVerify(),
                     decoration: appInputDecoration(
+                      context,
                       icon: Icons.pin_outlined,
                       hint: 'Enter 6-digit code',
                       errorText: errors['otp'],
@@ -157,9 +160,9 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
+                      Text(
                         'Already verified?',
-                        style: TextStyle(color: AppColors.hintColor, fontSize: 14),
+                        style: TextStyle(color: p.textMuted, fontSize: 14),
                       ),
                       const SizedBox(width: 6),
                       GestureDetector(

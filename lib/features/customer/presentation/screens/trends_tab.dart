@@ -1,41 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:posfrontend/features/customer/domain/entities/customer.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class TrendsTab extends StatelessWidget {
   final CustomerAnalyticsEntity analytics;
 
   const TrendsTab({super.key, required this.analytics});
 
-  static const Color title = Color(0xFF111827);
-  static const Color gray = Color(0xFF6B7280);
   static const Color purple = Color(0xFF6D28D9);
-  static const Color border = Color(0xFFE5E7EB);
   static const Color teal = Color(0xFF4FD1D9);
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (analytics.monthlyTrends.isNotEmpty) ...[
-            const Text('Sales Trend', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: title)),
+            Text('Sales Trend', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: p.textPrimary)),
             const SizedBox(height: 12),
-            _spendingChart(),
+            _spendingChart(context),
             const SizedBox(height: 24),
           ],
           if (analytics.monthlyTrends.isNotEmpty) ...[
-            const Text('Orders & Customers', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: title)),
+            Text('Orders & Customers', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: p.textPrimary)),
             const SizedBox(height: 12),
-            _ordersCustomersChart(),
+            _ordersCustomersChart(context),
             const SizedBox(height: 24),
           ],
           if (analytics.salesByLocation.isNotEmpty) ...[
-            const Text('Sales by Location', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: title)),
+            Text('Sales by Location', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: p.textPrimary)),
             const SizedBox(height: 12),
-            _locationChart(),
+            _locationChart(context),
             const SizedBox(height: 24),
           ],
           const SizedBox(height: 24),
@@ -44,16 +43,17 @@ class TrendsTab extends StatelessWidget {
     );
   }
 
-  Widget _spendingChart() {
+  Widget _spendingChart(BuildContext context) {
+    final p = context.palette;
     final trends = analytics.monthlyTrends;
     final maxY = trends.map((t) => t.totalSpending).fold<int>(0, (a, b) => a > b ? a : b);
     return Container(
       height: 220,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: p.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: border),
+        border: Border.all(color: p.border),
       ),
       child: BarChart(
         BarChartData(
@@ -67,7 +67,7 @@ class TrendsTab extends StatelessWidget {
                 getTitlesWidget: (value, meta) {
                   final idx = value.toInt();
                   if (idx >= 0 && idx < trends.length) {
-                    return Text(trends[idx].month, style: const TextStyle(fontSize: 10, color: gray));
+                    return Text(trends[idx].month, style: TextStyle(fontSize: 10, color: p.textSecondary));
                   }
                   return const Text('');
                 },
@@ -78,9 +78,9 @@ class TrendsTab extends StatelessWidget {
                 showTitles: true,
                 reservedSize: 50,
                 getTitlesWidget: (value, meta) {
-                  if (value >= 1000000) return Text('${(value / 1000000).toStringAsFixed(1)}M', style: const TextStyle(fontSize: 10, color: gray));
-                  if (value >= 1000) return Text('${(value / 1000).toStringAsFixed(0)}K', style: const TextStyle(fontSize: 10, color: gray));
-                  return Text('${value.toInt()}', style: const TextStyle(fontSize: 10, color: gray));
+                  if (value >= 1000000) return Text('${(value / 1000000).toStringAsFixed(1)}M', style: TextStyle(fontSize: 10, color: p.textSecondary));
+                  if (value >= 1000) return Text('${(value / 1000).toStringAsFixed(0)}K', style: TextStyle(fontSize: 10, color: p.textSecondary));
+                  return Text('${value.toInt()}', style: TextStyle(fontSize: 10, color: p.textSecondary));
                 },
               ),
             ),
@@ -91,7 +91,7 @@ class TrendsTab extends StatelessWidget {
           gridData: FlGridData(
             show: true,
             drawVerticalLine: false,
-            getDrawingHorizontalLine: (value) => FlLine(color: border, strokeWidth: 1),
+            getDrawingHorizontalLine: (value) => FlLine(color: p.border, strokeWidth: 1),
           ),
           barGroups: List.generate(trends.length, (i) {
             return BarChartGroupData(
@@ -111,7 +111,8 @@ class TrendsTab extends StatelessWidget {
     );
   }
 
-  Widget _ordersCustomersChart() {
+  Widget _ordersCustomersChart(BuildContext context) {
+    final p = context.palette;
     final trends = analytics.monthlyTrends;
     final maxOrders = trends.map((t) => t.orderCount).fold<int>(0, (a, b) => a > b ? a : b);
     final maxCustomers = trends.map((t) => t.uniqueCustomers).fold<int>(0, (a, b) => a > b ? a : b);
@@ -121,9 +122,9 @@ class TrendsTab extends StatelessWidget {
       height: 220,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: p.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: border),
+        border: Border.all(color: p.border),
       ),
       child: LineChart(
         LineChartData(
@@ -136,7 +137,7 @@ class TrendsTab extends StatelessWidget {
                 getTitlesWidget: (value, meta) {
                   final idx = value.toInt();
                   if (idx >= 0 && idx < trends.length) {
-                    return Text(trends[idx].month, style: const TextStyle(fontSize: 10, color: gray));
+                    return Text(trends[idx].month, style: TextStyle(fontSize: 10, color: p.textSecondary));
                   }
                   return const Text('');
                 },
@@ -146,7 +147,7 @@ class TrendsTab extends StatelessWidget {
               sideTitles: SideTitles(
                 showTitles: true,
                 reservedSize: 30,
-                getTitlesWidget: (value, meta) => Text('${value.toInt()}', style: const TextStyle(fontSize: 10, color: gray)),
+                getTitlesWidget: (value, meta) => Text('${value.toInt()}', style: TextStyle(fontSize: 10, color: p.textSecondary)),
               ),
             ),
             topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -156,7 +157,7 @@ class TrendsTab extends StatelessWidget {
           gridData: FlGridData(
             show: true,
             drawVerticalLine: false,
-            getDrawingHorizontalLine: (value) => FlLine(color: border, strokeWidth: 1),
+            getDrawingHorizontalLine: (value) => FlLine(color: p.border, strokeWidth: 1),
           ),
           lineBarsData: [
             LineChartBarData(
@@ -179,16 +180,17 @@ class TrendsTab extends StatelessWidget {
     );
   }
 
-  Widget _locationChart() {
+  Widget _locationChart(BuildContext context) {
+    final p = context.palette;
     final locations = analytics.salesByLocation;
     final maxSales = locations.map((l) => l.totalSales).fold<int>(0, (a, b) => a > b ? a : b);
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: p.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: border),
+        border: Border.all(color: p.border),
       ),
       child: Column(
         children: locations.take(8).map((loc) {
@@ -201,11 +203,11 @@ class TrendsTab extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: Text(loc.location, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: title)),
+                      child: Text(loc.location, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: p.textPrimary)),
                     ),
-                    Text('MMK ${loc.totalSales}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: purple)),
+                    Text('MMK ${loc.totalSales}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: purple)),
                     const SizedBox(width: 8),
-                    Text('${loc.percentage}%', style: const TextStyle(fontSize: 12, color: gray)),
+                    Text('${loc.percentage}%', style: TextStyle(fontSize: 12, color: p.textSecondary)),
                   ],
                 ),
                 const SizedBox(height: 6),
@@ -214,7 +216,7 @@ class TrendsTab extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: fraction,
                     backgroundColor: purple.withValues(alpha: 0.1),
-                    valueColor: const AlwaysStoppedAnimation(purple),
+                    valueColor: AlwaysStoppedAnimation(purple),
                     minHeight: 8,
                   ),
                 ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:posfrontend/features/profile/presentation/screens/profile_screen.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
 
@@ -29,6 +30,7 @@ class AppTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return Row(
       children: [
         if (showMenuButton)
@@ -52,17 +54,17 @@ class AppTopBar extends StatelessWidget {
             title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF111827),
+              color: p.textPrimary,
             ),
           ),
         ),
         Stack(
           children: [
             IconButton(
-              icon: const Icon(Icons.notifications_none_outlined, color: Color(0xFF111827)),
+              icon: Icon(Icons.notifications_none_outlined, color: p.textPrimary),
               onPressed: () {},
             ),
             Positioned(

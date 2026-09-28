@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/features/customer/presentation/viewmodels/customer_view_model.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'overview_tab.dart';
 import 'customers_tab.dart';
@@ -17,9 +18,7 @@ class _CustomerScreenState extends State<CustomerScreen>
   late final CustomerViewModel _viewModel;
   late final TabController _tabController;
 
-  static const Color bg = Color(0xFFFFFFFF);
   static const Color purple = Color(0xFF6D28D9);
-  static const Color gray = Color(0xFF6B7280);
 
   @override
   void initState() {
@@ -38,21 +37,23 @@ class _CustomerScreenState extends State<CustomerScreen>
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return LayoutBuilder(
       builder: (ctx, constraints) {
         final isWide = constraints.maxWidth >= 768;
         final body = _buildContent(isWide: isWide);
 
         if (isWide) {
-          return Scaffold(backgroundColor: bg, body: body);
+          return Scaffold(backgroundColor: p.surface, body: body);
         }
 
-        return Scaffold(backgroundColor: bg, body: body);
+        return Scaffold(backgroundColor: p.surface, body: body);
       },
     );
   }
 
   Widget _buildContent({required bool isWide}) {
+    final p = context.palette;
     return SafeArea(
       child: ListenableBuilder(
         listenable: _viewModel,
@@ -71,7 +72,7 @@ class _CustomerScreenState extends State<CustomerScreen>
                   const SizedBox(height: 12),
                   Text(
                     _viewModel.errorMessage ?? 'Failed to load',
-                    style: const TextStyle(color: gray),
+                    style: TextStyle(color: p.textSecondary),
                   ),
                   const SizedBox(height: 12),
                   ElevatedButton(
@@ -91,13 +92,13 @@ class _CustomerScreenState extends State<CustomerScreen>
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 24),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF3F4F6),
+                  color: p.chipBg,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: TabBar(
                   controller: _tabController,
                   labelColor: Colors.white,
-                  unselectedLabelColor: gray,
+                  unselectedLabelColor: p.textSecondary,
                   indicator: BoxDecoration(
                     color: purple,
                     borderRadius: BorderRadius.circular(10),

@@ -9,6 +9,7 @@ import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/filter_tabs.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class PurchaseItemsScreen extends StatefulWidget {
   const PurchaseItemsScreen({super.key});
@@ -39,8 +40,9 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FC),
+      backgroundColor: p.scaffoldBg,
       drawer: const AppDrawer(activeItem: 'Purchase Item'),
       floatingActionButton: FloatingActionButton(
         onPressed: _showNewPurchaseSheet,
@@ -55,7 +57,7 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
             Expanded(
               child: ListenableBuilder(
                 listenable: _viewModel,
-                builder: (context, _) => _buildBody(),
+                builder: (context, _) => _buildBody(context),
               ),
             ),
           ],
@@ -64,7 +66,8 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(BuildContext context) {
+    final p = context.palette;
     if (_viewModel.isLoading && _viewModel.purchaseItems.isEmpty) {
       return const Center(child: CircularProgressIndicator(color: AppColors.teal));
     }
@@ -75,7 +78,7 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
           children: [
             const Icon(Icons.error_outline, color: Colors.red, size: 48),
             const SizedBox(height: 12),
-            Text(_viewModel.errorMessage!, style: const TextStyle(color: AppColors.gray)),
+            Text(_viewModel.errorMessage!, style: TextStyle(color: p.textSecondary)),
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: () => _viewModel.loadPurchaseItems(refresh: true),
@@ -103,9 +106,9 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'Manage purchase orders from your suppliers',
-                style: TextStyle(fontSize: 13, color: AppColors.gray),
+                style: TextStyle(fontSize: 13, color: p.textSecondary),
               ),
               const SizedBox(height: 16),
               FilterTabs(
@@ -118,7 +121,7 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                 onTabChanged: (i) => setState(() => _selectedTab = i),
               ),
               const SizedBox(height: 16),
-              ..._filteredOrders.map((order) => _buildOrderCard(order)),
+              ..._filteredOrders.map((order) => _buildOrderCard(context, order)),
               if (_viewModel.isLoading && _viewModel.purchaseItems.isNotEmpty)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
@@ -127,12 +130,12 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                   ),
                 ),
               if (!_viewModel.hasMore && _viewModel.purchaseItems.isNotEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   child: Center(
                     child: Text(
                       'No more items',
-                      style: TextStyle(color: AppColors.gray, fontSize: 13),
+                      style: TextStyle(color: p.textSecondary, fontSize: 13),
                     ),
                   ),
                 ),
@@ -154,7 +157,8 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
     return list;
   }
 
-  Widget _buildOrderCard(PurchaseOrder order) {
+  Widget _buildOrderCard(BuildContext context, PurchaseOrder order) {
+    final p = context.palette;
     final isCompleted = order.status == PurchaseStatus.completed;
     return GestureDetector(
       onTap: () => Navigator.of(context).push(
@@ -166,10 +170,10 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: p.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, 2)),
+            BoxShadow(color: p.cardShadow, blurRadius: 8, offset: const Offset(0, 2)),
           ],
         ),
         child: Column(
@@ -181,10 +185,10 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF3F4F6),
+                    color: p.chipBg,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(Icons.inventory_2_outlined, color: AppColors.gray, size: 24),
+                  child: Icon(Icons.inventory_2_outlined, color: p.textSecondary, size: 24),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -193,12 +197,12 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                     children: [
                       Text(
                         'Order #${order.orderId}',
-                        style: const TextStyle(fontSize: 12, color: AppColors.gray, fontWeight: FontWeight.w500),
+                        style: TextStyle(fontSize: 12, color: p.textSecondary, fontWeight: FontWeight.w500),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         order.productName,
-                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.titleColor),
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: p.textPrimary),
                       ),
                     ],
                   ),
@@ -206,7 +210,7 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: isCompleted ? AppColors.greenBg : AppColors.orangeBg,
+                    color: isCompleted ? p.successBg : p.warningBg,
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -217,38 +221,38 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
               ],
             ),
             const SizedBox(height: 10),
-            const Divider(color: AppColors.border, height: 1),
+            Divider(color: p.border, height: 1),
             const SizedBox(height: 10),
             if (order.createdBy.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(bottom: 6),
                 child: Text(
                   'by ${order.createdBy}',
-                  style: const TextStyle(fontSize: 11, color: AppColors.gray, fontStyle: FontStyle.italic),
+                  style: TextStyle(fontSize: 11, color: p.textSecondary, fontStyle: FontStyle.italic),
                 ),
               ),
             Row(
               children: [
-                const Icon(Icons.business_outlined, size: 14, color: AppColors.gray),
+                Icon(Icons.business_outlined, size: 14, color: p.textSecondary),
                 const SizedBox(width: 4),
-                Text(order.supplierName, style: const TextStyle(fontSize: 12, color: AppColors.gray)),
+                Text(order.supplierName, style: TextStyle(fontSize: 12, color: p.textSecondary)),
                 const Spacer(),
                 Text(
                   'x${order.quantity}',
-                  style: const TextStyle(fontSize: 12, color: AppColors.gray, fontWeight: FontWeight.w500),
+                  style: TextStyle(fontSize: 12, color: p.textSecondary, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(width: 4),
-                const Text('@', style: TextStyle(fontSize: 12, color: AppColors.gray)),
+                Text('@', style: TextStyle(fontSize: 12, color: p.textSecondary)),
                 const SizedBox(width: 4),
-                PriceText(order.unitPrice.toDouble(), maxLength: 12, style: const TextStyle(fontSize: 12, color: AppColors.gray)),
+                PriceText(order.unitPrice.toDouble(), maxLength: 12, style: TextStyle(fontSize: 12, color: p.textSecondary)),
               ],
             ),
             const SizedBox(height: 6),
             Row(
               children: [
-                const Icon(Icons.calendar_today_outlined, size: 12, color: AppColors.gray),
+                Icon(Icons.calendar_today_outlined, size: 12, color: p.textSecondary),
                 const SizedBox(width: 4),
-                Text(order.date, style: const TextStyle(fontSize: 11, color: AppColors.gray)),
+                Text(order.date, style: TextStyle(fontSize: 11, color: p.textSecondary)),
                 const Spacer(),
                 if (!isCompleted)
                   GestureDetector(
@@ -256,7 +260,7 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.greenBg,
+                        color: p.successBg,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: const Text('Mark Completed', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.green)),

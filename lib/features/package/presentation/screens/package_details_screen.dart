@@ -9,6 +9,7 @@ import 'package:posfrontend/features/product/data/repositories/product_repositor
 import 'package:posfrontend/features/package/presentation/screens/assign_product_to_package_screen.dart';
 import 'package:posfrontend/features/product/presentation/screens/product_detail_screen.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
@@ -128,7 +129,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
 
             if (isWide) {
               return Scaffold(
-                backgroundColor: Colors.white,
+                backgroundColor: context.palette.surface,
                 floatingActionButton: FloatingActionButton.extended(
                   onPressed: _openAddProduct,
                   backgroundColor: const Color(0xFF4FD1D9),
@@ -142,7 +143,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
               );
             }
             return Scaffold(
-              backgroundColor: Colors.white,
+              backgroundColor: context.palette.surface,
               floatingActionButton: FloatingActionButton.extended(
                 onPressed: _openAddProduct,
                 backgroundColor: const Color(0xFF4FD1D9),
@@ -163,6 +164,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
   Widget _content() {
     final p = widget.package;
     final c = widget.category;
+    final pal = context.palette;
 
     if (_viewModel.isLoading) {
       return const Center(
@@ -222,12 +224,12 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                       _productsHeader(),
                       const SizedBox(height: 12),
                       if (products.isEmpty)
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 24),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 24),
                           child: Center(
                             child: Text(
                               'No products found.',
-                              style: TextStyle(color: kGray),
+                              style: TextStyle(color: pal.textSecondary),
                             ),
                           ),
                         )
@@ -254,17 +256,18 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
   }
 
   Widget _summaryCard(PackageEntity p, Category c) {
+    final pal = context.palette;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: pal.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: kBorder),
-        boxShadow: const [
+        border: Border.all(color: pal.border),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x0D000000),
+            color: pal.cardShadow,
             blurRadius: 10,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -319,7 +322,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF3E8FF),
+                            color: pal.selectionTint,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -354,16 +357,16 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                     const SizedBox(height: 12),
                     Text(
                       p.name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
-                        color: kTitle,
+                        color: pal.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       p.spec,
-                      style: const TextStyle(fontSize: 14, color: kGray),
+                      style: TextStyle(fontSize: 14, color: pal.textSecondary),
                     ),
                   ],
                 ),
@@ -378,12 +381,13 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
   }
 
   Widget _infoBlock(IconData icon, String label, String value) {
+    final p = context.palette;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FC),
+        color: p.surfaceAlt,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: kBorder),
+        border: Border.all(color: p.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -397,7 +401,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 11, color: kGray),
+                  style: TextStyle(fontSize: 11, color: p.textSecondary),
                 ),
               ),
             ],
@@ -407,10 +411,10 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
             value,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: kTitle,
+              color: p.textPrimary,
             ),
           ),
         ],
@@ -460,18 +464,19 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
   }
 
   Widget _stockSection(PackageEntity p) {
+    final pal = context.palette;
     final color = stockFg(p.status);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: pal.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: kBorder),
-        boxShadow: const [
+        border: Border.all(color: pal.border),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x0D000000),
+            color: pal.cardShadow,
             blurRadius: 10,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -482,12 +487,12 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
             children: [
               const Icon(Icons.info_outline, color: kPurple, size: 18),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 'Stock Status',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: kTitle,
+                  color: pal.textPrimary,
                 ),
               ),
               const Spacer(),
@@ -518,7 +523,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                 child: LinearProgressIndicator(
                   value: _viewModel.stockPct / 100,
                   minHeight: 8,
-                  backgroundColor: const Color(0xFFE5E7EB),
+                  backgroundColor: pal.border,
                   valueColor: AlwaysStoppedAnimation(color),
                 ),
               ),
@@ -539,6 +544,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
   }
 
   Widget _productsHeader() {
+    final p = context.palette;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -547,10 +553,10 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
             Expanded(
               child: Text(
                 'Products in this Package (${_viewModel.totalUnits})',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: kTitle,
+                  color: p.textPrimary,
                 ),
               ),
             ),
@@ -558,12 +564,12 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
               height: 44,
               width: 44,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: p.surface,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: kBorder),
+                border: Border.all(color: p.border),
               ),
               child: IconButton(
-                icon: const Icon(Icons.search, color: kTitle),
+                icon: Icon(Icons.search, color: p.textPrimary),
                 onPressed: () {},
               ),
             ),
@@ -572,12 +578,12 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
               height: 44,
               width: 44,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: p.surface,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: kBorder),
+                border: Border.all(color: p.border),
               ),
               child: IconButton(
-                icon: const Icon(Icons.filter_list, color: kTitle),
+                icon: Icon(Icons.filter_list, color: p.textPrimary),
                 onPressed: () {},
               ),
             ),

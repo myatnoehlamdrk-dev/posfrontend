@@ -262,11 +262,11 @@ class ProfileViewModel extends BaseViewModel with FormValidationMixin {
         confirmPassword: confirmPassword,
       );
       return true;
-    } on ApiException catch (e) {
+    } on ApiException catch (_) {
       setFieldError('currentPassword', 'Current password is wrong');
       notifyListeners();
       return false;
-    } catch (e) {
+    } catch (_) {
       setFieldError('currentPassword', 'Current password is wrong');
       notifyListeners();
       return false;

@@ -117,7 +117,11 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
   }
 
   List<CatalogProductView> _parseProducts(Object? data) {
-    final items = data is Map ? (data['data'] ?? []) : (data as List? ?? []);
+    final Iterable<dynamic> raw = data is Map
+        ? (data['data'] ?? const [])
+        : (data as List? ?? const []);
+    final items = <dynamic>[];
+    items.addAll(raw);
     return items.map((json) {
       final p = json as Map<String, dynamic>;
       final variants = (p['variants'] as List? ?? const [])

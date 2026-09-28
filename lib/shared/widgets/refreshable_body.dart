@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class RefreshableBody extends StatelessWidget {
   final Future<void> Function() onRefresh;
@@ -14,10 +15,11 @@ class RefreshableBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return RefreshIndicator(
       onRefresh: onRefresh,
-      color: const Color(0xFF2D1B69),
-      backgroundColor: Colors.white,
+      color: p.primary,
+      backgroundColor: p.surface,
       child: SingleChildScrollView(
         controller: scrollController,
         physics: const AlwaysScrollableScrollPhysics(),

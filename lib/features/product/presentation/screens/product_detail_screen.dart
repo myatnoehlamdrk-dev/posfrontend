@@ -64,20 +64,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           showBackButton: true,
           showMenuButton: false,
         ),
-        Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Breadcrumb([
-                BreadcrumbItem('Dashboard', false),
-                BreadcrumbItem('Inventory', false),
-                BreadcrumbItem('Products', false),
-                BreadcrumbItem('Detail', true),
-              ]),
-            ],
-          ),
-        ),
         Expanded(
           child: RefreshableBody(
             onRefresh: _viewModel.load,

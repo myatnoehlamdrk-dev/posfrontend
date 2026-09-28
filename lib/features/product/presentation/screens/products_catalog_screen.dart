@@ -14,6 +14,7 @@ import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 import 'package:posfrontend/features/product/presentation/widgets/category_showcase_data.dart';
 import 'package:posfrontend/features/product/presentation/widgets/category_showcase_grid.dart';
 import 'package:posfrontend/features/product/presentation/widgets/category_skeleton.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class ProductsCatalogScreen extends StatefulWidget {
   const ProductsCatalogScreen({super.key});
@@ -32,10 +33,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
   bool _hotPaused = false;
   bool _isSearchOpen = false;
   bool _disposed = false;
-  static const Color bg = Color(0xFFF8F9FC);
-  static const Color gray = Color(0xFF6B7280);
   static const Color purple = Color(0xFF6D28D9);
-  static const Color titleColor = Color(0xFF111827);
 
   @override
   void initState() {
@@ -127,7 +125,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
 
               if (isWide) {
                 return Scaffold(
-                  backgroundColor: bg,
+                  backgroundColor: context.palette.scaffoldBg,
                   floatingActionButton: FloatingActionButton(
                     onPressed: () => setState(() => _isSearchOpen = !_isSearchOpen),
                     backgroundColor: purple,
@@ -152,7 +150,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
               }
               return Scaffold(
                 key: _scaffoldKey,
-                backgroundColor: bg,
+                backgroundColor: context.palette.scaffoldBg,
                 floatingActionButton: FloatingActionButton(
                   onPressed: () => setState(() => _isSearchOpen = !_isSearchOpen),
                   backgroundColor: purple,
@@ -362,26 +360,26 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                     p.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: titleColor),
+                        color: context.palette.textPrimary),
                   ),
                   if (p.brand.isNotEmpty)
                     Text(
                       p.brand,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 12, color: gray),
+                      style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                     ),
                   Text(
                     'Stock: ${p.stock}',
-                    style: const TextStyle(fontSize: 12, color: gray),
+                    style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: gray),
+            Icon(Icons.chevron_right_rounded, color: context.palette.textSecondary),
           ],
         ),
       ),
@@ -462,7 +460,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: IconButton(
-        icon: Icon(icon, color: titleColor, size: 20),
+        icon: Icon(icon, color: context.palette.textPrimary, size: 20),
         onPressed: onTap,
         padding: EdgeInsets.zero,
       ),
@@ -476,8 +474,8 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
       style: const TextStyle(fontSize: 13),
       decoration: InputDecoration(
         hintText: 'Search...',
-        hintStyle: const TextStyle(color: gray, fontSize: 13),
-        prefixIcon: const Icon(Icons.search, color: gray, size: 18),
+        hintStyle: TextStyle(color: context.palette.textSecondary, fontSize: 13),
+        prefixIcon: Icon(Icons.search, color: context.palette.textSecondary, size: 18),
         isDense: true,
         filled: true,
         fillColor: Colors.white,

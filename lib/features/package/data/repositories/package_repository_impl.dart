@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:posfrontend/features/package/data/datasources/package_remote_data_source.dart';
-import 'package:posfrontend/features/package/data/models/package_api_model.dart';
 import 'package:posfrontend/features/package/domain/entities/package.dart';
 import 'package:posfrontend/features/package/domain/repositories/package_repository.dart';
 

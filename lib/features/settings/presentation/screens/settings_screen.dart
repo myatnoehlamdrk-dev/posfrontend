@@ -1,7 +1,12 @@
-import 'package:flutter/material.dart' hide ThemeMode;
+// No `hide ThemeMode` any more: the feature's own enum is `AppThemeMode`, so
+// there was never a collision to dodge, and hiding it only hid Flutter's.
+import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:posfrontend/core/auth/token_storage.dart';
 import 'package:posfrontend/core/network/api_client.dart';
+import 'package:posfrontend/shared/theme/app_palette.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
+import 'package:posfrontend/shared/theme/theme_mode_notifier.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
@@ -25,13 +30,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late final SettingsViewModel _viewModel;
   bool _isLoggingOut = false;
 
-  static const Color titleColor = Color(0xFF111827);
-  static const Color gray = Color(0xFF6B7280);
-  static const Color border = Color(0xFFE5E7EB);
-  static const Color sectionGray = Color(0xFF9CA3AF);
+  // Orange and red are mid-tone brand accents that read correctly on both
+  // light and dark surfaces, so they stay const. The neutrals have to track
+  // brightness and therefore resolve from the active theme.
   static const Color orange = Color(0xFFF97316);
-  static const Color cardBg = Color(0xFFF3F4F6);
   static const Color red = Color(0xFFEF4444);
+
+  AppPalette get _p => context.palette;
+  Color get titleColor => _p.textPrimary;
+  Color get gray => _p.textSecondary;
+  Color get border => _p.border;
+  Color get sectionGray => _p.textMuted;
+  Color get cardBg => _p.chipBg;
 
   String _userName(BuildContext context) {
     final user = AuthScope.userOf(context);
@@ -63,7 +73,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: Colors.white,
+      backgroundColor: context.palette.surface,
       drawer: const AppDrawer(activeItem: 'Setting'),
       body: SafeArea(
         child: Column(
@@ -135,7 +145,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _sectionHeader(String title) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 12,
         fontWeight: FontWeight.bold,
         color: sectionGray,
@@ -150,12 +160,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.palette.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: border),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: context.palette.cardShadow,
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -168,8 +178,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               backgroundColor: orange,
               child: Text(
                 _initial(_userName(context)),
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: context.palette.surface,
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
                 ),
@@ -184,7 +194,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _userName(context),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: titleColor,
@@ -195,7 +205,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _email(context),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       color: gray,
                     ),
@@ -203,7 +213,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: gray, size: 24),
+            Icon(Icons.chevron_right, color: gray, size: 24),
           ],
         ),
       ),
@@ -211,28 +221,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildAppearanceCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return _settingsCard(
-      child: Row(
+      child: Column(
         children: [
-          const Icon(Icons.wb_sunny_outlined, color: titleColor, size: 22),
-          const SizedBox(width: 14),
-          const Expanded(
-            child: Text(
-              'Light Mode',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: titleColor,
-              ),
+          _settingsRow(
+            icon: isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
+            label: 'Dark Mode',
+            trailing: Switch(
+              // No explicit thumb/track colours: the theme's switchTheme already
+              // resolves them per brightness, and a hardcoded white thumb is
+              // invisible on a light track. This is the control the user reaches
+              // for to change the theme, so it has to read in both modes.
+              value: isDark,
+              onChanged: (_) => _viewModel.toggleTheme(),
             ),
+            onTap: () => _viewModel.toggleTheme(),
           ),
-          Switch(
-            value: _viewModel.themeMode == AppThemeMode.dark,
-            onChanged: (_) => _viewModel.toggleTheme(),
-            activeThumbColor: Colors.white,
-            activeTrackColor: orange,
-            inactiveThumbColor: Colors.white,
-            inactiveTrackColor: gray,
+          Divider(height: 1, color: border),
+          _settingsRow(
+            icon: Icons.brightness_auto_outlined,
+            label: 'Match System',
+            trailing: Switch(
+              value: ThemeModeNotifier.instance.value == ThemeMode.system,
+              onChanged: (v) =>
+                  _viewModel.setSystemTheme(enabled: v),
+            ),
+            onTap: () => _viewModel.setSystemTheme(
+              enabled: ThemeModeNotifier.instance.value != ThemeMode.system,
+            ),
           ),
         ],
       ),
@@ -249,10 +266,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             Text(
               _viewModel.language,
-              style: const TextStyle(fontSize: 14, color: gray),
+              style: TextStyle(fontSize: 14, color: gray),
             ),
             const SizedBox(width: 4),
-            const Icon(Icons.chevron_right, color: gray, size: 24),
+            Icon(Icons.chevron_right, color: gray, size: 24),
           ],
         ),
         onTap: _showLanguageSheet,
@@ -270,10 +287,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             Text(
               _viewModel.shopTypeLabel(_viewModel.shopType),
-              style: const TextStyle(fontSize: 14, color: gray),
+              style: TextStyle(fontSize: 14, color: gray),
             ),
             const SizedBox(width: 4),
-            const Icon(Icons.chevron_right, color: gray, size: 24),
+            Icon(Icons.chevron_right, color: gray, size: 24),
           ],
         ),
         onTap: _showShopTypeModal,
@@ -293,9 +310,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             Row(
               children: [
-                const Icon(Icons.image_outlined, color: titleColor, size: 22),
+                Icon(Icons.image_outlined, color: titleColor, size: 22),
                 const SizedBox(width: 14),
-                const Expanded(
+                Expanded(
                   child: Text(
                     'Shop Image',
                     style: TextStyle(
@@ -378,14 +395,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _settingsRow(
             icon: Icons.feedback_outlined,
             label: 'Feedback',
-            trailing: const Icon(Icons.chevron_right, color: gray, size: 24),
+            trailing: Icon(Icons.chevron_right, color: gray, size: 24),
             onTap: _showFeedbackForm,
           ),
-          const Divider(height: 1, color: border),
+          Divider(height: 1, color: border),
           _settingsRow(
             icon: Icons.star_outline,
             label: 'Rate App',
-            trailing: const Icon(Icons.chevron_right, color: gray, size: 24),
+            trailing: Icon(Icons.chevron_right, color: gray, size: 24),
             onTap: _rateApp,
           ),
         ],
@@ -400,21 +417,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _settingsRow(
             icon: Icons.info_outline,
             label: 'About',
-            trailing: const Icon(Icons.chevron_right, color: gray, size: 24),
+            trailing: Icon(Icons.chevron_right, color: gray, size: 24),
             onTap: _showAboutDialog,
           ),
-          const Divider(height: 1, color: border),
+          Divider(height: 1, color: border),
           _settingsRow(
             icon: Icons.privacy_tip_outlined,
             label: 'Privacy Policy',
-            trailing: const Icon(Icons.chevron_right, color: gray, size: 24),
+            trailing: Icon(Icons.chevron_right, color: gray, size: 24),
             onTap: _showPrivacyPolicy,
           ),
-          const Divider(height: 1, color: border),
+          Divider(height: 1, color: border),
           _settingsRow(
             icon: Icons.description_outlined,
             label: 'Terms of Service',
-            trailing: const Icon(Icons.chevron_right, color: gray, size: 24),
+            trailing: Icon(Icons.chevron_right, color: gray, size: 24),
             onTap: _showTermsOfService,
           ),
         ],
@@ -429,11 +446,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.palette.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: red.withValues(alpha: 0.3)),
           ),
-          child: const Text(
+          child: Text(
             'Logout',
             style: TextStyle(
               color: red,
@@ -454,7 +471,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         border: Border.all(color: border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: context.palette.cardShadow,
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -482,7 +499,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Expanded(
               child: Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
                   color: titleColor,
@@ -510,7 +527,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Select Language',
                 style: TextStyle(
                   fontSize: 18,
@@ -530,7 +547,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                   trailing: selected
-                      ? const Icon(Icons.check, color: orange)
+                      ? Icon(Icons.check, color: orange)
                       : null,
                   onTap: () {
                     _viewModel.setLanguage(lang);
@@ -569,7 +586,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       width: 340,
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: context.palette.surface,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Column(
@@ -579,7 +596,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
+                              Text(
                                 'Shop Type',
                                 style: TextStyle(
                                   fontSize: 18,
@@ -589,7 +606,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                               GestureDetector(
                                 onTap: () => Navigator.pop(ctx),
-                                child: const Icon(Icons.close, color: gray),
+                                child: Icon(Icons.close, color: gray),
                               ),
                             ],
                           ),
@@ -687,7 +704,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
-              title: const Text(
+              title: Text(
                 'Feedback',
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
@@ -701,7 +718,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Type',
                         style: TextStyle(
                           fontSize: 13,
@@ -734,7 +751,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         maxLines: 5,
                         decoration: InputDecoration(
                           hintText: 'Write your feedback...',
-                          hintStyle: const TextStyle(color: gray),
+                          hintStyle: TextStyle(color: gray),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -751,7 +768,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Cancel', style: TextStyle(color: gray)),
+                  child: Text('Cancel', style: TextStyle(color: gray)),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -765,7 +782,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: const Text('Submit'),
+                  child: Text('Submit'),
                 ),
               ],
             );
@@ -787,7 +804,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: const Text(
+          title: Text(
             'About',
             style: TextStyle(fontWeight: FontWeight.w600, color: titleColor),
           ),
@@ -805,7 +822,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('OK', style: TextStyle(color: orange)),
+              child: Text('OK', style: TextStyle(color: orange)),
             ),
           ],
         );
@@ -817,8 +834,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(color: gray, fontSize: 14)),
-        Text(value, style: const TextStyle(color: titleColor, fontSize: 14, fontWeight: FontWeight.w500)),
+        Text(label, style: TextStyle(color: gray, fontSize: 14)),
+        Text(value, style: TextStyle(color: titleColor, fontSize: 14, fontWeight: FontWeight.w500)),
       ],
     );
   }
@@ -843,12 +860,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           builder: (ctx, setDialogState) {
             return AlertDialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              title: const Text('Logout', style: TextStyle(fontWeight: FontWeight.w600, color: titleColor)),
-              content: const Text('Are you sure you want to logout?', style: TextStyle(color: gray)),
+              title: Text('Logout', style: TextStyle(fontWeight: FontWeight.w600, color: titleColor)),
+              content: Text('Are you sure you want to logout?', style: TextStyle(color: gray)),
               actions: [
                 TextButton(
                   onPressed: _isLoggingOut ? null : () => Navigator.pop(ctx),
-                  child: const Text('Cancel', style: TextStyle(color: gray)),
+                  child: Text('Cancel', style: TextStyle(color: gray)),
                 ),
                 ElevatedButton(
                   onPressed: _isLoggingOut
@@ -875,15 +892,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                   child: _isLoggingOut
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 16,
                           height: 16,
                           child: CircularProgressIndicator(
-                            color: Colors.white,
+                            color: context.palette.surface,
                             strokeWidth: 2,
                           ),
                         )
-                      : const Text('Logout'),
+                      : Text('Logout'),
                 ),
               ],
             );

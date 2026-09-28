@@ -8,6 +8,7 @@ import 'package:posfrontend/features/auth/data/models/login_response.dart';
 import 'package:posfrontend/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:posfrontend/features/shop/presentation/screens/shop_screen.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_input_decoration.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/shop_scope.dart';
@@ -72,13 +73,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return ListenableBuilder(
       listenable: _viewModel,
       builder: (context, _) {
         final errors = _viewModel.fieldErrors;
         final loading = _viewModel.isLoading;
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: p.scaffoldBg,
           body: SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
@@ -89,19 +91,19 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     _buildHeaderIcon(),
                     const SizedBox(height: 20),
-                    const Text(
+                    Text(
                       'Welcome Back!',
                       style: TextStyle(
-                        color: AppColors.labelColor,
+                        color: p.textPrimary,
                         fontSize: 26,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       'Please login to your account',
                       style: TextStyle(
-                        color: AppColors.hintColor,
+                        color: p.textMuted,
                         fontSize: 14,
                       ),
                     ),
@@ -115,6 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
                       decoration: appInputDecoration(
+                        context,
                         icon: Icons.email_outlined,
                         hint: 'Enter your email',
                         errorText: errors['email'],
@@ -131,6 +134,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       textInputAction: TextInputAction.done,
                       onFieldSubmitted: (_) => _submit(),
                       decoration: appInputDecoration(
+                        context,
                         icon: Icons.lock_outline,
                         hint: 'Enter your password',
                         errorText: errors['password'],
@@ -144,7 +148,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             _obscurePassword
                                 ? Icons.visibility_outlined
                                 : Icons.visibility_off_outlined,
-                            color: AppColors.hintColor,
+                            color: p.textMuted,
                           ),
                         ),
                       ),
@@ -243,28 +247,30 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildDivider() {
+    final p = context.palette;
     return Row(
-      children: const [
-        Expanded(child: Divider(color: AppColors.borderColor)),
+      children: [
+        Expanded(child: Divider(color: p.border)),
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(
             'OR',
-            style: TextStyle(color: AppColors.hintColor, fontSize: 13),
+            style: TextStyle(color: p.textMuted, fontSize: 13),
           ),
         ),
-        Expanded(child: Divider(color: AppColors.borderColor)),
+        Expanded(child: Divider(color: p.border)),
       ],
     );
   }
 
   Widget _buildRegisterPrompt() {
+    final p = context.palette;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text(
+        Text(
           "Don't have an account?",
-          style: TextStyle(color: AppColors.hintColor, fontSize: 14),
+          style: TextStyle(color: p.textMuted, fontSize: 14),
         ),
         const SizedBox(width: 6),
         GestureDetector(

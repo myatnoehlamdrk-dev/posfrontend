@@ -7,6 +7,8 @@ import 'package:posfrontend/core/network/app_exceptions.dart';
 import 'package:posfrontend/features/product/data/models/product_create_models.dart';
 import 'package:posfrontend/features/product/data/repositories/product_create_repository_impl.dart';
 import 'package:posfrontend/shared/repositories/imgbb_repository_impl.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
@@ -14,7 +16,6 @@ import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 const Color kPurple700 = Color(0xFF7C3AED);
 const Color kPurple600 = Color(0xFF6D28D9);
 const Color kPurple900 = Color(0xFF5B21B6);
-const Color kLightPurple = Color(0xFFF5F0FF);
 
 class QuickAddProductScreen extends StatefulWidget {
   const QuickAddProductScreen({super.key});
@@ -51,6 +52,7 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
+        final p = ctx.palette;
         return SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -60,7 +62,7 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: kBorder,
+                  color: p.border,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -120,9 +122,10 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
     String label,
     ImageSource source,
   ) {
+    final p = ctx.palette;
     return ListTile(
       leading: Icon(icon, color: kPurple700),
-      title: Text(label, style: const TextStyle(fontSize: 15, color: kTitle)),
+      title: Text(label, style: TextStyle(fontSize: 15, color: p.textPrimary)),
       onTap: () => Navigator.pop(ctx, source),
     );
   }
@@ -172,8 +175,9 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FC),
+      backgroundColor: p.scaffoldBg,
       body: SafeArea(
         child: Column(
           children: [
@@ -237,6 +241,7 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
   }
 
   Widget _imageSection() {
+    final p = context.palette;
     final hasPreview = _imageFile != null;
     return GestureDetector(
       onTap: _uploading ? null : _pickImage,
@@ -261,12 +266,12 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
             : _uploading
             ? const CircularProgressIndicator(color: kPurple700)
             : Column(
-                children: const [
-                  Icon(Icons.add_a_photo_outlined, size: 42, color: kPurple700),
-                  SizedBox(height: 10),
+                children: [
+                  const Icon(Icons.add_a_photo_outlined, size: 42, color: kPurple700),
+                  const SizedBox(height: 10),
                   Text(
                     'Take a photo or choose an image',
-                    style: TextStyle(fontSize: 14, color: kGray),
+                    style: TextStyle(fontSize: 14, color: p.textSecondary),
                   ),
                 ],
               ),
@@ -282,6 +287,7 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
     bool number = false,
     bool decimal = false,
   }) {
+    final p = context.palette;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -289,10 +295,10 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
           children: [
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: kTitle,
+                color: p.textPrimary,
               ),
             ),
             if (req)
@@ -309,20 +315,20 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
               : TextInputType.text,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: kGray, fontSize: 14),
+            hintStyle: TextStyle(color: p.textSecondary, fontSize: 14),
             filled: true,
-            fillColor: kBg,
+            fillColor: p.surface,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
               vertical: 12,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: kBorder),
+              borderSide: BorderSide(color: p.border),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: kBorder),
+              borderSide: BorderSide(color: p.border),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -335,23 +341,30 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
   }
 
   Widget _submitButton() {
+    final p = context.palette;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: p.surface,
         boxShadow: [
           BoxShadow(
-            color: Color(0x0D000000),
+            color: p.cardShadow,
             blurRadius: 8,
-            offset: Offset(0, -2),
+            offset: const Offset(0, -2),
           ),
         ],
       ),
       child: Container(
         height: 52,
         decoration: BoxDecoration(
-          gradient: _saving ? null : kPurpleGradient,
-          color: _saving ? kGray : null,
+          gradient: _saving
+              ? null
+              : LinearGradient(
+                  colors: [AppColors.primaryLight, p.primary],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+          color: _saving ? p.textMuted : null,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Material(

@@ -1,5 +1,4 @@
 import 'package:posfrontend/core/base/use_case.dart';
-import 'package:posfrontend/features/product/domain/entities/product.dart';
 import 'package:posfrontend/features/product/domain/repositories/product_repository.dart';
 
 class GetProductsUseCase extends UseCase<Map<String, dynamic>, GetProductsParams> {

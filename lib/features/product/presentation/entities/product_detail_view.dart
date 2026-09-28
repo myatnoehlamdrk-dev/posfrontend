@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:posfrontend/core/extensions/map_json_extensions.dart';
 
 class ProductVariantDetail {

@@ -6,6 +6,7 @@ import 'package:posfrontend/features/category/presentation/screens/add_category_
 import 'package:posfrontend/features/category/presentation/viewmodels/category_view_model.dart';
 import 'package:posfrontend/features/inventory/domain/repositories/inventory_repository.dart';
 import 'package:posfrontend/features/package/presentation/screens/package_screen.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/error_snackbar.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
@@ -22,11 +23,7 @@ class CategoryScreen extends StatefulWidget {
 class _CategoryScreenState extends State<CategoryScreen> {
   late final CategoryViewModel _viewModel;
 
-  static const Color bg = Color(0xFFFFFFFF);
-  static const Color title = Color(0xFF111827);
-  static const Color gray = Color(0xFF6B7280);
   static const Color purple = Color(0xFF6D28D9);
-  static const Color border = Color(0xFFE5E7EB);
 
   String get _inventoryLabel {
     switch (widget.inventoryType) {
@@ -132,6 +129,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return LayoutBuilder(
       builder: (ctx, constraints) {
         final isWide = constraints.maxWidth >= 768;
@@ -139,7 +137,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
         if (isWide) {
           return Scaffold(
-            backgroundColor: bg,
+            backgroundColor: p.surface,
             floatingActionButton: FloatingActionButton(
               onPressed: _openAddCategory,
               backgroundColor: const Color(0xFF4FD1D9),
@@ -150,7 +148,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
         }
 
         return Scaffold(
-          backgroundColor: bg,
+          backgroundColor: p.surface,
           floatingActionButton: FloatingActionButton(
             onPressed: _openAddCategory,
             backgroundColor: const Color(0xFF4FD1D9),
@@ -164,6 +162,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
   }
 
   Widget _buildContent({required bool isWide}) {
+    final p = context.palette;
     return SafeArea(
       child: ListenableBuilder(
         listenable: _viewModel,
@@ -202,7 +201,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                               child: Text(
                                 _viewModel.errorMessage ??
                                     'Failed to load categories.',
-                                style: const TextStyle(color: gray),
+                                style: TextStyle(color: p.textSecondary),
                               ),
                             ),
                           )
@@ -228,7 +227,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
   }
 
   Widget _breadcrumb() {
-    const style = TextStyle(fontSize: 13, color: gray);
+    final p = context.palette;
+    final style = TextStyle(fontSize: 13, color: p.textSecondary);
     return Wrap(
       children: [
         GestureDetector(
@@ -238,7 +238,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
             style: TextStyle(fontSize: 13, color: purple),
           ),
         ),
-        const Text('  >  ', style: style),
+        Text('  >  ', style: style),
         GestureDetector(
           onTap: () => Navigator.of(context).pop(),
           child: const Text(
@@ -246,7 +246,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
             style: TextStyle(fontSize: 13, color: purple),
           ),
         ),
-        const Text('  >  ', style: style),
+        Text('  >  ', style: style),
         GestureDetector(
           onTap: () {},
           child: Text(
@@ -256,26 +256,27 @@ class _CategoryScreenState extends State<CategoryScreen> {
             style: const TextStyle(fontSize: 13, color: purple),
           ),
         ),
-        const Text('  >  ', style: style),
-        const Text('Categories', style: style),
+        Text('  >  ', style: style),
+        Text('Categories', style: style),
       ],
     );
   }
 
   Widget _headingRow() {
+    final p = context.palette;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
+            children: [
               Text(
                 'Categories',
                 style: TextStyle(
                   fontSize: 19,
                   fontWeight: FontWeight.bold,
-                  color: title,
+                  color: p.textPrimary,
                 ),
               ),
             ],
@@ -284,20 +285,20 @@ class _CategoryScreenState extends State<CategoryScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: p.surface,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: border),
+            border: Border.all(color: p.border),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<CategorySort>(
               value: _viewModel.sort == CategorySort.nameAz
                   ? null
                   : _viewModel.sort,
-              hint: const Text(
+              hint: Text(
                 'Sort',
-                style: TextStyle(color: title, fontSize: 14),
+                style: TextStyle(color: p.textPrimary, fontSize: 14),
               ),
-              style: const TextStyle(color: title, fontSize: 14),
+              style: TextStyle(color: p.textPrimary, fontSize: 14),
               items: [
                 DropdownMenuItem(
                   value: CategorySort.dateNewest,
@@ -317,11 +318,15 @@ class _CategoryScreenState extends State<CategoryScreen> {
   }
 
   Widget _categoryGrid(List<Category> items, int cols) {
+    final p = context.palette;
     if (items.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 40),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 40),
         child: Center(
-          child: Text('No categories found.', style: TextStyle(color: gray)),
+          child: Text(
+            'No categories found.',
+            style: TextStyle(color: p.textSecondary),
+          ),
         ),
       );
     }
@@ -360,6 +365,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
   }
 
   Widget _categoryCard(Category c) {
+    final p = context.palette;
     return GestureDetector(
       onTap: () => Navigator.of(
         context,
@@ -368,14 +374,14 @@ class _CategoryScreenState extends State<CategoryScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: p.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: border),
-          boxShadow: const [
+          border: Border.all(color: p.border),
+          boxShadow: [
             BoxShadow(
-              color: Color(0x0D000000),
+              color: p.cardShadow,
               blurRadius: 10,
-              offset: Offset(0, 2),
+              offset: const Offset(0, 2),
             ),
           ],
         ),
@@ -418,10 +424,10 @@ class _CategoryScreenState extends State<CategoryScreen> {
                         c.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: title,
+                          color: p.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -431,7 +437,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                         c.description,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 13, color: gray),
+                        style: TextStyle(fontSize: 13, color: p.textSecondary),
                       ),
                     ],
                   ),
@@ -457,14 +463,14 @@ class _CategoryScreenState extends State<CategoryScreen> {
                     children: [
                       Text(
                         'Created: ${c.createdDate}',
-                        style: const TextStyle(fontSize: 12, color: gray),
+                        style: TextStyle(fontSize: 12, color: p.textSecondary),
                       ),
                       if (c.createdBy.isNotEmpty)
                         Text(
                           'by ${c.createdBy}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
-                            color: gray,
+                            color: p.textSecondary,
                             fontStyle: FontStyle.italic,
                           ),
                         ),
@@ -473,7 +479,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                const Icon(Icons.chevron_right, color: gray),
+                Icon(Icons.chevron_right, color: p.textSecondary),
               ],
             ),
           ],
@@ -521,6 +527,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
   }
 
   Widget _singleImage(String url) {
+    final p = context.palette;
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
       child: Image.network(
@@ -532,12 +539,12 @@ class _CategoryScreenState extends State<CategoryScreen> {
           width: 110,
           height: 110,
           decoration: BoxDecoration(
-            color: const Color(0xFFF3F4F6),
+            color: p.chipBg,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Icon(
+          child: Icon(
             Icons.image_not_supported_outlined,
-            color: gray,
+            color: p.textSecondary,
             size: 32,
           ),
         ),
@@ -587,10 +594,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
   }
 
   Widget _mosaicTile(String url) {
+    final p = context.palette;
     if (url.isEmpty) {
       return Container(
-        color: const Color(0xFFF3F4F6),
-        child: const Icon(Icons.image_outlined, color: gray, size: 20),
+        color: p.chipBg,
+        child: Icon(Icons.image_outlined, color: p.textSecondary, size: 20),
       );
     }
     return Image.network(
@@ -598,10 +606,10 @@ class _CategoryScreenState extends State<CategoryScreen> {
       fit: BoxFit.cover,
       width: double.infinity,
       errorBuilder: (_, _, _) => Container(
-        color: const Color(0xFFF3F4F6),
-        child: const Icon(
+        color: p.chipBg,
+        child: Icon(
           Icons.image_not_supported_outlined,
-          color: gray,
+          color: p.textSecondary,
           size: 20,
         ),
       ),
@@ -609,10 +617,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
   }
 
   Widget _packageBadge(int count, int limit) {
+    final p = context.palette;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F0FF),
+        color: p.selectionTint,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
@@ -627,10 +636,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
   }
 
   Widget _statusBadge(bool active) {
+    final p = context.palette;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: active ? const Color(0xFFDCFCE7) : const Color(0xFFFEE2E2),
+        color: active ? p.successBg : p.dangerBg,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
@@ -645,18 +655,19 @@ class _CategoryScreenState extends State<CategoryScreen> {
   }
 
   Widget _pagination(int shown) {
+    final p = context.palette;
     return Row(
       children: [
         Expanded(
           child: Text(
             'First $shown of ${_viewModel.totalCount} categories',
-            style: const TextStyle(fontSize: 13, color: gray),
+            style: TextStyle(fontSize: 13, color: p.textSecondary),
             overflow: TextOverflow.ellipsis,
           ),
         ),
         const SizedBox(width: 12),
         IconButton(
-          icon: const Icon(Icons.chevron_left, color: gray),
+          icon: Icon(Icons.chevron_left, color: p.textSecondary),
           onPressed: null,
         ),
         Container(
@@ -671,7 +682,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
           ),
         ),
         IconButton(
-          icon: const Icon(Icons.chevron_right, color: gray),
+          icon: Icon(Icons.chevron_right, color: p.textSecondary),
           onPressed: null,
         ),
       ],

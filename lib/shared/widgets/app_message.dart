@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/core/network/app_exceptions.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 
 /// Unified success/error message style for the whole app.
 ///
@@ -7,9 +8,6 @@ import 'package:posfrontend/core/network/app_exceptions.dart';
 /// failure is always red. Use [AppMessageBanner] for inline messages, or
 /// [showSuccessMessage] / [showErrorMessage] for a floating toast.
 enum AppMessageKind { success, error }
-
-const Color kAppSuccessColor = Color(0xFF16A34A);
-const Color kAppErrorColor = Color(0xFFEF4444);
 
 class AppMessageBanner extends StatelessWidget {
   final String message;
@@ -27,8 +25,10 @@ class AppMessageBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     final success = kind == AppMessageKind.success;
-    final background = success ? kAppSuccessColor : kAppErrorColor;
+    final background = success ? p.successBg : p.dangerBg;
+    final foreground = success ? p.successFg : p.dangerFg;
     final icon = success
         ? Icons.check_circle_rounded
         : Icons.error_outline_rounded;
@@ -40,13 +40,13 @@ class AppMessageBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, color: Colors.white, size: 20),
+          Icon(icon, color: foreground, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: foreground,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
@@ -56,7 +56,7 @@ class AppMessageBanner extends StatelessWidget {
             const SizedBox(width: 8),
             TextButton(
               onPressed: onAction,
-              style: TextButton.styleFrom(foregroundColor: Colors.white),
+              style: TextButton.styleFrom(foregroundColor: foreground),
               child: Text(actionLabel!),
             ),
           ],

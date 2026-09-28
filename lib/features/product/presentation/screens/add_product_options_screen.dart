@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:posfrontend/features/product/presentation/screens/add_product_screen.dart';
 import 'package:posfrontend/features/product/presentation/screens/quick_add_product_screen.dart';
 import 'package:posfrontend/features/product/presentation/screens/stock_add_screen.dart';
-import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 
@@ -19,9 +19,10 @@ class _AddProductOptionsScreenState extends State<AddProductOptionsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: Colors.white,
+      backgroundColor: p.scaffoldBg,
       drawer: const AppDrawer(activeItem: 'Add Product'),
       body: SafeArea(
         child: Column(
@@ -37,9 +38,9 @@ class _AddProductOptionsScreenState extends State<AddProductOptionsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Choose how you want to add a product',
-                      style: TextStyle(color: AppColors.gray, fontSize: 14),
+                      style: TextStyle(color: p.textSecondary, fontSize: 14),
                     ),
                     const SizedBox(height: 32),
                     _OptionCard(
@@ -64,7 +65,7 @@ class _AddProductOptionsScreenState extends State<AddProductOptionsScreen> {
                     const SizedBox(height: 16),
                     _OptionCard(
                       icon: Icons.edit_note_rounded,
-                      iconBgColor: const Color(0xFFF5F0FF),
+                      iconBgColor: p.selectionTint,
                       iconColor: const Color(0xFF7C3AED),
                       title: 'Normal Add',
                       subtitle:
@@ -110,6 +111,7 @@ class _OptionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -118,9 +120,9 @@ class _OptionCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: const Color(0xFFF9FAFB),
+            color: p.surfaceAlt,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: p.border),
           ),
           child: Row(
             children: [
@@ -140,8 +142,8 @@ class _OptionCard extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
-                        color: AppColors.titleColor,
+                      style: TextStyle(
+                        color: p.textPrimary,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
@@ -149,8 +151,8 @@ class _OptionCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       subtitle,
-                      style: const TextStyle(
-                        color: AppColors.gray,
+                      style: TextStyle(
+                        color: p.textSecondary,
                         fontSize: 13,
                         height: 1.4,
                       ),
@@ -159,9 +161,9 @@ class _OptionCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              const Icon(
+              Icon(
                 Icons.chevron_right_rounded,
-                color: AppColors.gray,
+                color: p.textSecondary,
                 size: 22,
               ),
             ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/features/customer/domain/entities/customer.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class CustomersTab extends StatefulWidget {
   final CustomerAnalyticsEntity analytics;
@@ -14,10 +15,7 @@ class _CustomersTabState extends State<CustomersTab> {
   final _searchController = TextEditingController();
   String _searchQuery = '';
 
-  static const Color title = Color(0xFF111827);
-  static const Color gray = Color(0xFF6B7280);
   static const Color purple = Color(0xFF6D28D9);
-  static const Color border = Color(0xFFE5E7EB);
 
   List<CustomerSummaryItemEntity> get _filtered {
     if (_searchQuery.isEmpty) return widget.analytics.customerSummary;
@@ -35,6 +33,7 @@ class _CustomersTabState extends State<CustomersTab> {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return Column(
       children: [
         Padding(
@@ -43,21 +42,21 @@ class _CustomersTabState extends State<CustomersTab> {
             controller: _searchController,
             decoration: InputDecoration(
               hintText: 'Search customers...',
-              prefixIcon: const Icon(Icons.search, color: gray),
+              prefixIcon: Icon(Icons.search, color: p.textSecondary),
               suffixIcon: _searchQuery.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(Icons.clear, color: gray),
+                      icon: Icon(Icons.clear, color: p.textSecondary),
                       onPressed: () {
                         _searchController.clear();
                         setState(() => _searchQuery = '');
                       },
                     )
                   : null,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: border)),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: border)),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: p.border)),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: p.border)),
               focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: purple)),
               filled: true,
-              fillColor: const Color(0xFFF9FAFB),
+              fillColor: p.surfaceAlt,
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
             onChanged: (v) => setState(() => _searchQuery = v),
@@ -65,9 +64,12 @@ class _CustomersTabState extends State<CustomersTab> {
         ),
         const SizedBox(height: 12),
         if (widget.analytics.customerSummary.isEmpty)
-          const Expanded(
+          Expanded(
             child: Center(
-              child: Text('No customer data yet.', style: TextStyle(color: gray, fontSize: 14)),
+              child: Text(
+                'No customer data yet.',
+                style: TextStyle(color: p.textSecondary, fontSize: 14),
+              ),
             ),
           )
         else
@@ -83,6 +85,7 @@ class _CustomersTabState extends State<CustomersTab> {
   }
 
   Widget _customerCard(CustomerSummaryItemEntity c) {
+    final p = context.palette;
     return ExpansionTile(
       tilePadding: EdgeInsets.zero,
       childrenPadding: const EdgeInsets.only(bottom: 12),
@@ -100,16 +103,16 @@ class _CustomersTabState extends State<CustomersTab> {
           ),
         ),
       ),
-      title: Text(c.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: title)),
+      title: Text(c.name, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: p.textPrimary)),
       subtitle: Text(
         '${c.totalOrders} orders · MMK ${c.totalSpending}',
-        style: const TextStyle(fontSize: 12, color: gray),
+        style: TextStyle(fontSize: 12, color: p.textSecondary),
       ),
       children: [
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: const Color(0xFFF9FAFB),
+            color: p.surfaceAlt,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Column(
@@ -120,20 +123,20 @@ class _CustomersTabState extends State<CustomersTab> {
               _detailRow('Avg. Order', 'MMK ${c.avgOrderValue}'),
               _detailRow('Last Purchase', c.lastPurchaseDate ?? '-'),
               if (c.topProducts.isNotEmpty) ...[
-                const Divider(height: 16),
-                const Align(
+                Divider(height: 16, color: p.border),
+                Align(
                   alignment: Alignment.centerLeft,
-                  child: Text('Top Products', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: title)),
+                  child: Text('Top Products', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: p.textPrimary)),
                 ),
                 const SizedBox(height: 6),
-                ...c.topProducts.map((p) => Padding(
+                ...c.topProducts.map((item) => Padding(
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Row(
                     children: [
-                      const Icon(Icons.shopping_bag_outlined, size: 14, color: gray),
+                      Icon(Icons.shopping_bag_outlined, size: 14, color: p.textSecondary),
                       const SizedBox(width: 6),
-                      Expanded(child: Text(p.name, style: const TextStyle(fontSize: 12, color: title))),
-                      Text('x${p.count}', style: const TextStyle(fontSize: 12, color: gray)),
+                      Expanded(child: Text(item.name, style: TextStyle(fontSize: 12, color: p.textPrimary))),
+                      Text('x${item.count}', style: TextStyle(fontSize: 12, color: p.textSecondary)),
                     ],
                   ),
                 )),
@@ -146,13 +149,14 @@ class _CustomersTabState extends State<CustomersTab> {
   }
 
   Widget _detailRow(String label, String value) {
+    final p = context.palette;
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
         children: [
-          Text(label, style: const TextStyle(fontSize: 12, color: gray)),
+          Text(label, style: TextStyle(fontSize: 12, color: p.textSecondary)),
           const Spacer(),
-          Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: title)),
+          Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: p.textPrimary)),
         ],
       ),
     );

@@ -4,6 +4,7 @@ import 'package:posfrontend/features/auth/domain/usecases/forgot_password.dart';
 import 'package:posfrontend/features/auth/presentation/viewmodels/forgot_password_view_model.dart';
 import 'package:posfrontend/features/auth/presentation/screens/login_screen.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_input_decoration.dart';
 import 'package:posfrontend/shared/widgets/gradient_button.dart';
 import 'package:posfrontend/shared/widgets/required_label.dart';
@@ -68,6 +69,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return ListenableBuilder(
       listenable: _viewModel,
       builder: (context, _) {
@@ -75,7 +77,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         final loading = _viewModel.isLoading;
 
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: p.scaffoldBg,
           body: SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
@@ -86,10 +88,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   children: [
                     _buildHeaderIcon(),
                     const SizedBox(height: 20),
-                    const Text(
+                    Text(
                       'Reset Password',
                       style: TextStyle(
-                        color: AppColors.labelColor,
+                        color: p.textPrimary,
                         fontSize: 26,
                         fontWeight: FontWeight.bold,
                       ),
@@ -97,8 +99,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     const SizedBox(height: 8),
                     Text(
                       'Create a new password for ${widget.email}',
-                      style: const TextStyle(
-                        color: AppColors.hintColor,
+                      style: TextStyle(
+                        color: p.textMuted,
                         fontSize: 14,
                       ),
                       textAlign: TextAlign.center,
@@ -113,6 +115,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       obscureText: _obscurePassword,
                       textInputAction: TextInputAction.next,
                       decoration: appInputDecoration(
+                        context,
                         icon: Icons.lock_outline,
                         hint: 'Enter new password',
                         errorText: errors['password'],
@@ -126,7 +129,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                             _obscurePassword
                                 ? Icons.visibility_outlined
                                 : Icons.visibility_off_outlined,
-                            color: AppColors.hintColor,
+                            color: p.textMuted,
                           ),
                         ),
                       ),
@@ -142,6 +145,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       textInputAction: TextInputAction.done,
                       onFieldSubmitted: (_) => _handleResetPassword(),
                       decoration: appInputDecoration(
+                        context,
                         icon: Icons.lock_outline,
                         hint: 'Confirm new password',
                         errorText: errors['password_confirmation'],
@@ -155,7 +159,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                             _obscureConfirm
                                 ? Icons.visibility_outlined
                                 : Icons.visibility_off_outlined,
-                            color: AppColors.hintColor,
+                            color: p.textMuted,
                           ),
                         ),
                       ),
@@ -199,12 +203,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   }
 
   Widget _buildBackToLogin() {
+    final p = context.palette;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text(
+        Text(
           'Remember your password?',
-          style: TextStyle(color: AppColors.hintColor, fontSize: 14),
+          style: TextStyle(color: p.textMuted, fontSize: 14),
         ),
         const SizedBox(width: 6),
         GestureDetector(

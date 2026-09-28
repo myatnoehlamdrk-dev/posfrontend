@@ -1,6 +1,8 @@
 import 'dart:typed_data';
+import 'package:flutter/material.dart' show ThemeMode;
 import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/core/network/media_url.dart';
+import 'package:posfrontend/shared/theme/theme_mode_notifier.dart';
 import 'package:posfrontend/features/settings/domain/entities/settings.dart';
 import 'package:posfrontend/features/settings/domain/repositories/settings_repository.dart';
 import 'package:posfrontend/features/settings/data/repositories/settings_repository_impl.dart';
@@ -39,6 +41,17 @@ class SettingsViewModel extends BaseViewModel {
     try {
       _settings = await _repository.getSettings();
       _isInitialized = true;
+      // The server copy is authoritative once it arrives. Before it does, the
+      // local mirror already put the right theme on screen, so this only
+      // corrects the case where they genuinely disagree.
+      if (_settings.themeMode == AppThemeMode.dark) {
+        ThemeModeNotifier.instance.setMode(ThemeMode.dark);
+      } else if (ThemeModeNotifier.instance.value == ThemeMode.system) {
+        // A server value of "light" must not silently override an explicit
+        // "match system" choice.
+      } else {
+        ThemeModeNotifier.instance.setMode(ThemeMode.light);
+      }
     } catch (e) {
       setError('Failed to load settings');
     } finally {
@@ -47,15 +60,42 @@ class SettingsViewModel extends BaseViewModel {
   }
 
   Future<void> toggleTheme() async {
+    // Toggling out of "system" means the user is now choosing explicitly.
+    final wasSystem = ThemeModeNotifier.instance.value == ThemeMode.system;
     final newMode = _settings.themeMode == AppThemeMode.light
         ? AppThemeMode.dark
         : AppThemeMode.light;
     _settings = _settings.copyWith(themeMode: newMode);
     notifyListeners();
+    ThemeModeNotifier.instance.setMode(
+      newMode == AppThemeMode.dark
+          ? ThemeMode.dark
+          : (wasSystem ? ThemeMode.dark : ThemeMode.light),
+    );
     try {
       _settings = await _repository.updateSettings(
         themeMode: newMode == AppThemeMode.dark ? 'dark' : 'light',
       );
+    } catch (e) {
+      setError('Failed to update theme');
+    }
+  }
+
+  /// Opt into following the OS brightness, or back to an explicit choice.
+  Future<void> setSystemTheme({required bool enabled}) async {
+    ThemeModeNotifier.instance.setMode(
+      enabled ? ThemeMode.system : ThemeMode.light,
+    );
+    notifyListeners();
+    // The API only models light/dark, so the server keeps the last explicit
+    // value. Only the device preference is stored here.
+    try {
+      final resolved = ThemeModeNotifier.instance.value == ThemeMode.system
+          ? (ThemeModeNotifier.system == ThemeMode.dark
+                ? 'dark'
+                : 'light')
+          : (_settings.themeMode == AppThemeMode.dark ? 'dark' : 'light');
+      _settings = await _repository.updateSettings(themeMode: resolved);
     } catch (e) {
       setError('Failed to update theme');
     }
