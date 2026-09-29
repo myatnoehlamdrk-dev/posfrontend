@@ -4,8 +4,9 @@ import 'package:posfrontend/features/package/domain/entities/package.dart';
 import 'package:posfrontend/features/package/presentation/viewmodels/assign_product_to_package_view_model.dart';
 import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart';
 import 'package:posfrontend/features/product/data/repositories/product_repository_impl.dart';
+import 'package:posfrontend/shared/theme/app_palette.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/custom_back_button.dart';
-import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
 class AssignProductToPackageScreen extends StatefulWidget {
@@ -27,6 +28,13 @@ class _AssignProductToPackageScreenState
     extends State<AssignProductToPackageScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   late final AssignProductToPackageViewModel _viewModel;
+
+  // Brightness-dependent tokens; the `k*` constants are light-only.
+  AppPalette get _p => context.palette;
+  Color get _titleColor => _p.textPrimary;
+  Color get _mutedColor => _p.textSecondary;
+  Color get _accentColor => _p.primary;
+  Color get _borderColor => _p.border;
 
   @override
   void initState() {
@@ -64,7 +72,7 @@ class _AssignProductToPackageScreenState
       listenable: _viewModel,
       builder: (context, _) {
         return Scaffold(
-          backgroundColor: const Color(0xFFF9FAFB),
+          backgroundColor: _p.scaffoldBg,
           body: Column(
             children: [
               _header(),
@@ -92,14 +100,14 @@ class _AssignProductToPackageScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const Text(
+                  Text(
                     'Add Products to Package',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: kTitle,
+                      color: _titleColor,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -107,7 +115,7 @@ class _AssignProductToPackageScreenState
                     '${widget.package.name} • ${widget.category.name}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 13, color: kGray),
+                    style: TextStyle(fontSize: 13, color: _mutedColor),
                   ),
                 ],
               ),
@@ -121,18 +129,18 @@ class _AssignProductToPackageScreenState
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: _p.surface,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: kBorder),
+                    border: Border.all(color: _borderColor),
                   ),
                   child: Text(
                     _viewModel.allFilteredSelected
                         ? 'Deselect All'
                         : 'Select All',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: kPurple,
+                      color: _accentColor,
                     ),
                   ),
                 ),
@@ -151,18 +159,18 @@ class _AssignProductToPackageScreenState
         onChanged: _viewModel.setSearchQuery,
         decoration: InputDecoration(
           hintText: 'Search products by name, SKU, brand...',
-          hintStyle: const TextStyle(color: Color(0xFFD1D5DB), fontSize: 14),
-          prefixIcon: const Icon(Icons.search, color: kGray, size: 20),
+          hintStyle: TextStyle(color: _p.textMuted, fontSize: 14),
+          prefixIcon: Icon(Icons.search, color: _mutedColor, size: 20),
           filled: true,
-          fillColor: Colors.white,
+          fillColor: _p.surface,
           contentPadding: const EdgeInsets.symmetric(vertical: 0),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: kBorder),
+            borderSide: BorderSide(color: _borderColor),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: kBorder),
+            borderSide: BorderSide(color: _borderColor),
           ),
         ),
       ),
@@ -186,16 +194,16 @@ class _AssignProductToPackageScreenState
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               margin: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
-                color: active ? kPurple : Colors.white,
+                color: active ? _accentColor : _p.surface,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: active ? kPurple : kBorder),
+                border: Border.all(color: active ? _accentColor : _borderColor),
               ),
               child: Text(
                 cat,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: active ? Colors.white : kGray,
+                  color: active ? Colors.white : _mutedColor,
                 ),
               ),
             ),
@@ -207,7 +215,7 @@ class _AssignProductToPackageScreenState
 
   Widget _productList() {
     if (_viewModel.isLoading) {
-      return const Center(child: CircularProgressIndicator(color: kPurple));
+      return Center(child: CircularProgressIndicator(color: _accentColor));
     }
     if (_viewModel.hasError) {
       return Center(
@@ -216,7 +224,7 @@ class _AssignProductToPackageScreenState
           children: [
             Text(
               _viewModel.errorMessage!,
-              style: const TextStyle(color: kGray),
+              style: TextStyle(color: _mutedColor),
             ),
             const SizedBox(height: 12),
             ElevatedButton(
@@ -233,21 +241,21 @@ class _AssignProductToPackageScreenState
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.inventory_2_outlined,
               size: 48,
-              color: Color(0xFFD1D5DB),
+              color: _p.textMuted,
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'No unassigned products found.',
-              style: TextStyle(color: kGray, fontSize: 15),
+              style: TextStyle(color: _mutedColor, fontSize: 15),
             ),
             const SizedBox(height: 4),
             Text(
               'All products are already in a package.',
               style: TextStyle(
-                color: kGray.withValues(alpha: 0.7),
+                color: _mutedColor.withValues(alpha: 0.7),
                 fontSize: 13,
               ),
             ),
@@ -273,17 +281,17 @@ class _AssignProductToPackageScreenState
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _p.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: selected ? kPurple : kBorder,
+            color: selected ? _accentColor : _borderColor,
             width: selected ? 2 : 1,
           ),
-          boxShadow: const [
+          boxShadow: [
             BoxShadow(
-              color: Color(0x0D000000),
+              color: _p.cardShadow,
               blurRadius: 6,
-              offset: Offset(0, 2),
+              offset: const Offset(0, 2),
             ),
           ],
         ),
@@ -293,10 +301,10 @@ class _AssignProductToPackageScreenState
               width: 20,
               height: 20,
               decoration: BoxDecoration(
-                color: selected ? kPurple : Colors.white,
+                color: selected ? _accentColor : _p.surface,
                 borderRadius: BorderRadius.circular(4),
                 border: Border.all(
-                  color: selected ? kPurple : const Color(0xFFD1D5DB),
+                  color: selected ? _accentColor : _p.borderStrong,
                 ),
               ),
               child: selected
@@ -327,10 +335,10 @@ class _AssignProductToPackageScreenState
                     p.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
-                      color: kTitle,
+                      color: _titleColor,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -343,8 +351,8 @@ class _AssignProductToPackageScreenState
                         ),
                         decoration: BoxDecoration(
                           color: p.stock > 0
-                              ? const Color(0xFFDCFCE7)
-                              : const Color(0xFFFEE2E2),
+                              ? _p.successBg
+                              : _p.dangerBg,
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -353,8 +361,8 @@ class _AssignProductToPackageScreenState
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                             color: p.stock > 0
-                                ? const Color(0xFF16A34A)
-                                : const Color(0xFFDC2626),
+                                ? _p.successFg
+                                : _p.dangerFg,
                           ),
                         ),
                       ),
@@ -365,7 +373,7 @@ class _AssignProductToPackageScreenState
                             p.brand,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 12, color: kGray),
+                            style: TextStyle(fontSize: 12, color: _mutedColor),
                           ),
                         ),
                       ],
@@ -383,14 +391,14 @@ class _AssignProductToPackageScreenState
   Widget _bottomBar() {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: kBorder)),
+      decoration: BoxDecoration(
+        color: _p.surface,
+        border: Border(top: BorderSide(color: _borderColor)),
         boxShadow: [
           BoxShadow(
-            color: Color(0x0D000000),
+            color: _p.cardShadow,
             blurRadius: 10,
-            offset: Offset(0, -2),
+            offset: const Offset(0, -2),
           ),
         ],
       ),
@@ -398,15 +406,15 @@ class _AssignProductToPackageScreenState
         top: false,
         child: Row(
           children: [
-            Icon(Icons.inventory_2, size: 28, color: kTitle),
+            Icon(Icons.inventory_2, size: 28, color: _titleColor),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 '${_viewModel.selectedCount} product(s) selected',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: kTitle,
+                  color: _titleColor,
                 ),
               ),
             ),
@@ -419,13 +427,11 @@ class _AssignProductToPackageScreenState
                 ),
                 decoration: BoxDecoration(
                   gradient: !_viewModel.isAssigning
-                      ? const LinearGradient(
-                          colors: [Color(0xFF6D28D9), Color(0xFF5B21B6)],
+                      ? LinearGradient(
+                          colors: [_accentColor, _p.primaryDark],
                         )
                       : null,
-                  color: _viewModel.isAssigning
-                      ? const Color(0xFFD1D5DB)
-                      : null,
+                  color: _viewModel.isAssigning ? _p.borderStrong : null,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: _viewModel.isAssigning

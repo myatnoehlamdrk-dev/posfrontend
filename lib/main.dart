@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:posfrontend/core/auth/auth_redirect.dart';
 import 'package:posfrontend/core/di/injection.dart';
-import 'package:posfrontend/features/onboarding/presentation/screens/get_started_screen.dart';
+import 'package:posfrontend/features/onboarding/presentation/screens/splash_screen.dart';
 import 'package:posfrontend/shared/theme/app_theme.dart';
 import 'package:posfrontend/shared/theme/theme_mode_notifier.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
@@ -38,7 +38,7 @@ class MyApp extends StatelessWidget {
               theme: AppTheme.lightTheme,
               darkTheme: AppTheme.darkTheme,
               themeMode: ThemeModeNotifier.instance.value,
-              home: const GetStartedScreen(),
+              home: const SplashScreen(),
               builder: (context, child) {
                 // Kept inside the app rather than set once in main() so the
                 // status bar adapts with the theme. A hardcoded light

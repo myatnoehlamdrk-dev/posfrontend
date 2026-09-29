@@ -86,13 +86,25 @@ class AppPalette extends ThemeExtension<AppPalette> {
     dangerFg: Color(0xFFB91C1C),
   );
 
+  /// The neutrals below are a ramp, not a set of independent choices.
+  ///
+  /// `scaffoldBg` is the page and every other neutral steps *up* from it, which
+  /// is what keeps a card reading as a surface sitting above the page rather
+  /// than a hole punched into it. The old base was `#0E1014`, which forced the
+  /// ramp down into near-black and made a full screen of it genuinely tiring to
+  /// work under all day. `#1D2733` keeps the same blue-grey character at a
+  /// weight a tiller can stare at for a shift, and the steps between the tokens
+  /// are unchanged from the old ramp, so the contrast relationships survive
+  /// intact.
+  ///
+  /// If `scaffoldBg` changes again, the rest of these have to move with it.
   static const AppPalette dark = AppPalette(
-    scaffoldBg: Color(0xFF0E1014),
-    surface: Color(0xFF171A20),
-    surfaceAlt: Color(0xFF1E222A),
-    chipBg: Color(0xFF262B34),
-    border: Color(0xFF2C323C),
-    borderStrong: Color(0xFF3C434F),
+    scaffoldBg: Color(0xFF1D2733),
+    surface: Color(0xFF26313F),
+    surfaceAlt: Color(0xFF2D3949),
+    chipBg: Color(0xFF354253),
+    border: Color(0xFF3B495B),
+    borderStrong: Color(0xFF4B5A6E),
     textPrimary: Color(0xFFF2F4F7),
     textSecondary: Color(0xFFA2AAB8),
     textMuted: Color(0xFF6C7482),

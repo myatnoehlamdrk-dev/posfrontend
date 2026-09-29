@@ -3,6 +3,7 @@ import 'package:posfrontend/core/extensions/datetime_extensions.dart';
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
 import 'package:posfrontend/features/sale/presentation/viewmodels/sale_history_view_model.dart';
 import 'package:posfrontend/features/sale/presentation/screens/sale_detail_screen.dart';
+import 'package:posfrontend/features/sale/presentation/widgets/sale_items_skeleton.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
@@ -61,7 +62,7 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
   Widget _buildBody() {
     final p = context.palette;
     if (_viewModel.isLoading && _viewModel.filteredOrders.isEmpty) {
-      return const Center(child: CircularProgressIndicator(color: AppColors.teal));
+      return const SaleItemsSkeleton();
     }
     if (_viewModel.errorMessage != null && _viewModel.filteredOrders.isEmpty) {
       return Center(
@@ -276,7 +277,6 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                       Flexible(
                         child: PriceText(
                           order.amount.toDouble(),
-                          maxLength: 14,
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,

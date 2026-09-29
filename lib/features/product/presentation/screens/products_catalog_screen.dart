@@ -14,6 +14,7 @@ import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 import 'package:posfrontend/features/product/presentation/widgets/category_showcase_data.dart';
 import 'package:posfrontend/features/product/presentation/widgets/category_showcase_grid.dart';
 import 'package:posfrontend/features/product/presentation/widgets/category_skeleton.dart';
+import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class ProductsCatalogScreen extends StatefulWidget {
@@ -33,7 +34,10 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
   bool _hotPaused = false;
   bool _isSearchOpen = false;
   bool _disposed = false;
-  static const Color purple = Color(0xFF6D28D9);
+  AppPalette get _p => context.palette;
+  Color get _accentColor => _p.primary;
+  Color get _mutedColor => _p.textSecondary;
+  Color get _borderColor => _p.border;
 
   @override
   void initState() {
@@ -100,7 +104,10 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                 showErrorSnackBar(context, _viewModel.errorMessage!);
               }
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text(
+              'Delete',
+              style: TextStyle(color: context.palette.dangerFg),
+            ),
           ),
         ],
       ),
@@ -128,7 +135,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                   backgroundColor: context.palette.scaffoldBg,
                   floatingActionButton: FloatingActionButton(
                     onPressed: () => setState(() => _isSearchOpen = !_isSearchOpen),
-                    backgroundColor: purple,
+                    backgroundColor: _accentColor,
                     child: Icon(
                       _isSearchOpen ? Icons.close : Icons.search,
                       color: Colors.white,
@@ -153,7 +160,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                 backgroundColor: context.palette.scaffoldBg,
                 floatingActionButton: FloatingActionButton(
                   onPressed: () => setState(() => _isSearchOpen = !_isSearchOpen),
-                  backgroundColor: purple,
+                  backgroundColor: _accentColor,
                   child: Icon(
                     _isSearchOpen ? Icons.close : Icons.search,
                     color: Colors.white,
@@ -220,10 +227,10 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                 ),
               ),
             if (_viewModel.isSearching && _viewModel.searchLoading)
-              const Positioned.fill(
+              Positioned.fill(
                 child: Center(
                   child: CircularProgressIndicator(
-                    color: purple,
+                    color: _accentColor,
                     strokeWidth: 2.5,
                   ),
                 ),
@@ -248,11 +255,11 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, size: 48, color: Color(0xFFE5E7EB)),
+            Icon(Icons.error_outline, size: 48, color: _p.textMuted),
             const SizedBox(height: 16),
             Text(
               _viewModel.errorMessage ?? 'Unable to load categories',
-              style: const TextStyle(color: Colors.red, fontSize: 15),
+              style: TextStyle(color: _p.dangerFg, fontSize: 15),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
@@ -261,7 +268,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
               icon: const Icon(Icons.refresh, size: 18),
               label: const Text('Retry'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: purple,
+                backgroundColor: _accentColor,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
@@ -276,16 +283,16 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.category_outlined, size: 64, color: Colors.grey[300]),
+            Icon(Icons.category_outlined, size: 64, color: _p.textMuted),
             const SizedBox(height: 16),
             Text(
               'No categories available',
-              style: TextStyle(fontSize: 16, color: Colors.grey[500]),
+              style: TextStyle(fontSize: 16, color: _mutedColor),
             ),
             const SizedBox(height: 8),
             Text(
               'Add products to see categories here',
-              style: TextStyle(fontSize: 13, color: Colors.grey[400]),
+              style: TextStyle(fontSize: 13, color: _p.textMuted),
             ),
           ],
         ),
@@ -318,7 +325,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
 
   Widget _searchTileIcon(CatalogProductView p) {
     return Container(
-      color: const Color(0xFFF5F0FF),
+      color: _p.selectionTint,
       alignment: Alignment.center,
       child: Icon(p.icon, color: p.color, size: 20),
     );
@@ -333,8 +340,8 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+          color: _p.surface,
+          border: Border.all(color: _borderColor),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -398,11 +405,11 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, size: 48, color: Color(0xFFE5E7EB)),
+            Icon(Icons.error_outline, size: 48, color: _p.textMuted),
             const SizedBox(height: 16),
             Text(
               _viewModel.errorMessage ?? 'Unable to search products',
-              style: const TextStyle(color: Colors.red, fontSize: 15),
+              style: TextStyle(color: _p.dangerFg, fontSize: 15),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
@@ -411,7 +418,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
               icon: const Icon(Icons.refresh, size: 18),
               label: const Text('Retry'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: purple,
+                backgroundColor: _accentColor,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
@@ -428,16 +435,16 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.search_off, size: 64, color: Colors.grey[300]),
+            Icon(Icons.search_off, size: 64, color: _p.textMuted),
             const SizedBox(height: 16),
             Text(
               'No products found for "$query"',
-              style: TextStyle(fontSize: 16, color: Colors.grey[500]),
+              style: TextStyle(fontSize: 16, color: _mutedColor),
             ),
             const SizedBox(height: 8),
             Text(
               'Try a different keyword or brand',
-              style: TextStyle(fontSize: 13, color: Colors.grey[400]),
+              style: TextStyle(fontSize: 13, color: _p.textMuted),
             ),
           ],
         ),
@@ -455,9 +462,9 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
       height: 40,
       width: 40,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _p.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: _borderColor),
       ),
       child: IconButton(
         icon: Icon(icon, color: context.palette.textPrimary, size: 20),
@@ -478,18 +485,18 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
         prefixIcon: Icon(Icons.search, color: context.palette.textSecondary, size: 18),
         isDense: true,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: _p.surface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+          borderSide: BorderSide(color: _borderColor),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+          borderSide: BorderSide(color: _borderColor),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: purple),
+          borderSide: BorderSide(color: _accentColor),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
@@ -549,7 +556,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                   width: i == _hotIndex ? 20 : 6,
                   height: 6,
                   decoration: BoxDecoration(
-                    color: i == _hotIndex ? purple : const Color(0xFFD1D5DB),
+                    color: i == _hotIndex ? _accentColor : _p.borderStrong,
                     borderRadius: BorderRadius.circular(3),
                   ),
                 ),

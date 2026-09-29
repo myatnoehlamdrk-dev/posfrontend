@@ -5,6 +5,7 @@ import 'package:posfrontend/features/category/data/repositories/category_reposit
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/features/package/domain/entities/package.dart';
 import 'package:posfrontend/features/package/data/repositories/package_repository_impl.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
@@ -154,15 +155,16 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
         final body = _content(categoryLabels, selectedLabel);
 
         if (isWide) {
-          return Scaffold(backgroundColor: Colors.white, body: body);
+          return Scaffold(backgroundColor: ctx.palette.scaffoldBg, body: body);
         }
-        return Scaffold(backgroundColor: Colors.white, body: body);
+        return Scaffold(backgroundColor: ctx.palette.scaffoldBg, body: body);
       },
     );
   }
 
   Widget _content(List<String> categoryLabels, String? selectedLabel) {
     final isEdit = widget.isEditing;
+    final p = context.palette;
     return SafeArea(
       child: Column(
         children: [
@@ -189,10 +191,10 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
                   const SizedBox(height: 24),
                   Text(
                     isEdit ? 'Edit Package' : 'Package Information',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
-                      color: kTitle,
+                      color: p.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -200,7 +202,7 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
                     isEdit
                         ? 'Update the details for this package.'
                         : 'Provide the details for your new inventory package.',
-                    style: const TextStyle(fontSize: 16, color: kGray),
+                    style: TextStyle(fontSize: 16, color: p.textSecondary),
                   ),
                   const SizedBox(height: 24),
                   FormCard(
@@ -239,7 +241,10 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
                       controller: _amountController,
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.right,
-                      decoration: fieldDecoration('Enter amount of products'),
+                      decoration: fieldDecorationFor(
+                        context,
+                        'Enter amount of products',
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),

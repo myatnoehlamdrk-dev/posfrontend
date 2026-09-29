@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/theme/app_palette.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart';
 import 'package:posfrontend/features/product/data/repositories/product_repository_impl.dart';
 import 'package:posfrontend/features/product/presentation/screens/add_product_screen.dart';
 import 'package:posfrontend/features/product/presentation/viewmodels/product_detail_view_model.dart';
-import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
+import 'package:posfrontend/features/product/domain/entities/product_detail.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
 
@@ -19,6 +21,15 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   late final ProductDetailViewModel _viewModel;
+
+  // Brightness-dependent tokens. The `k*` constants from
+  // inventory_form_widgets.dart are light-only, so text and surfaces here read
+  // the active palette instead.
+  AppPalette get _p => context.palette;
+  Color get _titleColor => _p.textPrimary;
+  Color get _mutedColor => _p.textSecondary;
+  Color get _accentColor => _p.primary;
+  Color get _borderColor => _p.border;
 
   @override
   void initState() {
@@ -47,7 +58,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             final body = _content(isWide: isWide);
 
             return Scaffold(
-              backgroundColor: Colors.white,
+              backgroundColor: _p.scaffoldBg,
               body: SafeArea(child: body),
             );
           },
@@ -68,11 +79,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           child: RefreshableBody(
             onRefresh: _viewModel.load,
             child: _viewModel.isLoading
-                ? const SizedBox(
+                ? SizedBox(
                     height: 300,
                     child: Center(
                       child: CircularProgressIndicator(
-                        color: Color(0xFF6D28D9),
+                        color: _accentColor,
                       ),
                     ),
                   )
@@ -85,7 +96,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         children: [
                           Text(
                             _viewModel.errorMessage!,
-                            style: const TextStyle(color: Colors.red),
+                            style: TextStyle(color: _p.dangerFg),
                           ),
                           const SizedBox(height: 12),
                           ElevatedButton(
@@ -97,11 +108,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     ),
                   )
                 : _viewModel.detail == null
-                ? const SizedBox(
+                ? SizedBox(
                     height: 300,
                     child: Center(
                       child: CircularProgressIndicator(
-                        color: Color(0xFF6D28D9),
+                        color: _accentColor,
                       ),
                     ),
                   )
@@ -225,36 +236,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _p.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: kBorder),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0D000000),
-            blurRadius: 10,
-            offset: Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: _borderColor),
+        boxShadow: _p.cardElevation,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF3E8FF),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              _viewModel.detail!.categoryName,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: kPurple,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -263,10 +252,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   _viewModel.detail!.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: kTitle,
+                    color: _titleColor,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -275,10 +264,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
           PriceText(
             _viewModel.detail!.price,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: kPurple,
+              color: _accentColor,
             ),
           ),
         ],
@@ -291,7 +280,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F4F6),
+        color: _p.chipBg,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -303,14 +292,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: active ? Colors.white : Colors.transparent,
+                  color: active ? _p.surface : Colors.transparent,
                   borderRadius: BorderRadius.circular(9),
                   boxShadow: active
-                      ? const [
+                      ? [
                           BoxShadow(
-                            color: Color(0x1A000000),
+                            color: _p.cardShadow,
                             blurRadius: 4,
-                            offset: Offset(0, 1),
+                            offset: const Offset(0, 1),
                           ),
                         ]
                       : null,
@@ -321,7 +310,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: active ? kPurple : kGray,
+                      color: active ? _accentColor : _mutedColor,
                     ),
                   ),
                 ),
@@ -350,12 +339,25 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
+          'Overview',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: _titleColor,
+          ),
+        ),
+        const SizedBox(height: 12),
+        // Category, inventory and package are contextual tags, not product
+        // attributes, so they render as pills here rather than attribute rows.
+        _overviewChips(d),
+        const SizedBox(height: 24),
+        Text(
           'Identification',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: kTitle,
+            color: _titleColor,
           ),
         ),
         const SizedBox(height: 12),
@@ -364,33 +366,31 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           _row(Icons.layers, 'Is Set / Bundle', d.isBundle),
         ]),
         const SizedBox(height: 24),
-        const Text(
+        Text(
           'Attributes',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: kTitle,
+            color: _titleColor,
           ),
         ),
         const SizedBox(height: 12),
         _card([
           _row(Icons.inventory_2, 'Product Name', d.name),
           _row(Icons.business, 'Brand', d.brand),
-          _row(Icons.category, 'Category', d.categoryName),
-          _row(Icons.color_lens, 'Color', d.color),
-          _row(Icons.straighten, 'Size', d.size),
-          _row(Icons.inventory, 'Package', d.packageName),
-          _row(Icons.store, 'Inventory', d.inventoryType),
-          _row(Icons.check_circle, 'Product Status', d.status),
+          // Size and colour hold several values (each variant may carry its own),
+          // so they render as chips, one per option, rather than single rows.
+          _multiValueRow(Icons.color_lens, 'Color', _colorValues(d)),
+          _multiValueRow(Icons.straighten, 'Size', _sizeValues(d)),
         ]),
         if (d.createdBy.isNotEmpty || d.updatedBy.isNotEmpty) ...[
           const SizedBox(height: 24),
-          const Text(
+          Text(
             'Audit Information',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: kTitle,
+              color: _titleColor,
             ),
           ),
           const SizedBox(height: 12),
@@ -407,82 +407,84 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ],
         if (variants.isNotEmpty) ...[
           const SizedBox(height: 24),
-          const Text(
+          Text(
             'Variants',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: kTitle,
+              color: _titleColor,
             ),
           ),
           const SizedBox(height: 12),
           ...variants.map(
-            (v) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE5E7EB)),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF5F0FF),
-                        borderRadius: BorderRadius.circular(10),
+            (v) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: _p.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: _borderColor),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: _p.selectionTint,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          Icons.inventory_2,
+                          color: _accentColor,
+                          size: 20,
+                        ),
                       ),
-                      child: const Icon(
-                        Icons.inventory_2,
-                        color: Color(0xFF6D28D9),
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
+                      const SizedBox(width: 12),
+                      Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            v.size.isNotEmpty
-                                ? v.size
-                                : (v.color.isNotEmpty ? v.color : 'Default'),
-                            style: const TextStyle(
+                              v.size.isNotEmpty
+                                  ? v.size
+                                  : (v.color.isNotEmpty ? v.color : 'Default'),
+                            style: TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 14,
-                              color: kTitle,
+                              color: _titleColor,
                             ),
                           ),
-                          if (v.color.isNotEmpty && v.size.isNotEmpty)
-                            Text(
-                              v.color,
-                              style: const TextStyle(
+                            if (v.color.isNotEmpty && v.size.isNotEmpty)
+                              Text(
+                                v.color,
+                              style: TextStyle(
                                 fontSize: 12,
-                                color: kGray,
+                                color: _mutedColor,
                               ),
                             ),
                           Text(
                             'Qty: ${v.quantity}',
-                            style: const TextStyle(fontSize: 12, color: kGray),
+                            style: TextStyle(fontSize: 12, color: _mutedColor),
                           ),
                         ],
                       ),
                     ),
                     PriceText(
                       v.price,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
-                        color: Color(0xFF6D28D9),
+                        color: _accentColor,
                       ),
                     ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
         ],
       ],
@@ -492,29 +494,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget _stockTab() {
     final d = _viewModel.detail!;
     final pct = d.stockAvailable / d.maxCapacity;
+    // Status hues come from the palette so they stay legible on a dark surface.
     final color = d.stockStatus == 'High Stock'
-        ? const Color(0xFF16A34A)
+        ? _p.successFg
         : (d.stockStatus == 'Mid-Cap Stock'
-              ? const Color(0xFF2563EB)
+              ? const Color(0xFF60A5FA)
               : (d.stockStatus == 'Low Stock'
-                    ? const Color(0xFFD97706)
-                    : const Color(0xFFDC2626)));
+                    ? _p.warningFg
+                    : _p.dangerFg));
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: _p.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: kBorder),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x0D000000),
-                blurRadius: 10,
-                offset: Offset(0, 2),
-              ),
-            ],
+            border: Border.all(color: _borderColor),
+            boxShadow: _p.cardElevation,
           ),
           child: Row(
             children: [
@@ -522,10 +519,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDCFCE7),
+                  color: _p.successBg,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.inventory_2, color: Color(0xFF16A34A)),
+                child: Icon(Icons.inventory_2, color: _p.successFg),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -534,15 +531,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   children: [
                     Text(
                       '${d.stockAvailable}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
-                        color: kTitle,
+                        color: _titleColor,
                       ),
                     ),
-                    const Text(
+                    Text(
                       'Units in Stock',
-                      style: TextStyle(fontSize: 13, color: kGray),
+                      style: TextStyle(fontSize: 13, color: _mutedColor),
                     ),
                   ],
                 ),
@@ -553,15 +550,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDCFCE7),
+                  color: _p.successBg,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Text(
+                child: Text(
                   'Active',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF16A34A),
+                    color: _p.successFg,
                   ),
                 ),
               ),
@@ -569,12 +566,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
         ),
         const SizedBox(height: 24),
-        const Text(
+        Text(
           'Stock Info',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: kTitle,
+            color: _titleColor,
           ),
         ),
         const SizedBox(height: 12),
@@ -587,25 +584,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: _p.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: kBorder),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x0D000000),
-                blurRadius: 10,
-                offset: Offset(0, 2),
-              ),
-            ],
+            border: Border.all(color: _borderColor),
+            boxShadow: _p.cardElevation,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  const Text(
+                  Text(
                     'Current Stock Status',
-                    style: TextStyle(fontSize: 14, color: kGray),
+                    style: TextStyle(fontSize: 14, color: _mutedColor),
                   ),
                   const Spacer(),
                   Text(
@@ -622,7 +613,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               LinearProgressIndicator(
                 value: pct.clamp(0.0, 1.0),
                 minHeight: 10,
-                backgroundColor: const Color(0xFFE5E7EB),
+                backgroundColor: _p.chipBg,
                 valueColor: AlwaysStoppedAnimation(color),
               ),
             ],
@@ -637,12 +628,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Supplier Information',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: kTitle,
+            color: _titleColor,
           ),
         ),
         const SizedBox(height: 12),
@@ -656,24 +647,137 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
+  Widget _overviewChips(ProductDetailEntity d) {
+    final pills = <Widget>[];
+    if (d.categoryName.isNotEmpty && d.categoryName != '—') {
+      pills.add(_pill(Icons.category, d.categoryName));
+    }
+    if (d.inventoryType.isNotEmpty && d.inventoryType != '—') {
+      pills.add(_pill(Icons.store, d.inventoryType));
+    }
+    if (d.packageName.isNotEmpty && d.packageName != '—') {
+      pills.add(_pill(Icons.inventory, d.packageName));
+    }
+    if (pills.isEmpty) return const SizedBox.shrink();
+    return Wrap(spacing: 8, runSpacing: 8, children: pills);
+  }
+
+  Widget _pill(IconData icon, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: _p.selectionTint,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _borderColor),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: _accentColor),
+          const SizedBox(width: 6),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              color: _accentColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<String> _colorValues(ProductDetailEntity d) =>
+      _optionValues([d.color, ...d.variants.map((v) => v.color)]);
+
+  List<String> _sizeValues(ProductDetailEntity d) =>
+      _optionValues([d.size, ...d.variants.map((v) => v.size)]);
+
+  /// Distinct, non-empty options in first-seen order. A product may carry the
+  /// same value both at the top level and on its variants, so they're merged
+  /// rather than repeated.
+  List<String> _optionValues(List<String> all) {
+    final seen = <String>{};
+    final out = <String>[];
+    for (final v in all) {
+      if (v.isEmpty || v == '—') continue;
+      if (seen.add(v)) out.add(v);
+    }
+    return out;
+  }
+
+  Widget _multiValueRow(IconData icon, String label, List<String> values) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: _accentColor),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 14, color: _mutedColor),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 3,
+            child: values.isEmpty
+                ? Text(
+                    '—',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: _titleColor,
+                    ),
+                  )
+                : Wrap(
+                    alignment: WrapAlignment.end,
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: values.map(_valueChip).toList(),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _valueChip(String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: _p.selectionTint,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        value,
+        style: TextStyle(
+          fontSize: 12.5,
+          fontWeight: FontWeight.w600,
+          color: _titleColor,
+        ),
+      ),
+    );
+  }
+
   Widget _card(List<Widget> rows) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _p.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: kBorder),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0D000000),
-            blurRadius: 10,
-            offset: Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: _borderColor),
+        boxShadow: _p.cardElevation,
       ),
       child: Column(
         children: [
           for (var i = 0; i < rows.length; i++) ...[
-            if (i > 0) const Divider(height: 1, color: kBorder),
+            if (i > 0) Divider(height: 1, color: _borderColor),
             rows[i],
           ],
         ],
@@ -686,7 +790,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: kPurple),
+          Icon(icon, size: 18, color: _accentColor),
           const SizedBox(width: 12),
           Expanded(
             flex: 2,
@@ -694,7 +798,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 14, color: kGray),
+              style: TextStyle(fontSize: 14, color: _mutedColor),
             ),
           ),
           Expanded(
@@ -704,10 +808,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.end,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: kTitle,
+                color: _titleColor,
               ),
             ),
           ),

@@ -127,7 +127,6 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                                   const SizedBox(width: 8),
                                   PriceText(
                                     item.subtotal.toDouble(),
-                                    maxLength: 14,
                                     style: const TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w500,
@@ -169,7 +168,6 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                             Flexible(
                               child: PriceText(
                                 _order.amount.toDouble(),
-                                maxLength: 14,
                                 style: const TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
@@ -359,7 +357,6 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
               Flexible(
                 child: PriceText(
                   _order.amount.toDouble(),
-                  maxLength: 14,
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,

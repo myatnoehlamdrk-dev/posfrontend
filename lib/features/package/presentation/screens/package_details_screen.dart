@@ -593,7 +593,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
         TextField(
           controller: _search,
           onChanged: (_) {},
-          decoration: fieldDecoration('Search products...'),
+          decoration: fieldDecorationFor(context, 'Search products...'),
         ),
       ],
     );

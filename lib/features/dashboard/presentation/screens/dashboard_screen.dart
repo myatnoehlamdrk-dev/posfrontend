@@ -4,7 +4,10 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/features/dashboard/domain/entities/dashboard.dart';
 import 'package:posfrontend/features/dashboard/data/repositories/dashboard_repository_impl.dart';
+import 'package:posfrontend/features/dashboard/domain/entities/dashboard_tables.dart';
+import 'package:posfrontend/features/dashboard/presentation/screens/dashboard_table_screen.dart';
 import 'package:posfrontend/features/dashboard/presentation/viewmodels/dashboard_view_model.dart';
+import 'package:posfrontend/features/dashboard/presentation/widgets/dashboard_skeleton.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
@@ -88,11 +91,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (_viewModel.isLoading)
-                            const SizedBox(
-                              height: 300,
-                              child: Center(child: CircularProgressIndicator()),
-                            )
+                          if (_viewModel.isLoading && _viewModel.data == null)
+                            const DashboardSkeleton()
                           else if (_viewModel.hasError)
                             SizedBox(
                               height: 300,
@@ -130,10 +130,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                             )
                           else if (_viewModel.data == null)
-                            const SizedBox(
-                              height: 300,
-                              child: Center(child: CircularProgressIndicator()),
-                            )
+                            const DashboardSkeleton()
                           else ...[
                             Text(
                               'Summary',
@@ -222,34 +219,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(height: 12),
           Text(m.label, style: TextStyle(fontSize: 13, color: p.textSecondary)),
           const SizedBox(height: 6),
+          // Both the number and "View all" open the same table. The number used
+          // to open a dialog that just repeated it, which is a dead end: the
+          // card is a summary, and the rows behind it are somewhere else.
           GestureDetector(
-            onTap: () {
-              showDialog(
-                context: context,
-                builder: (_) => AlertDialog(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  title: Text(
-                    m.label,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: p.textSecondary,
-                    ),
-                  ),
-                  content: Text(
-                    m.value,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: p.textPrimary,
-                    ),
-                  ),
-                ),
-              );
-            },
+            onTap: () => _openSummaryTable(m.label),
             child: Text(
               m.value.length > 12 ? '${m.value.substring(0, 12)}...' : m.value,
               style: TextStyle(
@@ -263,7 +237,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           const SizedBox(height: 8),
           GestureDetector(
-            onTap: () {},
+            onTap: () => _openSummaryTable(m.label),
             child: Row(
               children: [
                 const Text(
@@ -282,6 +256,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
     );
+  }
+
+  /// Maps a summary card to the table of rows behind it. Total Sales is the
+  /// only card whose value is money rather than a count, but it has a table
+  /// too, so the mapping is on the label for all four.
+  void _openSummaryTable(String label) {
+    final route = switch (label) {
+      'Total Products' => DashboardTableScreen.route(spec: DashboardTables.products),
+      'In Stock' => DashboardTableScreen.route(spec: DashboardTables.inStock),
+      'Low Stock' => DashboardTableScreen.route(
+          spec: DashboardTables.lowStock,
+          query: const {'low': 1},
+        ),
+      'Total Sales' => DashboardTableScreen.route(spec: DashboardTables.sales),
+      _ => null,
+    };
+
+    if (route == null) return;
+    Navigator.of(context).push(route);
   }
 
   Widget _buildSummaryGrid(List<MetricEntity> metrics) {
@@ -552,10 +545,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
           child: _viewModel.isLoadingMonthly
-              ? const SizedBox(
-                  height: 260,
-                  child: Center(child: CircularProgressIndicator()),
-                )
+              ? const MonthlySalesChartSkeleton()
               : _viewModel.monthlySales.isEmpty
               ? const SizedBox(
                   height: 260,
@@ -580,16 +570,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
       title: 'Most Bought',
       titleColor: const Color(0xFF16A34A),
       items: most,
+      onViewAll: () => Navigator.of(context).push(
+        DashboardTableScreen.route(
+          spec: DashboardTables.bought,
+          showDirectionToggle: true,
+        ),
+      ),
     );
     final leastCard = _ProductListCard(
       title: 'Least Bought',
       titleColor: const Color(0xFFEF4444),
       items: least,
+      onViewAll: () => Navigator.of(context).push(
+        DashboardTableScreen.route(
+          spec: DashboardTables.leastBought,
+          showDirectionToggle: true,
+          initialDirection: 'asc',
+        ),
+      ),
     );
     final noBoughtCard = _ProductListCard(
       title: 'No Bought',
       titleColor: p.textSecondary,
       items: noBought,
+      onViewAll: () => Navigator.of(context).push(
+        DashboardTableScreen.route(spec: DashboardTables.noBought),
+      ),
     );
 
     return LayoutBuilder(
@@ -641,10 +647,15 @@ class _ProductListCard extends StatelessWidget {
   final Color titleColor;
   final List<ProductItemEntity> items;
 
+  /// Opens the full table of rows for this list. The card only holds three rows,
+  /// so without a way out the list is a dead end.
+  final VoidCallback onViewAll;
+
   const _ProductListCard({
     required this.title,
     required this.titleColor,
     required this.items,
+    required this.onViewAll,
   });
 
   @override
@@ -743,6 +754,37 @@ class _ProductListCard extends StatelessWidget {
                   ),
                 )
                 .toList(),
+          ),
+          const SizedBox(height: 4),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: onViewAll,
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                minimumSize: const Size(0, 32),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'View all',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: _DashboardScreenState.purpleAction,
+                    ),
+                  ),
+                  const SizedBox(width: 2),
+                  const Icon(
+                    Icons.chevron_right,
+                    size: 14,
+                    color: _DashboardScreenState.purpleAction,
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),

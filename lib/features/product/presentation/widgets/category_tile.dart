@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
+import 'package:posfrontend/shared/widgets/pressable_card.dart';
 
 class CategoryTile extends StatelessWidget {
   final CatalogProductView product;
@@ -13,13 +16,14 @@ class CategoryTile extends StatelessWidget {
     this.onLongPress,
   });
 
-  static const Color _titleColor = Color(0xFF111827);
-
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    final p = context.palette;
+    return PressableCard(
       onTap: onTap,
       onLongPress: onLongPress,
+      haptic: HapticFeedback.lightImpact,
+      pressedScale: 0.96,
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
       child: Column(
@@ -32,7 +36,7 @@ class CategoryTile extends StatelessWidget {
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  color: const Color(0xFFF3F4F6),
+                  color: p.chipBg,
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
@@ -52,10 +56,10 @@ class CategoryTile extends StatelessWidget {
             product.name,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: _titleColor,
+              color: p.textPrimary,
             ),
           ),
         ],

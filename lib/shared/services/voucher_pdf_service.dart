@@ -506,7 +506,7 @@ Future<Uint8List> _buildA4PdfBytes(PdfBuildParams params) async {
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Text(
-                      'Discount (${params.discountPct}%)',
+                      'Discount (${params.discountPct.asPercent()}%)',
                       style: pw.TextStyle(fontSize: 13, color: grayColor),
                     ),
                     pw.Text(
@@ -818,7 +818,7 @@ Future<Uint8List> _buildReceiptPdfBytes(PdfBuildParams params) async {
         ),
         if (params.discountPct > 0)
           _receiptSummaryRow(
-            'Discount (${params.discountPct}%)',
+            'Discount (${params.discountPct.asPercent()}%)',
             '-${_fmt(params.discountAmt)}',
             PdfColor.fromHex('#EF4444'),
             grayColor,

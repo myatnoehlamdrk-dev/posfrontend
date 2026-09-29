@@ -8,6 +8,7 @@ import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
 import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
+import 'package:posfrontend/shared/widgets/totals_panel.dart';
 
 String _fmtPrice(double value) => value.withCommas();
 
@@ -468,102 +469,45 @@ class SalePreviewScreen extends StatelessWidget {
   Widget _summarySection() {
     return Padding(
       padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          _summaryRow('Subtotal', subtotal),
-          if (discountPct > 0) ...[
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Discount ($discountPct%)',
-                  style: _monoStyle(fontSize: 13, color: kGray),
-                ),
-                Text(
-                  '-${_fmtPrice(discountAmt)}',
-                  textAlign: TextAlign.right,
-                  style: _monoStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: kRed,
-                  ),
-                ),
-              ],
-            ),
-          ],
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            child: DashedDivider(),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Total Payable',
-                style: _monoStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: kTitle,
-                ),
-              ),
-              Text(
-                _fmtPrice(totalPayable),
-                textAlign: TextAlign.right,
-                style: _monoStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF7C3AED),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5F0FF),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Payment Method',
-                  style: TextStyle(fontSize: 13, color: kGray),
-                ),
-                Text(
-                  paymentMethod,
-                  style: _monoStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: kPurple,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+      child: TotalsPanel(
+        padding: EdgeInsets.zero,
+        mono: true,
+        divider: TotalsDividerStyle.dashed,
+        format: (value) => value.withCommas(),
+        subtotal: subtotal,
+        discountPercent: discountPct,
+        discountAmount: discountAmt,
+        totalPayable: totalPayable,
+        footer: _paymentMethodChip(),
       ),
     );
   }
 
-  Widget _summaryRow(String label, double amount) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: _monoStyle(fontSize: 13, color: kGray)),
-        Text(
-          _fmtPrice(amount),
-          textAlign: TextAlign.right,
-          style: _monoStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: kTitle,
+  Widget _paymentMethodChip() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F0FF),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text(
+            'Payment Method',
+            style: TextStyle(fontSize: 13, color: kGray),
           ),
-        ),
-      ],
+          Text(
+            paymentMethod,
+            style: _monoStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: kPurple,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -651,31 +595,5 @@ class SalePreviewScreen extends StatelessWidget {
     } catch (_) {
       return _shopPlaceholder();
     }
-  }
-}
-
-class DashedDivider extends StatelessWidget {
-  const DashedDivider({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final dashWidth = 4.0;
-        final dashSpace = 4.0;
-        final dashCount = (constraints.maxWidth / (dashWidth + dashSpace))
-            .floor();
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: List.generate(dashCount, (_) {
-            return const SizedBox(
-              width: 4,
-              height: 1,
-              child: DecoratedBox(decoration: BoxDecoration(color: kBorder)),
-            );
-          }),
-        );
-      },
-    );
   }
 }

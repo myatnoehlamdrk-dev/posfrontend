@@ -3,6 +3,7 @@ import 'package:get_it/get_it.dart';
 import 'package:posfrontend/features/category/domain/entities/category.dart';
 import 'package:posfrontend/features/category/domain/repositories/category_repository.dart';
 import 'package:posfrontend/features/category/presentation/viewmodels/add_category_view_model.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
@@ -79,21 +80,35 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (ctx, constraints) {
-        final isWide = constraints.maxWidth >= 768;
-        final body = _content();
+    // The view model is a plain instance, not a provider, so nothing rebuilds
+    // this screen on `isSaving` / `fieldErrors` unless it listens explicitly.
+    return ListenableBuilder(
+      listenable: _viewModel,
+      builder: (context, _) {
+        return LayoutBuilder(
+          builder: (ctx, constraints) {
+            final isWide = constraints.maxWidth >= 768;
+            final body = _content();
 
-        if (isWide) {
-          return Scaffold(backgroundColor: Colors.white, body: body);
-        }
-        return Scaffold(backgroundColor: Colors.white, body: body);
+            if (isWide) {
+              return Scaffold(
+                backgroundColor: ctx.palette.scaffoldBg,
+                body: body,
+              );
+            }
+            return Scaffold(
+              backgroundColor: ctx.palette.scaffoldBg,
+              body: body,
+            );
+          },
+        );
       },
     );
   }
 
   Widget _content() {
     final isEdit = widget.isEditing;
+    final p = context.palette;
     return SafeArea(
       child: Column(
         children: [
@@ -120,10 +135,10 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                   const SizedBox(height: 24),
                   Text(
                     isEdit ? 'Edit Category' : 'Category Information',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
-                      color: kTitle,
+                      color: p.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -131,7 +146,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                     isEdit
                         ? 'Update the details for this category.'
                         : 'Provide the details for your new inventory category.',
-                    style: const TextStyle(fontSize: 16, color: kGray),
+                    style: TextStyle(fontSize: 16, color: p.textSecondary),
                   ),
                   const SizedBox(height: 24),
                   FormCard(

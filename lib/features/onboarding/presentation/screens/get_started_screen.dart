@@ -103,53 +103,63 @@ class GetStartedScreen extends StatelessWidget {
               ),
             ),
           ),
-          Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 120,
-                  height: 120,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: _buildAppIcon(),
-                ),
-                const SizedBox(height: 24),
-                const Text(
-                  'Smart POS',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    height: 1.1,
-                  ),
-                ),
-                const Text(
-                  '& Inventory',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    height: 1.1,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
-                  child: Text(
-                    'Manage sales, stock, and reports from your pocket.',
-                    textAlign: TextAlign.center,
+          Align(
+            // Lift the whole block so the title and inventory line sit higher
+            // in the hero, clear of the bottom section.
+            alignment: const Alignment(0, -0.2),
+            child: FittedBox(
+              // On short screens the 300pt logo plus wordmark would outgrow
+              // the hero area; scale the whole block down as one so it never
+              // overflows. On tall screens it renders at natural size.
+              fit: BoxFit.scaleDown,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildAppIcon(),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Smart POS',
                     style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.white.withValues(alpha: 0.8),
-                      height: 1.5,
+                      fontFamily: 'Broadway',
+                      fontSize: 34,
+                      color: Colors.white,
+                      height: 1.15,
                     ),
                   ),
-                ),
-              ],
+                  const Text(
+                    '&',
+                    style: TextStyle(
+                      fontFamily: 'Broadway',
+                      fontSize: 34,
+                      color: Colors.white,
+                      height: 1.15,
+                    ),
+                  ),
+                  const Text(
+                    'Inventory',
+                    style: TextStyle(
+                      fontFamily: 'Broadway',
+                      fontSize: 34,
+                      color: Colors.white,
+                      height: 1.15,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 40),
+                    child: Text(
+                      'Manage sales, stock, and reports from your pocket.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontStyle: FontStyle.italic,
+                        color: Colors.white.withValues(alpha: 0.8),
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -160,9 +170,13 @@ class GetStartedScreen extends StatelessWidget {
   Widget _buildAppIcon() {
     return Image.asset(
       'assets/shop.png',
+      width: 300,
+      height: 300,
       fit: BoxFit.contain,
-      cacheWidth: 300,
-      cacheHeight: 300,
+      // 300pt at DPR 3. The source is 2500px square, so decoding it whole for
+      // a 300pt box would allocate roughly 72MB of RGBA.
+      cacheWidth: 900,
+      cacheHeight: 900,
     );
   }
 

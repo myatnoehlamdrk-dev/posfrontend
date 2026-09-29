@@ -198,6 +198,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       height: 180,
       width: 180,
       fit: BoxFit.contain,
+      cacheWidth: 540,
+      cacheHeight: 540,
     );
   }
 

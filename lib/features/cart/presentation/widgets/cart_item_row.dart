@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/features/cart/domain/entities/cart_item_entity.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
 
 class CartItemRow extends StatelessWidget {
@@ -14,15 +15,21 @@ class CartItemRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     final img = 36.0;
     final nameSize = dense ? 12.5 : 14.0;
+    // The teal price sits on a card, so it needs lifting in dark to keep
+    // contrast; AppColors.teal is the light-mode value.
+    final priceColor = context.isDark
+        ? const Color(0xFF5EEAD4)
+        : const Color(0xFF0F766E);
     return Row(
       children: [
         Container(
           width: img,
           height: img,
           decoration: BoxDecoration(
-            color: const Color(0xFFF3F4F6),
+            color: p.chipBg,
             borderRadius: BorderRadius.circular(8),
           ),
           clipBehavior: Clip.antiAlias,
@@ -31,9 +38,9 @@ class CartItemRow extends StatelessWidget {
                   item.imageUrl!,
                   fit: BoxFit.cover,
                   errorBuilder: (_, _, _) =>
-                      Icon(Icons.inventory_2, color: Colors.grey[400], size: 18),
+                      Icon(Icons.inventory_2, color: p.textMuted, size: 18),
                 )
-              : Icon(Icons.inventory_2, color: Colors.grey[400], size: 18),
+              : Icon(Icons.inventory_2, color: p.textMuted, size: 18),
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -47,21 +54,21 @@ class CartItemRow extends StatelessWidget {
                 style: TextStyle(
                   fontSize: nameSize,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF111827),
+                  color: p.textPrimary,
                 ),
               ),
               if (item.variantLabel.isNotEmpty) ...[
                 const SizedBox(height: 2),
                 Row(
                   children: [
-                    const Icon(Icons.tune, size: 11, color: Color(0xFF6B7280)),
+                    Icon(Icons.tune, size: 11, color: p.textMuted),
                     const SizedBox(width: 3),
                     Flexible(
                       child: Text(
                         item.variantLabel,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 10.5, color: Color(0xFF6B7280)),
+                        style: TextStyle(fontSize: 10.5, color: p.textSecondary),
                       ),
                     ),
                   ],
@@ -70,17 +77,17 @@ class CartItemRow extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 '${item.unitPrice.toStringAsFixed(2)} x ${item.quantity}',
-                style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+                style: TextStyle(fontSize: 11, color: p.textSecondary),
               ),
             ],
           ),
         ),
         PriceText(
           item.subtotal,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF0F766E),
+            color: priceColor,
           ),
         ),
       ],

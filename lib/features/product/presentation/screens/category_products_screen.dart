@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/features/cart/data/cart_store.dart';
@@ -9,14 +10,18 @@ import 'package:posfrontend/features/cart/presentation/screens/add_to_cart_scree
 import 'package:posfrontend/features/cart/presentation/screens/cart_card_screen.dart';
 import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart';
 import 'package:posfrontend/features/product/presentation/screens/product_detail_screen.dart';
+import 'package:posfrontend/features/product/presentation/widgets/category_products_skeleton.dart';
 import 'package:posfrontend/features/sale/data/repositories/sale_repository_impl.dart';
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
+import 'package:posfrontend/shared/widgets/pressable_card.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_palette.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class VariantPick {
   final ProductVariant variant;
@@ -61,9 +66,10 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
   final Map<String, List<VariantPick>> _variantPicks = {};
   bool _isAddingToCart = false;
 
-  static const Color bg = Color(0xFFF8F9FC);
-  static const Color purple = Color(0xFF6D28D9);
-  static const Color titleColor = Color(0xFF111827);
+  AppPalette get _p => context.palette;
+  Color get _titleColor => _p.textPrimary;
+  Color get _accentColor => _p.primary;
+  Color get _borderColor => _p.border;
 
   @override
   void initState() {
@@ -389,7 +395,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
     try {
       final choice = await showDialog<_AddToCartChoice>(
         context: context,
-        builder: (_) => const _AddToCartChoiceDialog(),
+        builder: (_) => _AddToCartChoiceDialog(),
       );
       if (choice == null || !mounted) return;
       if (choice == _AddToCartChoice.newCard) {
@@ -416,7 +422,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
     }
     final card = await showModalBottomSheet<CartCardEntity>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: _p.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -539,7 +545,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: _p.scaffoldBg,
       body: SafeArea(
         child: Column(
           children: [
@@ -575,21 +581,22 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
           }
 
           if (_products.isEmpty && _isLoading) {
-            return const SizedBox(
-              height: 300,
-              child: Center(child: CircularProgressIndicator(color: purple)),
-            );
+            return CategoryProductsSkeleton(crossAxisCount: crossAxisCount);
           }
 
           if (_error != null && _products.isEmpty) {
             return Center(
               child: Column(
                 children: [
-                  const Icon(Icons.error_outline, size: 48, color: Color(0xFFE5E7EB)),
+                  Icon(
+                    Icons.error_outline,
+                    size: 48,
+                    color: _p.textMuted,
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     _error!,
-                    style: const TextStyle(color: Colors.red, fontSize: 15),
+                    style: TextStyle(color: _p.dangerFg, fontSize: 15),
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton.icon(
@@ -605,7 +612,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                     icon: const Icon(Icons.refresh, size: 18),
                     label: const Text('Retry'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: purple,
+                      backgroundColor: _accentColor,
                       foregroundColor: Colors.white,
                     ),
                   ),
@@ -618,11 +625,15 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
             return Center(
               child: Column(
                 children: [
-                  Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey[300]),
+                  Icon(
+                    Icons.inventory_2_outlined,
+                    size: 64,
+                    color: _p.textMuted,
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     'No products in this category',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[500]),
+                    style: TextStyle(fontSize: 16, color: _p.textSecondary),
                   ),
                 ],
               ),
@@ -642,10 +653,10 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
             itemCount: _products.length + (_hasMore ? 1 : 0),
             itemBuilder: (context, index) {
               if (index == _products.length) {
-                return const Center(
+                return Center(
                   child: Padding(
                     padding: EdgeInsets.all(16),
-                    child: CircularProgressIndicator(color: purple),
+                    child: CircularProgressIndicator(color: _accentColor),
                   ),
                 );
               }
@@ -682,14 +693,14 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
   Widget _bottomBar() {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFE5E7EB))),
+      decoration: BoxDecoration(
+        color: _p.surface,
+        border: Border(top: BorderSide(color: _borderColor)),
         boxShadow: [
           BoxShadow(
-            color: Color(0x0D000000),
+            color: _p.cardShadow,
             blurRadius: 10,
-            offset: Offset(0, -2),
+            offset: const Offset(0, -2),
           ),
         ],
       ),
@@ -705,12 +716,12 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                   child: InkWell(
                     borderRadius: BorderRadius.circular(20),
                     onTap: _openCart,
-                    child: const Padding(
+                    child: Padding(
                       padding: EdgeInsets.all(4),
                       child: Icon(
                         Icons.shopping_cart,
                         size: 24,
-                        color: titleColor,
+                        color: _titleColor,
                       ),
                     ),
                   ),
@@ -724,8 +735,8 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                         horizontal: 5,
                         vertical: 2,
                       ),
-                      decoration: const BoxDecoration(
-                        color: purple,
+                      decoration: BoxDecoration(
+                        color: _accentColor,
                         borderRadius: BorderRadius.all(Radius.circular(10)),
                       ),
                       child: Text(
@@ -750,27 +761,28 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                     _selectedCount > 0
                         ? '$_selectedCount Items Selected'
                         : 'No items selected',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: titleColor,
+                      color: _titleColor,
                     ),
                   ),
                   PriceText(
                     _selectedTotal,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: titleColor,
+                      color: _titleColor,
                     ),
                   ),
                 ],
               ),
             ),
-            GestureDetector(
+            PressableCard(
               onTap: (_isAddingToCart || _selectedCount == 0)
                   ? null
                   : _addToCart,
+              haptic: HapticFeedback.mediumImpact,
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20,
@@ -779,11 +791,11 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                 decoration: BoxDecoration(
                   gradient: (_isAddingToCart || _selectedCount == 0)
                       ? null
-                      : const LinearGradient(
-                          colors: [Color(0xFF6D28D9), Color(0xFF5B21B6)],
+                      : LinearGradient(
+                          colors: [_accentColor, _p.primaryDark],
                         ),
                   color: (_isAddingToCart || _selectedCount == 0)
-                      ? const Color(0xFFD1D5DB)
+                      ? _p.borderStrong
                       : null,
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -851,10 +863,6 @@ class _ProductCard extends StatelessWidget {
     this.onTap,
   });
 
-  static const Color titleColor = Color(0xFF111827);
-  static const Color gray = Color(0xFF6B7280);
-  static const Color purple = Color(0xFF6D28D9);
-
   double get _displayPrice => (picks != null && picks!.isNotEmpty)
       ? picks!.first.variant.price
       : (product.variants.isNotEmpty
@@ -877,15 +885,16 @@ class _ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: p.surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: selected ? purple : const Color(0xFFE5E7EB),
+            color: selected ? p.primary : p.border,
             width: selected ? 2 : 1,
           ),
           boxShadow: [
@@ -902,7 +911,7 @@ class _ProductCard extends StatelessWidget {
             Expanded(
               child: Stack(
                 children: [
-                  Positioned.fill(child: _image()),
+                  Positioned.fill(child: _image(p)),
                   Positioned(
                     top: 8,
                     left: 8,
@@ -935,11 +944,11 @@ class _ProductCard extends StatelessWidget {
                         height: 26,
                         decoration: BoxDecoration(
                           color: selected
-                              ? purple
+                              ? p.primary
                               : Colors.white.withValues(alpha: 0.92),
                           borderRadius: BorderRadius.circular(7),
                           border: Border.all(
-                            color: selected ? purple : const Color(0xFFD1D5DB),
+                            color: selected ? p.primary : p.borderStrong,
                           ),
                           boxShadow: [
                             BoxShadow(
@@ -970,10 +979,10 @@ class _ProductCard extends StatelessWidget {
                     product.name,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: titleColor,
+                      color: p.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -989,7 +998,7 @@ class _ProductCard extends StatelessWidget {
                   if (product.variants.isNotEmpty)
                     Row(
                       children: [
-                        const Icon(Icons.tune, size: 12, color: gray),
+                        Icon(Icons.tune, size: 12, color: p.textSecondary),
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
@@ -998,7 +1007,7 @@ class _ProductCard extends StatelessWidget {
                                 : '${product.variants.length} Variants',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 11, color: gray),
+                            style: TextStyle(fontSize: 11, color: p.textSecondary),
                           ),
                         ),
                       ],
@@ -1006,7 +1015,7 @@ class _ProductCard extends StatelessWidget {
                   else
                     Text(
                       'Stock: $_displayStock',
-                      style: const TextStyle(fontSize: 11, color: gray),
+                      style: TextStyle(fontSize: 11, color: p.textSecondary),
                     ),
                   if (selected) ...[
                     const SizedBox(height: 8),
@@ -1017,9 +1026,9 @@ class _ProductCard extends StatelessWidget {
                         vertical: 7,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF9FAFB),
+                        color: p.surfaceAlt,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFE5E7EB)),
+                        border: Border.all(color: p.border),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1029,10 +1038,10 @@ class _ProductCard extends StatelessWidget {
                               _picksSummary,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: purple,
+                                color: p.primary,
                               ),
                             ),
                             const SizedBox(height: 6),
@@ -1068,16 +1077,16 @@ class _ProductCard extends StatelessWidget {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Text(
+                                  Text(
                                     'Quantity',
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
-                                      color: gray,
+                                      color: p.textSecondary,
                                     ),
                                   ),
                                   const SizedBox(width: 8),
-                                  _qtyEditor(),
+                                  _qtyEditor(p),
                                 ],
                               ),
                             ),
@@ -1086,25 +1095,21 @@ class _ProductCard extends StatelessWidget {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
+                              Text(
                                 'Total',
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
-                                  color: gray,
+                                  color: p.textSecondary,
                                 ),
                               ),
                               Flexible(
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: PriceText(
-                                    _itemTotal,
-                                    maxLength: 10,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.teal,
-                                    ),
+                                child: PriceText(
+                                  _itemTotal,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.teal,
                                   ),
                                 ),
                               ),
@@ -1123,12 +1128,12 @@ class _ProductCard extends StatelessWidget {
     );
   }
 
-  Widget _image() {
+  Widget _image(AppPalette p) {
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
-        color: Color(0xFFF3F4F6),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
+      decoration: BoxDecoration(
+        color: p.chipBg,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
       ),
       child: ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
@@ -1143,17 +1148,17 @@ class _ProductCard extends StatelessWidget {
     );
   }
 
-  Widget _qtyEditor() {
+  Widget _qtyEditor(AppPalette p) {
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFD1D5DB)),
+        border: Border.all(color: p.borderStrong),
         borderRadius: BorderRadius.circular(8),
-        color: Colors.white,
+        color: p.surface,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _qtyBtn(Icons.remove, onQtyDecrease),
+          _qtyBtn(Icons.remove, onQtyDecrease, p),
           SizedBox(
             width: 34,
             child: TextField(
@@ -1161,10 +1166,10 @@ class _ProductCard extends StatelessWidget {
               keyboardType: TextInputType.number,
               textAlign: TextAlign.center,
               maxLength: 4,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: titleColor,
+                color: p.textPrimary,
               ),
               decoration: const InputDecoration(
                 counterText: '',
@@ -1175,20 +1180,22 @@ class _ProductCard extends StatelessWidget {
               onChanged: onQtyChanged,
             ),
           ),
-          _qtyBtn(Icons.add, onQtyIncrease),
+          _qtyBtn(Icons.add, onQtyIncrease, p),
         ],
       ),
     );
   }
 
-  Widget _qtyBtn(IconData icon, VoidCallback onTap) {
-    return GestureDetector(
+  Widget _qtyBtn(IconData icon, VoidCallback onTap, AppPalette p) {
+    return PressableCard(
       onTap: onTap,
+      haptic: HapticFeedback.selectionClick,
+      pressedScale: 0.88,
       child: Container(
         width: 24,
         height: 24,
         alignment: Alignment.center,
-        child: Icon(icon, size: 14, color: gray),
+        child: Icon(icon, size: 14, color: p.textSecondary),
       ),
     );
   }
@@ -1221,8 +1228,11 @@ class _VariantPickDialog extends StatefulWidget {
 }
 
 class _VariantPickDialogState extends State<_VariantPickDialog> {
-  static const Color purple = Color(0xFF6D28D9);
-  static const Color gray = Color(0xFF6B7280);
+  AppPalette get _p => context.palette;
+  Color get _mutedColor => _p.textSecondary;
+  Color get _accentColor => _p.primary;
+  Color get _titleColor => _p.textPrimary;
+  Color get _borderColor => _p.border;
 
   final List<TextEditingController> _ctrls = [];
   late final List<int> _qtys;
@@ -1299,7 +1309,7 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: Colors.white,
+      backgroundColor: _p.surface,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: Column(
@@ -1315,7 +1325,7 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
             _product.name,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 12, color: gray),
+            style: TextStyle(fontSize: 12, color: _mutedColor),
           ),
           const SizedBox(height: 8),
           Row(
@@ -1323,10 +1333,10 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
               Expanded(
                 child: Text(
                   '$_totalPicked / $_productStock pieces',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: purple,
+                    color: _accentColor,
                   ),
                 ),
               ),
@@ -1338,20 +1348,20 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
                     vertical: 5,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF3E8FF),
+                    color: _p.selectionTint,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.bolt, size: 13, color: purple),
+                      Icon(Icons.bolt, size: 13, color: _accentColor),
                       SizedBox(width: 4),
                       Text(
                         'Fill all stock',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: purple,
+                          color: _accentColor,
                         ),
                       ),
                     ],
@@ -1376,13 +1386,13 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          style: TextButton.styleFrom(foregroundColor: gray),
+          style: TextButton.styleFrom(foregroundColor: _mutedColor),
           child: const Text('Cancel'),
         ),
         FilledButton(
           onPressed: _totalPicked > 0 ? _confirm : null,
           style: FilledButton.styleFrom(
-            backgroundColor: purple,
+            backgroundColor: _accentColor,
             foregroundColor: Colors.white,
           ),
           child: const Text('Add'),
@@ -1400,7 +1410,7 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         border: Border.all(
-          color: qty > 0 ? purple : const Color(0xFFE5E7EB),
+          color: qty > 0 ? _accentColor : _borderColor,
           width: qty > 0 ? 1.5 : 1,
         ),
         borderRadius: BorderRadius.circular(10),
@@ -1411,7 +1421,7 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
         children: [
           Row(
             children: [
-              Icon(Icons.tune, size: 16, color: qty > 0 ? purple : gray),
+              Icon(Icons.tune, size: 16, color: qty > 0 ? _accentColor : _mutedColor),
               const SizedBox(width: 8),
               Expanded(
                 child: Column(
@@ -1420,23 +1430,22 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
                   children: [
                     Text(
                       variantTitle(v),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF111827),
+                        color: _titleColor,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       'Stock: ${v.quantity}',
-                      style: const TextStyle(fontSize: 11, color: gray),
+                      style: TextStyle(fontSize: 11, color: _mutedColor),
                     ),
                   ],
                 ),
               ),
               PriceText(
                 v.price,
-                maxLength: 8,
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
@@ -1451,11 +1460,11 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
             children: [
               Text(
                 qty > 0 ? 'Selected: $qty' : 'Tap + to select',
-                style: TextStyle(fontSize: 11, color: qty > 0 ? purple : gray),
+                style: TextStyle(fontSize: 11, color: qty > 0 ? _accentColor : _mutedColor),
               ),
               Container(
                 decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFFD1D5DB)),
+                  border: Border.all(color: _p.borderStrong),
                   borderRadius: BorderRadius.circular(8),
                   color: Colors.white,
                 ),
@@ -1473,10 +1482,10 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
                         keyboardType: TextInputType.number,
                         textAlign: TextAlign.center,
                         maxLength: 4,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF111827),
+                          color: _titleColor,
                         ),
                         decoration: const InputDecoration(
                           counterText: '',
@@ -1502,8 +1511,10 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
   }
 
   Widget _stepBtn(IconData icon, VoidCallback? onTap) {
-    return GestureDetector(
+    return PressableCard(
       onTap: onTap,
+      haptic: HapticFeedback.selectionClick,
+      pressedScale: 0.88,
       child: Container(
         width: 26,
         height: 26,
@@ -1512,7 +1523,7 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
         child: Icon(
           icon,
           size: 14,
-          color: onTap == null ? const Color(0xFFD1D5DB) : gray,
+          color: onTap == null ? _p.borderStrong : _mutedColor,
         ),
       ),
     );
@@ -1524,13 +1535,11 @@ enum _AddToCartChoice { newCard, existingCard }
 class _AddToCartChoiceDialog extends StatelessWidget {
   const _AddToCartChoiceDialog();
 
-  static const Color purple = Color(0xFF6D28D9);
-  static const Color gray = Color(0xFF6B7280);
-
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return AlertDialog(
-      backgroundColor: Colors.white,
+      backgroundColor: p.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: const Text(
         'Add to Cart',
@@ -1566,13 +1575,14 @@ class _AddToCartChoiceDialog extends StatelessWidget {
     required String subtitle,
     required _AddToCartChoice choice,
   }) {
+    final p = ctx.palette;
     return InkWell(
       onTap: () => Navigator.of(ctx).pop(choice),
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+          border: Border.all(color: p.border),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -1581,10 +1591,10 @@ class _AddToCartChoiceDialog extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: const Color(0xFFF3E8FF),
+                color: p.selectionTint,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, color: purple, size: 20),
+              child: Icon(icon, color: p.primary, size: 20),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -1594,21 +1604,21 @@ class _AddToCartChoiceDialog extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF111827),
+                      color: p.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(fontSize: 12, color: gray),
+                    style: TextStyle(fontSize: 12, color: p.textSecondary),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: gray, size: 20),
+            Icon(Icons.chevron_right, color: p.textSecondary, size: 20),
           ],
         ),
       ),
@@ -1626,8 +1636,11 @@ class _ExistingCardPicker extends StatefulWidget {
 }
 
 class _ExistingCardPickerState extends State<_ExistingCardPicker> {
-  static const Color purple = Color(0xFF6D28D9);
-  static const Color gray = Color(0xFF6B7280);
+  AppPalette get _p => context.palette;
+  Color get _mutedColor => _p.textSecondary;
+  Color get _accentColor => _p.primary;
+  Color get _titleColor => _p.textPrimary;
+  Color get _borderColor => _p.border;
 
   @override
   Widget build(BuildContext context) {
@@ -1643,19 +1656,19 @@ class _ExistingCardPickerState extends State<_ExistingCardPicker> {
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
               child: Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Existing Cards',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF111827),
+                        color: _titleColor,
                       ),
                     ),
                   ),
                   GestureDetector(
                     onTap: () => Navigator.of(context).pop(),
-                    child: const Icon(Icons.close, size: 20, color: gray),
+                    child: Icon(Icons.close, size: 20, color: _mutedColor),
                   ),
                 ],
               ),
@@ -1677,7 +1690,7 @@ class _ExistingCardPickerState extends State<_ExistingCardPicker> {
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        border: Border.all(color: const Color(0xFFE5E7EB)),
+                        border: Border.all(color: _borderColor),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -1686,12 +1699,12 @@ class _ExistingCardPickerState extends State<_ExistingCardPicker> {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF3E8FF),
+                              color: _p.selectionTint,
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.shopping_cart_outlined,
-                              color: purple,
+                              color: _accentColor,
                               size: 20,
                             ),
                           ),
@@ -1703,10 +1716,10 @@ class _ExistingCardPickerState extends State<_ExistingCardPicker> {
                               children: [
                                 Text(
                                   '${card.totalQuantity} items',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w700,
-                                    color: Color(0xFF111827),
+                                    color: _titleColor,
                                   ),
                                 ),
                                 const SizedBox(height: 2),
@@ -1717,9 +1730,9 @@ class _ExistingCardPickerState extends State<_ExistingCardPicker> {
                                       .join(', '),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 11,
-                                    color: gray,
+                                    color: _mutedColor,
                                   ),
                                 ),
                               ],
@@ -1728,7 +1741,6 @@ class _ExistingCardPickerState extends State<_ExistingCardPicker> {
                           const SizedBox(width: 8),
                           PriceText(
                             card.total,
-                            maxLength: 10,
                             style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,

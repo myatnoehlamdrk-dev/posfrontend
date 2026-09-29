@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart';
 import 'package:posfrontend/features/product/presentation/widgets/category_showcase_data.dart';
 import 'package:posfrontend/features/product/presentation/widgets/category_tile.dart';
+import 'package:posfrontend/shared/theme/app_palette.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class CategoryShowcaseCard extends StatelessWidget {
   final CategoryShowcaseData category;
@@ -17,19 +19,17 @@ class CategoryShowcaseCard extends StatelessWidget {
     this.onSeeAll,
   });
 
-  static const Color _titleColor = Color(0xFF111827);
-  static const Color _gray = Color(0xFF6B7280);
-
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: p.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: p.border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: p.cardShadow,
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -41,16 +41,16 @@ class CategoryShowcaseCard extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: onSeeAll,
-          hoverColor: const Color(0xFFF9FAFB),
+          hoverColor: p.surfaceAlt,
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _header(),
+                _header(p),
                 const SizedBox(height: 16),
-                _productGrid(),
+                _productGrid(p),
               ],
             ),
           ),
@@ -59,7 +59,7 @@ class CategoryShowcaseCard extends StatelessWidget {
     );
   }
 
-  Widget _header() {
+  Widget _header(AppPalette p) {
     return Row(
       children: [
         Expanded(
@@ -67,10 +67,10 @@ class CategoryShowcaseCard extends StatelessWidget {
             category.name,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: _titleColor,
+              color: p.textPrimary,
             ),
           ),
         ),
@@ -79,20 +79,20 @@ class CategoryShowcaseCard extends StatelessWidget {
           width: 28,
           height: 28,
           decoration: BoxDecoration(
-            color: const Color(0xFFF3F4F6),
+            color: p.chipBg,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: const Icon(
+          child: Icon(
             Icons.arrow_forward_ios_rounded,
             size: 14,
-            color: _gray,
+            color: p.textSecondary,
           ),
         ),
       ],
     );
   }
 
-  Widget _productGrid() {
+  Widget _productGrid(AppPalette p) {
     final products = category.products;
     if (products.isEmpty) {
       return Padding(
@@ -100,7 +100,7 @@ class CategoryShowcaseCard extends StatelessWidget {
         child: Center(
           child: Text(
             'No products',
-            style: TextStyle(fontSize: 13, color: Colors.grey[400]),
+            style: TextStyle(fontSize: 13, color: p.textMuted),
           ),
         ),
       );

@@ -41,16 +41,15 @@ class SettingsViewModel extends BaseViewModel {
     try {
       _settings = await _repository.getSettings();
       _isInitialized = true;
-      // The server copy is authoritative once it arrives. Before it does, the
-      // local mirror already put the right theme on screen, so this only
-      // corrects the case where they genuinely disagree.
-      if (_settings.themeMode == AppThemeMode.dark) {
-        ThemeModeNotifier.instance.setMode(ThemeMode.dark);
-      } else if (ThemeModeNotifier.instance.value == ThemeMode.system) {
-        // A server value of "light" must not silently override an explicit
-        // "match system" choice.
-      } else {
-        ThemeModeNotifier.instance.setMode(ThemeMode.light);
+      // The server copy is authoritative once it arrives, except when the user
+      // has opted into following the OS: the API only models light/dark, so its
+      // value would silently switch "Match System" back off behind their back.
+      if (ThemeModeNotifier.instance.value != ThemeMode.system) {
+        ThemeModeNotifier.instance.setMode(
+          _settings.themeMode == AppThemeMode.dark
+              ? ThemeMode.dark
+              : ThemeMode.light,
+        );
       }
     } catch (e) {
       setError('Failed to load settings');
@@ -59,19 +58,23 @@ class SettingsViewModel extends BaseViewModel {
     }
   }
 
+  /// The brightness actually on screen, whether it comes from the OS or from an
+  /// explicit choice.
+  ThemeMode get _effectiveMode {
+    final mode = ThemeModeNotifier.instance.value;
+    if (mode != ThemeMode.system) return mode;
+    return ThemeModeNotifier.system;
+  }
+
   Future<void> toggleTheme() async {
-    // Toggling out of "system" means the user is now choosing explicitly.
-    final wasSystem = ThemeModeNotifier.instance.value == ThemeMode.system;
-    final newMode = _settings.themeMode == AppThemeMode.light
-        ? AppThemeMode.dark
-        : AppThemeMode.light;
+    final newMode = _effectiveMode == ThemeMode.dark
+        ? AppThemeMode.light
+        : AppThemeMode.dark;
     _settings = _settings.copyWith(themeMode: newMode);
-    notifyListeners();
     ThemeModeNotifier.instance.setMode(
-      newMode == AppThemeMode.dark
-          ? ThemeMode.dark
-          : (wasSystem ? ThemeMode.dark : ThemeMode.light),
+      newMode == AppThemeMode.dark ? ThemeMode.dark : ThemeMode.light,
     );
+    notifyListeners();
     try {
       _settings = await _repository.updateSettings(
         themeMode: newMode == AppThemeMode.dark ? 'dark' : 'light',
@@ -83,18 +86,24 @@ class SettingsViewModel extends BaseViewModel {
 
   /// Opt into following the OS brightness, or back to an explicit choice.
   Future<void> setSystemTheme({required bool enabled}) async {
-    ThemeModeNotifier.instance.setMode(
-      enabled ? ThemeMode.system : ThemeMode.light,
-    );
+    if (enabled) {
+      ThemeModeNotifier.instance.setMode(ThemeMode.system);
+    } else {
+      // Leaving "match system" should not change what is on screen, so pin the
+      // brightness the OS is already showing.
+      final effective = _effectiveMode;
+      ThemeModeNotifier.instance.setMode(effective);
+      _settings = _settings.copyWith(
+        themeMode: effective == ThemeMode.dark
+            ? AppThemeMode.dark
+            : AppThemeMode.light,
+      );
+    }
     notifyListeners();
     // The API only models light/dark, so the server keeps the last explicit
     // value. Only the device preference is stored here.
     try {
-      final resolved = ThemeModeNotifier.instance.value == ThemeMode.system
-          ? (ThemeModeNotifier.system == ThemeMode.dark
-                ? 'dark'
-                : 'light')
-          : (_settings.themeMode == AppThemeMode.dark ? 'dark' : 'light');
+      final resolved = _effectiveMode == ThemeMode.dark ? 'dark' : 'light';
       _settings = await _repository.updateSettings(themeMode: resolved);
     } catch (e) {
       setError('Failed to update theme');

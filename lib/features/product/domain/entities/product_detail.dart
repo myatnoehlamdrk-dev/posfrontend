@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:posfrontend/features/product/domain/entities/product_variant.dart';
 
 class ProductDetailEntity extends Equatable {
   final String id;
@@ -29,7 +30,7 @@ class ProductDetailEntity extends Equatable {
   final String supplierAddress;
   final String? imageUrl;
   final String? imageDeleteUrl;
-  final List<dynamic> variants;
+  final List<ProductVariantEntity> variants;
   final String createdBy;
   final String updatedBy;
   final String createdAt;

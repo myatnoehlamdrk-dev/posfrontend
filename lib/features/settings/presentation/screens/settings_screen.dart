@@ -16,6 +16,7 @@ import 'package:posfrontend/features/settings/domain/entities/settings.dart';
 import 'package:posfrontend/features/settings/presentation/screens/privacy_policy_screen.dart';
 import 'package:posfrontend/features/settings/presentation/screens/terms_of_service_screen.dart';
 import 'package:posfrontend/features/settings/presentation/viewmodels/settings_view_model.dart';
+import 'package:posfrontend/features/settings/presentation/widgets/settings_skeleton.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -73,7 +74,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: context.palette.surface,
+      // Page fill sits one step back from the cards, so the cards stay readable
+      // in dark where there is no drop shadow to separate them.
+      backgroundColor: context.palette.scaffoldBg,
       drawer: const AppDrawer(activeItem: 'Setting'),
       body: SafeArea(
         child: Column(
@@ -95,12 +98,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           if (_viewModel.isLoading && !_viewModel.isInitialized)
-                            const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 60),
-                              child: Center(
-                                child: CircularProgressIndicator(color: orange),
-                              ),
-                            )
+                            const SettingsSkeleton()
                           else ...[
                             _buildProfileCard(),
                             const SizedBox(height: 28),
@@ -112,7 +110,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             const SizedBox(height: 10),
                             _buildRegionalCard(),
                             const SizedBox(height: 28),
-                            _sectionHeader('BUSINESS'),
+                            _sectionHeader('SHOP'),
                             const SizedBox(height: 10),
                             _buildShopImageCard(),
                             const SizedBox(height: 12),
@@ -220,37 +218,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  /// "Match System" is the only permanent control. The explicit light/dark
+  /// choice is a follow-up question, so it stays hidden until the user opts out
+  /// of following the OS.
   Widget _buildAppearanceCard() {
+    final isSystem = ThemeModeNotifier.instance.value == ThemeMode.system;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return _settingsCard(
       child: Column(
         children: [
           _settingsRow(
-            icon: isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
-            label: 'Dark Mode',
-            trailing: Switch(
-              // No explicit thumb/track colours: the theme's switchTheme already
-              // resolves them per brightness, and a hardcoded white thumb is
-              // invisible on a light track. This is the control the user reaches
-              // for to change the theme, so it has to read in both modes.
-              value: isDark,
-              onChanged: (_) => _viewModel.toggleTheme(),
-            ),
-            onTap: () => _viewModel.toggleTheme(),
-          ),
-          Divider(height: 1, color: border),
-          _settingsRow(
             icon: Icons.brightness_auto_outlined,
             label: 'Match System',
             trailing: Switch(
-              value: ThemeModeNotifier.instance.value == ThemeMode.system,
-              onChanged: (v) =>
-                  _viewModel.setSystemTheme(enabled: v),
+              // No explicit thumb/track colours: the theme's switchTheme already
+              // resolves them per brightness, and a hardcoded white thumb is
+              // invisible on a light track.
+              value: isSystem,
+              onChanged: (v) => _viewModel.setSystemTheme(enabled: v),
             ),
-            onTap: () => _viewModel.setSystemTheme(
-              enabled: ThemeModeNotifier.instance.value != ThemeMode.system,
-            ),
+            onTap: () => _viewModel.setSystemTheme(enabled: !isSystem),
           ),
+          if (!isSystem) ...[
+            Divider(height: 1, color: border),
+            _settingsRow(
+              icon: isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
+              label: isDark ? 'Dark Mode' : 'Light Mode',
+              trailing: Switch(
+                value: isDark,
+                onChanged: (_) => _viewModel.toggleTheme(),
+              ),
+              onTap: _viewModel.toggleTheme,
+            ),
+          ],
         ],
       ),
     );
@@ -466,7 +467,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _settingsCard({required Widget child}) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        // Theme-aware: a hardcoded white card stayed white in dark mode while
+        // the label colours came from the palette, leaving white text on white.
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: border),
         boxShadow: [

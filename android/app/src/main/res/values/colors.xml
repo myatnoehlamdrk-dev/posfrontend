@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Mirrors SplashScreen's gradient top stop. Keeping the two identical
+         removes the white flash between the system window and the first
+         Flutter frame. -->
+    <color name="splash_background">#0A1631</color>
+</resources>

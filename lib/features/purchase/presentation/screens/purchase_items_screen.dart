@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:posfrontend/features/purchase/presentation/screens/add_purchase_sheet.dart';
 import 'package:posfrontend/features/purchase/presentation/screens/add_supplier_sheet.dart';
 import 'package:posfrontend/features/purchase/presentation/screens/purchase_detail_screen.dart';
+import 'package:posfrontend/features/purchase/presentation/widgets/purchase_items_skeleton.dart';
 import 'package:posfrontend/features/purchase/presentation/viewmodels/purchase_item_view_model.dart';
 import 'package:posfrontend/features/purchase/domain/entities/purchase.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
@@ -69,7 +70,7 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
   Widget _buildBody(BuildContext context) {
     final p = context.palette;
     if (_viewModel.isLoading && _viewModel.purchaseItems.isEmpty) {
-      return const Center(child: CircularProgressIndicator(color: AppColors.teal));
+      return const PurchaseItemsSkeleton();
     }
     if (_viewModel.errorMessage != null && _viewModel.purchaseItems.isEmpty) {
       return Center(
@@ -244,7 +245,7 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                 const SizedBox(width: 4),
                 Text('@', style: TextStyle(fontSize: 12, color: p.textSecondary)),
                 const SizedBox(width: 4),
-                PriceText(order.unitPrice.toDouble(), maxLength: 12, style: TextStyle(fontSize: 12, color: p.textSecondary)),
+                PriceText(order.unitPrice.toDouble(), style: TextStyle(fontSize: 12, color: p.textSecondary)),
               ],
             ),
             const SizedBox(height: 6),
@@ -267,7 +268,7 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                     ),
                   ),
                 if (isCompleted) const SizedBox(width: 8),
-                PriceText(order.totalAmount.toDouble(), maxLength: 14, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.tealDark)),
+                PriceText(order.totalAmount.toDouble(), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.tealDark)),
               ],
             ),
           ],

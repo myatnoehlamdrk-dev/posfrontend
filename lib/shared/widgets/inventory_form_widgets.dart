@@ -16,28 +16,9 @@ const LinearGradient kPurpleGradient = LinearGradient(
   end: Alignment.centerRight,
 );
 
-InputDecoration fieldDecoration(String hint, {bool alignRight = false}) {
-  return InputDecoration(
-    hintText: hint,
-    hintStyle: const TextStyle(color: kGray, fontSize: 14),
-    filled: true,
-    fillColor: kBg,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(color: kBorder),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(color: kBorder),
-    ),
-    disabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(color: kBorder),
-    ),
-  );
-}
-
+/// Themed field decoration. There is deliberately no context-free variant: the
+/// light-only one that used to sit here painted a white fill with a grey hint,
+/// which is unreadable in dark mode.
 InputDecoration fieldDecorationFor(
   BuildContext context,
   String hint, {

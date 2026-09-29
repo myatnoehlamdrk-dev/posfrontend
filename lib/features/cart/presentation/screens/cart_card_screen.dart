@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:posfrontend/features/cart/data/cart_store.dart';
 import 'package:posfrontend/features/cart/domain/entities/cart_card_entity.dart';
 import 'package:posfrontend/features/cart/presentation/widgets/cart_item_row.dart';
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
 import 'package:posfrontend/features/sale/presentation/screens/new_sale_screen.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
-import 'package:posfrontend/shared/widgets/price_text.dart';
+import 'package:posfrontend/shared/widgets/pressable_card.dart';
+import 'package:posfrontend/shared/widgets/totals_panel.dart';
 
 class CartCardScreen extends StatefulWidget {
   final CartCardEntity card;
@@ -17,8 +20,6 @@ class CartCardScreen extends StatefulWidget {
 }
 
 class _CartCardScreenState extends State<CartCardScreen> {
-  static const Color titleColor = Color(0xFF111827);
-
   double get _total => widget.card.total;
 
   Future<void> _goCheckout() async {
@@ -51,8 +52,10 @@ class _CartCardScreenState extends State<CartCardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FC),
+      backgroundColor: p.scaffoldBg,
       body: SafeArea(
         child: Column(
           children: [
@@ -73,9 +76,9 @@ class _CartCardScreenState extends State<CartCardScreen> {
                   return Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: p.surface,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                      border: Border.all(color: p.border),
                     ),
                     child: CartItemRow(item: widget.card.items[index]),
                   );
@@ -90,78 +93,85 @@ class _CartCardScreenState extends State<CartCardScreen> {
   }
 
   Widget _bottomBar() {
+    final p = context.palette;
+
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFE5E7EB))),
+      decoration: BoxDecoration(
+        color: p.surface,
+        border: Border(top: BorderSide(color: p.border)),
         boxShadow: [
           BoxShadow(
-            color: Color(0x0D000000),
+            color: p.cardShadow,
             blurRadius: 10,
-            offset: Offset(0, -2),
+            offset: const Offset(0, -2),
           ),
         ],
       ),
       child: SafeArea(
         top: false,
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${widget.card.totalQuantity} Items',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: titleColor,
-                    ),
-                  ),
-                  PriceText(
-                    _total,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: titleColor,
-                    ),
-                  ),
-                ],
-              ),
+            TotalsPanel(
+              padding: EdgeInsets.zero,
+              itemCount: widget.card.totalQuantity,
+              subtotal: _total,
+              discountAmount: 0,
+              totalPayable: _total,
+              showSubtotal: false,
+              divider: TotalsDividerStyle.none,
             ),
-            GestureDetector(
-              onTap: _goCheckout,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF6D28D9), Color(0xFF5B21B6)],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.check_circle_outline,
-                      color: Colors.white,
-                      size: 18,
-                    ),
-                    SizedBox(width: 6),
-                    Text(
-                      'Checkout',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
+            const SizedBox(height: 14),
+            _checkoutButton(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Deliberately not a filled gradient.
+  ///
+  /// The total above is the number being confirmed, so the action that follows
+  /// it is supporting cast. A solid saturated button would pull focus off the
+  /// amount and read as the primary thing on the screen, which is what it used
+  /// to do. Tinted fill, hairline border, primary-coloured label: present, but
+  /// no longer competing.
+  ///
+  /// The ink ripple this used to carry is gone, replaced by press physics: this
+  /// is the one tap on the screen that spends money, so it answers the finger
+  /// with a dip and a firmer tick rather than a soft bloom. The dip is shallow
+  /// and the release is slow, which keeps a double-tap from reading as one
+  /// confident press.
+  Widget _checkoutButton() {
+    final p = context.palette;
+
+    return PressableCard(
+      onTap: _goCheckout,
+      haptic: HapticFeedback.mediumImpact,
+      pressedScale: 0.98,
+      child: Container(
+        height: 48,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: p.selectionTint,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: p.primary.withValues(alpha: 0.35)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.arrow_forward_rounded, size: 18, color: p.primary),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                'Proceed to Checkout',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: p.primary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
                 ),
               ),
             ),

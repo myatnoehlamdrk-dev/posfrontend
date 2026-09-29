@@ -11,6 +11,7 @@ import 'package:posfrontend/features/purchase/presentation/screens/purchase_item
 import 'package:posfrontend/features/settings/presentation/screens/settings_screen.dart';
 import 'package:posfrontend/features/cart/presentation/screens/add_to_cart_screen.dart';
 
+import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
 
@@ -22,21 +23,17 @@ class AppDrawer extends StatelessWidget {
     this.activeItem = 'Dashboard',
   });
 
-  static const Color purple = Color(0xFF6D28D9);
-  static const Color titleColor = Color(0xFF111827);
-  static const Color gray = Color(0xFF6B7280);
-  static const Color border = Color(0xFFE5E7EB);
-
   @override
   Widget build(BuildContext context) {
     final user = AuthScope.userOf(context);
     final userName = user?.fullName.trim().isNotEmpty == true ? user!.fullName : 'John Doe';
     final email = user?.email ?? '';
     final initials = _initials(userName);
+    final p = context.palette;
 
     return Drawer(
       child: Container(
-        color: Colors.white,
+        color: p.surface,
         child: Column(
           children: [
             Container(
@@ -124,7 +121,7 @@ class AppDrawer extends StatelessWidget {
                 ),
               ),
             ),
-            const Divider(height: 1, color: border),
+            Divider(height: 1, color: p.border),
             const _LogoutTile(),
             const SizedBox(height: 16),
           ],
@@ -146,12 +143,18 @@ class AppDrawer extends StatelessWidget {
     IconData icon,
     Color iconColor,
   ) {
+    final p = context.palette;
     final active = label == activeItem;
+    // The per-item accents are tuned for a white drawer. In dark the icon is
+    // lifted toward white so the hue stays recognisable but readable.
+    final idleIcon = context.isDark
+        ? Color.lerp(iconColor, Colors.white, 0.4)!
+        : iconColor;
     return Container(
       margin: const EdgeInsets.only(bottom: 4),
       decoration: active
           ? BoxDecoration(
-              color: const Color(0xFFF5F0FF),
+              color: p.selectionTint,
               borderRadius: BorderRadius.circular(12),
             )
           : null,
@@ -165,14 +168,14 @@ class AppDrawer extends StatelessWidget {
           ),
           child: Icon(
             icon,
-            color: active ? Colors.white : iconColor,
+            color: active ? Colors.white : idleIcon,
             size: 20,
           ),
         ),
         title: Text(
           label,
           style: TextStyle(
-            color: active ? purple : titleColor,
+            color: active ? p.primary : p.textPrimary,
             fontWeight: active ? FontWeight.w600 : FontWeight.w500,
             fontSize: 15,
           ),
@@ -242,8 +245,7 @@ class _LogoutTile extends StatefulWidget {
 class _LogoutTileState extends State<_LogoutTile> {
   bool _isLoading = false;
 
-  static const Color gray = Color(0xFF6B7280);
-  static const Color titleColor = Color(0xFF111827);
+  static const Color red = Color(0xFFEF4444);
 
   Future<void> _handleLogout() async {
     setState(() => _isLoading = true);
@@ -265,6 +267,7 @@ class _LogoutTileState extends State<_LogoutTile> {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: ListTile(
@@ -273,15 +276,15 @@ class _LogoutTileState extends State<_LogoutTile> {
                 width: 22,
                 height: 22,
                 child: CircularProgressIndicator(
-                  color: Color(0xFFEF4444),
+                  color: red,
                   strokeWidth: 2.5,
                 ),
               )
-            : const Icon(Icons.logout, color: Color(0xFFEF4444), size: 22),
+            : const Icon(Icons.logout, color: red, size: 22),
         title: const Text(
           'Logout',
           style: TextStyle(
-            color: Color(0xFFEF4444),
+            color: red,
             fontWeight: FontWeight.w600,
             fontSize: 15,
           ),
@@ -295,12 +298,12 @@ class _LogoutTileState extends State<_LogoutTile> {
                   builder: (ctx) {
                     return AlertDialog(
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      title: const Text('Logout', style: TextStyle(fontWeight: FontWeight.w600, color: titleColor)),
-                      content: const Text('Are you sure you want to logout?', style: TextStyle(color: gray)),
+                      title: Text('Logout', style: TextStyle(fontWeight: FontWeight.w600, color: p.textPrimary)),
+                      content: Text('Are you sure you want to logout?', style: TextStyle(color: p.textSecondary)),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(ctx),
-                          child: const Text('Cancel', style: TextStyle(color: gray)),
+                          child: Text('Cancel', style: TextStyle(color: p.textSecondary)),
                         ),
                         ElevatedButton(
                           onPressed: () async {
@@ -308,7 +311,7 @@ class _LogoutTileState extends State<_LogoutTile> {
                             await _handleLogout();
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFEF4444),
+                            backgroundColor: red,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),

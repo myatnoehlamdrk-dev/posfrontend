@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:posfrontend/core/network/media_url.dart';
+import 'package:posfrontend/shared/theme/app_palette.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
@@ -51,11 +53,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _ownerEmailController = TextEditingController();
   final _ownerPhoneController = TextEditingController();
 
-  static const Color primary = Color(0xFF7B2CBF);
-  static const Color primaryLight = Color(0xFF9D4EDD);
-  static const Color borderColor = Color(0xFFE0E0E0);
-  static const Color labelColor = Color(0xFF1A1A1A);
-  static const Color hintColor = Color(0xFF9E9E9E);
+  // Brightness-dependent tokens, so the same screen serves light and dark.
+  AppPalette get _p => context.palette;
+  Color get primary => _p.primary;
+  Color get primaryLight => _p.primaryDark;
+  Color get borderColor => _p.border;
+  Color get labelColor => _p.textPrimary;
+  Color get hintColor => _p.textSecondary;
 
   @override
   void initState() {
@@ -268,7 +272,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           padding: const EdgeInsets.only(bottom: 12),
           child: Text(
             _viewModel.errorMessage!,
-            style: const TextStyle(color: Colors.red, fontSize: 13),
+            style: TextStyle(color: _p.dangerFg, fontSize: 13),
           ),
         ),
       _gradientButton(
@@ -291,7 +295,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             color: labelColor,
             fontSize: 14,
             fontWeight: FontWeight.w500,
@@ -332,7 +336,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  title: const Text(
+                  title: Text(
                     'Change Password',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
@@ -353,8 +357,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               errorText: _viewModel.getFieldError(
                                 'currentPassword',
                               ),
-                              hintStyle: const TextStyle(color: hintColor),
-                              prefixIcon: const Icon(
+                              hintStyle: TextStyle(color: hintColor),
+                              prefixIcon: Icon(
                                 Icons.lock_outline,
                                 color: primary,
                                 size: 20,
@@ -376,7 +380,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
+                                borderSide: BorderSide(
                                   color: primary,
                                   width: 1.5,
                                 ),
@@ -396,8 +400,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               errorText: _viewModel.getFieldError(
                                 'newPassword',
                               ),
-                              hintStyle: const TextStyle(color: hintColor),
-                              prefixIcon: const Icon(
+                              hintStyle: TextStyle(color: hintColor),
+                              prefixIcon: Icon(
                                 Icons.lock_outline,
                                 color: primary,
                                 size: 20,
@@ -419,7 +423,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
+                                borderSide: BorderSide(
                                   color: primary,
                                   width: 1.5,
                                 ),
@@ -439,8 +443,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               errorText: _viewModel.getFieldError(
                                 'confirmPassword',
                               ),
-                              hintStyle: const TextStyle(color: hintColor),
-                              prefixIcon: const Icon(
+                              hintStyle: TextStyle(color: hintColor),
+                              prefixIcon: Icon(
                                 Icons.lock_outline,
                                 color: primary,
                                 size: 20,
@@ -462,7 +466,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
+                                borderSide: BorderSide(
                                   color: primary,
                                   width: 1.5,
                                 ),
@@ -480,7 +484,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(ctx),
-                      child: const Text(
+                      child: Text(
                         'Cancel',
                         style: TextStyle(color: hintColor),
                       ),
@@ -565,23 +569,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return InputDecoration(
       hintText: hint,
       errorText: errorText,
-      hintStyle: const TextStyle(color: hintColor, fontSize: 14),
+      hintStyle: TextStyle(color: hintColor, fontSize: 14),
       prefixIcon: icon != null ? Icon(icon, color: primary, size: 20) : null,
       suffixIcon: suffixIcon,
       filled: true,
-      fillColor: Colors.white,
+      // Theme-aware fill: a hardcoded white field kept white in dark mode while
+      // the typed text came from the light-on-dark text theme.
+      fillColor: _p.surfaceAlt,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: borderColor),
+        borderSide: BorderSide(color: borderColor),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: borderColor),
+        borderSide: BorderSide(color: borderColor),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: primary, width: 1.5),
+        borderSide: BorderSide(color: primary, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -605,10 +611,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final errors = _viewModel.fieldErrors;
 
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: _p.scaffoldBg,
           body: SafeArea(
             child: loading && _viewModel.profile == null
-                ? const Center(child: CircularProgressIndicator(color: primary))
+                ? Center(child: CircularProgressIndicator(color: primary))
                 : Column(
                     children: [
                       _buildTopBar(),
@@ -731,8 +737,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ),
                                       child: Text(
                                         _viewModel.errorMessage!,
-                                        style: const TextStyle(
-                                          color: Colors.red,
+                                        style: TextStyle(
+                                          color: _p.dangerFg,
                                           fontSize: 13,
                                         ),
                                       ),
@@ -761,14 +767,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildTopBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: _p.surface,
         border: Border(bottom: BorderSide(color: borderColor, width: 1)),
       ),
       child: Row(
         children: [
           const CustomBackButton(),
-          const Expanded(
+          Expanded(
             child: Center(
               child: Text(
                 'My Profile',
@@ -797,7 +803,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 CircleAvatar(
                   radius: 50,
-                  backgroundColor: const Color(0xFFE9D5FF),
+                  backgroundColor: _p.selectionTint,
                   backgroundImage: image.isNotEmpty
                       ? NetworkImage(image)
                       : null,
@@ -808,7 +814,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         }
                       : null,
                   child: image.isEmpty
-                      ? const Icon(Icons.person, size: 50, color: primary)
+                      ? Icon(Icons.person, size: 50, color: primary)
                       : null,
                 ),
                 if (_uploadingImage)
@@ -831,7 +837,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   right: 0,
                   child: Container(
                     padding: const EdgeInsets.all(6),
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: primary,
                       shape: BoxShape.circle,
                     ),
@@ -848,7 +854,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 12),
           Text(
             _viewModel.name.isNotEmpty ? _viewModel.name : 'Your Name',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: labelColor,
@@ -857,7 +863,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 4),
           Text(
             _viewModel.email.isNotEmpty ? _viewModel.email : 'your@email.com',
-            style: const TextStyle(fontSize: 14, color: hintColor),
+            style: TextStyle(fontSize: 14, color: hintColor),
           ),
         ],
       ),
@@ -867,7 +873,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _sectionTitle(String title) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w600,
         color: primary,
@@ -883,7 +889,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
+        color: _p.surfaceAlt,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: borderColor),
       ),
@@ -897,7 +903,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     color: hintColor,
                     fontWeight: FontWeight.w500,
@@ -906,7 +912,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     color: labelColor,
                     fontWeight: FontWeight.w500,
@@ -938,7 +944,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             color: labelColor,
             fontSize: 14,
             fontWeight: FontWeight.w500,
@@ -975,7 +981,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       width: double.infinity,
       height: 52,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           colors: [primary, primaryLight],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,

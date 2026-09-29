@@ -100,7 +100,6 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
                             Flexible(
                               child: PriceText(
                                 _order.totalAmount.toDouble(),
-                                maxLength: 14,
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
@@ -252,7 +251,6 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
               Flexible(
                 child: PriceText(
                   _order.totalAmount.toDouble(),
-                  maxLength: 14,
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,

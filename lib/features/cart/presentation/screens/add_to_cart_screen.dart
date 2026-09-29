@@ -5,8 +5,11 @@ import 'package:posfrontend/features/cart/domain/entities/cart_card_entity.dart'
 import 'package:posfrontend/features/cart/domain/entities/cart_item_entity.dart';
 import 'package:posfrontend/features/cart/presentation/screens/cart_card_screen.dart';
 import 'package:posfrontend/features/cart/presentation/widgets/cart_item_row.dart';
+import 'package:posfrontend/features/cart/presentation/widgets/add_to_cart_skeleton.dart';
 import 'package:posfrontend/features/sale/data/repositories/sale_repository_impl.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_palette.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
@@ -179,7 +182,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
     final cards = CartStore.instance.value;
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: const Color(0xFFF8F9FC),
+      backgroundColor: context.palette.scaffoldBg,
       drawer: const AppDrawer(activeItem: 'Add to Cart'),
       body: SafeArea(
         child: Column(
@@ -191,11 +194,17 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
             ),
             Expanded(
               child: cards.isEmpty
-                  ? RefreshableBody(onRefresh: _reload, child: _loadingMore ? _loadingState() : _emptyState())
+                  ? RefreshableBody(
+                      onRefresh: _reload,
+                      // The empty state is a `Center`, and without a viewport
+                      // floor the scroll view would collapse it to the top.
+                      fill: true,
+                      child: _loadingMore ? _loadingState() : _emptyState(),
+                    )
                   : RefreshIndicator(
                       onRefresh: _reload,
                       color: const Color(0xFF2D1B69),
-                      backgroundColor: Colors.white,
+                      backgroundColor: context.palette.surface,
                       child: _cardsList(cards),
                     ),
             ),
@@ -206,26 +215,25 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
   }
 
   Widget _loadingState() {
-    return const Center(
-      child: CircularProgressIndicator(color: AppColors.teal),
-    );
+    return const AddToCartSkeleton();
   }
 
   Widget _emptyState() {
+    final p = context.palette;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.shopping_cart_outlined, size: 80, color: Colors.grey[300]),
+          Icon(Icons.shopping_cart_outlined, size: 80, color: p.textMuted),
           const SizedBox(height: 20),
           Text(
             'Cart is empty',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.grey[500]),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: p.textSecondary),
           ),
           const SizedBox(height: 8),
           Text(
             'Add products to your cart',
-            style: TextStyle(fontSize: 14, color: Colors.grey[400]),
+            style: TextStyle(fontSize: 14, color: p.textMuted),
           ),
         ],
       ),
@@ -260,9 +268,12 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                   strokeWidth: 2,
                 ),
               )
-            : const Text(
+            : Text(
                 'No more items',
-                style: TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+                style: TextStyle(
+                  color: context.palette.textSecondary,
+                  fontSize: 13,
+                ),
               ),
       ),
     );
@@ -274,14 +285,17 @@ class _CardTile extends StatelessWidget {
 
   const _CardTile({required this.card});
 
-  static const Color titleColor = Color(0xFF111827);
-  static const Color gray = Color(0xFF6B7280);
-  static const Color purple = Color(0xFF6D28D9);
+  // Brightness-dependent tokens, resolved from the active theme.
+  AppPalette _tokens(BuildContext context) => context.palette;
 
   @override
   Widget build(BuildContext context) {
+    final p = _tokens(context);
+    final titleColor = p.textPrimary;
+    final mutedColor = p.textSecondary;
+    final accentColor = p.primary;
     return Material(
-      color: Colors.white,
+      color: p.surface,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -294,7 +308,7 @@ class _CardTile extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
+            border: Border.all(color: p.border),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -305,10 +319,10 @@ class _CardTile extends StatelessWidget {
                     width: 34,
                     height: 34,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF3F4F6),
+                      color: p.chipBg,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.receipt_long_outlined, size: 18, color: purple),
+                    child: Icon(Icons.receipt_long_outlined, size: 18, color: accentColor),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -317,7 +331,7 @@ class _CardTile extends StatelessWidget {
                       children: [
                         Text(
                           '${card.totalQuantity} item${card.totalQuantity == 1 ? '' : 's'}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                             color: titleColor,
@@ -326,30 +340,36 @@ class _CardTile extends StatelessWidget {
                         const SizedBox(height: 2),
                         Text(
                           _formatTime(card.createdAt),
-                          style: const TextStyle(fontSize: 11, color: gray),
+                          style: TextStyle(fontSize: 11, color: mutedColor),
                         ),
                       ],
                     ),
                   ),
                   PriceText(
                     card.total,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.teal,
+                      color: context.isDark
+                          ? const Color(0xFF5EEAD4)
+                          : AppColors.teal,
                     ),
                   ),
                   const SizedBox(width: 4),
                   GestureDetector(
                     onTap: () => _showDeleteDialog(context),
-                    child: const Padding(
-                      padding: EdgeInsets.all(6),
-                      child: Icon(Icons.delete_outline, size: 18, color: Color(0xFFEF4444)),
+                    child: Padding(
+                      padding: const EdgeInsets.all(6),
+                      child: Icon(
+                        Icons.delete_outline,
+                        size: 18,
+                        color: p.dangerFg,
+                      ),
                     ),
                   ),
                 ],
               ),
-              const Divider(height: 20, color: Color(0xFFE5E7EB)),
+              Divider(height: 20, color: p.border),
               for (final item in card.items.take(2)) ...[
                 CartItemRow(item: item, dense: true),
                 if (item != card.items.take(2).last)
@@ -359,7 +379,11 @@ class _CardTile extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   '+${card.items.length - 2} more',
-                  style: const TextStyle(fontSize: 11, color: purple, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: accentColor,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ],
@@ -375,6 +399,7 @@ class _CardTile extends StatelessWidget {
   }
 
   Future<void> _showDeleteDialog(BuildContext context) async {
+    final dangerFg = context.palette.dangerFg;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) {
@@ -388,7 +413,7 @@ class _CardTile extends StatelessWidget {
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+              child: Text('Delete', style: TextStyle(color: dangerFg)),
             ),
           ],
         );

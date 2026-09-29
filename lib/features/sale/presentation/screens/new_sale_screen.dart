@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:posfrontend/core/extensions/datetime_extensions.dart';
 import 'package:posfrontend/features/cart/data/cart_store.dart';
@@ -10,10 +11,13 @@ import 'package:posfrontend/features/sale/data/repositories/sale_repository_impl
 import 'package:posfrontend/features/sale/data/repositories/sale_product_repository_impl.dart';
 import 'package:posfrontend/features/sale/presentation/screens/sale_preview_screen.dart';
 import 'package:posfrontend/features/sale/presentation/viewmodels/sale_view_model.dart';
+import 'package:posfrontend/features/sale/presentation/widgets/percent_input_formatter.dart';
 import 'package:posfrontend/shared/services/voucher_pdf_service.dart';
 import 'package:posfrontend/features/sale/presentation/screens/sale_items_screen.dart';
-import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
+import 'package:posfrontend/shared/theme/app_palette.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
+import 'package:posfrontend/shared/widgets/totals_panel.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 import 'package:printing/printing.dart';
@@ -38,6 +42,12 @@ class NewSaleScreen extends StatefulWidget {
 }
 
 class _NewSaleScreenState extends State<NewSaleScreen> {
+  AppPalette get _p => context.palette;
+  Color get _titleColor => _p.textPrimary;
+  Color get _mutedColor => _p.textSecondary;
+  Color get _accentColor => _p.primary;
+  Color get _borderColor => _p.border;
+
   final TextEditingController _discountCtrl = TextEditingController(text: '0');
   final TextEditingController _notesCtrl = TextEditingController();
   final TextEditingController _customerNameCtrl = TextEditingController(
@@ -55,7 +65,6 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   static const _keyPrintVoucher = 'print_voucher_enabled';
   static const _keyPrintFormat = 'print_format';
   static const _keyPaperSize = 'print_paper_size';
-  static const double _valueColW = 96;
 
   @override
   void initState() {
@@ -212,7 +221,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             final isWide = constraints.maxWidth >= 768;
             final body = _content(isWide);
 
-            return Scaffold(backgroundColor: kBg, body: body);
+            return Scaffold(backgroundColor: _p.scaffoldBg, body: body);
           },
         );
       },
@@ -269,14 +278,14 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.calendar_today, size: 14, color: kGray),
+                    Icon(Icons.calendar_today, size: 14, color: _mutedColor),
                     const SizedBox(width: 6),
                     Text(
                       dateStr,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: kTitle,
+                        color: _titleColor,
                       ),
                     ),
                   ],
@@ -284,14 +293,14 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    const Icon(Icons.access_time, size: 14, color: kGray),
+                    Icon(Icons.access_time, size: 14, color: _mutedColor),
                     const SizedBox(width: 6),
                     Text(
                       timeStr,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: kGray,
+                        color: _mutedColor,
                       ),
                     ),
                   ],
@@ -315,12 +324,12 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       children: [
         Row(
           children: [
-            const Text(
+            Text(
               'Items',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: kTitle,
+                color: _titleColor,
               ),
             ),
             const Spacer(),
@@ -328,12 +337,12 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         ),
         const SizedBox(height: 12),
         if (_viewModel.items.isEmpty)
-          const Center(
+          Center(
             child: Padding(
               padding: EdgeInsets.symmetric(vertical: 32),
               child: Text(
                 'No items added yet.',
-                style: TextStyle(color: kGray, fontSize: 14),
+                style: TextStyle(color: _mutedColor, fontSize: 14),
               ),
             ),
           )
@@ -357,14 +366,14 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _p.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: kBorder),
-        boxShadow: const [
+        border: Border.all(color: _borderColor),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x0D000000),
+            color: _p.cardShadow,
             blurRadius: 8,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -379,7 +388,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF5F0FF),
+                    color: _p.selectionTint,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: item.imageUrl != null
@@ -396,10 +405,10 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                       item.productName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
-                        color: kTitle,
+                        color: _titleColor,
                       ),
                     ),
                     if (item.category.isNotEmpty) ...[
@@ -408,7 +417,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                         item.category,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 11, color: kGray),
+                        style: TextStyle(fontSize: 11, color: _mutedColor),
                       ),
                     ],
                     if (item.size != null ||
@@ -422,27 +431,28 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                         ].where((e) => e != null && e.isNotEmpty).join(' | '),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 11, color: kGray),
+                        style: TextStyle(fontSize: 11, color: _mutedColor),
                       ),
                     ],
                   ],
                 ),
               ),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  PriceText(
-                    item.unitPrice,
-                    maxLength: 10,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: kTitle,
+              Flexible(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    PriceText(
+                      item.unitPrice,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: _titleColor,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                ],
+                    const SizedBox(height: 4),
+                  ],
+                ),
               ),
             ],
           ),
@@ -451,18 +461,19 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             children: [
               _qtyLabel(index),
               const Spacer(),
-              const Text(
+              Text(
                 'Total:',
-                style: TextStyle(fontSize: 11, color: kGray),
+                style: TextStyle(fontSize: 11, color: _mutedColor),
               ),
               const SizedBox(width: 4),
-              PriceText(
-                item.subtotal,
-                maxLength: 12,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: kTitle,
+              Flexible(
+                child: PriceText(
+                  item.subtotal,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: _titleColor,
+                  ),
                 ),
               ),
             ],
@@ -477,19 +488,19 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        border: Border.all(color: kBorder),
+        border: Border.all(color: _borderColor),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('Qty: ', style: TextStyle(fontSize: 13, color: kGray)),
+          Text('Qty: ', style: TextStyle(fontSize: 13, color: _mutedColor)),
           Text(
             '$qty',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: kTitle,
+              color: _titleColor,
             ),
           ),
         ],
@@ -499,138 +510,47 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
 
   Widget _summaryCard() {
     return _card(
-      child: Column(
-        children: [
-          _summaryRow('Total Items', '${_viewModel.totalItems}'),
-          const SizedBox(height: 12),
-          _summaryPriceRow('Subtotal', _viewModel.subtotal),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              const Text(
-                'Discount',
-                style: TextStyle(fontSize: 14, color: kGray),
-              ),
-              const Spacer(),
-              SizedBox(
-                width: _valueColW,
-                child: TextField(
-                  controller: _discountCtrl,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  onChanged: (v) =>
-                      _viewModel.setDiscountPercent(double.tryParse(v) ?? 0),
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: kTitle,
-                  ),
-                  decoration: InputDecoration(
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 6,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: kBorder),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: kBorder),
-                    ),
-                    suffixText: '%',
-                    suffixStyle: const TextStyle(fontSize: 12, color: kGray),
-                  ),
-                ),
-              ),
-            ],
+      child: TotalsPanel(
+        padding: EdgeInsets.zero,
+        itemCount: _viewModel.totalItems,
+        subtotal: _viewModel.subtotal,
+        discountPercent: _viewModel.discountPercent,
+        discountAmount: _viewModel.discountAmount,
+        totalPayable: _viewModel.totalPayable,
+        discountEditor: TextField(
+          controller: _discountCtrl,
+          keyboardType: TextInputType.number,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            const PercentInputFormatter(),
+          ],
+          onChanged: (v) =>
+              _viewModel.setDiscountPercent(double.tryParse(v) ?? 0),
+          textAlign: TextAlign.right,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: _titleColor,
           ),
-          const SizedBox(height: 12),
-          _summaryPriceRow('Discount Amount', _viewModel.discountAmount),
-          const Divider(height: 24, color: kBorder),
-          Row(
-            children: [
-              const Text(
-                'Total Payable',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: kTitle,
-                ),
-              ),
-              const Spacer(),
-              SizedBox(
-                width: _valueColW,
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: PriceText(
-                    _viewModel.totalPayable,
-                    maxLength: 12,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2563EB),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+          decoration: InputDecoration(
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 8,
+              vertical: 6,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: _borderColor),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: _borderColor),
+            ),
+            suffixText: '%',
+            suffixStyle: TextStyle(fontSize: 12, color: _mutedColor),
           ),
-        ],
+        ),
       ),
-    );
-  }
-
-  Widget _summaryRow(String label, String value) {
-    return Row(
-      children: [
-        Text(label, style: const TextStyle(fontSize: 14, color: kGray)),
-        const Spacer(),
-        SizedBox(
-          width: _valueColW,
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.end,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: kTitle,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _summaryPriceRow(String label, double amount) {
-    return Row(
-      children: [
-        Text(label, style: const TextStyle(fontSize: 14, color: kGray)),
-        const Spacer(),
-        SizedBox(
-          width: _valueColW,
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: PriceText(
-              amount,
-              maxLength: 12,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: kTitle,
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -640,10 +560,10 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         _card(
           child: Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Payment Method',
-                  style: TextStyle(fontSize: 14, color: kGray),
+                  style: TextStyle(fontSize: 14, color: _mutedColor),
                 ),
               ),
               Expanded(
@@ -651,7 +571,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    border: Border.all(color: kBorder),
+                    border: Border.all(color: _borderColor),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: DropdownButtonHideUnderline(
@@ -683,23 +603,23 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Notes', style: TextStyle(fontSize: 14, color: kGray)),
+              Text('Notes', style: TextStyle(fontSize: 14, color: _mutedColor)),
               const SizedBox(height: 8),
               TextField(
                 controller: _notesCtrl,
                 maxLines: 3,
-                style: const TextStyle(fontSize: 14, color: kTitle),
+                style: TextStyle(fontSize: 14, color: _titleColor),
                 onChanged: (v) => _viewModel.setNotes(v),
                 decoration: InputDecoration(
                   hintText: 'Enter notes...',
-                  hintStyle: const TextStyle(color: Color(0xFFD1D5DB)),
+                  hintStyle: TextStyle(color: _p.textMuted),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: kBorder),
+                    borderSide: BorderSide(color: _borderColor),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: kBorder),
+                    borderSide: BorderSide(color: _borderColor),
                   ),
                   contentPadding: const EdgeInsets.all(12),
                 ),
@@ -779,7 +699,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                         colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
                       ),
                 color: (_viewModel.isSubmitting || _viewModel.items.isEmpty)
-                    ? kGray
+                    ? _mutedColor
                     : null,
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -831,7 +751,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         height: 48,
         decoration: BoxDecoration(
           border: Border.all(
-            color: loading ? kBorder : const Color(0xFF2563EB),
+            color: loading ? _borderColor : const Color(0xFF2563EB),
           ),
           borderRadius: BorderRadius.circular(12),
         ),
@@ -853,7 +773,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             Text(
               label,
               style: TextStyle(
-                color: loading ? kGray : const Color(0xFF2563EB),
+                color: loading ? _mutedColor : const Color(0xFF2563EB),
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
               ),
@@ -1011,7 +931,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                           width: 40,
                           height: 4,
                           decoration: BoxDecoration(
-                            color: kBorder,
+                            color: _borderColor,
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
@@ -1020,17 +940,17 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
+                          Text(
                             'Print Settings',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
-                              color: kTitle,
+                              color: _titleColor,
                             ),
                           ),
                           GestureDetector(
                             onTap: () => Navigator.pop(ctx),
-                            child: const Icon(Icons.close, color: kGray),
+                            child: Icon(Icons.close, color: _mutedColor),
                           ),
                         ],
                       ),
@@ -1060,12 +980,12 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                       ),
                       if (_printVoucherEnabled) ...[
                         const SizedBox(height: 20),
-                        const Text(
+                        Text(
                           'Print Format',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: kTitle,
+                            color: _titleColor,
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -1088,12 +1008,12 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                       if (_printVoucherEnabled &&
                           _printFormat == 'thermal') ...[
                         const SizedBox(height: 20),
-                        const Text(
+                        Text(
                           'Paper Size',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: kTitle,
+                            color: _titleColor,
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -1148,13 +1068,13 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFF5F0FF) : Colors.white,
+          color: isSelected ? _p.selectionTint : _p.surface,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: isSelected ? kPurple : kBorder),
+          border: Border.all(color: isSelected ? _accentColor : _borderColor),
         ),
         child: Row(
           children: [
-            Icon(icon, color: isSelected ? kPurple : kGray, size: 20),
+            Icon(icon, color: isSelected ? _accentColor : _mutedColor, size: 20),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -1162,12 +1082,12 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: isSelected ? kPurple : kTitle,
+                  color: isSelected ? _accentColor : _titleColor,
                 ),
               ),
             ),
             if (isSelected)
-              const Icon(Icons.check_circle, color: kPurple, size: 20),
+              Icon(Icons.check_circle, color: _accentColor, size: 20),
           ],
         ),
       ),
@@ -1190,26 +1110,26 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFF5F0FF) : Colors.white,
+          color: isSelected ? _p.selectionTint : _p.surface,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: isSelected ? kPurple : kBorder),
+          border: Border.all(color: isSelected ? _accentColor : _borderColor),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: isSelected ? kPurple : kGray, size: 20),
+            Icon(icon, color: isSelected ? _accentColor : _mutedColor, size: 20),
             const SizedBox(width: 8),
             Text(
               label,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: isSelected ? kPurple : kTitle,
+                color: isSelected ? _accentColor : _titleColor,
               ),
             ),
             if (isSelected) ...[
               const SizedBox(width: 6),
-              const Icon(Icons.check_circle, color: kPurple, size: 18),
+              Icon(Icons.check_circle, color: _accentColor, size: 18),
             ],
           ],
         ),
@@ -1227,9 +1147,9 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _p.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: kBorder),
+        border: Border.all(color: _borderColor),
       ),
       child: Row(
         children: [
@@ -1237,10 +1157,10 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFFF3F4F6),
+              color: _p.chipBg,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: kGray, size: 20),
+            child: Icon(icon, color: _mutedColor, size: 20),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1249,16 +1169,16 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: kTitle,
+                    color: _titleColor,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: const TextStyle(fontSize: 12, color: kGray),
+                  style: TextStyle(fontSize: 12, color: _mutedColor),
                 ),
               ],
             ),
@@ -1267,9 +1187,9 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             value: value,
             onChanged: onChanged,
             activeThumbColor: Colors.white,
-            activeTrackColor: kPurple,
+            activeTrackColor: _accentColor,
             inactiveThumbColor: Colors.white,
-            inactiveTrackColor: kBorder,
+            inactiveTrackColor: _borderColor,
           ),
         ],
       ),
@@ -1287,7 +1207,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         Container(
           width: 1,
           height: 20,
-          color: kBorder,
+          color: _borderColor,
           margin: const EdgeInsets.symmetric(horizontal: 20),
         ),
         GestureDetector(
@@ -1305,9 +1225,9 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   Widget _footerBtn(IconData icon, String label) {
     return Row(
       children: [
-        Icon(icon, color: kGray, size: 18),
+        Icon(icon, color: _mutedColor, size: 18),
         const SizedBox(width: 6),
-        Text(label, style: const TextStyle(fontSize: 13, color: kGray)),
+        Text(label, style: TextStyle(fontSize: 13, color: _mutedColor)),
       ],
     );
   }
@@ -1317,14 +1237,14 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _p.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: kBorder),
-        boxShadow: const [
+        border: Border.all(color: _borderColor),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x0D000000),
+            color: _p.cardShadow,
             blurRadius: 10,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
