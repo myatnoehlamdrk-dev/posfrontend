@@ -31,4 +31,26 @@ class AppColors {
   static const Color red = Color(0xFFEF4444);
   static const Color blue = Color(0xFF3B82F6);
   static const Color blueBright = Color(0xFF2563EB);
+
+  /// The brand ramp: violet through to sky.
+  ///
+  /// Shared by the onboarding hero, every `GradientButton` and the login brand
+  /// pane, so a gradient is recognisably the same gradient wherever it appears
+  /// rather than each screen picking its own pair of purples.
+  ///
+  /// Lives here rather than in the screen that introduced it because a ramp
+  /// copied into a second file is a ramp that will drift: someone adds a stop
+  /// to the onboarding hero, the login button keeps the old one, and the two
+  /// screens that are supposed to look like one product quietly stop matching.
+  ///
+  /// Const, not palette-driven, for the same reason as the rest of this class:
+  /// these are brand hues used as artwork, not surfaces that need to hold
+  /// contrast in both brightnesses.
+  static const List<Color> brandRamp = [
+    Color(0xFF7C3AED),
+    Color(0xFF8B5CF6),
+    Color(0xFF6366F1),
+    Color(0xFF3B82F6),
+    Color(0xFF0EA5E9),
+  ];
 }

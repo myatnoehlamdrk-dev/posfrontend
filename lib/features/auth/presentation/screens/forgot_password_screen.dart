@@ -11,6 +11,18 @@ import 'package:posfrontend/shared/widgets/gradient_button.dart';
 import 'package:posfrontend/shared/widgets/required_label.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
+/// Layout thresholds, matching the login screen so the two agree.
+///
+///  * phone   (< [cardFrom])  — single column, edge to edge, no surface.
+///  * tablet+ (>= [cardFrom]) — lifted onto a card, because the alternative is
+///    an email input stretched across 1900px of desktop window.
+class _ForgotLayout {
+  static const double cardFrom = 600;
+  static const double formMaxWidth = 440;
+  static const double cardMaxWidth = 460;
+  static const double cardPadding = 32;
+}
+
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
 
@@ -82,113 +94,206 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         return Scaffold(
           backgroundColor: p.scaffoldBg,
           body: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    _buildHeaderIcon(),
-                    const SizedBox(height: 20),
-                    Text(
-                      context.l10n.t('Forgot Password?'),
-                      style: TextStyle(
-                        color: p.textPrimary,
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      otpSent
-                          ? 'Enter the OTP sent to your email'
-                          : 'Enter your email to receive a verification code',
-                      style: TextStyle(color: p.textMuted, fontSize: 14),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 36),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: RequiredLabel('Email'),
-                    ),
-                    TextFormField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      textInputAction: TextInputAction.next,
-                      enabled: !otpSent,
-                      decoration: appInputDecoration(
-                        context,
-                        icon: Icons.email_outlined,
-                        hint: context.l10n.t('Enter your email'),
-                        errorText: errors['email'],
-                      ),
-                    ),
-                    if (!otpSent) ...[
-                      const SizedBox(height: 24),
-                      GradientButton(
-                        label: context.l10n.t('Send OTP'),
-                        loading: loading,
-                        onPressed: _handleSendOtp,
-                      ),
-                    ],
-                    if (otpSent) ...[
-                      const SizedBox(height: 24),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: RequiredLabel('OTP Code'),
-                      ),
-                      TextFormField(
-                        controller: _otpController,
-                        keyboardType: TextInputType.number,
-                        textInputAction: TextInputAction.done,
-                        maxLength: 6,
-                        decoration: appInputDecoration(
-                          context,
-                          icon: Icons.pin_outlined,
-                          hint: context.l10n.t('Enter 6-digit OTP'),
-                          errorText: errors['otp'],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      GestureDetector(
-                        onTap: loading ? null : _handleSendOtp,
-                        child: Text(
-                          context.l10n.t('Resend OTP'),
-                          style: TextStyle(
-                            color: AppColors.primary,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
+            child: LayoutBuilder(
+              builder: (ctx, c) {
+                final carded = c.maxWidth >= _ForgotLayout.cardFrom;
+                return _centeredScroll(
+                  maxWidth: carded
+                      ? _ForgotLayout.cardMaxWidth
+                      : _ForgotLayout.formMaxWidth,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 32,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      _buildHeaderIcon(),
+                      const SizedBox(height: 20),
+                      _buildHeading(otpSent: otpSent),
+                      const SizedBox(height: 28),
+                      if (carded)
+                        _card(
+                          child: _buildForm(
+                            errors: errors,
+                            loading: loading,
+                            otpSent: otpSent,
                           ),
+                        )
+                      else
+                        _buildForm(
+                          errors: errors,
+                          loading: loading,
+                          otpSent: otpSent,
                         ),
-                      ),
-                      const SizedBox(height: 24),
-                      GradientButton(
-                        label: context.l10n.t('Verify OTP'),
-                        loading: loading,
-                        onPressed: _handleVerifyOtp,
-                      ),
                     ],
-                    if (_viewModel.errorMessage != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 12),
-                        child: Text(
-                          _viewModel.errorMessage!,
-                          style: const TextStyle(
-                            color: Colors.red,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                    const SizedBox(height: 24),
-                    _buildBackToLogin(),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildHeading({required bool otpSent}) {
+    final p = context.palette;
+    return Column(
+      children: [
+        Text(
+          context.l10n.t('Forgot Password?'),
+          style: TextStyle(
+            color: p.textPrimary,
+            fontSize: 26,
+            fontWeight: FontWeight.bold,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          context.l10n.t(
+            otpSent
+                ? 'Enter the OTP sent to your email'
+                : 'Enter your email to receive a verification code',
+          ),
+          style: TextStyle(color: p.textMuted, fontSize: 14),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  /// Scrolls when the content is taller than the window, centres when it is
+  /// not. The `minHeight` floor is what makes those two agree.
+  Widget _centeredScroll({
+    required Widget child,
+    required double maxWidth,
+    required EdgeInsets padding,
+  }) {
+    return LayoutBuilder(
+      builder: (ctx, c) => SingleChildScrollView(
+        padding: padding,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: c.maxHeight - padding.vertical,
+          ),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: maxWidth),
+              child: child,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _card({required Widget child}) {
+    final p = context.palette;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(_ForgotLayout.cardPadding),
+      decoration: BoxDecoration(
+        color: p.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: p.border),
+        boxShadow: [
+          BoxShadow(
+            color: p.cardShadow,
+            blurRadius: 32,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+
+  Widget _buildForm({
+    required Map<String, String?> errors,
+    required bool loading,
+    required bool otpSent,
+  }) {
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: RequiredLabel('Email'),
+          ),
+          TextFormField(
+            controller: _emailController,
+            keyboardType: TextInputType.emailAddress,
+            textInputAction: TextInputAction.next,
+            enabled: !otpSent,
+            decoration: appInputDecoration(
+              context,
+              icon: Icons.email_outlined,
+              hint: context.l10n.t('Enter your email'),
+              errorText: errors['email'],
+            ),
+          ),
+          if (!otpSent) ...[
+            const SizedBox(height: 24),
+            GradientButton(
+              label: context.l10n.t('Send OTP'),
+              loading: loading,
+              onPressed: _handleSendOtp,
+            ),
+          ],
+          if (otpSent) ...[
+            const SizedBox(height: 24),
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: RequiredLabel('OTP Code'),
+            ),
+            TextFormField(
+              controller: _otpController,
+              keyboardType: TextInputType.number,
+              textInputAction: TextInputAction.done,
+              maxLength: 6,
+              decoration: appInputDecoration(
+                context,
+                icon: Icons.pin_outlined,
+                hint: context.l10n.t('Enter 6-digit OTP'),
+                errorText: errors['otp'],
+              ),
+            ),
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: loading ? null : _handleSendOtp,
+              child: Text(
+                context.l10n.t('Resend OTP'),
+                style: const TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            GradientButton(
+              label: context.l10n.t('Verify OTP'),
+              loading: loading,
+              onPressed: _handleVerifyOtp,
+            ),
+          ],
+          if (_viewModel.errorMessage != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Text(
+                _viewModel.errorMessage!,
+                style: const TextStyle(color: Colors.red, fontSize: 13),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          const SizedBox(height: 24),
+          _buildBackToLogin(),
+        ],
+      ),
     );
   }
 

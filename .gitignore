@@ -1,3 +1,7 @@
+# Archives / large artifacts
+flutter.zip
+*.zip
+
 # Miscellaneous
 *.class
 *.log
