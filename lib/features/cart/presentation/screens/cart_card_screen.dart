@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:flutter/services.dart';
 import 'package:posfrontend/features/cart/data/cart_store.dart';
 import 'package:posfrontend/features/cart/domain/entities/cart_card_entity.dart';
@@ -59,8 +60,8 @@ class _CartCardScreenState extends State<CartCardScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            const AppScreenTopBar(
-              title: 'Checkout',
+            AppScreenTopBar(
+              title: context.l10n.t('Checkout'),
               showMenuButton: false,
               showBackButton: true,
             ),
@@ -165,7 +166,7 @@ class _CartCardScreenState extends State<CartCardScreen> {
             const SizedBox(width: 8),
             Flexible(
               child: Text(
-                'Proceed to Checkout',
+                context.l10n.t('Proceed to Checkout'),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(

@@ -46,7 +46,9 @@ class CategoryShowcaseGrid extends StatelessWidget {
                 category: cat,
                 onProductTap: onProductTap,
                 onProductLongPress: onProductLongPress,
-                onSeeAll: onCategoryTap != null ? () => onCategoryTap!(cat) : null,
+                onSeeAll: onCategoryTap != null
+                    ? () => onCategoryTap!(cat)
+                    : null,
               ),
             );
           }).toList(),

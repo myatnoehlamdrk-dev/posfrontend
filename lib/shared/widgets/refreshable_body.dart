@@ -38,9 +38,7 @@ class RefreshableBody extends StatelessWidget {
           // stretched child is not possible anyway, so fall back to plain.
           final content = fill && constraints.hasBoundedHeight
               ? ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: constraints.maxHeight,
-                  ),
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
                   child: child,
                 )
               : child;

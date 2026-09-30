@@ -61,8 +61,9 @@ class CategoryRemoteDataSource {
       cancelToken: cancelToken,
     );
     final data = resp.data;
-    final Map<String, dynamic> json =
-        data is Map<String, dynamic> ? data : data['data'] as Map<String, dynamic>;
+    final Map<String, dynamic> json = data is Map<String, dynamic>
+        ? data
+        : data['data'] as Map<String, dynamic>;
     return CategoryApiModel.fromJson(json);
   }
 

@@ -13,7 +13,9 @@ class AuthScope extends StatefulWidget {
   }
 
   static void updateUserOf(BuildContext context, LoginResponse? user) {
-    context.dependOnInheritedWidgetOfExactType<_AuthScopeData>()?.updateUser(user);
+    context.dependOnInheritedWidgetOfExactType<_AuthScopeData>()?.updateUser(
+      user,
+    );
   }
 }
 

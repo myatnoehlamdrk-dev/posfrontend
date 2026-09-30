@@ -4,12 +4,7 @@ import 'package:posfrontend/features/category/domain/entities/category.dart';
 import 'package:posfrontend/features/category/domain/repositories/category_repository.dart';
 import 'package:posfrontend/features/inventory/domain/repositories/inventory_repository.dart';
 
-enum CategorySort {
-  dateNewest,
-  dateOldest,
-  nameAz,
-  nameZa,
-}
+enum CategorySort { dateNewest, dateOldest, nameAz, nameZa }
 
 class CategoryViewModel extends BaseViewModel {
   final CategoryRepository _repository;
@@ -23,19 +18,22 @@ class CategoryViewModel extends BaseViewModel {
     CategoryRepository? repository,
     InventoryRepository? inventoryRepository,
     this.type = 'self',
-  })  : _repository = repository ?? _defaultCategoryRepository(),
-        _inventoryRepository = inventoryRepository ?? _defaultInventoryRepository() {
+  }) : _repository = repository ?? _defaultCategoryRepository(),
+       _inventoryRepository =
+           inventoryRepository ?? _defaultInventoryRepository() {
     load();
   }
 
   static CategoryRepository _defaultCategoryRepository() {
     throw UnimplementedError(
-        'CategoryRepository must be injected into CategoryViewModel');
+      'CategoryRepository must be injected into CategoryViewModel',
+    );
   }
 
   static InventoryRepository _defaultInventoryRepository() {
     throw UnimplementedError(
-        'InventoryRepository must be injected into CategoryViewModel');
+      'InventoryRepository must be injected into CategoryViewModel',
+    );
   }
 
   Future<void> load() async {

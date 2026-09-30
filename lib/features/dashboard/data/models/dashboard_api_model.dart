@@ -1,6 +1,7 @@
 import 'package:posfrontend/core/extensions/number_extensions.dart';
 import 'package:posfrontend/core/extensions/map_json_extensions.dart';
 import 'package:posfrontend/features/dashboard/domain/entities/dashboard.dart';
+import 'package:posfrontend/features/dashboard/domain/entities/dashboard_tables.dart';
 
 class DashboardApiModel {
   final List<MetricEntity> metrics;
@@ -49,6 +50,7 @@ class DashboardApiModel {
         iconFontFamily: 'MaterialIcons',
         iconBgValue: 0xFFDCFCE7,
         iconColorValue: 0xFF16A34A,
+        tableKey: DashboardTableKey.products,
         label: 'Total Products',
         value: totalProducts.withCommas(),
       ),
@@ -57,6 +59,7 @@ class DashboardApiModel {
         iconFontFamily: 'MaterialIcons',
         iconBgValue: 0xFFDBEAFE,
         iconColorValue: 0xFF3B82F6,
+        tableKey: DashboardTableKey.inStock,
         label: 'In Stock',
         value: inStock.withCommas(),
       ),
@@ -65,6 +68,7 @@ class DashboardApiModel {
         iconFontFamily: 'MaterialIcons',
         iconBgValue: 0xFFFEF3C7,
         iconColorValue: 0xFFF59E0B,
+        tableKey: DashboardTableKey.lowStock,
         label: 'Low Stock',
         value: lowStock.withCommas(),
       ),
@@ -73,6 +77,7 @@ class DashboardApiModel {
         iconFontFamily: 'MaterialIcons',
         iconBgValue: 0xFFF3E8FF,
         iconColorValue: 0xFF8B5CF6,
+        tableKey: DashboardTableKey.sales,
         label: 'Total Sales',
         value: 'MMK ${totalSales.withCommas()}',
       ),
@@ -83,11 +88,13 @@ class DashboardApiModel {
       final item = distRes[i] as Map<String, dynamic>;
       final count = item.integer('product_count');
       if (count <= 0) continue;
-      categoryDistribution.add(CategoryDistributionEntity(
-        category: item.str('category_name', 'Unknown'),
-        productCount: count,
-        colorValue: _categoryColors[i % _categoryColors.length],
-      ));
+      categoryDistribution.add(
+        CategoryDistributionEntity(
+          category: item.str('category_name', 'Unknown'),
+          productCount: count,
+          colorValue: _categoryColors[i % _categoryColors.length],
+        ),
+      );
     }
 
     final categoryQuantity = catQtyRes.map<CategoryQuantityEntity>((e) {

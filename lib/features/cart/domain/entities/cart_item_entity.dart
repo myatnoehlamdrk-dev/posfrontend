@@ -30,15 +30,15 @@ class CartItemEntity {
   }
 
   Map<String, dynamic> toJson() => {
-        'productId': productId,
-        'productName': productName,
-        'imageUrl': imageUrl,
-        'unitPrice': unitPrice,
-        'quantity': quantity,
-        'category': category,
-        'size': size,
-        'color': color,
-      };
+    'productId': productId,
+    'productName': productName,
+    'imageUrl': imageUrl,
+    'unitPrice': unitPrice,
+    'quantity': quantity,
+    'category': category,
+    'size': size,
+    'color': color,
+  };
 
   factory CartItemEntity.fromJson(Map<String, dynamic> json) {
     return CartItemEntity(

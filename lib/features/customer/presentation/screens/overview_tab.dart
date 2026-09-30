@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/features/customer/domain/entities/customer.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 
@@ -23,17 +24,41 @@ class OverviewTab extends StatelessWidget {
         children: [
           Row(
             children: [
-              _statCard(context, 'Total Customers', '${ov.totalCustomers}', Icons.people, purple),
+              _statCard(
+                context,
+                'Total Customers',
+                '${ov.totalCustomers}',
+                Icons.people,
+                purple,
+              ),
               const SizedBox(width: 12),
-              _statCard(context, 'New This Month', '${ov.newThisMonth}', Icons.person_add, teal),
+              _statCard(
+                context,
+                'New This Month',
+                '${ov.newThisMonth}',
+                Icons.person_add,
+                teal,
+              ),
             ],
           ),
           const SizedBox(height: 12),
           Row(
             children: [
-              _statCard(context, 'Returning', '${ov.returningCustomers}', Icons.replay, green),
+              _statCard(
+                context,
+                'Returning',
+                '${ov.returningCustomers}',
+                Icons.replay,
+                green,
+              ),
               const SizedBox(width: 12),
-              _statCard(context, 'Walk-in', '${ov.walkInCount}', Icons.store, orange),
+              _statCard(
+                context,
+                'Walk-in',
+                '${ov.walkInCount}',
+                Icons.store,
+                orange,
+              ),
             ],
           ),
           const SizedBox(height: 24),
@@ -41,11 +66,17 @@ class OverviewTab extends StatelessWidget {
           const SizedBox(height: 24),
           if (analytics.topCustomers.isNotEmpty) ...[
             Text(
-              'Top 3 Customers',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: p.textPrimary),
+              context.l10n.t('Top 3 Customers'),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: p.textPrimary,
+              ),
             ),
             const SizedBox(height: 12),
-            ...analytics.topCustomers.take(3).toList().asMap().entries.map((entry) {
+            ...analytics.topCustomers.take(3).toList().asMap().entries.map((
+              entry,
+            ) {
               final i = entry.key;
               final c = entry.value;
               return _topCustomerRow(context, i, c);
@@ -59,7 +90,13 @@ class OverviewTab extends StatelessWidget {
     );
   }
 
-  Widget _statCard(BuildContext context, String label, String value, IconData icon, Color color) {
+  Widget _statCard(
+    BuildContext context,
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     final p = context.palette;
     return Expanded(
       child: Container(
@@ -81,7 +118,14 @@ class OverviewTab extends StatelessWidget {
               child: Icon(icon, size: 20, color: color),
             ),
             const SizedBox(height: 12),
-            Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color)),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
             const SizedBox(height: 4),
             Text(label, style: TextStyle(fontSize: 13, color: p.textSecondary)),
           ],
@@ -104,13 +148,26 @@ class OverviewTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('New vs Returning Customers', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: p.textPrimary)),
+          Text(
+            context.l10n.t('New vs Returning Customers'),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: p.textPrimary,
+            ),
+          ),
           const SizedBox(height: 16),
           Row(
             children: [
               _nvrStat(context, 'New', nvr.newCount, nvr.newPct, teal),
               const SizedBox(width: 16),
-              _nvrStat(context, 'Returning', nvr.returningCount, nvr.returningPct, purple),
+              _nvrStat(
+                context,
+                'Returning',
+                nvr.returningCount,
+                nvr.returningPct,
+                purple,
+              ),
             ],
           ),
           if (total > 0) ...[
@@ -130,7 +187,13 @@ class OverviewTab extends StatelessWidget {
     );
   }
 
-  Widget _nvrStat(BuildContext context, String label, int count, int pct, Color color) {
+  Widget _nvrStat(
+    BuildContext context,
+    String label,
+    int count,
+    int pct,
+    Color color,
+  ) {
     final p = context.palette;
     return Expanded(
       child: Column(
@@ -138,8 +201,22 @@ class OverviewTab extends StatelessWidget {
         children: [
           Text(label, style: TextStyle(fontSize: 13, color: p.textSecondary)),
           const SizedBox(height: 4),
-          Text('$count', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
-          Text('$pct%', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: color)),
+          Text(
+            context.l10n.t('{v1}').replaceAll('{v1}', (count).toString()),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          Text(
+            context.l10n.t('{v1}%').replaceAll('{v1}', (pct).toString()),
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: color,
+            ),
+          ),
         ],
       ),
     );
@@ -155,7 +232,9 @@ class OverviewTab extends StatelessWidget {
       decoration: BoxDecoration(
         color: rank == 0 ? p.warningBg : p.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: rank == 0 ? const Color(0xFFF59E0B) : p.border),
+        border: Border.all(
+          color: rank == 0 ? const Color(0xFFF59E0B) : p.border,
+        ),
       ),
       child: Row(
         children: [
@@ -165,12 +244,33 @@ class OverviewTab extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(c.name, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: p.textPrimary)),
-                Text('${c.totalOrders} orders', style: TextStyle(fontSize: 12, color: p.textSecondary)),
+                Text(
+                  c.name,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: p.textPrimary,
+                  ),
+                ),
+                Text(
+                  context.l10n
+                      .t('{v1} orders')
+                      .replaceAll('{v1}', (c.totalOrders).toString()),
+                  style: TextStyle(fontSize: 12, color: p.textSecondary),
+                ),
               ],
             ),
           ),
-          Text('MMK ${c.totalSpending}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: rank == 0 ? const Color(0xFFF59E0B) : purple)),
+          Text(
+            context.l10n
+                .t('MMK {v1}')
+                .replaceAll('{v1}', (c.totalSpending).toString()),
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: rank == 0 ? const Color(0xFFF59E0B) : purple,
+            ),
+          ),
         ],
       ),
     );
@@ -189,19 +289,46 @@ class OverviewTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Purchase Behavior', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: p.textPrimary)),
+          Text(
+            context.l10n.t('Purchase Behavior'),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: p.textPrimary,
+            ),
+          ),
           const SizedBox(height: 12),
-          _behaviorRow(context, Icons.attach_money, 'Avg. Spending', 'MMK ${b.avgSpendingPerCustomer}'),
+          _behaviorRow(
+            context,
+            Icons.attach_money,
+            'Avg. Spending',
+            'MMK ${b.avgSpendingPerCustomer}',
+          ),
           const SizedBox(height: 8),
-          _behaviorRow(context, Icons.calendar_today, 'Most Frequent Day', b.mostFrequentDay.isEmpty ? '-' : b.mostFrequentDay),
+          _behaviorRow(
+            context,
+            Icons.calendar_today,
+            'Most Frequent Day',
+            b.mostFrequentDay.isEmpty ? '-' : b.mostFrequentDay,
+          ),
           const SizedBox(height: 8),
-          _behaviorRow(context, Icons.access_time, 'Most Frequent Hour', b.mostFrequentHour.isEmpty ? '-' : b.mostFrequentHour),
+          _behaviorRow(
+            context,
+            Icons.access_time,
+            'Most Frequent Hour',
+            b.mostFrequentHour.isEmpty ? '-' : b.mostFrequentHour,
+          ),
         ],
       ),
     );
   }
 
-  Widget _behaviorRow(BuildContext context, IconData icon, String label, String value) {
+  Widget _behaviorRow(
+    BuildContext context,
+    IconData icon,
+    String label,
+    String value,
+  ) {
     final p = context.palette;
     return Row(
       children: [
@@ -209,7 +336,14 @@ class OverviewTab extends StatelessWidget {
         const SizedBox(width: 10),
         Text(label, style: TextStyle(fontSize: 13, color: p.textSecondary)),
         const Spacer(),
-        Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: p.textPrimary)),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: p.textPrimary,
+          ),
+        ),
       ],
     );
   }

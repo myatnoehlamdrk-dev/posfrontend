@@ -13,8 +13,8 @@ class ProfileViewModel extends BaseViewModel with FormValidationMixin {
   ProfileViewModel({
     required ProfileRepository repository,
     required ShopApiRepository shopRepository,
-  })  : _repository = repository,
-        _shopRepository = shopRepository;
+  }) : _repository = repository,
+       _shopRepository = shopRepository;
 
   ProfileEntity? _profile;
   ProfileEntity? get profile => _profile;

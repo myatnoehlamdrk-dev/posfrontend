@@ -122,11 +122,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
 
   /// Standard card treatment: surface fill, hairline border, theme-aware shadow.
   List<BoxShadow> get cardElevation => [
-    BoxShadow(
-      color: cardShadow,
-      blurRadius: 10,
-      offset: const Offset(0, 2),
-    ),
+    BoxShadow(color: cardShadow, blurRadius: 10, offset: const Offset(0, 2)),
   ];
 
   @override

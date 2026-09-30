@@ -7,7 +7,7 @@ class ShopLocalRepositoryImpl implements ShopLocalRepository {
   final ShopLocalDataSource _dataSource;
 
   ShopLocalRepositoryImpl({ShopLocalDataSource? dataSource})
-      : _dataSource = dataSource ?? ShopLocalDataSource();
+    : _dataSource = dataSource ?? ShopLocalDataSource();
 
   @override
   Future<void> saveShop(ShopEntity shop) async {

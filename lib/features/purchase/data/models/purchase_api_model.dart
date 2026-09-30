@@ -96,11 +96,6 @@ class SupplierApiModel {
   }
 
   SupplierEntity toEntity() {
-    return SupplierEntity(
-      id: id,
-      name: name,
-      phone: phone,
-      address: address,
-    );
+    return SupplierEntity(id: id, name: name, phone: phone, address: address);
   }
 }

@@ -36,9 +36,7 @@ class AuthRemoteDataSource {
 
   Future<void> sendOtp(String email) async {
     try {
-      await _dio.post('/api/auth/register/send-otp', data: {
-        'email': email,
-      });
+      await _dio.post('/api/auth/register/send-otp', data: {'email': email});
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
@@ -46,10 +44,10 @@ class AuthRemoteDataSource {
 
   Future<void> verifyOtp(String email, String otp) async {
     try {
-      await _dio.post('/api/auth/register/verify-otp', data: {
-        'email': email,
-        'otp': otp,
-      });
+      await _dio.post(
+        '/api/auth/register/verify-otp',
+        data: {'email': email, 'otp': otp},
+      );
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
@@ -57,9 +55,10 @@ class AuthRemoteDataSource {
 
   Future<void> sendForgotPasswordOtp(String email) async {
     try {
-      await _dio.post('/api/auth/forgot-password/send-otp', data: {
-        'email': email,
-      });
+      await _dio.post(
+        '/api/auth/forgot-password/send-otp',
+        data: {'email': email},
+      );
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
@@ -67,10 +66,10 @@ class AuthRemoteDataSource {
 
   Future<String> verifyForgotPasswordOtp(String email, String otp) async {
     try {
-      final response = await _dio.post('/api/auth/forgot-password/verify-otp', data: {
-        'email': email,
-        'otp': otp,
-      });
+      final response = await _dio.post(
+        '/api/auth/forgot-password/verify-otp',
+        data: {'email': email, 'otp': otp},
+      );
       return response.data['reset_token'] as String;
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
@@ -83,12 +82,15 @@ class AuthRemoteDataSource {
     required String password,
   }) async {
     try {
-      await _dio.post('/api/auth/forgot-password/reset', data: {
-        'email': email,
-        'reset_token': resetToken,
-        'password': password,
-        'password_confirmation': password,
-      });
+      await _dio.post(
+        '/api/auth/forgot-password/reset',
+        data: {
+          'email': email,
+          'reset_token': resetToken,
+          'password': password,
+          'password_confirmation': password,
+        },
+      );
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }

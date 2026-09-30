@@ -18,10 +18,10 @@ class RegisterViewModel extends BaseViewModel with FormValidationMixin {
     required ShopLocalRepository shopRepository,
     required ShopApiRepository shopApiRepository,
     required ImgbbRepository imgbbRepository,
-  })  : _registerUseCase = registerUseCase,
-        _shopRepository = shopRepository,
-        _shopApiRepository = shopApiRepository,
-        _imgbbRepository = imgbbRepository;
+  }) : _registerUseCase = registerUseCase,
+       _shopRepository = shopRepository,
+       _shopApiRepository = shopApiRepository,
+       _imgbbRepository = imgbbRepository;
 
   Shop? _shop;
   Shop? get shop => _shop;
@@ -55,17 +55,61 @@ class RegisterViewModel extends BaseViewModel with FormValidationMixin {
   String get dob => _dob;
   String? get gender => _gender;
 
-  void setName(String value) { _name = value; clearFieldError('name'); }
-  void setEmail(String value) { _email = value; clearFieldError('email'); }
-  void setPassword(String value) { _password = value; clearFieldError('password'); }
-  void setPhone(String value) { _phone = value; clearFieldError('phone'); }
-  void setSocial(String value) { _social = value; clearFieldError('social'); }
-  void setRole(String value) { _role = value; clearFieldError('role'); }
-  void setAddress(String value) { _address = value; clearFieldError('address'); }
-  void setNrc(String value) { _nrc = value; clearFieldError('nrc'); }
-  void setBillingWay(String value) { _billingWay = value; clearFieldError('billingWay'); }
-  void setDob(String value) { _dob = value; clearFieldError('dob'); }
-  void setGender(String? value) { _gender = value; clearFieldError('gender'); notifyListeners(); }
+  void setName(String value) {
+    _name = value;
+    clearFieldError('name');
+  }
+
+  void setEmail(String value) {
+    _email = value;
+    clearFieldError('email');
+  }
+
+  void setPassword(String value) {
+    _password = value;
+    clearFieldError('password');
+  }
+
+  void setPhone(String value) {
+    _phone = value;
+    clearFieldError('phone');
+  }
+
+  void setSocial(String value) {
+    _social = value;
+    clearFieldError('social');
+  }
+
+  void setRole(String value) {
+    _role = value;
+    clearFieldError('role');
+  }
+
+  void setAddress(String value) {
+    _address = value;
+    clearFieldError('address');
+  }
+
+  void setNrc(String value) {
+    _nrc = value;
+    clearFieldError('nrc');
+  }
+
+  void setBillingWay(String value) {
+    _billingWay = value;
+    clearFieldError('billingWay');
+  }
+
+  void setDob(String value) {
+    _dob = value;
+    clearFieldError('dob');
+  }
+
+  void setGender(String? value) {
+    _gender = value;
+    clearFieldError('gender');
+    notifyListeners();
+  }
 
   Future<void> loadShop() async {
     setLoading(true);
@@ -88,7 +132,8 @@ class RegisterViewModel extends BaseViewModel with FormValidationMixin {
       setFieldError('email', 'Enter a valid email');
     }
     if (_password.isEmpty) setFieldError('password', 'Password is required');
-    if (_billingWay.trim().isEmpty) setFieldError('billingWay', 'Billing way is required');
+    if (_billingWay.trim().isEmpty)
+      setFieldError('billingWay', 'Billing way is required');
     notifyListeners();
     return fieldErrors.isEmpty;
   }
@@ -115,7 +160,10 @@ class RegisterViewModel extends BaseViewModel with FormValidationMixin {
         var shop = localShop;
         if (shop.logoData?.isNotEmpty == true) {
           final bytes = base64Decode(shop.logoData!);
-          final result = await _imgbbRepository.uploadImage(bytes, fileName: 'shop_logo.jpg');
+          final result = await _imgbbRepository.uploadImage(
+            bytes,
+            fileName: 'shop_logo.jpg',
+          );
           shop = shop.copyWith(logoUrl: result.url);
           await _shopRepository.saveShop(shop);
         }
@@ -126,20 +174,22 @@ class RegisterViewModel extends BaseViewModel with FormValidationMixin {
         shopId = createdShop.id!;
       }
 
-      final user = await _registerUseCase(RegisterParams(
-        fullName: _name.trim(),
-        email: _email.trim(),
-        password: _password,
-        phone: _phone.trim().isEmpty ? null : _phone.trim(),
-        social: _social.trim().isEmpty ? null : _social.trim(),
-        role: _role.trim().isEmpty ? null : _role.trim(),
-        address: _address.trim().isEmpty ? null : _address.trim(),
-        nrc: _nrc.trim().isEmpty ? null : _nrc.trim(),
-        billingWay: _billingWay.trim(),
-        dob: _dob.isEmpty ? null : _dob,
-        gender: _gender,
-        shopId: shopId,
-      ));
+      final user = await _registerUseCase(
+        RegisterParams(
+          fullName: _name.trim(),
+          email: _email.trim(),
+          password: _password,
+          phone: _phone.trim().isEmpty ? null : _phone.trim(),
+          social: _social.trim().isEmpty ? null : _social.trim(),
+          role: _role.trim().isEmpty ? null : _role.trim(),
+          address: _address.trim().isEmpty ? null : _address.trim(),
+          nrc: _nrc.trim().isEmpty ? null : _nrc.trim(),
+          billingWay: _billingWay.trim(),
+          dob: _dob.isEmpty ? null : _dob,
+          gender: _gender,
+          shopId: shopId,
+        ),
+      );
       _user = user;
       return true;
     } catch (e) {

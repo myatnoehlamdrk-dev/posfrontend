@@ -11,7 +11,7 @@ class ProductRepositoryImpl implements ProductRepository {
   final ProductRemoteDataSource _remoteDataSource;
 
   ProductRepositoryImpl({ProductRemoteDataSource? remoteDataSource})
-      : _remoteDataSource = remoteDataSource ?? ProductRemoteDataSource();
+    : _remoteDataSource = remoteDataSource ?? ProductRemoteDataSource();
 
   @override
   Future<Map<String, dynamic>> getProducts({
@@ -66,11 +66,17 @@ class ProductDetailRepositoryImpl implements ProductDetailRepository {
   final ProductRemoteDataSource _remoteDataSource;
 
   ProductDetailRepositoryImpl({ProductRemoteDataSource? remoteDataSource})
-      : _remoteDataSource = remoteDataSource ?? ProductRemoteDataSource();
+    : _remoteDataSource = remoteDataSource ?? ProductRemoteDataSource();
 
   @override
-  Future<ProductDetailEntity> getDetail(String productId, {CancelToken? cancelToken}) async {
-    final model = await _remoteDataSource.getProductDetail(productId, cancelToken: cancelToken);
+  Future<ProductDetailEntity> getDetail(
+    String productId, {
+    CancelToken? cancelToken,
+  }) async {
+    final model = await _remoteDataSource.getProductDetail(
+      productId,
+      cancelToken: cancelToken,
+    );
     return model.toEntity();
   }
 }
@@ -79,19 +85,23 @@ class ProductManageRepositoryImpl implements ProductManageRepository {
   final ProductRemoteDataSource _remoteDataSource;
 
   ProductManageRepositoryImpl({ProductRemoteDataSource? remoteDataSource})
-      : _remoteDataSource = remoteDataSource ?? ProductRemoteDataSource();
+    : _remoteDataSource = remoteDataSource ?? ProductRemoteDataSource();
 
   @override
-  Future<List<Map<String, dynamic>>> getSuppliers() => _remoteDataSource.getSuppliers();
+  Future<List<Map<String, dynamic>>> getSuppliers() =>
+      _remoteDataSource.getSuppliers();
 
   @override
-  Future<List<Map<String, dynamic>>> getPackages() => _remoteDataSource.getPackages();
+  Future<List<Map<String, dynamic>>> getPackages() =>
+      _remoteDataSource.getPackages();
 
   @override
-  Future<void> createProduct(Map<String, dynamic> data) => _remoteDataSource.createProduct(data);
+  Future<void> createProduct(Map<String, dynamic> data) =>
+      _remoteDataSource.createProduct(data);
 
   @override
-  Future<void> updateProduct(String productId, Map<String, dynamic> data) => _remoteDataSource.updateProduct(productId, data);
+  Future<void> updateProduct(String productId, Map<String, dynamic> data) =>
+      _remoteDataSource.updateProduct(productId, data);
 
   @override
   Future<List<ProductEntity>> searchProducts(String query) async {
@@ -100,17 +110,19 @@ class ProductManageRepositoryImpl implements ProductManageRepository {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> getPendingPurchaseItems() => _remoteDataSource.getPendingPurchaseItems();
+  Future<List<Map<String, dynamic>>> getPendingPurchaseItems() =>
+      _remoteDataSource.getPendingPurchaseItems();
 
   @override
-  Future<void> completePurchaseItem(String itemId) => _remoteDataSource.completePurchaseItem(itemId);
+  Future<void> completePurchaseItem(String itemId) =>
+      _remoteDataSource.completePurchaseItem(itemId);
 }
 
 class CategoryRepositoryImpl implements CategoryRepository {
   final ProductRemoteDataSource _remoteDataSource;
 
   CategoryRepositoryImpl({ProductRemoteDataSource? remoteDataSource})
-      : _remoteDataSource = remoteDataSource ?? ProductRemoteDataSource();
+    : _remoteDataSource = remoteDataSource ?? ProductRemoteDataSource();
 
   @override
   Future<List<Category>> getCategories() async {
@@ -119,12 +131,32 @@ class CategoryRepositoryImpl implements CategoryRepository {
   }
 
   @override
-  Future<void> createCategory({required String name, String? description, String? inventoryId, String? type}) {
-    return _remoteDataSource.createCategory(name: name, description: description, inventoryId: inventoryId, type: type);
+  Future<void> createCategory({
+    required String name,
+    String? description,
+    String? inventoryId,
+    String? type,
+  }) {
+    return _remoteDataSource.createCategory(
+      name: name,
+      description: description,
+      inventoryId: inventoryId,
+      type: type,
+    );
   }
 
   @override
-  Future<void> updateCategory(String id, {String? name, String? description, bool? active}) {
-    return _remoteDataSource.updateCategory(id, name: name, description: description, active: active);
+  Future<void> updateCategory(
+    String id, {
+    String? name,
+    String? description,
+    bool? active,
+  }) {
+    return _remoteDataSource.updateCategory(
+      id,
+      name: name,
+      description: description,
+      active: active,
+    );
   }
 }

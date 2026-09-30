@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/features/category/domain/entities/category.dart';
 import 'package:posfrontend/features/package/domain/entities/package.dart';
 import 'package:posfrontend/features/package/presentation/viewmodels/assign_product_to_package_view_model.dart';
@@ -26,7 +27,6 @@ class AssignProductToPackageScreen extends StatefulWidget {
 
 class _AssignProductToPackageScreenState
     extends State<AssignProductToPackageScreen> {
-  final TextEditingController _searchCtrl = TextEditingController();
   late final AssignProductToPackageViewModel _viewModel;
 
   // Brightness-dependent tokens; the `k*` constants are light-only.
@@ -49,7 +49,12 @@ class _AssignProductToPackageScreenState
   Future<void> _assignToPackage() async {
     final successCount = await _viewModel.assignToPackage();
     if (successCount > 0 && mounted) {
-      showSuccessMessage(context, '$successCount product(s) added to package');
+      showSuccessMessage(
+        context,
+        context.l10n
+            .t('{v1} product(s) added to package')
+            .replaceAll('{v1}', (successCount).toString()),
+      );
       Navigator.of(context).pop(true);
     } else if (_viewModel.hasError && mounted) {
       showErrorMessage(
@@ -62,7 +67,6 @@ class _AssignProductToPackageScreenState
   @override
   void dispose() {
     _viewModel.dispose();
-    _searchCtrl.dispose();
     super.dispose();
   }
 
@@ -76,8 +80,6 @@ class _AssignProductToPackageScreenState
           body: Column(
             children: [
               _header(),
-              _searchBar(),
-              _categoryChips(),
               Expanded(child: _productList()),
               if (_viewModel.selectedCount > 0) _bottomBar(),
             ],
@@ -101,7 +103,7 @@ class _AssignProductToPackageScreenState
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
-                    'Add Products to Package',
+                    context.l10n.t('Add Products to Package'),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -112,7 +114,10 @@ class _AssignProductToPackageScreenState
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${widget.package.name} • ${widget.category.name}',
+                    context.l10n
+                        .t('{v1} • {v2}')
+                        .replaceAll('{v1}', (widget.package.name).toString())
+                        .replaceAll('{v2}', (widget.category.name).toString()),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(fontSize: 13, color: _mutedColor),
@@ -151,68 +156,6 @@ class _AssignProductToPackageScreenState
     );
   }
 
-  Widget _searchBar() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: TextField(
-        controller: _searchCtrl,
-        onChanged: _viewModel.setSearchQuery,
-        decoration: InputDecoration(
-          hintText: 'Search products by name, SKU, brand...',
-          hintStyle: TextStyle(color: _p.textMuted, fontSize: 14),
-          prefixIcon: Icon(Icons.search, color: _mutedColor, size: 20),
-          filled: true,
-          fillColor: _p.surface,
-          contentPadding: const EdgeInsets.symmetric(vertical: 0),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: _borderColor),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: _borderColor),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _categoryChips() {
-    return SizedBox(
-      height: 56,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: _viewModel.categories.length,
-        separatorBuilder: (ctx, index) => const SizedBox(width: 8),
-        itemBuilder: (_, i) {
-          final cat = _viewModel.categories[i];
-          final active = _viewModel.selectedCategory == cat;
-          return GestureDetector(
-            onTap: () => _viewModel.setSelectedCategory(cat),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              margin: const EdgeInsets.symmetric(vertical: 8),
-              decoration: BoxDecoration(
-                color: active ? _accentColor : _p.surface,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: active ? _accentColor : _borderColor),
-              ),
-              child: Text(
-                cat,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: active ? Colors.white : _mutedColor,
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
   Widget _productList() {
     if (_viewModel.isLoading) {
       return Center(child: CircularProgressIndicator(color: _accentColor));
@@ -229,7 +172,7 @@ class _AssignProductToPackageScreenState
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: _viewModel.loadProducts,
-              child: const Text('Retry'),
+              child: Text(context.l10n.t('Retry')),
             ),
           ],
         ),
@@ -241,19 +184,15 @@ class _AssignProductToPackageScreenState
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.inventory_2_outlined,
-              size: 48,
-              color: _p.textMuted,
-            ),
+            Icon(Icons.inventory_2_outlined, size: 48, color: _p.textMuted),
             const SizedBox(height: 12),
             Text(
-              'No unassigned products found.',
+              context.l10n.t('No unassigned products found.'),
               style: TextStyle(color: _mutedColor, fontSize: 15),
             ),
             const SizedBox(height: 4),
             Text(
-              'All products are already in a package.',
+              context.l10n.t('All products are already in a package.'),
               style: TextStyle(
                 color: _mutedColor.withValues(alpha: 0.7),
                 fontSize: 13,
@@ -350,9 +289,7 @@ class _AssignProductToPackageScreenState
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: p.stock > 0
-                              ? _p.successBg
-                              : _p.dangerBg,
+                          color: p.stock > 0 ? _p.successBg : _p.dangerBg,
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -360,9 +297,7 @@ class _AssignProductToPackageScreenState
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: p.stock > 0
-                                ? _p.successFg
-                                : _p.dangerFg,
+                            color: p.stock > 0 ? _p.successFg : _p.dangerFg,
                           ),
                         ),
                       ),
@@ -410,7 +345,9 @@ class _AssignProductToPackageScreenState
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                '${_viewModel.selectedCount} product(s) selected',
+                context.l10n
+                    .t('{v1} product(s) selected')
+                    .replaceAll('{v1}', (_viewModel.selectedCount).toString()),
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -427,9 +364,7 @@ class _AssignProductToPackageScreenState
                 ),
                 decoration: BoxDecoration(
                   gradient: !_viewModel.isAssigning
-                      ? LinearGradient(
-                          colors: [_accentColor, _p.primaryDark],
-                        )
+                      ? LinearGradient(colors: [_accentColor, _p.primaryDark])
                       : null,
                   color: _viewModel.isAssigning ? _p.borderStrong : null,
                   borderRadius: BorderRadius.circular(12),
@@ -443,8 +378,8 @@ class _AssignProductToPackageScreenState
                           color: Colors.white,
                         ),
                       )
-                    : const Text(
-                        'Add to Package',
+                    : Text(
+                        context.l10n.t('Add to Package'),
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,

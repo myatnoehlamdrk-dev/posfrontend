@@ -41,7 +41,15 @@ class CustomerAnalyticsEntity extends Equatable {
   });
 
   @override
-  List<Object?> get props => [overview, customerSummary, topCustomers, salesByLocation, newVsReturning, monthlyTrends, purchaseBehavior];
+  List<Object?> get props => [
+    overview,
+    customerSummary,
+    topCustomers,
+    salesByLocation,
+    newVsReturning,
+    monthlyTrends,
+    purchaseBehavior,
+  ];
 }
 
 class CustomerOverviewEntity extends Equatable {
@@ -58,7 +66,12 @@ class CustomerOverviewEntity extends Equatable {
   });
 
   @override
-  List<Object?> get props => [totalCustomers, newThisMonth, returningCustomers, walkInCount];
+  List<Object?> get props => [
+    totalCustomers,
+    newThisMonth,
+    returningCustomers,
+    walkInCount,
+  ];
 }
 
 class CustomerSummaryItemEntity extends Equatable {
@@ -163,7 +176,12 @@ class MonthlyTrendEntity extends Equatable {
   });
 
   @override
-  List<Object?> get props => [month, totalSpending, orderCount, uniqueCustomers];
+  List<Object?> get props => [
+    month,
+    totalSpending,
+    orderCount,
+    uniqueCustomers,
+  ];
 }
 
 class PurchaseBehaviorEntity extends Equatable {
@@ -178,7 +196,11 @@ class PurchaseBehaviorEntity extends Equatable {
   });
 
   @override
-  List<Object?> get props => [avgSpendingPerCustomer, mostFrequentDay, mostFrequentHour];
+  List<Object?> get props => [
+    avgSpendingPerCustomer,
+    mostFrequentDay,
+    mostFrequentHour,
+  ];
 }
 
 class CustomerSearchResultEntity extends Equatable {

@@ -1,5 +1,13 @@
 import 'package:posfrontend/features/dashboard/domain/entities/dashboard_table.dart';
 
+/// Stable identity for a dashboard summary tile.
+///
+/// `MetricEntity.label` used to double as the routing key, so the summary tile
+/// and its table were matched on shared English wording — and translating that
+/// wording would have broken the "View all" link. The label is now free to be
+/// copy; this is what navigation switches on.
+enum DashboardTableKey { products, inStock, lowStock, sales }
+
 /// The tables reachable from the dashboard's "View all" links.
 ///
 /// Each [DashboardTableSpec] pairs an endpoint with the columns the user asked
@@ -15,11 +23,16 @@ class DashboardTableSpec {
   /// card that opened it, and without this the table looks like a mismatch.
   final String? note;
 
+  /// Lets the toolbar scope the table to one month. Only the sales table has a
+  /// meaningful month dimension, so only it opts in.
+  final bool showMonthFilter;
+
   const DashboardTableSpec({
     required this.title,
     required this.endpoint,
     required this.columns,
     this.note,
+    this.showMonthFilter = false,
   });
 
   double get totalWidth =>
@@ -92,6 +105,7 @@ class DashboardTables {
   static const sales = DashboardTableSpec(
     title: 'Total Sales',
     endpoint: '/api/dashboard/tables/sales',
+    showMonthFilter: true,
     columns: [
       TableColumn(
         label: 'Date',
@@ -156,11 +170,11 @@ class DashboardTables {
   );
 
   static DashboardTableSpec get leastBought => DashboardTableSpec(
-        title: 'Least Bought',
-        endpoint: DashboardTables.bought.endpoint,
-        note: DashboardTables.bought.note,
-        columns: DashboardTables.bought.columns,
-      );
+    title: 'Least Bought',
+    endpoint: DashboardTables.bought.endpoint,
+    note: DashboardTables.bought.note,
+    columns: DashboardTables.bought.columns,
+  );
 
   /// No bought: product name, price, who created it, when.
   static const noBought = DashboardTableSpec(

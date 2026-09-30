@@ -59,7 +59,10 @@ class ProductDetailApiModel {
         ? (variantList.first['price'] ?? 0).toDouble()
         : 0.0;
     final parsedVariants = variantList
-        .map((v) => ProductVariantDetailApiModel.fromJson(v as Map<String, dynamic>))
+        .map(
+          (v) =>
+              ProductVariantDetailApiModel.fromJson(v as Map<String, dynamic>),
+        )
         .toList();
     final stock = json.integer('stock');
     final size = (json['size'] as String?)?.isNotEmpty == true
@@ -70,8 +73,8 @@ class ProductDetailApiModel {
     final stockStatus = stock == 0
         ? 'Out of Stock'
         : (stock < 10
-            ? 'Low Stock'
-            : (stock <= 20 ? 'Mid-Cap Stock' : 'High Stock'));
+              ? 'Low Stock'
+              : (stock <= 20 ? 'Mid-Cap Stock' : 'High Stock'));
 
     return ProductDetailApiModel(
       id: json['id']?.toString() ?? '',

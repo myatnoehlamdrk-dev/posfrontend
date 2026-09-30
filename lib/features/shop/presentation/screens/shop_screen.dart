@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:posfrontend/features/auth/presentation/screens/register_screen.dart';
 import 'package:posfrontend/features/shop/presentation/viewmodels/shop_view_model.dart';
@@ -14,6 +15,7 @@ import 'package:posfrontend/shared/widgets/app_input_decoration.dart';
 import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 import 'package:posfrontend/shared/widgets/gradient_button.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
+import 'package:posfrontend/shared/widgets/premium_image_upload.dart';
 import 'package:posfrontend/shared/widgets/required_label.dart';
 
 class ShopScreen extends StatefulWidget {
@@ -109,25 +111,7 @@ class _ShopScreenState extends State<ShopScreen> {
     final p = context.palette;
     return Padding(
       padding: const EdgeInsets.only(top: 6),
-      child: Text(
-        text,
-        style: TextStyle(color: p.textMuted, fontSize: 12),
-      ),
-    );
-  }
-
-  Widget _optionalLabel(BuildContext context, String text) {
-    final p = context.palette;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: p.textPrimary,
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
+      child: Text(text, style: TextStyle(color: p.textMuted, fontSize: 12)),
     );
   }
 
@@ -145,7 +129,11 @@ class _ShopScreenState extends State<ShopScreen> {
     );
   }
 
-  Widget _sectionTile(BuildContext context, String title, List<Widget> children) {
+  Widget _sectionTile(
+    BuildContext context,
+    String title,
+    List<Widget> children,
+  ) {
     final p = context.palette;
     return Container(
       width: double.infinity,
@@ -204,7 +192,7 @@ class _ShopScreenState extends State<ShopScreen> {
                                 _buildExistingShopPicker(),
                                 const SizedBox(height: 32),
                                 GradientButton(
-                                  label: 'Continue',
+                                  label: context.l10n.t('Continue'),
                                   icon: Icons.arrow_forward,
                                   loading:
                                       _viewModel.isLoading ||
@@ -221,7 +209,7 @@ class _ShopScreenState extends State<ShopScreen> {
                                     decoration: appInputDecoration(
                                       context,
                                       icon: Icons.store_outlined,
-                                      hint: 'Enter shop name',
+                                      hint: context.l10n.t('Enter shop name'),
                                       errorText: errors['name'],
                                     ),
                                   ),
@@ -233,7 +221,7 @@ class _ShopScreenState extends State<ShopScreen> {
                                         appInputDecoration(
                                           context,
                                           icon: Icons.category_outlined,
-                                          hint: 'Select type',
+                                          hint: context.l10n.t('Select type'),
                                           errorText: errors['type'],
                                         ).copyWith(
                                           suffixIcon: Icon(
@@ -264,7 +252,9 @@ class _ShopScreenState extends State<ShopScreen> {
                                     decoration: appInputDecoration(
                                       context,
                                       icon: Icons.location_on_outlined,
-                                      hint: 'Enter physical address',
+                                      hint: context.l10n.t(
+                                        'Enter physical address',
+                                      ),
                                       errorText: errors['physicalAddress'],
                                     ),
                                   ),
@@ -308,7 +298,7 @@ class _ShopScreenState extends State<ShopScreen> {
                                 ]),
                                 const SizedBox(height: 28),
                                 GradientButton(
-                                  label: 'Create Shop',
+                                  label: context.l10n.t('Create Shop'),
                                   icon: Icons.save_outlined,
                                   loading:
                                       _viewModel.isLoading ||
@@ -349,9 +339,7 @@ class _ShopScreenState extends State<ShopScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       decoration: BoxDecoration(
         color: p.surface,
-        border: Border(
-          bottom: BorderSide(color: p.border, width: 1),
-        ),
+        border: Border(bottom: BorderSide(color: p.border, width: 1)),
       ),
       child: Row(
         children: [
@@ -362,7 +350,7 @@ class _ShopScreenState extends State<ShopScreen> {
           Expanded(
             child: Center(
               child: Text(
-                'Create Shop',
+                context.l10n.t('Create Shop'),
                 style: TextStyle(
                   color: p.textPrimary,
                   fontSize: 18,
@@ -381,88 +369,44 @@ class _ShopScreenState extends State<ShopScreen> {
     final p = context.palette;
     final logoData = _viewModel.logoData;
     final logoUrl = _viewModel.logoUrl;
-    final hasImage =
-        (logoData != null && logoData.isNotEmpty) ||
-        (logoUrl != null && logoUrl.isNotEmpty);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _optionalLabel(context, 'Shop Image (optional)'),
-        GestureDetector(
-          onTap: _pickImage,
-          child: Container(
-            width: double.infinity,
-            height: 180,
-            decoration: BoxDecoration(
-              color: p.surfaceAlt,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: CustomPaint(
-                painter: _DashedBorderPainter(
-                  color: AppColors.primary,
-                  radius: 16,
-                  strokeWidth: 1.5,
-                  dashWidth: 8,
-                  dashSpace: 6,
-                ),
-                child: hasImage
-                    ? (logoUrl != null && logoUrl.isNotEmpty
-                          ? Image.network(
-                              logoUrl,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: double.infinity,
-                            )
-                          : Image.memory(
-                              base64Decode(logoData!),
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: double.infinity,
-                            ))
-                    : Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.add_a_photo_outlined,
-                              color: AppColors.primary,
-                              size: 40,
-                            ),
-                            const SizedBox(height: 10),
-                            Text(
-                              'Tap to upload shop image',
-                              style: TextStyle(
-                                color: AppColors.primary,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              'JPG, PNG up to 5MB',
-                              style: TextStyle(
-                                color: p.textMuted,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-              ),
-            ),
+        Text(
+          context.l10n.t('Shop Image'),
+          style: TextStyle(
+            color: p.textPrimary,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
           ),
         ),
+        SizedBox(height: 12),
+        PremiumImageUpload(
+          onTap: _pickImage,
+          imageUrl: logoUrl,
+          imageBase64: logoData,
+          title: context.l10n.t('Upload shop image'),
+          subtitle: context.l10n.t('Tap to browse your gallery'),
+          hint: context.l10n.t('JPG or PNG · up to 5MB'),
+          changeLabel: context.l10n.t('Change photo'),
+        ),
+        SizedBox(height: 10),
+        _helperText(context, 'Recommended 1:1 · JPG or PNG up to 5MB'),
       ],
     );
   }
 
   Widget _buildModeToggle() {
     return SegmentedButton<String>(
-      segments: const [
-        ButtonSegment(value: 'create', label: Text('Create Shop?')),
-        ButtonSegment(value: 'existing', label: Text('Link Shop?')),
+      segments: [
+        ButtonSegment(
+          value: 'create',
+          label: Text(context.l10n.t('Create Shop?')),
+        ),
+        ButtonSegment(
+          value: 'existing',
+          label: Text(context.l10n.t('Link Shop?')),
+        ),
       ],
       selected: {_viewModel.mode},
       onSelectionChanged: (selected) => _viewModel.setMode(selected.first),
@@ -494,7 +438,7 @@ class _ShopScreenState extends State<ShopScreen> {
           decoration: appInputDecoration(
             context,
             icon: Icons.search,
-            hint: 'Search shop by name, address or owner',
+            hint: context.l10n.t('Search shop by name, address or owner'),
             suffixIcon: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -562,14 +506,15 @@ class _ShopScreenState extends State<ShopScreen> {
     final p = context.palette;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Text(
-        text,
-        style: TextStyle(color: p.textMuted, fontSize: 14),
-      ),
+      child: Text(text, style: TextStyle(color: p.textMuted, fontSize: 14)),
     );
   }
 
-  Widget _shopResultTile(BuildContext context, old_shop.Shop shop, bool selected) {
+  Widget _shopResultTile(
+    BuildContext context,
+    old_shop.Shop shop,
+    bool selected,
+  ) {
     final p = context.palette;
     return GestureDetector(
       onTap: () => _viewModel.selectExistingShop(shop),
@@ -619,10 +564,7 @@ class _ShopScreenState extends State<ShopScreen> {
                       shop.physicalAddress,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: p.textMuted,
-                        fontSize: 13,
-                      ),
+                      style: TextStyle(color: p.textMuted, fontSize: 13),
                     ),
                   ],
                 ],
@@ -654,47 +596,4 @@ class _ShopScreenState extends State<ShopScreen> {
       );
     }
   }
-}
-
-class _DashedBorderPainter extends CustomPainter {
-  final Color color;
-  final double radius;
-  final double strokeWidth;
-  final double dashWidth;
-  final double dashSpace;
-
-  _DashedBorderPainter({
-    required this.color,
-    required this.radius,
-    this.strokeWidth = 1.5,
-    this.dashWidth = 8,
-    this.dashSpace = 6,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke;
-
-    final rrect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-      Radius.circular(radius),
-    );
-    final path = Path()..addRRect(rrect);
-    final metrics = path.computeMetrics();
-
-    for (final metric in metrics) {
-      double distance = 0;
-      while (distance < metric.length) {
-        final next = distance + dashWidth;
-        canvas.drawPath(metric.extractPath(distance, next), paint);
-        distance = next + dashSpace;
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

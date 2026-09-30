@@ -72,10 +72,7 @@ class AppScreenTopBar extends StatelessWidget {
             children: [
               IconButton(
                 onPressed: () {},
-                icon: Icon(
-                  Icons.notifications_outlined,
-                  color: p.textPrimary,
-                ),
+                icon: Icon(Icons.notifications_outlined, color: p.textPrimary),
               ),
               Positioned(
                 right: 8,

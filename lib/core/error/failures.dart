@@ -13,7 +13,10 @@ abstract class Failure extends Equatable {
       AuthException() => AuthFailure(e.message),
       NetworkException() => NetworkFailure(e.message),
       TimeoutException() => TimeoutFailure(e.message),
-      ValidationException() => ValidationFailure(e.message, fieldErrors: e.fieldErrors),
+      ValidationException() => ValidationFailure(
+        e.message,
+        fieldErrors: e.fieldErrors,
+      ),
       ServerException() => ServerFailure(e.message),
       ApiException() => ServerFailure(e.message),
       CancelledException() => CancelledFailure(e.message),

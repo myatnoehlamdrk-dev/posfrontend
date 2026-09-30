@@ -7,10 +7,14 @@ class PurchaseRepositoryImpl implements PurchaseItemRepository {
   final PurchaseRemoteDataSource _dataSource;
 
   PurchaseRepositoryImpl({PurchaseRemoteDataSource? dataSource})
-      : _dataSource = dataSource ?? PurchaseRemoteDataSource();
+    : _dataSource = dataSource ?? PurchaseRemoteDataSource();
 
   @override
-  Future<Map<String, dynamic>> getPurchaseItems({int page = 1, String? status, CancelToken? cancelToken}) async {
+  Future<Map<String, dynamic>> getPurchaseItems({
+    int page = 1,
+    String? status,
+    CancelToken? cancelToken,
+  }) async {
     return _dataSource.getPurchaseItems(page: page, status: status);
   }
 

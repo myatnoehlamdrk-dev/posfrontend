@@ -7,7 +7,7 @@ class SaleRepositoryImpl implements SaleRepository {
   final SaleRemoteDataSource _remoteDataSource;
 
   SaleRepositoryImpl({SaleRemoteDataSource? remoteDataSource})
-      : _remoteDataSource = remoteDataSource ?? SaleRemoteDataSource();
+    : _remoteDataSource = remoteDataSource ?? SaleRemoteDataSource();
 
   @override
   Future<void> createSale({
@@ -25,10 +25,17 @@ class SaleRepositoryImpl implements SaleRepository {
     CancelToken? cancelToken,
   }) {
     return _remoteDataSource.createSale(
-      userName: userName, voucherNo: voucherNo, orderId: orderId,
-      customerName: customerName, customerPhone: customerPhone,
-      customerLocation: customerLocation, payMethod: payMethod,
-      items: items, grandTotal: grandTotal, discount: discount, notes: notes,
+      userName: userName,
+      voucherNo: voucherNo,
+      orderId: orderId,
+      customerName: customerName,
+      customerPhone: customerPhone,
+      customerLocation: customerLocation,
+      payMethod: payMethod,
+      items: items,
+      grandTotal: grandTotal,
+      discount: discount,
+      notes: notes,
     );
   }
 }
@@ -37,7 +44,7 @@ class OrderRepositoryImpl implements OrderRepository {
   final SaleRemoteDataSource _remoteDataSource;
 
   OrderRepositoryImpl({SaleRemoteDataSource? remoteDataSource})
-      : _remoteDataSource = remoteDataSource ?? SaleRemoteDataSource();
+    : _remoteDataSource = remoteDataSource ?? SaleRemoteDataSource();
 
   @override
   Future<String> createOrder({
@@ -54,16 +61,29 @@ class OrderRepositoryImpl implements OrderRepository {
     String status = 'draft',
   }) {
     return _remoteDataSource.createOrder(
-      userName: userName, voucherNo: voucherNo, orderId: orderId,
-      customerName: customerName, customerPhone: customerPhone,
-      payMethod: payMethod, items: items, grandTotal: grandTotal,
-      discount: discount, notes: notes, status: status,
+      userName: userName,
+      voucherNo: voucherNo,
+      orderId: orderId,
+      customerName: customerName,
+      customerPhone: customerPhone,
+      payMethod: payMethod,
+      items: items,
+      grandTotal: grandTotal,
+      discount: discount,
+      notes: notes,
+      status: status,
     );
   }
 
   @override
-  Future<void> updateOrderStatus({required String orderId, required String status}) {
-    return _remoteDataSource.updateOrderStatus(orderId: orderId, status: status);
+  Future<void> updateOrderStatus({
+    required String orderId,
+    required String status,
+  }) {
+    return _remoteDataSource.updateOrderStatus(
+      orderId: orderId,
+      status: status,
+    );
   }
 
   @override
@@ -84,15 +104,21 @@ class SaleHistoryRepositoryImpl implements SaleHistoryRepository {
   final SaleRemoteDataSource _remoteDataSource;
 
   SaleHistoryRepositoryImpl({SaleRemoteDataSource? remoteDataSource})
-      : _remoteDataSource = remoteDataSource ?? SaleRemoteDataSource();
+    : _remoteDataSource = remoteDataSource ?? SaleRemoteDataSource();
 
   @override
-  Future<Map<String, dynamic>> getSales({int page = 1, int perPage = 10}) async {
+  Future<Map<String, dynamic>> getSales({
+    int page = 1,
+    int perPage = 10,
+  }) async {
     return await _remoteDataSource.getSales(page: page, perPage: perPage);
   }
 
   @override
-  Future<Map<String, dynamic>> getOrders({int page = 1, int perPage = 10}) async {
+  Future<Map<String, dynamic>> getOrders({
+    int page = 1,
+    int perPage = 10,
+  }) async {
     return await _remoteDataSource.getOrders(page: page, perPage: perPage);
   }
 

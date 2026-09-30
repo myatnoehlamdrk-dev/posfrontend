@@ -1,0 +1,12 @@
+Noto Sans Myanmar, Noto Sans Thai and Noto Sans JP
+Copyright 2013-2024 The Noto Project Authors (https://github.com/notofonts)
+
+These fonts are licensed under the SIL Open Font License, Version 1.1.
+This license is available with a FAQ at: https://openfontlicense.org
+
+The bundled files were obtained from:
+  NotoSansMyanmar, NotoSansThai - https://github.com/notofonts/notofonts.github.io
+  NotoSansJP                   - https://fonts.google.com/noto/specimen/Noto+Sans+JP
+
+The OFL permits commercial use, bundling and redistribution provided the
+fonts are not sold on their own and this notice travels with them.

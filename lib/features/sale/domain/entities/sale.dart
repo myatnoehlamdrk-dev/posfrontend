@@ -50,7 +50,14 @@ class SaleItemEntity extends Equatable {
   }
 
   @override
-  List<Object?> get props => [productId, productName, unitPrice, quantity, size, color];
+  List<Object?> get props => [
+    productId,
+    productName,
+    unitPrice,
+    quantity,
+    size,
+    color,
+  ];
 }
 
 enum PaymentMethod { cash, card, mobilePay, other }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/core/di/injection.dart';
 import 'package:posfrontend/features/auth/domain/usecases/verify_account.dart';
 import 'package:posfrontend/features/auth/presentation/viewmodels/verify_account_view_model.dart';
@@ -83,7 +84,7 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
                   _buildHeaderIcon(),
                   const SizedBox(height: 20),
                   Text(
-                    'Verify Your Email',
+                    context.l10n.t('Verify Your Email'),
                     style: TextStyle(
                       color: p.textPrimary,
                       fontSize: 26,
@@ -92,11 +93,8 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'We sent a 6-digit verification code to',
-                    style: TextStyle(
-                      color: p.textMuted,
-                      fontSize: 14,
-                    ),
+                    context.l10n.t('We sent a 6-digit verification code to'),
+                    style: TextStyle(color: p.textMuted, fontSize: 14),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 4),
@@ -123,15 +121,15 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
                     decoration: appInputDecoration(
                       context,
                       icon: Icons.pin_outlined,
-                      hint: 'Enter 6-digit code',
+                      hint: context.l10n.t('Enter 6-digit code'),
                       errorText: errors['otp'],
                     ),
                   ),
                   const SizedBox(height: 8),
                   GestureDetector(
                     onTap: loading ? null : _handleResendOtp,
-                    child: const Text(
-                      'Resend Code',
+                    child: Text(
+                      context.l10n.t('Resend Code'),
                       style: TextStyle(
                         color: AppColors.primary,
                         fontSize: 13,
@@ -141,7 +139,7 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
                   ),
                   const SizedBox(height: 24),
                   GradientButton(
-                    label: 'Verify',
+                    label: context.l10n.t('Verify'),
                     loading: loading,
                     onPressed: _handleVerify,
                   ),
@@ -150,10 +148,7 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
                       padding: const EdgeInsets.only(top: 12),
                       child: Text(
                         _viewModel.errorMessage!,
-                        style: const TextStyle(
-                          color: Colors.red,
-                          fontSize: 13,
-                        ),
+                        style: const TextStyle(color: Colors.red, fontSize: 13),
                       ),
                     ),
                   const SizedBox(height: 24),
@@ -161,17 +156,19 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Already verified?',
+                        context.l10n.t('Already verified?'),
                         style: TextStyle(color: p.textMuted, fontSize: 14),
                       ),
                       const SizedBox(width: 6),
                       GestureDetector(
                         onTap: () => Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (_) => const LoginScreen()),
+                          MaterialPageRoute(
+                            builder: (_) => const LoginScreen(),
+                          ),
                         ),
-                        child: const Text(
-                          'Back to Login',
+                        child: Text(
+                          context.l10n.t('Back to Login'),
                           style: TextStyle(
                             color: AppColors.primary,
                             fontSize: 14,

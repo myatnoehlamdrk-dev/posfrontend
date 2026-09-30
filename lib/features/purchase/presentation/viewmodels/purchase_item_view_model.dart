@@ -19,7 +19,7 @@ class PurchaseItemViewModel extends BaseViewModel {
   bool get hasMore => _currentPage <= _lastPage;
 
   PurchaseItemViewModel({PurchaseItemRepository? repository})
-      : _repository = repository ?? PurchaseRepositoryImpl();
+    : _repository = repository ?? PurchaseRepositoryImpl();
 
   Future<void> loadPurchaseItems({bool refresh = false}) async {
     if (refresh) {
@@ -32,8 +32,14 @@ class PurchaseItemViewModel extends BaseViewModel {
     resetError();
 
     try {
-      final response = await _repository.getPurchaseItems(page: _currentPage, cancelToken: cancelToken);
-      final paginated = PaginatedResponse.fromJson(response, PurchaseOrder.fromJson);
+      final response = await _repository.getPurchaseItems(
+        page: _currentPage,
+        cancelToken: cancelToken,
+      );
+      final paginated = PaginatedResponse.fromJson(
+        response,
+        PurchaseOrder.fromJson,
+      );
       _purchaseItems = _currentPage == 1
           ? paginated.data
           : [..._purchaseItems, ...paginated.data];
@@ -125,7 +131,11 @@ class PurchaseItemViewModel extends BaseViewModel {
 
   Future<bool> updateStatus(String id, String status) async {
     try {
-      await _repository.updatePurchaseItemStatus(id: id, status: status, cancelToken: cancelToken);
+      await _repository.updatePurchaseItemStatus(
+        id: id,
+        status: status,
+        cancelToken: cancelToken,
+      );
       await loadPurchaseItems(refresh: true);
       return true;
     } on DioException catch (e) {

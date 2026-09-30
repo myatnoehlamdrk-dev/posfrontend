@@ -14,17 +14,24 @@ sealed class AppException implements Exception {
 
 /// No internet connection.
 class NetworkException extends AppException {
-  const NetworkException({super.message = 'No internet connection. Please check your network.'});
+  const NetworkException({
+    super.message = 'No internet connection. Please check your network.',
+  });
 }
 
 /// API request timed out (connect/send/receive).
 class TimeoutException extends AppException {
-  const TimeoutException({super.message = 'Request timed out. Please try again.'});
+  const TimeoutException({
+    super.message = 'Request timed out. Please try again.',
+  });
 }
 
 /// Auth token expired or invalid — redirect to login.
 class AuthException extends AppException {
-  const AuthException({super.message = 'Session expired. Please login again.', super.statusCode = 401});
+  const AuthException({
+    super.message = 'Session expired. Please login again.',
+    super.statusCode = 401,
+  });
 }
 
 /// Server returned 422 with field-level validation errors.
@@ -40,7 +47,10 @@ class ValidationException extends AppException {
 
 /// Server error (500, 502, 503, etc.).
 class ServerException extends AppException {
-  const ServerException({super.message = 'Server error. Please try again later.', super.statusCode});
+  const ServerException({
+    super.message = 'Server error. Please try again later.',
+    super.statusCode,
+  });
 }
 
 /// Request was cancelled by the user navigating away.

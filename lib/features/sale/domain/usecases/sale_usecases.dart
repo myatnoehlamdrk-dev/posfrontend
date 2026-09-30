@@ -160,7 +160,8 @@ class DeleteSaleUseCase extends UseCase<void, String> {
   }
 }
 
-class DeleteSaleItemUseCase extends UseCase<SaleOrderEntity, DeleteSaleItemParams> {
+class DeleteSaleItemUseCase
+    extends UseCase<SaleOrderEntity, DeleteSaleItemParams> {
   final SaleHistoryRepository _repository;
 
   DeleteSaleItemUseCase(this._repository);

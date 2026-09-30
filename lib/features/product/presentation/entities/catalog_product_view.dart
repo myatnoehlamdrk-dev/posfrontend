@@ -56,17 +56,11 @@ class CatalogProductView {
     this.createdBy = '',
   });
 
-  List<String> get sizes => variants
-      .map((v) => v.size)
-      .where((s) => s.isNotEmpty)
-      .toSet()
-      .toList();
+  List<String> get sizes =>
+      variants.map((v) => v.size).where((s) => s.isNotEmpty).toSet().toList();
 
-  List<String> get colors => variants
-      .map((v) => v.color)
-      .where((c) => c.isNotEmpty)
-      .toSet()
-      .toList();
+  List<String> get colors =>
+      variants.map((v) => v.color).where((c) => c.isNotEmpty).toSet().toList();
 
   static const List<Color> _palette = [
     Color(0xFF6D28D9),

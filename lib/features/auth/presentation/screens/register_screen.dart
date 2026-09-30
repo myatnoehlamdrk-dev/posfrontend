@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/core/di/injection.dart';
 import 'package:posfrontend/features/auth/domain/usecases/register.dart';
 import 'package:posfrontend/features/auth/presentation/viewmodels/register_view_model.dart';
@@ -105,10 +106,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final p = context.palette;
     return Padding(
       padding: const EdgeInsets.only(top: 6),
-      child: Text(
-        text,
-        style: TextStyle(color: p.textMuted, fontSize: 12),
-      ),
+      child: Text(text, style: TextStyle(color: p.textMuted, fontSize: 12)),
     );
   }
 
@@ -172,7 +170,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               decoration: appInputDecoration(
                                 context,
                                 icon: Icons.person_outline,
-                                hint: 'Enter full name',
+                                hint: context.l10n.t('Enter full name'),
                                 errorText: errors['name'],
                               ),
                             ),
@@ -185,7 +183,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               decoration: appInputDecoration(
                                 context,
                                 icon: Icons.email_outlined,
-                                hint: 'Enter email address',
+                                hint: context.l10n.t('Enter email address'),
                                 errorText: errors['email'],
                               ),
                             ),
@@ -197,7 +195,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               decoration: appInputDecoration(
                                 context,
                                 icon: Icons.lock_outline,
-                                hint: 'Enter password',
+                                hint: context.l10n.t('Enter password'),
                                 errorText: errors['password'],
                                 suffixIcon: IconButton(
                                   onPressed: () {
@@ -244,7 +242,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         decoration: appInputDecoration(
                                           context,
                                           icon: Icons.calendar_today_outlined,
-                                          hint: 'Select date of birth',
+                                          hint: context.l10n.t(
+                                            'Select date of birth',
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -263,7 +263,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         decoration: appInputDecoration(
                                           context,
                                           icon: Icons.wc_outlined,
-                                          hint: 'Select gender',
+                                          hint: context.l10n.t('Select gender'),
                                         ),
                                         items: _genders
                                             .map(
@@ -299,7 +299,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         decoration: appInputDecoration(
                                           context,
                                           icon: Icons.phone_outlined,
-                                          hint: 'Phone number',
+                                          hint: context.l10n.t('Phone number'),
                                         ),
                                       ),
                                     ],
@@ -317,7 +317,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         decoration: appInputDecoration(
                                           context,
                                           icon: Icons.chat_outlined,
-                                          hint: 'Social (e.g. Telegram, Viber)',
+                                          hint: context.l10n.t(
+                                            'Social (e.g. Telegram, Viber)',
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -333,7 +335,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               decoration: appInputDecoration(
                                 context,
                                 icon: Icons.location_on_outlined,
-                                hint: 'Enter user address',
+                                hint: context.l10n.t('Enter user address'),
                               ),
                             ),
                             const SizedBox(height: 16),
@@ -343,7 +345,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               decoration: appInputDecoration(
                                 context,
                                 icon: Icons.credit_card_outlined,
-                                hint: 'Enter NRC number',
+                                hint: context.l10n.t('Enter NRC number'),
                               ),
                             ),
                           ]),
@@ -355,7 +357,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               decoration: appInputDecoration(
                                 context,
                                 icon: Icons.supervisor_account_outlined,
-                                hint: 'Enter user role',
+                                hint: context.l10n.t('Enter user role'),
                               ),
                             ),
                             _helperText(
@@ -422,7 +424,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               decoration: appInputDecoration(
                                 context,
                                 icon: Icons.payment_outlined,
-                                hint: 'Enter billing way',
+                                hint: context.l10n.t('Enter billing way'),
                                 errorText: errors['billingWay'],
                               ),
                             ),
@@ -432,7 +434,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ]),
                           const SizedBox(height: 28),
                           GradientButton(
-                            label: 'Register',
+                            label: context.l10n.t('Register'),
                             icon: Icons.save_outlined,
                             loading: _viewModel.isLoading,
                             onPressed: () async {
@@ -488,7 +490,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           Expanded(
             child: Center(
               child: Text(
-                'Register',
+                context.l10n.t('Register'),
                 style: TextStyle(
                   color: p.textPrimary,
                   fontSize: 18,

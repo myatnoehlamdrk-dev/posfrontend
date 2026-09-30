@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:get_it/get_it.dart';
 import 'package:posfrontend/features/category/domain/entities/category.dart';
 import 'package:posfrontend/features/category/domain/repositories/category_repository.dart';
@@ -78,12 +79,16 @@ class _CategoryScreenState extends State<CategoryScreen> {
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             return AlertDialog(
-              title: const Text('Delete Category'),
-              content: Text('Are you sure you want to delete "${c.name}"?'),
+              title: Text(context.l10n.t('Delete Category')),
+              content: Text(
+                context.l10n
+                    .t('Are you sure you want to delete "{v1}"?')
+                    .replaceAll('{v1}', (c.name).toString()),
+              ),
               actions: [
                 TextButton(
                   onPressed: deleting ? null : () => Navigator.pop(ctx),
-                  child: const Text('Cancel'),
+                  child: Text(context.l10n.t('Cancel')),
                 ),
                 TextButton(
                   onPressed: deleting
@@ -108,8 +113,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
                             color: Colors.red,
                           ),
                         )
-                      : const Text(
-                          'Delete',
+                      : Text(
+                          context.l10n.t('Delete'),
                           style: TextStyle(color: Colors.red),
                         ),
                 ),
@@ -233,16 +238,16 @@ class _CategoryScreenState extends State<CategoryScreen> {
       children: [
         GestureDetector(
           onTap: () {},
-          child: const Text(
-            'Dashboard',
+          child: Text(
+            context.l10n.t('Dashboard'),
             style: TextStyle(fontSize: 13, color: purple),
           ),
         ),
         Text('  >  ', style: style),
         GestureDetector(
           onTap: () => Navigator.of(context).pop(),
-          child: const Text(
-            'Inventory',
+          child: Text(
+            context.l10n.t('Inventory'),
             style: TextStyle(fontSize: 13, color: purple),
           ),
         ),
@@ -257,7 +262,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
           ),
         ),
         Text('  >  ', style: style),
-        Text('Categories', style: style),
+        Text(context.l10n.t('Categories'), style: style),
       ],
     );
   }
@@ -272,7 +277,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Categories',
+                context.l10n.t('Categories'),
                 style: TextStyle(
                   fontSize: 19,
                   fontWeight: FontWeight.bold,
@@ -295,18 +300,18 @@ class _CategoryScreenState extends State<CategoryScreen> {
                   ? null
                   : _viewModel.sort,
               hint: Text(
-                'Sort',
+                context.l10n.t('Sort'),
                 style: TextStyle(color: p.textPrimary, fontSize: 14),
               ),
               style: TextStyle(color: p.textPrimary, fontSize: 14),
               items: [
                 DropdownMenuItem(
                   value: CategorySort.dateNewest,
-                  child: const Text('Newest'),
+                  child: Text(context.l10n.t('Newest')),
                 ),
                 DropdownMenuItem(
                   value: CategorySort.dateOldest,
-                  child: const Text('Oldest'),
+                  child: Text(context.l10n.t('Oldest')),
                 ),
               ],
               onChanged: (v) => _viewModel.setSort(v!),
@@ -324,7 +329,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
         padding: const EdgeInsets.symmetric(vertical: 40),
         child: Center(
           child: Text(
-            'No categories found.',
+            context.l10n.t('No categories found.'),
             style: TextStyle(color: p.textSecondary),
           ),
         ),
@@ -462,12 +467,16 @@ class _CategoryScreenState extends State<CategoryScreen> {
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text(
-                        'Created: ${c.createdDate}',
+                        context.l10n
+                            .t('Created: {v1}')
+                            .replaceAll('{v1}', (c.createdDate).toString()),
                         style: TextStyle(fontSize: 12, color: p.textSecondary),
                       ),
                       if (c.createdBy.isNotEmpty)
                         Text(
-                          'by ${c.createdBy}',
+                          context.l10n
+                              .t('by {v1}')
+                              .replaceAll('{v1}', (c.createdBy).toString()),
                           style: TextStyle(
                             fontSize: 11,
                             color: p.textSecondary,
@@ -625,7 +634,10 @@ class _CategoryScreenState extends State<CategoryScreen> {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        '$count in $limit',
+        context.l10n
+            .t('{v1} in {v2}')
+            .replaceAll('{v1}', (count).toString())
+            .replaceAll('{v2}', (limit).toString()),
         style: const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
@@ -644,7 +656,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        active ? 'Active' : 'Inactive',
+        active ? context.l10n.t('Active') : context.l10n.t('Inactive'),
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
@@ -660,7 +672,10 @@ class _CategoryScreenState extends State<CategoryScreen> {
       children: [
         Expanded(
           child: Text(
-            'First $shown of ${_viewModel.totalCount} categories',
+            context.l10n
+                .t('First {v2} of {v1} categories')
+                .replaceAll('{v1}', (_viewModel.totalCount).toString())
+                .replaceAll('{v2}', (shown).toString()),
             style: TextStyle(fontSize: 13, color: p.textSecondary),
             overflow: TextOverflow.ellipsis,
           ),
@@ -676,7 +691,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
             color: purple,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: const Text(
+          child: Text(
             '1',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
           ),

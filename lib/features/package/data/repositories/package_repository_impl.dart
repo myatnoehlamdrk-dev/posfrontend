@@ -7,10 +7,13 @@ class PackageRepositoryImpl implements PackageRepository {
   final PackageRemoteDataSource _dataSource;
 
   PackageRepositoryImpl({PackageRemoteDataSource? dataSource})
-      : _dataSource = dataSource ?? PackageRemoteDataSource();
+    : _dataSource = dataSource ?? PackageRemoteDataSource();
 
   @override
-  Future<List<PackageEntity>> getPackages(String categoryId, {CancelToken? cancelToken}) async {
+  Future<List<PackageEntity>> getPackages(
+    String categoryId, {
+    CancelToken? cancelToken,
+  }) async {
     final models = await _dataSource.getPackages(categoryId);
     return models.map((m) => m.toEntity()).toList();
   }

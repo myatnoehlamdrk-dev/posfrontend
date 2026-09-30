@@ -2,7 +2,8 @@ import 'package:posfrontend/core/base/use_case.dart';
 import 'package:posfrontend/features/customer/domain/entities/customer.dart';
 import 'package:posfrontend/features/customer/domain/repositories/customer_repository.dart';
 
-class GetCustomersUseCase extends UseCase<Map<String, dynamic>, GetCustomersParams> {
+class GetCustomersUseCase
+    extends UseCase<Map<String, dynamic>, GetCustomersParams> {
   final CustomerRepository repository;
 
   GetCustomersUseCase(this.repository);
@@ -31,7 +32,8 @@ class GetCustomerUseCase extends UseCase<Map<String, dynamic>, String> {
   }
 }
 
-class GetCustomerAnalyticsUseCase extends UseCase<CustomerAnalyticsEntity, NoParams> {
+class GetCustomerAnalyticsUseCase
+    extends UseCase<CustomerAnalyticsEntity, NoParams> {
   final CustomerRepository repository;
 
   GetCustomerAnalyticsUseCase(this.repository);
@@ -42,7 +44,8 @@ class GetCustomerAnalyticsUseCase extends UseCase<CustomerAnalyticsEntity, NoPar
   }
 }
 
-class SearchCustomersUseCase extends UseCase<List<CustomerSearchResultEntity>, SearchCustomersParams> {
+class SearchCustomersUseCase
+    extends UseCase<List<CustomerSearchResultEntity>, SearchCustomersParams> {
   final CustomerRepository repository;
 
   SearchCustomersUseCase(this.repository);

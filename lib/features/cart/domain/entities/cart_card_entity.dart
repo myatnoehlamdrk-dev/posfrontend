@@ -15,15 +15,14 @@ class CartCardEntity {
 
   double get total => items.fold(0.0, (sum, e) => sum + e.subtotal);
 
-  int get totalQuantity =>
-      items.fold(0, (sum, e) => sum + e.quantity);
+  int get totalQuantity => items.fold(0, (sum, e) => sum + e.quantity);
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'orderId': orderId,
-        'createdAt': createdAt.toIso8601String(),
-        'items': items.map((e) => e.toJson()).toList(),
-      };
+    'id': id,
+    'orderId': orderId,
+    'createdAt': createdAt.toIso8601String(),
+    'items': items.map((e) => e.toJson()).toList(),
+  };
 
   factory CartCardEntity.fromJson(Map<String, dynamic> json) {
     return CartCardEntity(
@@ -31,7 +30,7 @@ class CartCardEntity {
       orderId: json['orderId']?.toString() ?? '',
       createdAt:
           DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
-              DateTime.now(),
+          DateTime.now(),
       items: (json['items'] as List? ?? const [])
           .map((e) => CartItemEntity.fromJson(e as Map<String, dynamic>))
           .toList(),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/features/cart/domain/entities/cart_item_entity.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
@@ -7,11 +8,7 @@ class CartItemRow extends StatelessWidget {
   final CartItemEntity item;
   final bool dense;
 
-  const CartItemRow({
-    super.key,
-    required this.item,
-    this.dense = false,
-  });
+  const CartItemRow({super.key, required this.item, this.dense = false});
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +65,10 @@ class CartItemRow extends StatelessWidget {
                         item.variantLabel,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 10.5, color: p.textSecondary),
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          color: p.textSecondary,
+                        ),
                       ),
                     ),
                   ],
@@ -76,7 +76,13 @@ class CartItemRow extends StatelessWidget {
               ],
               const SizedBox(height: 2),
               Text(
-                '${item.unitPrice.toStringAsFixed(2)} x ${item.quantity}',
+                context.l10n
+                    .t('{v1} x {v2}')
+                    .replaceAll(
+                      '{v1}',
+                      (item.unitPrice.toStringAsFixed(2)).toString(),
+                    )
+                    .replaceAll('{v2}', (item.quantity).toString()),
                 style: TextStyle(fontSize: 11, color: p.textSecondary),
               ),
             ],

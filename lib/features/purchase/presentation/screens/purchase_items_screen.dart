@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/features/purchase/presentation/screens/add_purchase_sheet.dart';
 import 'package:posfrontend/features/purchase/presentation/screens/add_supplier_sheet.dart';
 import 'package:posfrontend/features/purchase/presentation/screens/purchase_detail_screen.dart';
@@ -44,7 +45,7 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
     final p = context.palette;
     return Scaffold(
       backgroundColor: p.scaffoldBg,
-      drawer: const AppDrawer(activeItem: 'Purchase Item'),
+      drawer: const AppDrawer(active: DrawerDestination.purchaseItem),
       floatingActionButton: FloatingActionButton(
         onPressed: _showNewPurchaseSheet,
         backgroundColor: AppColors.teal,
@@ -54,7 +55,7 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            AppScreenTopBar(title: 'Purchase Items'),
+            AppScreenTopBar(title: context.l10n.t('Purchase Items')),
             Expanded(
               child: ListenableBuilder(
                 listenable: _viewModel,
@@ -79,11 +80,14 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
           children: [
             const Icon(Icons.error_outline, color: Colors.red, size: 48),
             const SizedBox(height: 12),
-            Text(_viewModel.errorMessage!, style: TextStyle(color: p.textSecondary)),
+            Text(
+              _viewModel.errorMessage!,
+              style: TextStyle(color: p.textSecondary),
+            ),
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: () => _viewModel.loadPurchaseItems(refresh: true),
-              child: const Text('Retry'),
+              child: Text(context.l10n.t('Retry')),
             ),
           ],
         ),
@@ -108,21 +112,33 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
             children: [
               const SizedBox(height: 12),
               Text(
-                'Manage purchase orders from your suppliers',
+                context.l10n.t('Manage purchase orders from your suppliers'),
                 style: TextStyle(fontSize: 13, color: p.textSecondary),
               ),
               const SizedBox(height: 16),
               FilterTabs(
                 tabs: [
                   ('All', _viewModel.purchaseItems.length),
-                  ('Completed', _viewModel.purchaseItems.where((o) => o.status == PurchaseStatus.completed).length),
-                  ('Pending', _viewModel.purchaseItems.where((o) => o.status == PurchaseStatus.pending).length),
+                  (
+                    'Completed',
+                    _viewModel.purchaseItems
+                        .where((o) => o.status == PurchaseStatus.completed)
+                        .length,
+                  ),
+                  (
+                    'Pending',
+                    _viewModel.purchaseItems
+                        .where((o) => o.status == PurchaseStatus.pending)
+                        .length,
+                  ),
                 ],
                 selectedIndex: _selectedTab,
                 onTabChanged: (i) => setState(() => _selectedTab = i),
               ),
               const SizedBox(height: 16),
-              ..._filteredOrders.map((order) => _buildOrderCard(context, order)),
+              ..._filteredOrders.map(
+                (order) => _buildOrderCard(context, order),
+              ),
               if (_viewModel.isLoading && _viewModel.purchaseItems.isNotEmpty)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
@@ -135,7 +151,7 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   child: Center(
                     child: Text(
-                      'No more items',
+                      context.l10n.t('No more items'),
                       style: TextStyle(color: p.textSecondary, fontSize: 13),
                     ),
                   ),
@@ -163,9 +179,7 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
     final isCompleted = order.status == PurchaseStatus.completed;
     return GestureDetector(
       onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => PurchaseDetailScreen(order: order),
-        ),
+        MaterialPageRoute(builder: (_) => PurchaseDetailScreen(order: order)),
       ),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
@@ -174,7 +188,11 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
           color: p.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
-            BoxShadow(color: p.cardShadow, blurRadius: 8, offset: const Offset(0, 2)),
+            BoxShadow(
+              color: p.cardShadow,
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
           ],
         ),
         child: Column(
@@ -189,7 +207,11 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                     color: p.chipBg,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(Icons.inventory_2_outlined, color: p.textSecondary, size: 24),
+                  child: Icon(
+                    Icons.inventory_2_outlined,
+                    color: p.textSecondary,
+                    size: 24,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -197,26 +219,43 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Order #${order.orderId}',
-                        style: TextStyle(fontSize: 12, color: p.textSecondary, fontWeight: FontWeight.w500),
+                        context.l10n
+                            .t('Order #{v1}')
+                            .replaceAll('{v1}', (order.orderId).toString()),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: p.textSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         order.productName,
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: p.textPrimary),
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: p.textPrimary,
+                        ),
                       ),
                     ],
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: isCompleted ? p.successBg : p.warningBg,
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
                     isCompleted ? 'Completed' : 'Pending',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: isCompleted ? AppColors.green : AppColors.orange),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: isCompleted ? AppColors.green : AppColors.orange,
+                    ),
                   ),
                 ),
               ],
@@ -228,47 +267,93 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
               Padding(
                 padding: const EdgeInsets.only(bottom: 6),
                 child: Text(
-                  'by ${order.createdBy}',
-                  style: TextStyle(fontSize: 11, color: p.textSecondary, fontStyle: FontStyle.italic),
+                  context.l10n
+                      .t('by {v1}')
+                      .replaceAll('{v1}', (order.createdBy).toString()),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: p.textSecondary,
+                    fontStyle: FontStyle.italic,
+                  ),
                 ),
               ),
             Row(
               children: [
                 Icon(Icons.business_outlined, size: 14, color: p.textSecondary),
                 const SizedBox(width: 4),
-                Text(order.supplierName, style: TextStyle(fontSize: 12, color: p.textSecondary)),
+                Text(
+                  order.supplierName,
+                  style: TextStyle(fontSize: 12, color: p.textSecondary),
+                ),
                 const Spacer(),
                 Text(
-                  'x${order.quantity}',
-                  style: TextStyle(fontSize: 12, color: p.textSecondary, fontWeight: FontWeight.w500),
+                  context.l10n
+                      .t('x{v1}')
+                      .replaceAll('{v1}', (order.quantity).toString()),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: p.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 const SizedBox(width: 4),
-                Text('@', style: TextStyle(fontSize: 12, color: p.textSecondary)),
+                Text(
+                  '@',
+                  style: TextStyle(fontSize: 12, color: p.textSecondary),
+                ),
                 const SizedBox(width: 4),
-                PriceText(order.unitPrice.toDouble(), style: TextStyle(fontSize: 12, color: p.textSecondary)),
+                PriceText(
+                  order.unitPrice.toDouble(),
+                  style: TextStyle(fontSize: 12, color: p.textSecondary),
+                ),
               ],
             ),
             const SizedBox(height: 6),
             Row(
               children: [
-                Icon(Icons.calendar_today_outlined, size: 12, color: p.textSecondary),
+                Icon(
+                  Icons.calendar_today_outlined,
+                  size: 12,
+                  color: p.textSecondary,
+                ),
                 const SizedBox(width: 4),
-                Text(order.date, style: TextStyle(fontSize: 11, color: p.textSecondary)),
+                Text(
+                  order.date,
+                  style: TextStyle(fontSize: 11, color: p.textSecondary),
+                ),
                 const Spacer(),
                 if (!isCompleted)
                   GestureDetector(
-                    onTap: () => _viewModel.updateStatus(order.orderId, 'completed'),
+                    onTap: () =>
+                        _viewModel.updateStatus(order.orderId, 'completed'),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: p.successBg,
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: const Text('Mark Completed', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.green)),
+                      child: Text(
+                        context.l10n.t('Mark Completed'),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.green,
+                        ),
+                      ),
                     ),
                   ),
                 if (isCompleted) const SizedBox(width: 8),
-                PriceText(order.totalAmount.toDouble(), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.tealDark)),
+                PriceText(
+                  order.totalAmount.toDouble(),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.tealDark,
+                  ),
+                ),
               ],
             ),
           ],

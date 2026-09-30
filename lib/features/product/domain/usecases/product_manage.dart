@@ -13,7 +13,8 @@ class SearchProductsUseCase extends UseCase<List<ProductEntity>, String> {
   }
 }
 
-class GetSuppliersUseCase extends UseCase<List<Map<String, dynamic>>, NoParams> {
+class GetSuppliersUseCase
+    extends UseCase<List<Map<String, dynamic>>, NoParams> {
   final ProductManageRepository _repository;
 
   GetSuppliersUseCase(this._repository);
@@ -24,7 +25,8 @@ class GetSuppliersUseCase extends UseCase<List<Map<String, dynamic>>, NoParams> 
   }
 }
 
-class GetPackagesForProductUseCase extends UseCase<List<Map<String, dynamic>>, NoParams> {
+class GetPackagesForProductUseCase
+    extends UseCase<List<Map<String, dynamic>>, NoParams> {
   final ProductManageRepository _repository;
 
   GetPackagesForProductUseCase(this._repository);

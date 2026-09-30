@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:posfrontend/core/auth/token_storage.dart';
 import 'package:posfrontend/core/network/api_client.dart';
+import 'package:posfrontend/shared/l10n/app_language.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
+import 'package:posfrontend/shared/l10n/locale_notifier.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/theme/theme_mode_notifier.dart';
@@ -12,12 +15,14 @@ import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 import 'package:posfrontend/features/auth/presentation/screens/login_screen.dart';
+import 'package:posfrontend/features/settings/domain/entities/feedback.dart';
 import 'package:posfrontend/features/settings/domain/entities/settings.dart';
 import 'package:posfrontend/features/settings/presentation/screens/privacy_policy_screen.dart';
 import 'package:posfrontend/features/settings/presentation/screens/terms_of_service_screen.dart';
 import 'package:posfrontend/features/settings/presentation/viewmodels/settings_view_model.dart';
 import 'package:posfrontend/features/settings/presentation/widgets/settings_skeleton.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
+import 'package:posfrontend/shared/widgets/premium_image_upload.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -50,7 +55,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return name.isNotEmpty ? name : 'Aung Ko Ko';
   }
 
-  String _email(BuildContext context) => AuthScope.userOf(context)?.email ?? 'aungkoko@example.com';
+  String _email(BuildContext context) =>
+      AuthScope.userOf(context)?.email ?? 'aungkoko@example.com';
 
   String _initial(String name) {
     if (name.trim().isEmpty) return 'A';
@@ -77,12 +83,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       // Page fill sits one step back from the cards, so the cards stay readable
       // in dark where there is no drop shadow to separate them.
       backgroundColor: context.palette.scaffoldBg,
-      drawer: const AppDrawer(activeItem: 'Setting'),
+      drawer: const AppDrawer(active: DrawerDestination.setting),
       body: SafeArea(
         child: Column(
           children: [
             AppScreenTopBar(
-              title: 'Setting',
+              title: context.l10n.t('Setting'),
               showMenuButton: true,
               onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
             ),
@@ -203,10 +209,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _email(context),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: gray,
-                    ),
+                    style: TextStyle(fontSize: 13, color: gray),
                   ),
                 ],
               ),
@@ -230,7 +233,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           _settingsRow(
             icon: Icons.brightness_auto_outlined,
-            label: 'Match System',
+            label: context.l10n.t('Match System'),
             trailing: Switch(
               // No explicit thumb/track colours: the theme's switchTheme already
               // resolves them per brightness, and a hardcoded white thumb is
@@ -243,7 +246,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           if (!isSystem) ...[
             Divider(height: 1, color: border),
             _settingsRow(
-              icon: isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
+              icon: isDark
+                  ? Icons.dark_mode_outlined
+                  : Icons.light_mode_outlined,
               label: isDark ? 'Dark Mode' : 'Light Mode',
               trailing: Switch(
                 value: isDark,
@@ -261,7 +266,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return _settingsCard(
       child: _settingsRow(
         icon: Icons.language,
-        label: 'Language',
+        label: context.l10n.t('Language'),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -282,7 +287,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return _settingsCard(
       child: _settingsRow(
         icon: Icons.business_outlined,
-        label: 'Shop Type',
+        label: context.l10n.t('Shop Type'),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -315,7 +320,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(width: 14),
                 Expanded(
                   child: Text(
-                    'Shop Image',
+                    context.l10n.t('Shop Image'),
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
@@ -324,7 +329,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 if (_viewModel.isUploadingImage)
-                  const SizedBox(
+                  SizedBox(
                     width: 18,
                     height: 18,
                     child: CircularProgressIndicator(
@@ -334,48 +339,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
               ],
             ),
-            const SizedBox(height: 12),
-            GestureDetector(
+            const SizedBox(height: 14),
+            PremiumImageUpload(
               onTap: _viewModel.isUploadingImage ? null : _pickShopImage,
-              child: Container(
-                width: double.infinity,
-                height: 140,
-                decoration: BoxDecoration(
-                  color: cardBg,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: border),
-                ),
-                child: hasImage
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          shopImage,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              _imagePlaceholder(),
-                        ),
-                      )
-                    : _imagePlaceholder(),
-              ),
+              isBusy: _viewModel.isUploadingImage,
+              imageUrl: hasImage ? shopImage : null,
+              height: 150,
+              title: context.l10n.t('Upload shop image'),
+              subtitle: context.l10n.t('Tap to change shop image'),
+              hint: context.l10n.t('JPG or PNG up to 5MB'),
+              changeLabel: context.l10n.t('Change photo'),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _imagePlaceholder() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.add_a_photo_outlined, color: gray, size: 32),
-          const SizedBox(height: 8),
-          Text(
-            'Tap to change shop image',
-            style: TextStyle(fontSize: 13, color: gray),
-          ),
-        ],
       ),
     );
   }
@@ -395,14 +371,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           _settingsRow(
             icon: Icons.feedback_outlined,
-            label: 'Feedback',
+            label: context.l10n.t('Feedback'),
             trailing: Icon(Icons.chevron_right, color: gray, size: 24),
             onTap: _showFeedbackForm,
           ),
           Divider(height: 1, color: border),
           _settingsRow(
             icon: Icons.star_outline,
-            label: 'Rate App',
+            label: context.l10n.t('Rate App'),
             trailing: Icon(Icons.chevron_right, color: gray, size: 24),
             onTap: _rateApp,
           ),
@@ -417,21 +393,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           _settingsRow(
             icon: Icons.info_outline,
-            label: 'About',
+            label: context.l10n.t('About'),
             trailing: Icon(Icons.chevron_right, color: gray, size: 24),
             onTap: _showAboutDialog,
           ),
           Divider(height: 1, color: border),
           _settingsRow(
             icon: Icons.privacy_tip_outlined,
-            label: 'Privacy Policy',
+            label: context.l10n.t('Privacy Policy'),
             trailing: Icon(Icons.chevron_right, color: gray, size: 24),
             onTap: _showPrivacyPolicy,
           ),
           Divider(height: 1, color: border),
           _settingsRow(
             icon: Icons.description_outlined,
-            label: 'Terms of Service',
+            label: context.l10n.t('Terms of Service'),
             trailing: Icon(Icons.chevron_right, color: gray, size: 24),
             onTap: _showTermsOfService,
           ),
@@ -452,7 +428,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             border: Border.all(color: red.withValues(alpha: 0.3)),
           ),
           child: Text(
-            'Logout',
+            context.l10n.t('Logout'),
             style: TextStyle(
               color: red,
               fontSize: 16,
@@ -517,7 +493,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showLanguageSheet() {
-    final languages = ['Myanmar', 'English', 'Thai', 'Japanese', 'Korean'];
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -531,7 +506,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Select Language',
+                context.l10n.t('Select Language'),
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -539,21 +514,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              ...languages.map((lang) {
-                final selected = lang == _viewModel.language;
+              // Autonyms, not English names. A shop owner who cannot read the
+              // current UI has no way to find their own language in a list
+              // written in languages they cannot read.
+              ...AppLanguage.values.map((language) {
+                final selected = language.serverValue == _viewModel.language;
                 return ListTile(
                   title: Text(
-                    lang,
+                    language.autonym,
                     style: TextStyle(
                       color: selected ? orange : titleColor,
                       fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                     ),
                   ),
-                  trailing: selected
-                      ? Icon(Icons.check, color: orange)
-                      : null,
+                  trailing: selected ? Icon(Icons.check, color: orange) : null,
                   onTap: () {
-                    _viewModel.setLanguage(lang);
+                    _viewModel.setLanguage(language.serverValue);
+                    // Re-render every screen in the new language immediately.
+                    // The notifier is the app-wide source of truth; the server
+                    // write above is what makes it survive a reinstall.
+                    LocaleNotifier.instance.setLanguage(language);
                     Navigator.pop(ctx);
                   },
                 );
@@ -600,7 +580,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Shop Type',
+                                context.l10n.t('Shop Type'),
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w600,
@@ -696,7 +676,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   void _showFeedbackForm() {
     final feedbackController = TextEditingController();
-    String feedbackType = 'Comment';
+    var feedbackType = FeedbackType.comment;
+    var isSubmitting = false;
+    String? validationError;
 
     showDialog(
       context: context,
@@ -708,7 +690,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 borderRadius: BorderRadius.circular(16),
               ),
               title: Text(
-                'Feedback',
+                context.l10n.t('Feedback'),
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: titleColor,
@@ -722,7 +704,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Type',
+                        context.l10n.t('Type'),
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
@@ -732,19 +714,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
-                        children: ['Comment', 'Suggestion', 'Bug Report'].map((t) {
+                        children: FeedbackType.values.map((t) {
                           final isActive = t == feedbackType;
                           return ChoiceChip(
-                            label: Text(t),
+                            label: Text(t.label),
                             selected: isActive,
                             selectedColor: orange,
                             labelStyle: TextStyle(
                               color: isActive ? Colors.white : titleColor,
                               fontWeight: FontWeight.w500,
                             ),
-                            onSelected: (_) {
-                              setDialogState(() => feedbackType = t);
-                            },
+                            onSelected: isSubmitting
+                                ? null
+                                : (_) {
+                                    setDialogState(() {
+                                      feedbackType = t;
+                                      validationError = null;
+                                    });
+                                  },
                           );
                         }).toList(),
                       ),
@@ -752,32 +739,89 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       TextField(
                         controller: feedbackController,
                         maxLines: 5,
+                        enabled: !isSubmitting,
                         decoration: InputDecoration(
-                          hintText: 'Write your feedback...',
+                          hintText: context.l10n.t('Write your feedback...'),
                           hintStyle: TextStyle(color: gray),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: orange, width: 1.5),
+                            borderSide: const BorderSide(
+                              color: orange,
+                              width: 1.5,
+                            ),
                           ),
                         ),
                       ),
+                      if (validationError != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          validationError!,
+                          style: const TextStyle(
+                            color: red,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: Text('Cancel', style: TextStyle(color: gray)),
+                  onPressed: isSubmitting ? null : () => Navigator.pop(ctx),
+                  child: Text(
+                    context.l10n.t('Cancel'),
+                    style: TextStyle(color: gray),
+                  ),
                 ),
                 ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    showSuccessMessage(context, 'Feedback submitted!');
-                  },
+                  onPressed: isSubmitting
+                      ? null
+                      : () async {
+                          final message = feedbackController.text.trim();
+
+                          // The API rejects anything under 3 characters, so catch
+                          // it here rather than spending a round trip on it.
+                          if (message.length < 3) {
+                            setDialogState(() {
+                              validationError =
+                                  'Please enter at least 3 characters.';
+                            });
+                            return;
+                          }
+
+                          setDialogState(() {
+                            isSubmitting = true;
+                            validationError = null;
+                          });
+
+                          final submitted = await _viewModel.submitFeedback(
+                            type: feedbackType,
+                            message: message,
+                          );
+
+                          if (!ctx.mounted) return;
+
+                          if (submitted) {
+                            Navigator.pop(ctx);
+                            if (!mounted) return;
+                            showSuccessMessage(
+                              context,
+                              context.l10n.t('Feedback submitted!'),
+                            );
+                          } else {
+                            setDialogState(() {
+                              isSubmitting = false;
+                              validationError =
+                                  _viewModel.errorMessage ??
+                                  'Failed to submit feedback';
+                            });
+                          }
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: orange,
                     foregroundColor: Colors.white,
@@ -785,18 +829,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: Text('Submit'),
+                  child: isSubmitting
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(context.l10n.t('Submit')),
                 ),
               ],
             );
           },
         );
       },
-    );
+    ).whenComplete(feedbackController.dispose);
   }
 
   void _rateApp() {
-    showSuccessMessage(context, 'Redirecting to app rating...');
+    showSuccessMessage(context, context.l10n.t('Redirecting to app rating...'));
   }
 
   void _showAboutDialog() {
@@ -808,24 +861,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
             borderRadius: BorderRadius.circular(16),
           ),
           title: Text(
-            'About',
+            context.l10n.t('About'),
             style: TextStyle(fontWeight: FontWeight.w600, color: titleColor),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _aboutRow('App Name', 'Inventory'),
+              _aboutRow(context.l10n.t('App Name'), 'Inventory'),
               const SizedBox(height: 8),
-              _aboutRow('Version', _viewModel.settings.appVersion),
+              _aboutRow(
+                context.l10n.t('Version'),
+                _viewModel.settings.appVersion,
+              ),
               const SizedBox(height: 8),
-              _aboutRow('Developer', 'MDRK Mobile Team'),
+              _aboutRow(context.l10n.t('Developer'), 'MDRK Mobile Team'),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: Text('OK', style: TextStyle(color: orange)),
+              child: Text(
+                context.l10n.t('OK'),
+                style: TextStyle(color: orange),
+              ),
             ),
           ],
         );
@@ -838,21 +897,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: TextStyle(color: gray, fontSize: 14)),
-        Text(value, style: TextStyle(color: titleColor, fontSize: 14, fontWeight: FontWeight.w500)),
+        Text(
+          value,
+          style: TextStyle(
+            color: titleColor,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
       ],
     );
   }
 
   void _showPrivacyPolicy() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen()));
   }
 
   void _showTermsOfService() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const TermsOfServiceScreen()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const TermsOfServiceScreen()));
   }
 
   void _signOut() {
@@ -862,13 +928,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              title: Text('Logout', style: TextStyle(fontWeight: FontWeight.w600, color: titleColor)),
-              content: Text('Are you sure you want to logout?', style: TextStyle(color: gray)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: Text(
+                context.l10n.t('Logout'),
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: titleColor,
+                ),
+              ),
+              content: Text(
+                context.l10n.t('Are you sure you want to logout?'),
+                style: TextStyle(color: gray),
+              ),
               actions: [
                 TextButton(
                   onPressed: _isLoggingOut ? null : () => Navigator.pop(ctx),
-                  child: Text('Cancel', style: TextStyle(color: gray)),
+                  child: Text(
+                    context.l10n.t('Cancel'),
+                    style: TextStyle(color: gray),
+                  ),
                 ),
                 ElevatedButton(
                   onPressed: _isLoggingOut
@@ -884,7 +964,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           await TokenStorage.clearToken();
                           if (mounted) {
                             Navigator.of(context).pushAndRemoveUntil(
-                              MaterialPageRoute(builder: (_) => const LoginScreen()),
+                              MaterialPageRoute(
+                                builder: (_) => const LoginScreen(),
+                              ),
                               (route) => false,
                             );
                           }
@@ -892,7 +974,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: red,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                   child: _isLoggingOut
                       ? SizedBox(
@@ -903,7 +987,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             strokeWidth: 2,
                           ),
                         )
-                      : Text('Logout'),
+                      : Text(context.l10n.t('Logout')),
                 ),
               ],
             );

@@ -21,16 +21,20 @@ class SaleRemoteDataSource {
     int? discount,
     String? notes,
   }) async {
-    final itemsData = items.map((item) => {
-      'productId': int.tryParse(item.productId),
-      'productName': item.productName,
-      'quantity': item.quantity,
-      'unitPrice': item.unitPrice,
-      'subtotal': item.subtotal,
-      if (item.size != null) 'size': item.size,
-      if (item.color?.isNotEmpty == true) 'color': item.color,
-      if (item.notes?.isNotEmpty == true) 'notes': item.notes,
-    }).toList();
+    final itemsData = items
+        .map(
+          (item) => {
+            'productId': int.tryParse(item.productId),
+            'productName': item.productName,
+            'quantity': item.quantity,
+            'unitPrice': item.unitPrice,
+            'subtotal': item.subtotal,
+            if (item.size != null) 'size': item.size,
+            if (item.color?.isNotEmpty == true) 'color': item.color,
+            if (item.notes?.isNotEmpty == true) 'notes': item.notes,
+          },
+        )
+        .toList();
 
     final payload = {
       'userName': userName,
@@ -49,7 +53,10 @@ class SaleRemoteDataSource {
     try {
       final resp = await _dio.post('/api/sales', data: payload);
       if (resp.statusCode != 201) {
-        throw ApiException(statusCode: resp.statusCode, message: 'Failed to save sale');
+        throw ApiException(
+          statusCode: resp.statusCode,
+          message: 'Failed to save sale',
+        );
       }
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
@@ -69,16 +76,20 @@ class SaleRemoteDataSource {
     String? notes,
     String status = 'draft',
   }) async {
-    final itemsData = items.map((item) => {
-      'productId': int.tryParse(item.productId),
-      'productName': item.productName,
-      'quantity': item.quantity,
-      'unitPrice': item.unitPrice,
-      'subtotal': item.subtotal,
-      if (item.size != null) 'size': item.size,
-      if (item.color?.isNotEmpty == true) 'color': item.color,
-      if (item.notes?.isNotEmpty == true) 'notes': item.notes,
-    }).toList();
+    final itemsData = items
+        .map(
+          (item) => {
+            'productId': int.tryParse(item.productId),
+            'productName': item.productName,
+            'quantity': item.quantity,
+            'unitPrice': item.unitPrice,
+            'subtotal': item.subtotal,
+            if (item.size != null) 'size': item.size,
+            if (item.color?.isNotEmpty == true) 'color': item.color,
+            if (item.notes?.isNotEmpty == true) 'notes': item.notes,
+          },
+        )
+        .toList();
 
     final payload = {
       'userName': userName,
@@ -97,7 +108,10 @@ class SaleRemoteDataSource {
     try {
       final resp = await _dio.post('/api/orders', data: payload);
       if (resp.statusCode != 201) {
-        throw ApiException(statusCode: resp.statusCode, message: 'Failed to save order');
+        throw ApiException(
+          statusCode: resp.statusCode,
+          message: 'Failed to save order',
+        );
       }
       final data = resp.data;
       if (data is Map<String, dynamic>) {
@@ -109,7 +123,10 @@ class SaleRemoteDataSource {
     }
   }
 
-  Future<void> updateOrderStatus({required String orderId, required String status}) async {
+  Future<void> updateOrderStatus({
+    required String orderId,
+    required String status,
+  }) async {
     try {
       await _dio.put('/api/orders/$orderId', data: {'status': status});
     } on DioException catch (e) {
@@ -121,23 +138,31 @@ class SaleRemoteDataSource {
     required String orderId,
     required List<SaleItemEntity> items,
   }) async {
-    final itemsData = items.map((item) => {
-      'productId': int.tryParse(item.productId),
-      'productName': item.productName,
-      'quantity': item.quantity,
-      'unitPrice': item.unitPrice,
-      'subtotal': item.subtotal,
-      if (item.size != null) 'size': item.size,
-      if (item.color?.isNotEmpty == true) 'color': item.color,
-      if (item.notes?.isNotEmpty == true) 'notes': item.notes,
-    }).toList();
+    final itemsData = items
+        .map(
+          (item) => {
+            'productId': int.tryParse(item.productId),
+            'productName': item.productName,
+            'quantity': item.quantity,
+            'unitPrice': item.unitPrice,
+            'subtotal': item.subtotal,
+            if (item.size != null) 'size': item.size,
+            if (item.color?.isNotEmpty == true) 'color': item.color,
+            if (item.notes?.isNotEmpty == true) 'notes': item.notes,
+          },
+        )
+        .toList();
 
     try {
-      final resp = await _dio.post('/api/orders/$orderId/items', data: {
-        'items': itemsData,
-      });
+      final resp = await _dio.post(
+        '/api/orders/$orderId/items',
+        data: {'items': itemsData},
+      );
       if (resp.statusCode != 200) {
-        throw ApiException(statusCode: resp.statusCode, message: 'Failed to add items to order');
+        throw ApiException(
+          statusCode: resp.statusCode,
+          message: 'Failed to add items to order',
+        );
       }
       final data = resp.data;
       if (data is Map<String, dynamic>) {
@@ -157,25 +182,51 @@ class SaleRemoteDataSource {
     }
   }
 
-  Future<Map<String, dynamic>> getSales({int page = 1, int perPage = 10}) async {
+  Future<Map<String, dynamic>> getSales({
+    int page = 1,
+    int perPage = 10,
+  }) async {
     try {
-      final response = await _dio.get('/api/sales', queryParameters: {'page': page, 'per_page': perPage});
+      final response = await _dio.get(
+        '/api/sales',
+        queryParameters: {'page': page, 'per_page': perPage},
+      );
       final data = response.data;
       if (data is Map<String, dynamic>) return data;
-      if (data is List) return {'data': data, 'meta': {'current_page': page, 'last_page': 1, 'total': data.length}};
-      return {'data': [], 'meta': {'current_page': 1, 'last_page': 1, 'total': 0}};
+      if (data is List)
+        return {
+          'data': data,
+          'meta': {'current_page': page, 'last_page': 1, 'total': data.length},
+        };
+      return {
+        'data': [],
+        'meta': {'current_page': 1, 'last_page': 1, 'total': 0},
+      };
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
   }
 
-  Future<Map<String, dynamic>> getOrders({int page = 1, int perPage = 10}) async {
+  Future<Map<String, dynamic>> getOrders({
+    int page = 1,
+    int perPage = 10,
+  }) async {
     try {
-      final response = await _dio.get('/api/orders', queryParameters: {'page': page, 'per_page': perPage});
+      final response = await _dio.get(
+        '/api/orders',
+        queryParameters: {'page': page, 'per_page': perPage},
+      );
       final data = response.data;
       if (data is Map<String, dynamic>) return data;
-      if (data is List) return {'data': data, 'meta': {'current_page': page, 'last_page': 1, 'total': data.length}};
-      return {'data': [], 'meta': {'current_page': 1, 'last_page': 1, 'total': 0}};
+      if (data is List)
+        return {
+          'data': data,
+          'meta': {'current_page': page, 'last_page': 1, 'total': data.length},
+        };
+      return {
+        'data': [],
+        'meta': {'current_page': 1, 'last_page': 1, 'total': 0},
+      };
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }

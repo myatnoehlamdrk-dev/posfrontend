@@ -35,6 +35,13 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
 
+  # Localized Material/Cupertino strings. Without these the framework's own
+  # widgets (date picker month names, the text-selection menu's "Copy" and
+  # "Paste") stay English even when the app is fully translated.
+  flutter_localizations:
+    sdk: flutter
+  intl: any
+
   # Local persistence for shop data (saved before register).
   shared_preferences: ^2.3.0
   # Pick shop image/file from device (optional, nullable).
@@ -73,6 +80,7 @@ dev_dependencies:
 
   build_runner: ^2.4.14
   injectable_generator: ^2.7.0
+  image_picker_platform_interface: ^2.11.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -84,6 +92,36 @@ flutter:
   assets:
     - assets/shop.png
     - assets/launcher.png
+
+  # Poppins carries no Burmese, Thai or CJK glyphs, so text in those languages
+  # would render as tofu boxes. These are applied as a per-glyph fallback
+  # chain in AppTheme rather than as the primary face, so Latin keeps Poppins.
+  # Japanese is deliberately absent: it needs several MB, and Android and iOS
+  # both ship a CJK face that Flutter falls back to automatically.
+  #
+  # Noto fonts are licensed under the SIL Open Font License 1.1, which permits
+  # commercial use. See assets/fonts/LICENSE-Noto.txt.
+  fonts:
+    - family: NotoSansMyanmar
+      fonts:
+        - asset: assets/fonts/NotoSansMyanmar-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/NotoSansMyanmar-Bold.ttf
+          weight: 700
+    - family: NotoSansThai
+      fonts:
+        - asset: assets/fonts/NotoSansThai-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/NotoSansThai-Bold.ttf
+          weight: 700
+    # Japanese is bundled for the receipt PDF only, which cannot read system
+    # fonts. Nothing on screen uses it.
+    - family: NotoSansJP
+      fonts:
+        - asset: assets/fonts/NotoSansJP-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/NotoSansJP-Bold.ttf
+          weight: 700
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -121,3 +159,5 @@ flutter_launcher_icons:
   macos:
     generate: true
   image_path: "Pos_logo.png"
+  # Matches ic_launcher_background so a regeneration keeps the current launcher look.
+  adaptive_icon_background: "#007AFC"

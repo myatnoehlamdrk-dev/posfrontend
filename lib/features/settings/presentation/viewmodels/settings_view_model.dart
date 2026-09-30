@@ -2,9 +2,14 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/core/network/media_url.dart';
+import 'package:posfrontend/shared/l10n/app_language.dart';
+import 'package:posfrontend/shared/l10n/locale_notifier.dart';
 import 'package:posfrontend/shared/theme/theme_mode_notifier.dart';
+import 'package:posfrontend/features/settings/domain/entities/feedback.dart';
 import 'package:posfrontend/features/settings/domain/entities/settings.dart';
+import 'package:posfrontend/features/settings/domain/repositories/feedback_repository.dart';
 import 'package:posfrontend/features/settings/domain/repositories/settings_repository.dart';
+import 'package:posfrontend/features/settings/data/repositories/feedback_repository_impl.dart';
 import 'package:posfrontend/features/settings/data/repositories/settings_repository_impl.dart';
 import 'package:posfrontend/features/shop/domain/repositories/shop_repository.dart';
 import 'package:posfrontend/features/shop/data/repositories/shop_local_repository_impl.dart';
@@ -15,11 +20,17 @@ class SettingsViewModel extends BaseViewModel {
   final SettingsRepository _repository;
   final ImgbbRepository _imgbbRepository;
   final ShopLocalRepository _shopLocalRepository;
+  final FeedbackRepository _feedbackRepository;
 
-  SettingsViewModel({SettingsRepository? repository, ImgbbRepository? imgbbRepository, ShopLocalRepository? shopLocalRepository})
-      : _repository = repository ?? SettingsRepositoryImpl(),
-        _imgbbRepository = imgbbRepository ?? ImgbbRepositoryImpl(),
-        _shopLocalRepository = shopLocalRepository ?? ShopLocalRepositoryImpl();
+  SettingsViewModel({
+    SettingsRepository? repository,
+    ImgbbRepository? imgbbRepository,
+    ShopLocalRepository? shopLocalRepository,
+    FeedbackRepository? feedbackRepository,
+  }) : _repository = repository ?? SettingsRepositoryImpl(),
+       _imgbbRepository = imgbbRepository ?? ImgbbRepositoryImpl(),
+       _shopLocalRepository = shopLocalRepository ?? ShopLocalRepositoryImpl(),
+       _feedbackRepository = feedbackRepository ?? FeedbackRepositoryImpl();
 
   SettingsEntity _settings = const SettingsEntity();
 
@@ -34,6 +45,9 @@ class SettingsViewModel extends BaseViewModel {
 
   bool _isUploadingImage = false;
   bool get isUploadingImage => _isUploadingImage;
+
+  bool _isSubmittingFeedback = false;
+  bool get isSubmittingFeedback => _isSubmittingFeedback;
 
   Future<void> loadSettings() async {
     setLoading(true);
@@ -51,6 +65,12 @@ class SettingsViewModel extends BaseViewModel {
               : ThemeMode.light,
         );
       }
+      // Same reasoning for language: a shop that syncs settings across devices
+      // should open in the language its owner chose elsewhere. Unlike the
+      // theme there is no "follow the OS" opt-in, so the server always wins.
+      LocaleNotifier.instance.setLanguage(
+        AppLanguage.fromServer(_settings.language),
+      );
     } catch (e) {
       setError('Failed to load settings');
     } finally {
@@ -166,18 +186,43 @@ class SettingsViewModel extends BaseViewModel {
         imageBytes,
         fileName: fileName ?? 'shop_image.jpg',
       );
-      _settings = _settings.copyWith(shopImage: resolveMediaUrl(result.url) ?? '');
+      _settings = _settings.copyWith(
+        shopImage: resolveMediaUrl(result.url) ?? '',
+      );
       notifyListeners();
       _settings = await _repository.updateSettings(shopImage: result.url);
 
       final shop = await _shopLocalRepository.getShop();
       if (shop != null) {
-        await _shopLocalRepository.saveShop(shop.copyWith(logoData: '', logoUrl: result.url));
+        await _shopLocalRepository.saveShop(
+          shop.copyWith(logoData: '', logoUrl: result.url),
+        );
       }
     } catch (e) {
       setError('Failed to upload image');
     } finally {
       _isUploadingImage = false;
+      notifyListeners();
+    }
+  }
+
+  /// Post the Settings > Feedback form to the API. Returns true only when the
+  /// server accepted it, so the caller can keep the dialog open on failure.
+  Future<bool> submitFeedback({
+    required FeedbackType type,
+    required String message,
+  }) async {
+    _isSubmittingFeedback = true;
+    resetError();
+    notifyListeners();
+    try {
+      await _feedbackRepository.submitFeedback(type: type, message: message);
+      return true;
+    } catch (e) {
+      setError('Failed to submit feedback');
+      return false;
+    } finally {
+      _isSubmittingFeedback = false;
       notifyListeners();
     }
   }

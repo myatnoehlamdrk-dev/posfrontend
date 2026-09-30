@@ -40,7 +40,8 @@ class AppTopBar extends StatelessWidget {
           ),
         if (showBackButton)
           CustomBackButton(
-            onTap: onBackTap ??
+            onTap:
+                onBackTap ??
                 () {
                   if (Navigator.of(context).canPop()) {
                     Navigator.of(context).pop();
@@ -64,7 +65,10 @@ class AppTopBar extends StatelessWidget {
         Stack(
           children: [
             IconButton(
-              icon: Icon(Icons.notifications_none_outlined, color: p.textPrimary),
+              icon: Icon(
+                Icons.notifications_none_outlined,
+                color: p.textPrimary,
+              ),
               onPressed: () {},
             ),
             Positioned(
@@ -84,9 +88,9 @@ class AppTopBar extends StatelessWidget {
         const SizedBox(width: 8),
         GestureDetector(
           onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const ProfileScreen()),
-            );
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const ProfileScreen()));
           },
           child: ValueListenableBuilder<String>(
             valueListenable: ProfileImageNotifier.instance,
@@ -94,10 +98,14 @@ class AppTopBar extends StatelessWidget {
               return CircleAvatar(
                 radius: 20,
                 backgroundColor: const Color(0xFF6D28D9),
-                backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
-                onBackgroundImageError: imageUrl.isNotEmpty ? (_, __) {
-                  ProfileImageNotifier.instance.update('');
-                } : null,
+                backgroundImage: imageUrl.isNotEmpty
+                    ? NetworkImage(imageUrl)
+                    : null,
+                onBackgroundImageError: imageUrl.isNotEmpty
+                    ? (_, __) {
+                        ProfileImageNotifier.instance.update('');
+                      }
+                    : null,
                 child: imageUrl.isEmpty
                     ? const Icon(Icons.person, color: Colors.white, size: 22)
                     : null,

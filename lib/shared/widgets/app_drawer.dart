@@ -11,22 +11,111 @@ import 'package:posfrontend/features/purchase/presentation/screens/purchase_item
 import 'package:posfrontend/features/settings/presentation/screens/settings_screen.dart';
 import 'package:posfrontend/features/cart/presentation/screens/add_to_cart_screen.dart';
 
+import 'package:posfrontend/shared/l10n/app_strings.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
 
-class AppDrawer extends StatelessWidget {
-  final String activeItem;
+/// Stable identity for a drawer destination.
+///
+/// This used to be the display label itself, so `_onTap` did a `switch` over
+/// strings like 'Sale Item' and every screen passed `activeItem: 'Dashboard'`.
+/// That made the English copy load-bearing: translating the labels would have
+/// silently broken navigation and the active-item highlight. Identity now lives
+/// here, and [label] is only the English source text used to look up a
+/// translation.
+enum DrawerDestination {
+  dashboard(
+    label: 'Dashboard',
+    icon: Icons.dashboard_outlined,
+    iconColor: Color(0xFF6D28D9),
+  ),
+  product(
+    label: 'Product',
+    icon: Icons.category_outlined,
+    iconColor: Color(0xFF0D9488),
+  ),
+  addProduct(
+    label: 'Add Product',
+    icon: Icons.add_circle_outline,
+    iconColor: Color(0xFF16A34A),
+    isTabRoot: true,
+  ),
+  addToCart(
+    label: 'Add to Cart',
+    icon: Icons.shopping_cart_outlined,
+    iconColor: Color(0xFFF97316),
+    isTabRoot: true,
+  ),
+  inventory(
+    label: 'Inventory',
+    icon: Icons.inventory_2_outlined,
+    iconColor: Color(0xFF2563EB),
+  ),
+  saleItem(
+    label: 'Sale Item',
+    icon: Icons.receipt_long_outlined,
+    iconColor: Color(0xFFDB2777),
+    isTabRoot: true,
+  ),
+  purchaseItem(
+    label: 'Purchase Item',
+    icon: Icons.local_shipping_outlined,
+    iconColor: Color(0xFF4F46E5),
+    isTabRoot: true,
+  ),
+  setting(
+    label: 'Setting',
+    icon: Icons.settings_outlined,
+    iconColor: Color(0xFF64748B),
+    isTabRoot: true,
+  );
 
-  const AppDrawer({
-    super.key,
-    this.activeItem = 'Dashboard',
+  const DrawerDestination({
+    required this.label,
+    required this.icon,
+    required this.iconColor,
+    this.isTabRoot = false,
   });
+
+  /// English source text. Looked up in the translation store; never compared
+  /// for equality.
+  final String label;
+
+  final IconData icon;
+  final Color iconColor;
+
+  /// True when the destination is pushed rather than swapped in. The three
+  /// root tabs replace the stack so Back does not walk a growing history;
+  /// anything else is a drill-down and pushes.
+  final bool isTabRoot;
+
+  String localized(AppStrings strings) => strings.t(label);
+
+  Widget get screen => switch (this) {
+    DrawerDestination.dashboard => const DashboardScreen(),
+    DrawerDestination.inventory => const InventoryScreen(),
+    DrawerDestination.product => const ProductsCatalogScreen(),
+    DrawerDestination.addProduct => const AddProductOptionsScreen(),
+    DrawerDestination.saleItem => const SaleItemScreen(),
+    DrawerDestination.purchaseItem => const PurchaseItemsScreen(),
+    DrawerDestination.addToCart => const AddToCartScreen(),
+    DrawerDestination.setting => const SettingsScreen(),
+  };
+}
+
+class AppDrawer extends StatelessWidget {
+  final DrawerDestination active;
+
+  const AppDrawer({super.key, this.active = DrawerDestination.dashboard});
 
   @override
   Widget build(BuildContext context) {
     final user = AuthScope.userOf(context);
-    final userName = user?.fullName.trim().isNotEmpty == true ? user!.fullName : 'John Doe';
+    final userName = user?.fullName.trim().isNotEmpty == true
+        ? user!.fullName
+        : 'John Doe';
     final email = user?.email ?? '';
     final initials = _initials(userName);
     final p = context.palette;
@@ -38,7 +127,12 @@ class AppDrawer extends StatelessWidget {
           children: [
             Container(
               width: double.infinity,
-              padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 16, 20, 20),
+              padding: EdgeInsets.fromLTRB(
+                20,
+                MediaQuery.of(context).padding.top + 16,
+                20,
+                20,
+              ),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [Color(0xFF7C3AED), Color(0xFF5B21B6)],
@@ -54,10 +148,14 @@ class AppDrawer extends StatelessWidget {
                       return CircleAvatar(
                         radius: 28,
                         backgroundColor: Colors.white.withValues(alpha: 0.25),
-                        backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
-                        onBackgroundImageError: imageUrl.isNotEmpty ? (error, stackTrace) {
-                          ProfileImageNotifier.instance.update('');
-                        } : null,
+                        backgroundImage: imageUrl.isNotEmpty
+                            ? NetworkImage(imageUrl)
+                            : null,
+                        onBackgroundImageError: imageUrl.isNotEmpty
+                            ? (error, stackTrace) {
+                                ProfileImageNotifier.instance.update('');
+                              }
+                            : null,
                         child: imageUrl.isEmpty
                             ? Text(
                                 initials,
@@ -105,19 +203,15 @@ class AppDrawer extends StatelessWidget {
             ),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 8,
+                  horizontal: 12,
+                ),
                 child: Column(
                   children: [
-                    _navItem(context, 'Dashboard', Icons.dashboard_outlined, const Color(0xFF6D28D9)),
-                    _navItem(context, 'Product', Icons.category_outlined, const Color(0xFF0D9488)),
-                    _navItem(context, 'Add Product', Icons.add_circle_outline, const Color(0xFF16A34A)),
-                    _navItem(context, 'Add to Cart', Icons.shopping_cart_outlined, const Color(0xFFF97316)),
-                    _navItem(context, 'Inventory', Icons.inventory_2_outlined, const Color(0xFF2563EB)),
-                    _navItem(context, 'Sale Item', Icons.receipt_long_outlined, const Color(0xFFDB2777)),
-                    
-                    _navItem(context, 'Purchase Item', Icons.local_shipping_outlined, const Color(0xFF4F46E5)),
-                    _navItem(context, 'Setting', Icons.settings_outlined, const Color(0xFF64748B))
-                    ],
+                    for (final destination in DrawerDestination.values)
+                      _navItem(context, destination),
+                  ],
                 ),
               ),
             ),
@@ -137,14 +231,10 @@ class AppDrawer extends StatelessWidget {
     return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 
-  Widget _navItem(
-    BuildContext context,
-    String label,
-    IconData icon,
-    Color iconColor,
-  ) {
+  Widget _navItem(BuildContext context, DrawerDestination destination) {
     final p = context.palette;
-    final active = label == activeItem;
+    final active = destination == this.active;
+    final iconColor = destination.iconColor;
     // The per-item accents are tuned for a white drawer. In dark the icon is
     // lifted toward white so the hue stays recognisable but readable.
     final idleIcon = context.isDark
@@ -167,13 +257,13 @@ class AppDrawer extends StatelessWidget {
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(
-            icon,
+            destination.icon,
             color: active ? Colors.white : idleIcon,
             size: 20,
           ),
         ),
         title: Text(
-          label,
+          destination.localized(context.l10n),
           style: TextStyle(
             color: active ? p.primary : p.textPrimary,
             fontWeight: active ? FontWeight.w600 : FontWeight.w500,
@@ -181,57 +271,26 @@ class AppDrawer extends StatelessWidget {
           ),
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        onTap: () => _onTap(context, label),
+        onTap: () => _onTap(context, destination),
       ),
     );
   }
 
-  void _onTap(BuildContext context, String label) {
+  void _onTap(BuildContext context, DrawerDestination destination) {
     final scaffold = Scaffold.maybeOf(context);
     if (scaffold != null && scaffold.isDrawerOpen) {
       Navigator.of(context).pop();
     }
-    if (label == activeItem) return;
+    if (destination == active) return;
 
-    Widget destination;
-    switch (label) {
-      case 'Dashboard':
-        destination = const DashboardScreen();
-        break;
-      case 'Inventory':
-        destination = const InventoryScreen();
-        break;
-      case 'Product':
-        destination = const ProductsCatalogScreen();
-        break;
-      case 'Add Product':
-        destination = const AddProductOptionsScreen();
-        break;
-      case 'Sale Item':
-        destination = const SaleItemScreen();
-        break;
-      case 'Purchase Item':
-        destination = const PurchaseItemsScreen();
-        break;
-      case 'Add to Cart':
-        destination = const AddToCartScreen();
-        break;
-      case 'Setting':
-        destination = const SettingsScreen();
-        break;
-
-      default:
-        return;
-    }
-    if (label == 'Setting' || label == 'Sale Item' || label == 'Purchase Item' || label == 'Add Product' || label == 'Add to Cart') {
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => destination),
-      );
+    final screen = destination.screen;
+    if (destination.isTabRoot) {
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
       return;
     }
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => destination),
-    );
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => screen));
   }
 }
 
@@ -275,14 +334,11 @@ class _LogoutTileState extends State<_LogoutTile> {
             ? const SizedBox(
                 width: 22,
                 height: 22,
-                child: CircularProgressIndicator(
-                  color: red,
-                  strokeWidth: 2.5,
-                ),
+                child: CircularProgressIndicator(color: red, strokeWidth: 2.5),
               )
             : const Icon(Icons.logout, color: red, size: 22),
-        title: const Text(
-          'Logout',
+        title: Text(
+          context.l10n.t('Logout'),
           style: TextStyle(
             color: red,
             fontWeight: FontWeight.w600,
@@ -297,13 +353,27 @@ class _LogoutTileState extends State<_LogoutTile> {
                   context: context,
                   builder: (ctx) {
                     return AlertDialog(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      title: Text('Logout', style: TextStyle(fontWeight: FontWeight.w600, color: p.textPrimary)),
-                      content: Text('Are you sure you want to logout?', style: TextStyle(color: p.textSecondary)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      title: Text(
+                        context.l10n.t('Logout'),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: p.textPrimary,
+                        ),
+                      ),
+                      content: Text(
+                        'Are you sure you want to logout?',
+                        style: TextStyle(color: p.textSecondary),
+                      ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(ctx),
-                          child: Text('Cancel', style: TextStyle(color: p.textSecondary)),
+                          child: Text(
+                            'Cancel',
+                            style: TextStyle(color: p.textSecondary),
+                          ),
                         ),
                         ElevatedButton(
                           onPressed: () async {
@@ -313,7 +383,9 @@ class _LogoutTileState extends State<_LogoutTile> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: red,
                             foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
                           child: _isLoading
                               ? const SizedBox(
@@ -324,7 +396,7 @@ class _LogoutTileState extends State<_LogoutTile> {
                                     strokeWidth: 2,
                                   ),
                                 )
-                              : const Text('Logout'),
+                              : Text(context.l10n.t('Logout')),
                         ),
                       ],
                     );

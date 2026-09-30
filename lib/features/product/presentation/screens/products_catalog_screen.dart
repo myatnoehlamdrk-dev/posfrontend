@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart';
 import 'package:posfrontend/features/product/presentation/screens/product_detail_screen.dart';
 import 'package:posfrontend/features/product/presentation/screens/category_products_screen.dart';
@@ -79,9 +80,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
 
   void _openProduct(CatalogProductView p) {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ProductDetailScreen(productId: p.id),
-      ),
+      MaterialPageRoute(builder: (_) => ProductDetailScreen(productId: p.id)),
     );
   }
 
@@ -89,12 +88,16 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Product'),
-        content: Text('Are you sure you want to delete "${p.name}"?'),
+        title: Text(context.l10n.t('Delete Product')),
+        content: Text(
+          context.l10n
+              .t('Are you sure you want to delete "{v1}"?')
+              .replaceAll('{v1}', (p.name).toString()),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.t('Cancel')),
           ),
           TextButton(
             onPressed: () async {
@@ -105,7 +108,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
               }
             },
             child: Text(
-              'Delete',
+              context.l10n.t('Delete'),
               style: TextStyle(color: context.palette.dangerFg),
             ),
           ),
@@ -134,7 +137,8 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                 return Scaffold(
                   backgroundColor: context.palette.scaffoldBg,
                   floatingActionButton: FloatingActionButton(
-                    onPressed: () => setState(() => _isSearchOpen = !_isSearchOpen),
+                    onPressed: () =>
+                        setState(() => _isSearchOpen = !_isSearchOpen),
                     backgroundColor: _accentColor,
                     child: Icon(
                       _isSearchOpen ? Icons.close : Icons.search,
@@ -147,7 +151,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                       children: [
                         const SizedBox(
                           width: 240,
-                          child: AppDrawer(activeItem: 'Product'),
+                          child: AppDrawer(active: DrawerDestination.product),
                         ),
                         Expanded(child: _content()),
                       ],
@@ -159,14 +163,15 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                 key: _scaffoldKey,
                 backgroundColor: context.palette.scaffoldBg,
                 floatingActionButton: FloatingActionButton(
-                  onPressed: () => setState(() => _isSearchOpen = !_isSearchOpen),
+                  onPressed: () =>
+                      setState(() => _isSearchOpen = !_isSearchOpen),
                   backgroundColor: _accentColor,
                   child: Icon(
                     _isSearchOpen ? Icons.close : Icons.search,
                     color: Colors.white,
                   ),
                 ),
-                drawer: const AppDrawer(activeItem: 'Product'),
+                drawer: const AppDrawer(active: DrawerDestination.product),
                 body: SafeArea(child: _content()),
               );
             },
@@ -187,7 +192,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
             Column(
               children: [
                 AppScreenTopBar(
-                  title: 'Products',
+                  title: context.l10n.t('Products'),
                   showMenuButton: true,
                   onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
                 ),
@@ -215,13 +220,16 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                     children: [
                       Expanded(child: _searchField()),
                       const SizedBox(width: 8),
-                      _iconButton(Icons.close, onTap: () {
-                        setState(() {
-                          _isSearchOpen = false;
-                          _search.clear();
-                          _viewModel.setSearchQuery('');
-                        });
-                      }),
+                      _iconButton(
+                        Icons.close,
+                        onTap: () {
+                          setState(() {
+                            _isSearchOpen = false;
+                            _search.clear();
+                            _viewModel.setSearchQuery('');
+                          });
+                        },
+                      ),
                     ],
                   ),
                 ),
@@ -266,11 +274,13 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
             ElevatedButton.icon(
               onPressed: () => _viewModel.load(),
               icon: const Icon(Icons.refresh, size: 18),
-              label: const Text('Retry'),
+              label: Text(context.l10n.t('Retry')),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _accentColor,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
             ),
           ],
@@ -286,12 +296,12 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
             Icon(Icons.category_outlined, size: 64, color: _p.textMuted),
             const SizedBox(height: 16),
             Text(
-              'No categories available',
+              context.l10n.t('No categories available'),
               style: TextStyle(fontSize: 16, color: _mutedColor),
             ),
             const SizedBox(height: 8),
             Text(
-              'Add products to see categories here',
+              context.l10n.t('Add products to see categories here'),
               style: TextStyle(fontSize: 13, color: _p.textMuted),
             ),
           ],
@@ -368,25 +378,37 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: context.palette.textPrimary),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: context.palette.textPrimary,
+                    ),
                   ),
                   if (p.brand.isNotEmpty)
                     Text(
                       p.brand,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: context.palette.textSecondary,
+                      ),
                     ),
                   Text(
-                    'Stock: ${p.stock}',
-                    style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
+                    context.l10n
+                        .t('Stock: {v1}')
+                        .replaceAll('{v1}', (p.stock).toString()),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: context.palette.textSecondary,
+                    ),
                   ),
                 ],
               ),
             ),
-            Icon(Icons.chevron_right_rounded, color: context.palette.textSecondary),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: context.palette.textSecondary,
+            ),
           ],
         ),
       ),
@@ -416,12 +438,13 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
             ElevatedButton.icon(
               onPressed: () => _viewModel.searchProducts(),
               icon: const Icon(Icons.refresh, size: 18),
-              label: const Text('Retry'),
+              label: Text(context.l10n.t('Retry')),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _accentColor,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
             ),
           ],
@@ -438,12 +461,14 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
             Icon(Icons.search_off, size: 64, color: _p.textMuted),
             const SizedBox(height: 16),
             Text(
-              'No products found for "$query"',
+              context.l10n
+                  .t('No products found for "{v1}"')
+                  .replaceAll('{v1}', (query).toString()),
               style: TextStyle(fontSize: 16, color: _mutedColor),
             ),
             const SizedBox(height: 8),
             Text(
-              'Try a different keyword or brand',
+              context.l10n.t('Try a different keyword or brand'),
               style: TextStyle(fontSize: 13, color: _p.textMuted),
             ),
           ],
@@ -480,9 +505,16 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
       onChanged: _viewModel.setSearchQuery,
       style: const TextStyle(fontSize: 13),
       decoration: InputDecoration(
-        hintText: 'Search...',
-        hintStyle: TextStyle(color: context.palette.textSecondary, fontSize: 13),
-        prefixIcon: Icon(Icons.search, color: context.palette.textSecondary, size: 18),
+        hintText: context.l10n.t('Search...'),
+        hintStyle: TextStyle(
+          color: context.palette.textSecondary,
+          fontSize: 13,
+        ),
+        prefixIcon: Icon(
+          Icons.search,
+          color: context.palette.textSecondary,
+          size: 18,
+        ),
         isDense: true,
         filled: true,
         fillColor: _p.surface,
@@ -540,9 +572,9 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                 key: const PageStorageKey('hotCarousel'),
                 controller: _hotPageController,
                 itemCount: loopCount,
-                onPageChanged: (i) => setState(() => _hotIndex = i % items.length),
-                itemBuilder: (ctx, i) =>
-                    _hotBanner(items[i % items.length], i),
+                onPageChanged: (i) =>
+                    setState(() => _hotIndex = i % items.length),
+                itemBuilder: (ctx, i) => _hotBanner(items[i % items.length], i),
               ),
             ),
             const SizedBox(height: 10),
@@ -605,7 +637,9 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 3),
+                              horizontal: 10,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.6),
                               borderRadius: BorderRadius.circular(20),
@@ -644,13 +678,12 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                           const Spacer(),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [
-                                  gradient.colors[1],
-                                  accent,
-                                ],
+                                colors: [gradient.colors[1], accent],
                               ),
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
@@ -661,8 +694,8 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                                 ),
                               ],
                             ),
-                            child: const Text(
-                              'View Details',
+                            child: Text(
+                              context.l10n.t('View Details'),
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
@@ -723,17 +756,18 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
   }
 
   Widget _promoBadge(CatalogProductView p, LinearGradient gradient) {
-    final accent = Color.lerp(gradient.colors[0], const Color(0xFF111827), 0.7)!;
+    final accent = Color.lerp(
+      gradient.colors[0],
+      const Color(0xFF111827),
+      0.7,
+    )!;
     return Center(
       child: Icon(
         p.icon,
         color: accent,
         size: 64,
         shadows: [
-          Shadow(
-            color: Colors.black.withValues(alpha: 0.15),
-            blurRadius: 14,
-          ),
+          Shadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 14),
         ],
       ),
     );
@@ -824,10 +858,7 @@ class _GradientColorImagePainter extends CustomPainter {
       image.width.toDouble(),
       image.height.toDouble(),
     );
-    final scale = math.min(
-      size.width / src.width,
-      size.height / src.height,
-    );
+    final scale = math.min(size.width / src.width, size.height / src.height);
     final imgRect = Rect.fromCenter(
       center: size.center(Offset.zero),
       width: src.width * scale,
@@ -839,10 +870,14 @@ class _GradientColorImagePainter extends CustomPainter {
     const double frame = 15;
     final matRect = imgRect.inflate(mat);
     final frameOuterRect = matRect.inflate(frame);
-    final frameOuter =
-        RRect.fromRectAndRadius(frameOuterRect, const Radius.circular(16));
-    final frameInner =
-        RRect.fromRectAndRadius(matRect, const Radius.circular(10));
+    final frameOuter = RRect.fromRectAndRadius(
+      frameOuterRect,
+      const Radius.circular(16),
+    );
+    final frameInner = RRect.fromRectAndRadius(
+      matRect,
+      const Radius.circular(10),
+    );
 
     // Lay the frame down slightly from vertical (little tilt).
     const double tiltDeg = 7.5;
@@ -853,10 +888,7 @@ class _GradientColorImagePainter extends CustomPainter {
     final fh = frameOuterRect.height;
     final rotW = fw * cosT + fh * sinT;
     final rotH = fw * sinT + fh * cosT;
-    final fit = math.min(
-      1.0,
-      math.min(size.width / rotW, size.height / rotH),
-    );
+    final fit = math.min(1.0, math.min(size.width / rotW, size.height / rotH));
 
     final cx = size.width / 2;
     final cy = size.height / 2;

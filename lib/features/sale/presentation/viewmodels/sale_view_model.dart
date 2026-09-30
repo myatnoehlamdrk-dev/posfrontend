@@ -19,10 +19,10 @@ class SaleViewModel extends BaseViewModel {
     required SaleRepository saleRepository,
     required OrderRepository orderRepository,
     required CustomerRepository customerRepository,
-  })  : _productRepository = productRepository,
-        _saleRepository = saleRepository,
-        _orderRepository = orderRepository,
-        _customerRepository = customerRepository;
+  }) : _productRepository = productRepository,
+       _saleRepository = saleRepository,
+       _orderRepository = orderRepository,
+       _customerRepository = customerRepository;
 
   List<CatalogProductView> _products = [];
   List<CatalogProductView> get products => _products;
@@ -89,7 +89,8 @@ class SaleViewModel extends BaseViewModel {
     _voucherRandom = _generateRandom5();
     _orderRandom = _generateRandom5();
     if (initialItems != null) _items.addAll(initialItems);
-    if (initialCustomerName?.isNotEmpty == true) _customerName = initialCustomerName!;
+    if (initialCustomerName?.isNotEmpty == true)
+      _customerName = initialCustomerName!;
     if (initialCustomerPhone != null) _customerPhone = initialCustomerPhone;
     if (initialPaymentMethod != null) _paymentMethod = initialPaymentMethod;
     notifyListeners();
@@ -107,6 +108,7 @@ class SaleViewModel extends BaseViewModel {
     _discountPercent = value;
     notifyListeners();
   }
+
   void setNotes(String value) => _notes = value;
 
   void refreshRandoms() {
@@ -162,10 +164,9 @@ class SaleViewModel extends BaseViewModel {
     }
     try {
       final results = await _customerRepository.searchCustomers(query: query);
-      _customerSuggestions = results.map((r) => {
-        'name': r.name,
-        'phone': r.phone ?? '',
-      }).toList();
+      _customerSuggestions = results
+          .map((r) => {'name': r.name, 'phone': r.phone ?? ''})
+          .toList();
       _showSuggestions = results.isNotEmpty;
     } catch (_) {
       _customerSuggestions = [];
@@ -212,27 +213,35 @@ class SaleViewModel extends BaseViewModel {
         (json) => ProductApiModel.fromJson(json).toEntity(),
       );
 
-      final newItems = paginated.data.map((e) => CatalogProductView(
-        id: e.id,
-        name: e.name,
-        brand: e.brand,
-        sku: e.sku,
-        price: e.price,
-        stock: e.stock,
-        isSet: e.isSet,
-        category: e.category,
-        packageId: e.packageId,
-        icon: CatalogProductView.iconFor(e.category),
-        color: CatalogProductView.colorFor(e.category),
-        imageUrl: e.imageUrl,
-        variants: e.variants.map((v) => ProductVariant(
-          size: v.size,
-          color: v.color,
-          quantity: v.quantity,
-          price: v.price,
-        )).toList(),
-        createdBy: e.createdBy,
-      )).toList();
+      final newItems = paginated.data
+          .map(
+            (e) => CatalogProductView(
+              id: e.id,
+              name: e.name,
+              brand: e.brand,
+              sku: e.sku,
+              price: e.price,
+              stock: e.stock,
+              isSet: e.isSet,
+              category: e.category,
+              packageId: e.packageId,
+              icon: CatalogProductView.iconFor(e.category),
+              color: CatalogProductView.colorFor(e.category),
+              imageUrl: e.imageUrl,
+              variants: e.variants
+                  .map(
+                    (v) => ProductVariant(
+                      size: v.size,
+                      color: v.color,
+                      quantity: v.quantity,
+                      price: v.price,
+                    ),
+                  )
+                  .toList(),
+              createdBy: e.createdBy,
+            ),
+          )
+          .toList();
 
       _products = _currentPage == 1 ? newItems : [..._products, ...newItems];
       _lastPage = paginated.lastPage;
@@ -277,7 +286,9 @@ class SaleViewModel extends BaseViewModel {
         userName: staffName,
         customerName: _customerName,
         customerPhone: _customerPhone.isNotEmpty ? _customerPhone : null,
-        customerLocation: _customerLocation.isNotEmpty ? _customerLocation : null,
+        customerLocation: _customerLocation.isNotEmpty
+            ? _customerLocation
+            : null,
         payMethod: _paymentMethod,
         voucherNo: voucherNo,
         orderId: orderId,

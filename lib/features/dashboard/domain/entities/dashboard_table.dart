@@ -7,14 +7,7 @@ import 'package:posfrontend/core/extensions/number_extensions.dart';
 /// read-only tables with the same shape do not justify six screens, and a
 /// column list is far easier to review against the request than a bespoke
 /// layout is.
-enum TableValueKind {
-  text,
-  number,
-  currency,
-  date,
-  time,
-  dateTime,
-}
+enum TableValueKind { text, number, currency, date, time, dateTime }
 
 enum TableColumnAlign { left, right }
 

@@ -115,8 +115,8 @@ class ProductDetailView {
     final stockStatus = stock == 0
         ? 'Out of Stock'
         : (stock < 10
-            ? 'Low Stock'
-            : (stock <= 20 ? 'Mid-Cap Stock' : 'High Stock'));
+              ? 'Low Stock'
+              : (stock <= 20 ? 'Mid-Cap Stock' : 'High Stock'));
 
     return ProductDetailView(
       id: json['id']?.toString() ?? '',

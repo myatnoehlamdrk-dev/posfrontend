@@ -35,27 +35,28 @@ class ShopApiModel {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'logoData': logoData,
-        'logoUrl': logoUrl,
-        'name': name,
-        'type': type,
-        'physicalAddress': physicalAddress,
-        'ownerInformation': ownerInformation.toJson(),
-      };
+    'id': id,
+    'logoData': logoData,
+    'logoUrl': logoUrl,
+    'name': name,
+    'type': type,
+    'physicalAddress': physicalAddress,
+    'ownerInformation': ownerInformation.toJson(),
+  };
 
   Map<String, dynamic> toApiJson() => {
-        'id': id,
-        'logoUrl': logoUrl,
-        'name': name,
-        'type': type,
-        'physicalAddress': physicalAddress,
-        'ownerInformation': ownerInformation.toJson(),
-      };
+    'id': id,
+    'logoUrl': logoUrl,
+    'name': name,
+    'type': type,
+    'physicalAddress': physicalAddress,
+    'ownerInformation': ownerInformation.toJson(),
+  };
 
   ShopEntity toEntity() {
     return ShopEntity(
       id: id,
+      logoData: logoData,
       logoUrl: logoUrl,
       name: name ?? '',
       type: type ?? '',
@@ -71,6 +72,7 @@ class ShopApiModel {
   factory ShopApiModel.fromEntity(ShopEntity entity) {
     return ShopApiModel(
       id: entity.id,
+      logoData: entity.logoData,
       logoUrl: entity.logoUrl,
       name: entity.name,
       type: entity.type,
@@ -104,8 +106,8 @@ class OwnerInformationModel {
   }
 
   Map<String, dynamic> toJson() => {
-        'name': name,
-        'email': email,
-        'phone': phone,
-      };
+    'name': name,
+    'email': email,
+    'phone': phone,
+  };
 }

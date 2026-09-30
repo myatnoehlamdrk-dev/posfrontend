@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/core/di/injection.dart';
 import 'package:posfrontend/features/auth/domain/usecases/forgot_password.dart';
 import 'package:posfrontend/features/auth/presentation/viewmodels/forgot_password_view_model.dart';
@@ -43,8 +44,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     );
     _viewModel.setEmail(widget.email);
     _viewModel.setResetToken(widget.resetToken);
-    _passwordController.addListener(() => _viewModel.setNewPassword(_passwordController.text));
-    _confirmPasswordController.addListener(() => _viewModel.setConfirmPassword(_confirmPasswordController.text));
+    _passwordController.addListener(
+      () => _viewModel.setNewPassword(_passwordController.text),
+    );
+    _confirmPasswordController.addListener(
+      () => _viewModel.setConfirmPassword(_confirmPasswordController.text),
+    );
   }
 
   @override
@@ -89,7 +94,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     _buildHeaderIcon(),
                     const SizedBox(height: 20),
                     Text(
-                      'Reset Password',
+                      context.l10n.t('Reset Password'),
                       style: TextStyle(
                         color: p.textPrimary,
                         fontSize: 26,
@@ -98,11 +103,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Create a new password for ${widget.email}',
-                      style: TextStyle(
-                        color: p.textMuted,
-                        fontSize: 14,
-                      ),
+                      context.l10n
+                          .t('Create a new password for {v1}')
+                          .replaceAll('{v1}', (widget.email).toString()),
+                      style: TextStyle(color: p.textMuted, fontSize: 14),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 36),
@@ -117,7 +121,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       decoration: appInputDecoration(
                         context,
                         icon: Icons.lock_outline,
-                        hint: 'Enter new password',
+                        hint: context.l10n.t('Enter new password'),
                         errorText: errors['password'],
                         suffixIcon: IconButton(
                           onPressed: () {
@@ -147,7 +151,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       decoration: appInputDecoration(
                         context,
                         icon: Icons.lock_outline,
-                        hint: 'Confirm new password',
+                        hint: context.l10n.t('Confirm new password'),
                         errorText: errors['password_confirmation'],
                         suffixIcon: IconButton(
                           onPressed: () {
@@ -166,7 +170,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     ),
                     const SizedBox(height: 32),
                     GradientButton(
-                      label: 'Reset Password',
+                      label: context.l10n.t('Reset Password'),
                       loading: loading,
                       onPressed: _handleResetPassword,
                     ),
@@ -210,14 +214,14 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          'Remember your password?',
+          context.l10n.t('Remember your password?'),
           style: TextStyle(color: p.textMuted, fontSize: 14),
         ),
         const SizedBox(width: 6),
         GestureDetector(
           onTap: () => Navigator.pop(context),
-          child: const Text(
-            'Back to Login',
+          child: Text(
+            context.l10n.t('Back to Login'),
             style: TextStyle(
               color: AppColors.primary,
               fontSize: 14,

@@ -2,7 +2,10 @@ import 'package:dio/dio.dart';
 import 'package:posfrontend/features/package/domain/entities/package.dart';
 
 abstract class PackageRepository {
-  Future<List<PackageEntity>> getPackages(String categoryId, {CancelToken? cancelToken});
+  Future<List<PackageEntity>> getPackages(
+    String categoryId, {
+    CancelToken? cancelToken,
+  });
   Future<PackageEntity> createPackage({
     required String categoryId,
     required String name,

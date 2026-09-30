@@ -9,5 +9,9 @@ class ImgbbUploadResult {
 }
 
 abstract class ImgbbRepository {
-  Future<ImgbbUploadResult> uploadImage(Uint8List bytes, {String? fileName, CancelToken? cancelToken});
+  Future<ImgbbUploadResult> uploadImage(
+    Uint8List bytes, {
+    String? fileName,
+    CancelToken? cancelToken,
+  });
 }

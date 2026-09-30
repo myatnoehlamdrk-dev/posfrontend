@@ -32,7 +32,8 @@ class PercentInputFormatter extends TextInputFormatter {
 
     // The field starts on '0', so typing 5 would otherwise leave '05%'.
     final trimmed = raw.replaceFirst(RegExp(r'^0+(?=\d)'), '');
-    final caretAtEnd = newValue.selection.baseOffset == raw.length &&
+    final caretAtEnd =
+        newValue.selection.baseOffset == raw.length &&
         newValue.selection.extentOffset == raw.length;
     if (trimmed == raw || !caretAtEnd) return newValue;
 

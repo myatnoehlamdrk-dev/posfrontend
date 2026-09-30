@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class QuantityControl extends StatelessWidget {
@@ -33,8 +34,13 @@ class QuantityControl extends StatelessWidget {
             width: width,
             child: Center(
               child: Text(
-                '$quantity',
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                context.l10n
+                    .t('{v1}')
+                    .replaceAll('{v1}', (quantity).toString()),
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),

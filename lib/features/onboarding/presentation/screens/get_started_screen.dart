@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/features/auth/presentation/screens/login_screen.dart';
 
 class GetStartedScreen extends StatelessWidget {
@@ -11,14 +12,8 @@ class GetStartedScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            Expanded(
-              flex: 58,
-              child: _buildHeroSection(context),
-            ),
-            Expanded(
-              flex: 42,
-              child: _buildBottomSection(context),
-            ),
+            Expanded(flex: 58, child: _buildHeroSection(context)),
+            Expanded(flex: 42, child: _buildBottomSection(context)),
           ],
         ),
       ),
@@ -117,8 +112,8 @@ class GetStartedScreen extends StatelessWidget {
                 children: [
                   _buildAppIcon(),
                   const SizedBox(height: 12),
-                  const Text(
-                    'Smart POS',
+                  Text(
+                    context.l10n.t('SMART POS'),
                     style: TextStyle(
                       fontFamily: 'Broadway',
                       fontSize: 34,
@@ -126,7 +121,7 @@ class GetStartedScreen extends StatelessWidget {
                       height: 1.15,
                     ),
                   ),
-                  const Text(
+                  Text(
                     '&',
                     style: TextStyle(
                       fontFamily: 'Broadway',
@@ -135,8 +130,8 @@ class GetStartedScreen extends StatelessWidget {
                       height: 1.15,
                     ),
                   ),
-                  const Text(
-                    'Inventory',
+                  Text(
+                    context.l10n.t('INVENTORY MANAGEMENT'),
                     style: TextStyle(
                       fontFamily: 'Broadway',
                       fontSize: 34,
@@ -148,7 +143,9 @@ class GetStartedScreen extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 40),
                     child: Text(
-                      'Manage sales, stock, and reports from your pocket.',
+                      context.l10n.t(
+                        'Manage sales, stock, and reports from your pocket.',
+                      ),
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 15,
@@ -188,7 +185,10 @@ class GetStartedScreen extends StatelessWidget {
           const Spacer(),
           _buildFeatureItem(Icons.bolt_rounded, 'Fast checkout'),
           const SizedBox(height: 20),
-          _buildFeatureItem(Icons.inventory_2_outlined, 'Live inventory tracking'),
+          _buildFeatureItem(
+            Icons.inventory_2_outlined,
+            'Live inventory tracking',
+          ),
           const SizedBox(height: 20),
           _buildFeatureItem(Icons.bar_chart_rounded, 'Daily sales reports'),
           const Spacer(),
@@ -276,15 +276,18 @@ class _SwipeToUnlockState extends State<SwipeToUnlock>
           builder: (context, constraints) {
             final trackWidth = constraints.maxWidth;
             final usableTrackWidth = trackWidth - _padding * 2;
-            final thumbLeft = _padding + _dragPercent * (usableTrackWidth - _thumbSize);
+            final thumbLeft =
+                _padding + _dragPercent * (usableTrackWidth - _thumbSize);
 
             return GestureDetector(
               onHorizontalDragUpdate: (d) {
                 if (_completed) return;
                 final md = usableTrackWidth - _thumbSize;
                 setState(() {
-                  _dragPercent =
-                      (_dragPercent + d.delta.dx / md).clamp(0.0, 1.0);
+                  _dragPercent = (_dragPercent + d.delta.dx / md).clamp(
+                    0.0,
+                    1.0,
+                  );
                 });
               },
               onHorizontalDragEnd: (d) {
@@ -332,13 +335,17 @@ class _SwipeToUnlockState extends State<SwipeToUnlock>
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: [
-                                    const Color(0xFF7C3AED)
-                                        .withValues(alpha: 0.12),
-                                    const Color(0xFF7C3AED)
-                                        .withValues(alpha: 0.25),
+                                    const Color(
+                                      0xFF7C3AED,
+                                    ).withValues(alpha: 0.12),
+                                    const Color(
+                                      0xFF7C3AED,
+                                    ).withValues(alpha: 0.25),
                                   ],
                                 ),
-                                borderRadius: BorderRadius.circular(_trackRadius),
+                                borderRadius: BorderRadius.circular(
+                                  _trackRadius,
+                                ),
                               ),
                             ),
                           ),
@@ -349,45 +356,52 @@ class _SwipeToUnlockState extends State<SwipeToUnlock>
                             child: FittedBox(
                               fit: BoxFit.scaleDown,
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(
                                       Icons.chevron_right_rounded,
                                       size: 16,
-                                      color: const Color(0xFF7C3AED)
-                                          .withValues(alpha: 0.3),
+                                      color: const Color(
+                                        0xFF7C3AED,
+                                      ).withValues(alpha: 0.3),
                                     ),
                                     Icon(
                                       Icons.chevron_right_rounded,
                                       size: 16,
-                                      color: const Color(0xFF7C3AED)
-                                          .withValues(alpha: 0.55),
+                                      color: const Color(
+                                        0xFF7C3AED,
+                                      ).withValues(alpha: 0.55),
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
-                                      'Swipe to get started',
+                                      context.l10n.t('Swipe to get started'),
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,
                                         letterSpacing: 0.3,
-                                        color: const Color(0xFF7C3AED)
-                                            .withValues(alpha: 0.55),
+                                        color: const Color(
+                                          0xFF7C3AED,
+                                        ).withValues(alpha: 0.55),
                                       ),
                                     ),
                                     const SizedBox(width: 4),
                                     Icon(
                                       Icons.chevron_right_rounded,
                                       size: 16,
-                                      color: const Color(0xFF7C3AED)
-                                          .withValues(alpha: 0.55),
+                                      color: const Color(
+                                        0xFF7C3AED,
+                                      ).withValues(alpha: 0.55),
                                     ),
                                     Icon(
                                       Icons.chevron_right_rounded,
                                       size: 16,
-                                      color: const Color(0xFF7C3AED)
-                                          .withValues(alpha: 0.3),
+                                      color: const Color(
+                                        0xFF7C3AED,
+                                      ).withValues(alpha: 0.3),
                                     ),
                                   ],
                                 ),
@@ -402,7 +416,9 @@ class _SwipeToUnlockState extends State<SwipeToUnlock>
                   AnimatedPositioned(
                     duration: const Duration(milliseconds: 80),
                     curve: Curves.easeOut,
-                    left: _padding + _dragPercent * (usableTrackWidth - _thumbSize),
+                    left:
+                        _padding +
+                        _dragPercent * (usableTrackWidth - _thumbSize),
                     child: Container(
                       width: _thumbSize,
                       height: _thumbSize,
@@ -415,7 +431,9 @@ class _SwipeToUnlockState extends State<SwipeToUnlock>
                         borderRadius: BorderRadius.circular(_trackRadius - 2),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF7C3AED).withValues(alpha: 0.4),
+                            color: const Color(
+                              0xFF7C3AED,
+                            ).withValues(alpha: 0.4),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -427,12 +445,17 @@ class _SwipeToUnlockState extends State<SwipeToUnlock>
                           final glow = 0.3 + _pulseController.value * 0.2;
                           return Container(
                             decoration: BoxDecoration(
-                              borderRadius:
-                                  BorderRadius.circular(_trackRadius - 2),
+                              borderRadius: BorderRadius.circular(
+                                _trackRadius - 2,
+                              ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Color.fromRGBO(124, 58, 237,
-                                      _completed ? 0.6 : glow),
+                                  color: Color.fromRGBO(
+                                    124,
+                                    58,
+                                    237,
+                                    _completed ? 0.6 : glow,
+                                  ),
                                   blurRadius: _completed ? 24 : 18,
                                   spreadRadius: _completed ? 4 : 0,
                                 ),

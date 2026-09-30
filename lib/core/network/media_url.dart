@@ -20,20 +20,19 @@ String? resolveMediaUrl(String? url) {
   if (uri == null || !value.startsWith('http')) return value;
 
   final host = uri.host.toLowerCase();
-  final isLoopback = host.isEmpty ||
+  final isLoopback =
+      host.isEmpty ||
       host == 'localhost' ||
       host == '127.0.0.1' ||
       host == '0.0.0.0' ||
       host == '10.0.2.2';
-  final isPrivate = host.startsWith('192.168.') ||
+  final isPrivate =
+      host.startsWith('192.168.') ||
       host.startsWith('10.') ||
       _isPrivate172(host);
 
   if (uri.path.startsWith('/uploads/') && (isLoopback || isPrivate)) {
-    return _withApiOrigin(
-      uri.path,
-      uri.hasQuery ? uri.query : null,
-    );
+    return _withApiOrigin(uri.path, uri.hasQuery ? uri.query : null);
   }
 
   return value;
@@ -50,8 +49,5 @@ bool _isPrivate172(String host) {
 String _withApiOrigin(String path, [String? query]) {
   final base = ApiClient.baseUrl.trim();
   if (base.isEmpty) return path;
-  return Uri.parse(base).replace(
-    path: path,
-    query: query,
-  ).toString();
+  return Uri.parse(base).replace(path: path, query: query).toString();
 }

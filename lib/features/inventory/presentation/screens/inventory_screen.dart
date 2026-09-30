@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/features/inventory/domain/entities/inventory.dart';
 import 'package:posfrontend/features/inventory/presentation/viewmodels/inventory_view_model.dart';
 import 'package:posfrontend/features/inventory/data/repositories/inventory_repository_impl.dart';
@@ -27,9 +28,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
   @override
   void initState() {
     super.initState();
-    _viewModel = InventoryViewModel(
-      repository: InventoryRepositoryImpl(),
-    );
+    _viewModel = InventoryViewModel(repository: InventoryRepositoryImpl());
   }
 
   @override
@@ -58,7 +57,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 children: [
                   SizedBox(
                     width: 240,
-                    child: AppDrawer(activeItem: 'Inventory'),
+                    child: AppDrawer(active: DrawerDestination.inventory),
                   ),
                   Expanded(child: _buildContent(isWide: true)),
                 ],
@@ -68,7 +67,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
           return Scaffold(
             key: _scaffoldKey,
             backgroundColor: p.surface,
-            drawer: AppDrawer(activeItem: 'Inventory'),
+            drawer: AppDrawer(active: DrawerDestination.inventory),
             body: _buildContent(isWide: false),
           );
         },
@@ -83,7 +82,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       child: Column(
         children: [
           AppScreenTopBar(
-            title: 'Inventory',
+            title: context.l10n.t('Inventory'),
             showMenuButton: !isWide,
             onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
           ),
@@ -98,7 +97,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     _breadcrumb(),
                     const SizedBox(height: 16),
                     Text(
-                      'Choose an inventory to manage your items.',
+                      context.l10n.t(
+                        'Choose an inventory to manage your items.',
+                      ),
                       style: TextStyle(fontSize: 16, color: p.textSecondary),
                     ),
                     const SizedBox(height: 32),
@@ -120,11 +121,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
     return Row(
       children: [
         GestureDetector(
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => DashboardScreen()),
-          ),
-          child: const Text(
-            'Dashboard',
+          onTap: () => Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => DashboardScreen())),
+          child: Text(
+            context.l10n.t('Dashboard'),
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
@@ -136,17 +137,18 @@ class _InventoryScreenState extends State<InventoryScreen> {
         Text('>', style: TextStyle(fontSize: 14, color: p.textSecondary)),
         const SizedBox(width: 8),
         Text(
-          'Inventory',
+          context.l10n.t('Inventory'),
           style: TextStyle(fontSize: 14, color: p.textSecondary),
         ),
       ],
     );
   }
 
-  Widget _buildOptionCards(List<InventoryOptionEntity> options, {required bool isWide}) {
-    final cards = options
-        .map((o) => _optionCard(o))
-        .toList();
+  Widget _buildOptionCards(
+    List<InventoryOptionEntity> options, {
+    required bool isWide,
+  }) {
+    final cards = options.map((o) => _optionCard(o)).toList();
     if (isWide) {
       return Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -157,13 +159,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
         ],
       );
     }
-    return Column(
-      children: [
-        cards[0],
-        const SizedBox(height: 24),
-        cards[1],
-      ],
-    );
+    return Column(children: [cards[0], const SizedBox(height: 24), cards[1]]);
   }
 
   Widget _optionCard(InventoryOptionEntity option) {
@@ -218,9 +214,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
               'Open',
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => CategoryScreen(
-                    inventoryType: option.key,
-                  ),
+                  builder: (_) => CategoryScreen(inventoryType: option.key),
                 ),
               ),
             ),

@@ -21,10 +21,10 @@ class OwnerInformationEntity extends Equatable {
   }
 
   Map<String, dynamic> toJson() => {
-        'name': name,
-        'email': email,
-        'phone': phone,
-      };
+    'name': name,
+    'email': email,
+    'phone': phone,
+  };
 
   @override
   List<Object?> get props => [name, email, phone];
@@ -57,8 +57,9 @@ class ShopEntity extends Equatable {
       name: json['name'] as String,
       type: json['type'] as String,
       physicalAddress: json['physicalAddress'] as String,
-      ownerInformation:
-          OwnerInformationEntity.fromJson(json['ownerInformation'] as Map<String, dynamic>),
+      ownerInformation: OwnerInformationEntity.fromJson(
+        json['ownerInformation'] as Map<String, dynamic>,
+      ),
     );
   }
 
@@ -83,26 +84,32 @@ class ShopEntity extends Equatable {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'logoData': logoData,
-        'logoUrl': logoUrl,
-        'name': name,
-        'type': type,
-        'physicalAddress': physicalAddress,
-        'ownerInformation': ownerInformation.toJson(),
-      };
+    'id': id,
+    'logoData': logoData,
+    'logoUrl': logoUrl,
+    'name': name,
+    'type': type,
+    'physicalAddress': physicalAddress,
+    'ownerInformation': ownerInformation.toJson(),
+  };
 
   Map<String, dynamic> toApiJson() => {
-        'id': id,
-        'logoUrl': logoUrl,
-        'name': name,
-        'type': type,
-        'physicalAddress': physicalAddress,
-        'ownerInformation': ownerInformation.toJson(),
-      };
+    'id': id,
+    'logoUrl': logoUrl,
+    'name': name,
+    'type': type,
+    'physicalAddress': physicalAddress,
+    'ownerInformation': ownerInformation.toJson(),
+  };
 
   @override
-  List<Object?> get props => [id, name, type, physicalAddress, ownerInformation];
+  List<Object?> get props => [
+    id,
+    name,
+    type,
+    physicalAddress,
+    ownerInformation,
+  ];
 }
 
 typedef Shop = ShopEntity;

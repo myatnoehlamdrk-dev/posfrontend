@@ -7,7 +7,10 @@ class PackageRemoteDataSource {
 
   PackageRemoteDataSource({Dio? dio}) : _dio = dio ?? ApiClient.create();
 
-  Future<List<PackageApiModel>> getPackages(String categoryId, {CancelToken? cancelToken}) async {
+  Future<List<PackageApiModel>> getPackages(
+    String categoryId, {
+    CancelToken? cancelToken,
+  }) async {
     try {
       final resp = await _dio.get(
         '/api/packages',
@@ -92,8 +95,9 @@ class PackageRemoteDataSource {
         cancelToken: cancelToken,
       );
       final data = resp.data;
-      final Map<String, dynamic> json =
-          data is Map<String, dynamic> ? data : data['data'] as Map<String, dynamic>;
+      final Map<String, dynamic> json = data is Map<String, dynamic>
+          ? data
+          : data['data'] as Map<String, dynamic>;
       return PackageApiModel.fromJson(json);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);

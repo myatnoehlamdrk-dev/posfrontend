@@ -1,7 +1,8 @@
 import 'package:posfrontend/core/base/use_case.dart';
 import 'package:posfrontend/features/product/domain/repositories/product_repository.dart';
 
-class GetProductsUseCase extends UseCase<Map<String, dynamic>, GetProductsParams> {
+class GetProductsUseCase
+    extends UseCase<Map<String, dynamic>, GetProductsParams> {
   final ProductRepository _repository;
 
   GetProductsUseCase(this._repository);
@@ -20,11 +21,7 @@ class GetProductsParams {
   final String? packageId;
   final int page;
   final int perPage;
-  const GetProductsParams({
-    this.packageId,
-    this.page = 1,
-    this.perPage = 10,
-  });
+  const GetProductsParams({this.packageId, this.page = 1, this.perPage = 10});
 }
 
 class DeleteProductUseCase extends UseCase<void, String> {

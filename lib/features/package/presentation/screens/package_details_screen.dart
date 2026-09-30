@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
+import 'package:posfrontend/shared/l10n/status_l10n.dart';
 import 'package:posfrontend/features/category/domain/entities/category.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/features/package/domain/entities/package.dart';
@@ -67,18 +69,25 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Remove Product'),
+        title: Text(context.l10n.t('Remove Product')),
         content: Text(
-          'Remove "${product.name}" from this package? The product will not be deleted.',
+          context.l10n
+              .t(
+                'Remove "{v1}" from this package? The product will not be deleted.',
+              )
+              .replaceAll('{v1}', (product.name).toString()),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.t('Cancel')),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Remove', style: TextStyle(color: Colors.red)),
+            child: Text(
+              context.l10n.t('Remove'),
+              style: TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
@@ -134,8 +143,8 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                   onPressed: _openAddProduct,
                   backgroundColor: const Color(0xFF4FD1D9),
                   icon: const Icon(Icons.add, color: Colors.white),
-                  label: const Text(
-                    'Add Product',
+                  label: Text(
+                    context.l10n.t('Add Product'),
                     style: TextStyle(color: Colors.white),
                   ),
                 ),
@@ -148,8 +157,8 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                 onPressed: _openAddProduct,
                 backgroundColor: const Color(0xFF4FD1D9),
                 icon: const Icon(Icons.add, color: Colors.white),
-                label: const Text(
-                  'Add Product',
+                label: Text(
+                  context.l10n.t('Add Product'),
                   style: TextStyle(color: Colors.white),
                 ),
               ),
@@ -183,7 +192,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: _viewModel.load,
-              child: const Text('Retry'),
+              child: Text(context.l10n.t('Retry')),
             ),
           ],
         ),
@@ -197,7 +206,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
         return Column(
           children: [
             AppScreenTopBar(
-              title: 'Package Details',
+              title: context.l10n.t('Package Details'),
               showMenuButton: false,
               showBackButton: true,
             ),
@@ -210,8 +219,8 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Breadcrumb([
-                        const BreadcrumbItem('Dashboard', false),
-                        const BreadcrumbItem('Inventory', false),
+                        BreadcrumbItem(context.l10n.t('Dashboard'), false),
+                        BreadcrumbItem(context.l10n.t('Inventory'), false),
                         BreadcrumbItem(widget.category.name, false),
                         BreadcrumbItem(widget.package.name, false),
                         const BreadcrumbItem('Package Detail', true),
@@ -228,7 +237,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 24),
                           child: Center(
                             child: Text(
-                              'No products found.',
+                              context.l10n.t('No products found.'),
                               style: TextStyle(color: pal.textSecondary),
                             ),
                           ),
@@ -343,8 +352,8 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                             color: const Color(0xFFDCFCE7),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: const Text(
-                            'Active',
+                          child: Text(
+                            context.l10n.t('Active'),
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -488,7 +497,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
               const Icon(Icons.info_outline, color: kPurple, size: 18),
               const SizedBox(width: 8),
               Text(
-                'Stock Status',
+                context.l10n.t('Stock Status'),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -506,7 +515,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  _viewModel.stockLabel,
+                  _viewModel.stockLabel.localized(context.l10n),
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -529,7 +538,9 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
               ),
               const SizedBox(width: 12),
               Text(
-                '${_viewModel.stockPct}%',
+                context.l10n
+                    .t('{v1}%')
+                    .replaceAll('{v1}', (_viewModel.stockPct).toString()),
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -552,7 +563,9 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
           children: [
             Expanded(
               child: Text(
-                'Products in this Package (${_viewModel.totalUnits})',
+                context.l10n
+                    .t('Products in this Package ({v1})')
+                    .replaceAll('{v1}', (_viewModel.totalUnits).toString()),
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -682,7 +695,9 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    '${pr.stock}',
+                    context.l10n
+                        .t('{v1}')
+                        .replaceAll('{v1}', (pr.stock).toString()),
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -711,7 +726,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                           }
                         },
                   itemBuilder: (ctx) => [
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'remove',
                       child: Row(
                         children: [
@@ -721,7 +736,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                             size: 18,
                           ),
                           SizedBox(width: 8),
-                          Text('Remove from package'),
+                          Text(context.l10n.t('Remove from package')),
                         ],
                       ),
                     ),

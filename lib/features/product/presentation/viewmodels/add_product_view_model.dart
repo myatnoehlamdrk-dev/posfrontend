@@ -11,6 +11,7 @@ import 'package:posfrontend/shared/repositories/imgbb_repository_impl.dart';
 import 'package:posfrontend/features/product/data/models/product_create_models.dart';
 import 'package:posfrontend/features/product/domain/entities/product_detail.dart';
 import 'package:posfrontend/features/product/data/repositories/product_create_repository_impl.dart';
+import 'package:posfrontend/features/purchase/domain/entities/purchase.dart';
 
 class AddProductViewModel extends BaseViewModel with FormValidationMixin {
   final ProductCreateRepositoryImpl _repository = ProductCreateRepositoryImpl();
@@ -63,8 +64,15 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
   List<ProductCreateVariant> get variants => List.unmodifiable(_variants);
 
   static const List<String> sizeOptions = [
-    'Individual', 'Family Pack', 'Small', 'Medium', 'Large',
-    'XL', 'Standard', 'Premium', 'Enterprise',
+    'Individual',
+    'Family Pack',
+    'Small',
+    'Medium',
+    'Large',
+    'XL',
+    'Standard',
+    'Premium',
+    'Enterprise',
   ];
 
   static const List<ProductColorOption> colorOptions = [
@@ -84,16 +92,25 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
     name.text = p.name;
     brand.text = p.brand;
     sku.text = p.sku;
-    _selectedSupplierId = (p.supplierId == '—' || p.supplierId.isEmpty) ? null : p.supplierId;
+    _selectedSupplierId = (p.supplierId == '—' || p.supplierId.isEmpty)
+        ? null
+        : p.supplierId;
     _imageUrl = p.imageUrl;
     _imageDeleteUrl = p.imageDeleteUrl;
-    _inventoryType = (p.inventoryType.isNotEmpty && p.inventoryType != '—') ? p.inventoryType : 'self';
+    _inventoryType = (p.inventoryType.isNotEmpty && p.inventoryType != '—')
+        ? p.inventoryType
+        : 'self';
     _isSet = p.isBundle == 'Yes';
     _variants.clear();
     for (final v in p.variants) {
-      _variants.add(ProductCreateVariant(
-        size: v.size, color: v.color, quantity: v.quantity, price: v.price,
-      ));
+      _variants.add(
+        ProductCreateVariant(
+          size: v.size,
+          color: v.color,
+          quantity: v.quantity,
+          price: v.price,
+        ),
+      );
     }
     if (_variants.isEmpty) {
       _variants.add(ProductCreateVariant(size: 'Small', color: 'Black'));
@@ -108,11 +125,15 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
       initFromProduct(product);
       await loadCategories();
       if (product.categoryName.isNotEmpty) {
-        final cat = _categories.where((c) => c.name == product.categoryName).firstOrNull;
+        final cat = _categories
+            .where((c) => c.name == product.categoryName)
+            .firstOrNull;
         if (cat != null) {
           await onCategoryChanged(cat);
           if (product.packageId.isNotEmpty && product.packageId != '—') {
-            final pkg = _packages.where((pk) => pk.id == product.packageId).firstOrNull;
+            final pkg = _packages
+                .where((pk) => pk.id == product.packageId)
+                .firstOrNull;
             if (pkg != null) {
               _selectedPackage = pkg;
               notifyListeners();
@@ -126,14 +147,18 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
   }
 
   Future<void> loadSuppliers() async {
-    final list = await runAsync((token) => _repository.getSuppliers(cancelToken: token));
+    final list = await runAsync(
+      (token) => _repository.getSuppliers(cancelToken: token),
+    );
     if (list != null) _suppliers = list;
     notifyListeners();
   }
 
   Future<void> loadCategories() async {
     try {
-      final cats = await CategoryRepositoryImpl().getCategories(type: _inventoryType);
+      final cats = await CategoryRepositoryImpl().getCategories(
+        type: _inventoryType,
+      );
       _categories = cats;
       _selectedCategory = null;
       _packages = [];
@@ -155,7 +180,10 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
       return;
     }
     notifyListeners();
-    final pkgs = await runAsync((token) => _repository.getPackages(cat.id, cancelToken: token), showLoading: false);
+    final pkgs = await runAsync(
+      (token) => _repository.getPackages(cat.id, cancelToken: token),
+      showLoading: false,
+    );
     _packages = pkgs ?? [];
     _selectedPackage = null;
     notifyListeners();
@@ -165,6 +193,40 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
     _inventoryType = value;
     notifyListeners();
     loadCategories();
+  }
+
+  /// Fills the form from a purchase item. Only the fields both screens carry
+  /// are copied: product name, stock (the first variant's quantity), price and
+  /// supplier. Everything else stays for manual entry.
+  void applyPurchaseItem(PurchaseOrderEntity order) {
+    final productName = order.productName.trim();
+    if (productName.isNotEmpty) name.text = productName;
+
+    if (_variants.isEmpty) {
+      _variants.add(ProductCreateVariant(size: 'Small', color: 'Black'));
+    }
+    _variants[0] = _variants.first.copyWith(
+      quantity: order.quantity,
+      price: order.unitPrice.toDouble(),
+    );
+
+    if (order.supplierId.isNotEmpty) {
+      final match = _suppliers
+          .where(
+            (s) => s.id == order.supplierId || s.name == order.supplierName,
+          )
+          .firstOrNull;
+      if (match != null) {
+        _selectedSupplierId = match.id;
+      } else if (order.supplierName.isNotEmpty) {
+        _suppliers.insert(
+          0,
+          SupplierOption(id: order.supplierId, name: order.supplierName),
+        );
+        _selectedSupplierId = order.supplierId;
+      }
+    }
+    notifyListeners();
   }
 
   void setIsSet(bool value) {
@@ -198,7 +260,10 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
     _uploading = true;
     notifyListeners();
     try {
-      final result = await ImgbbRepositoryImpl().uploadImage(bytes, fileName: xfile.name);
+      final result = await ImgbbRepositoryImpl().uploadImage(
+        bytes,
+        fileName: xfile.name,
+      );
       _imageUrl = result.url;
       _imageDeleteUrl = result.deleteUrl;
       _imageKey = UniqueKey();
@@ -264,8 +329,10 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
       sku: sku.text.trim(),
       supplierId: _selectedSupplierId ?? '',
       supplierName: _suppliers
-          .firstWhere((s) => s.id == (_selectedSupplierId ?? ''),
-              orElse: () => const SupplierOption(id: '', name: ''))
+          .firstWhere(
+            (s) => s.id == (_selectedSupplierId ?? ''),
+            orElse: () => const SupplierOption(id: '', name: ''),
+          )
           .name,
       supplierContact: '',
       supplierSince: '',

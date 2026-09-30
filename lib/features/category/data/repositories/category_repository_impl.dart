@@ -7,7 +7,7 @@ class CategoryRepositoryImpl implements CategoryRepository {
   final CategoryRemoteDataSource _dataSource;
 
   CategoryRepositoryImpl({CategoryRemoteDataSource? dataSource})
-      : _dataSource = dataSource ?? CategoryRemoteDataSource();
+    : _dataSource = dataSource ?? CategoryRemoteDataSource();
 
   @override
   Future<List<Category>> getCategories({

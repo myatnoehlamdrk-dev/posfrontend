@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class FilterTabs extends StatelessWidget {
@@ -37,7 +38,10 @@ class FilterTabs extends StatelessWidget {
                 ),
                 child: Center(
                   child: Text(
-                    '${tabs[i].$1} (${tabs[i].$2})',
+                    context.l10n
+                        .t('{v1} ({v2})')
+                        .replaceAll('{v1}', (tabs[i].$1).toString())
+                        .replaceAll('{v2}', (tabs[i].$2).toString()),
                     style: TextStyle(
                       color: active ? Colors.white : p.textSecondary,
                       fontWeight: FontWeight.w600,

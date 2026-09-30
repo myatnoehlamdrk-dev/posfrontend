@@ -22,8 +22,7 @@ class GetCategoriesParams {
   const GetCategoriesParams({this.type, this.inventoryId});
 }
 
-class CreateCategoryUseCase
-    extends UseCase<Category, CreateCategoryParams> {
+class CreateCategoryUseCase extends UseCase<Category, CreateCategoryParams> {
   final CategoryRepository _repository;
   CreateCategoryUseCase(this._repository);
 
@@ -51,8 +50,7 @@ class CreateCategoryParams {
   });
 }
 
-class UpdateCategoryUseCase
-    extends UseCase<Category, UpdateCategoryParams> {
+class UpdateCategoryUseCase extends UseCase<Category, UpdateCategoryParams> {
   final CategoryRepository _repository;
   UpdateCategoryUseCase(this._repository);
 

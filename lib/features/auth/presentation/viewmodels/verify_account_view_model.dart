@@ -9,8 +9,8 @@ class VerifyAccountViewModel extends BaseViewModel with FormValidationMixin {
   VerifyAccountViewModel({
     required SendOtpUseCase sendOtpUseCase,
     required VerifyOtpUseCase verifyOtpUseCase,
-  })  : _sendOtpUseCase = sendOtpUseCase,
-        _verifyOtpUseCase = verifyOtpUseCase;
+  }) : _sendOtpUseCase = sendOtpUseCase,
+       _verifyOtpUseCase = verifyOtpUseCase;
 
   String _email = '';
   String _otp = '';
@@ -18,8 +18,15 @@ class VerifyAccountViewModel extends BaseViewModel with FormValidationMixin {
   String get email => _email;
   String get otp => _otp;
 
-  void setEmail(String value) { _email = value; clearFieldError('email'); }
-  void setOtp(String value) { _otp = value; clearFieldError('otp'); }
+  void setEmail(String value) {
+    _email = value;
+    clearFieldError('email');
+  }
+
+  void setOtp(String value) {
+    _otp = value;
+    clearFieldError('otp');
+  }
 
   bool _validateOtp() {
     clearAllFieldErrors();
@@ -54,7 +61,9 @@ class VerifyAccountViewModel extends BaseViewModel with FormValidationMixin {
 
     setLoading(true);
     try {
-      await _verifyOtpUseCase(VerifyOtpParams(email: _email.trim(), otp: _otp.trim()));
+      await _verifyOtpUseCase(
+        VerifyOtpParams(email: _email.trim(), otp: _otp.trim()),
+      );
       return true;
     } catch (e) {
       setError('Verification failed: $e');

@@ -38,7 +38,9 @@ class SaleOrderApiModel {
     if (value is int) return value;
     if (value is String) {
       if (value.contains(',')) {
-        return value.split(',').fold<int>(0, (sum, e) => sum + (int.tryParse(e.trim()) ?? 0));
+        return value
+            .split(',')
+            .fold<int>(0, (sum, e) => sum + (int.tryParse(e.trim()) ?? 0));
       }
       return int.tryParse(value) ?? 0;
     }

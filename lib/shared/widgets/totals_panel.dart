@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:posfrontend/core/extensions/number_extensions.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
@@ -137,10 +138,12 @@ class TotalsPanel extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'TOTAL PAYABLE',
-            style: _type(11, FontWeight.w700, p.textSecondary).copyWith(
-              letterSpacing: 1.2,
-            ),
+            context.l10n.t('TOTAL PAYABLE'),
+            style: _type(
+              11,
+              FontWeight.w700,
+              p.textSecondary,
+            ).copyWith(letterSpacing: 1.2),
           ),
           const SizedBox(height: 6),
           _amount(
@@ -239,8 +242,8 @@ class _DashedDivider extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final dashCount =
-            (constraints.maxWidth / (dashWidth + dashSpace)).floor();
+        final dashCount = (constraints.maxWidth / (dashWidth + dashSpace))
+            .floor();
 
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,

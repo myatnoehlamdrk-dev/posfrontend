@@ -26,19 +26,18 @@ class CreatePurchaseItemUseCase {
     String? color,
     String? brand,
     String? sku,
-  }) =>
-      _repository.createPurchaseItem(
-        productName: productName,
-        quantity: quantity,
-        unitPrice: unitPrice,
-        date: date,
-        supplierId: supplierId,
-        notes: notes,
-        size: size,
-        color: color,
-        brand: brand,
-        sku: sku,
-      );
+  }) => _repository.createPurchaseItem(
+    productName: productName,
+    quantity: quantity,
+    unitPrice: unitPrice,
+    date: date,
+    supplierId: supplierId,
+    notes: notes,
+    size: size,
+    color: color,
+    brand: brand,
+    sku: sku,
+  );
 }
 
 class UpdatePurchaseItemStatusUseCase {
@@ -46,8 +45,10 @@ class UpdatePurchaseItemStatusUseCase {
 
   UpdatePurchaseItemStatusUseCase(this._repository);
 
-  Future<Map<String, dynamic>> call({required String id, required String status}) =>
-      _repository.updatePurchaseItemStatus(id: id, status: status);
+  Future<Map<String, dynamic>> call({
+    required String id,
+    required String status,
+  }) => _repository.updatePurchaseItemStatus(id: id, status: status);
 }
 
 class DeletePurchaseItemUseCase {
@@ -75,6 +76,9 @@ class CreateSupplierUseCase {
     required String name,
     String? contact,
     String? address,
-  }) =>
-      _repository.createSupplier(name: name, contact: contact, address: address);
+  }) => _repository.createSupplier(
+    name: name,
+    contact: contact,
+    address: address,
+  );
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 
@@ -28,7 +29,11 @@ class LegalDocumentScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            AppScreenTopBar(title: title, showBackButton: true),
+            AppScreenTopBar(
+              title: title,
+              showBackButton: true,
+              showMenuButton: false,
+            ),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
@@ -36,7 +41,9 @@ class LegalDocumentScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      'Last Updated: $lastUpdated',
+                      context.l10n
+                          .t('Last Updated: {v1}')
+                          .replaceAll('{v1}', (lastUpdated).toString()),
                       style: TextStyle(
                         color: p.textSecondary,
                         fontSize: 13,

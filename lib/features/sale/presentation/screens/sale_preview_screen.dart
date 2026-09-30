@@ -1,3 +1,5 @@
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
+import 'package:posfrontend/shared/l10n/app_strings.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
@@ -76,8 +78,8 @@ class SalePreviewScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: const CustomBackButton(),
-        title: const Text(
-          'Invoice Preview',
+        title: Text(
+          context.l10n.t('Invoice Preview'),
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -198,8 +200,8 @@ class SalePreviewScreen extends StatelessWidget {
               ),
             ),
           const SizedBox(height: 10),
-          const Text(
-            'INVOICE',
+          Text(
+            AppStrings.current.t('INVOICE'),
             style: TextStyle(
               color: Colors.white,
               fontSize: 20,
@@ -288,8 +290,8 @@ class SalePreviewScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Customer',
+                    Text(
+                      AppStrings.current.t('Customer'),
                       style: TextStyle(fontSize: 11, color: kGray),
                     ),
                     const SizedBox(height: 2),
@@ -333,7 +335,7 @@ class SalePreviewScreen extends StatelessWidget {
           Expanded(
             flex: 4,
             child: Text(
-              'Item',
+              AppStrings.current.t('Item'),
               style: _monoStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
@@ -344,7 +346,7 @@ class SalePreviewScreen extends StatelessWidget {
           Expanded(
             flex: 1,
             child: Text(
-              'Qty',
+              AppStrings.current.t('Qty'),
               textAlign: TextAlign.center,
               style: _monoStyle(
                 fontSize: 11,
@@ -356,7 +358,7 @@ class SalePreviewScreen extends StatelessWidget {
           Expanded(
             flex: 2,
             child: Text(
-              'Price',
+              AppStrings.current.t('Price'),
               textAlign: TextAlign.right,
               style: _monoStyle(
                 fontSize: 11,
@@ -368,7 +370,7 @@ class SalePreviewScreen extends StatelessWidget {
           Expanded(
             flex: 2,
             child: Text(
-              'Total',
+              AppStrings.current.t('Total'),
               textAlign: TextAlign.right,
               style: _monoStyle(
                 fontSize: 11,
@@ -433,7 +435,9 @@ class SalePreviewScreen extends StatelessWidget {
                 Expanded(
                   flex: 1,
                   child: Text(
-                    '${item.quantity}',
+                    AppStrings.current
+                        .t('{v1}')
+                        .replaceAll('{v1}', (item.quantity).toString()),
                     textAlign: TextAlign.center,
                     style: _monoStyle(fontSize: 13, color: kTitle),
                   ),
@@ -494,8 +498,8 @@ class SalePreviewScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text(
-            'Payment Method',
+          Text(
+            AppStrings.current.t('Payment Method'),
             style: TextStyle(fontSize: 13, color: kGray),
           ),
           Text(
@@ -524,8 +528,8 @@ class SalePreviewScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Notes',
+            Text(
+              AppStrings.current.t('Notes'),
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
@@ -558,8 +562,8 @@ class SalePreviewScreen extends StatelessWidget {
         children: [
           const Icon(Icons.check_circle, color: Color(0xFF16A34A), size: 32),
           const SizedBox(height: 8),
-          const Text(
-            'Thank you for your purchase!',
+          Text(
+            AppStrings.current.t('Thank you for your purchase!'),
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -568,7 +572,9 @@ class SalePreviewScreen extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Total Items: ${items.length}',
+            AppStrings.current
+                .t('Total Items: {v1}')
+                .replaceAll('{v1}', (items.length).toString()),
             style: const TextStyle(fontSize: 12, color: kGray),
           ),
         ],

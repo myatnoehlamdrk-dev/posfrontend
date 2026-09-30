@@ -6,7 +6,7 @@ class DashboardViewModel extends BaseViewModel {
   final DashboardRepository _repository;
 
   DashboardViewModel({required DashboardRepository repository})
-      : _repository = repository;
+    : _repository = repository;
 
   DashboardEntity? _data;
   DashboardEntity? get data => _data;

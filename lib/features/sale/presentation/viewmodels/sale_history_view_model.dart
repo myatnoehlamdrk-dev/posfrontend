@@ -18,16 +18,17 @@ class SaleHistoryViewModel extends BaseViewModel {
     DeleteSaleUseCase? deleteSaleUseCase,
     DeleteOrderUseCase? deleteOrderUseCase,
     DeleteSaleItemUseCase? deleteSaleItemUseCase,
-  })  : _getSalesUseCase =
-            getSalesUseCase ?? GetSalesUseCase(SaleHistoryRepositoryImpl()),
-        _getOrdersUseCase =
-            getOrdersUseCase ?? GetOrdersUseCase(SaleHistoryRepositoryImpl()),
-        _deleteSaleUseCase =
-            deleteSaleUseCase ?? DeleteSaleUseCase(SaleHistoryRepositoryImpl()),
-        _deleteOrderUseCase =
-            deleteOrderUseCase ?? DeleteOrderUseCase(OrderRepositoryImpl()),
-        _deleteSaleItemUseCase = deleteSaleItemUseCase ??
-            DeleteSaleItemUseCase(SaleHistoryRepositoryImpl());
+  }) : _getSalesUseCase =
+           getSalesUseCase ?? GetSalesUseCase(SaleHistoryRepositoryImpl()),
+       _getOrdersUseCase =
+           getOrdersUseCase ?? GetOrdersUseCase(SaleHistoryRepositoryImpl()),
+       _deleteSaleUseCase =
+           deleteSaleUseCase ?? DeleteSaleUseCase(SaleHistoryRepositoryImpl()),
+       _deleteOrderUseCase =
+           deleteOrderUseCase ?? DeleteOrderUseCase(OrderRepositoryImpl()),
+       _deleteSaleItemUseCase =
+           deleteSaleItemUseCase ??
+           DeleteSaleItemUseCase(SaleHistoryRepositoryImpl());
 
   List<SaleOrderEntity> _allSales = [];
   List<SaleOrderEntity> _allOrders = [];

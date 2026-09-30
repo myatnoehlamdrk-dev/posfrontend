@@ -2,10 +2,7 @@ import 'package:posfrontend/features/auth/domain/entities/login_result.dart';
 import 'package:posfrontend/features/auth/domain/entities/user.dart';
 
 abstract class AuthRepository {
-  Future<LoginResult> login({
-    required String email,
-    required String password,
-  });
+  Future<LoginResult> login({required String email, required String password});
 
   Future<UserEntity> register({
     required String fullName,
@@ -28,7 +25,10 @@ abstract class AuthRepository {
 
   Future<void> sendForgotPasswordOtp({required String email});
 
-  Future<String> verifyForgotPasswordOtp({required String email, required String otp});
+  Future<String> verifyForgotPasswordOtp({
+    required String email,
+    required String otp,
+  });
 
   Future<void> resetPassword({
     required String email,

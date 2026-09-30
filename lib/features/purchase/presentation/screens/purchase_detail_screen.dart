@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/core/extensions/datetime_extensions.dart';
 import 'package:posfrontend/core/extensions/number_extensions.dart';
 import 'package:posfrontend/features/purchase/domain/entities/purchase.dart';
@@ -50,11 +51,19 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
                         if (_order.createdBy.isNotEmpty)
                           _infoRow(context, 'Purchaser Name', _order.createdBy),
                         if (_order.createdAt.isNotEmpty)
-                          _infoRow(context, 'Created At', _formatDate(_order.createdAt)),
+                          _infoRow(
+                            context,
+                            'Created At',
+                            _formatDate(_order.createdAt),
+                          ),
                         if (_order.updatedBy.isNotEmpty)
                           _infoRow(context, 'Updated By', _order.updatedBy),
                         if (_order.updatedAt.isNotEmpty)
-                          _infoRow(context, 'Updated At', _formatDate(_order.updatedAt)),
+                          _infoRow(
+                            context,
+                            'Updated At',
+                            _formatDate(_order.updatedAt),
+                          ),
                       ]),
                       const SizedBox(height: 12),
                       _buildInfoCard(context, 'Supplier Information', [
@@ -93,8 +102,11 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Total Amount',
-                              style: TextStyle(fontSize: 13, color: p.textSecondary),
+                              context.l10n.t('Total Amount'),
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: p.textSecondary,
+                              ),
                             ),
                             const SizedBox(width: 12),
                             Flexible(
@@ -124,7 +136,11 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
                       ],
                       const SizedBox(height: 12),
                       _buildInfoCard(context, 'Order Status & History', [
-                        _infoRow(context, 'Order Date', _formatDate(_order.date)),
+                        _infoRow(
+                          context,
+                          'Order Date',
+                          _formatDate(_order.date),
+                        ),
                         _infoRow(
                           context,
                           'Order Status',
@@ -158,7 +174,7 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
           Expanded(
             child: Center(
               child: Text(
-                'Purchase Detail',
+                context.l10n.t('Purchase Detail'),
                 style: TextStyle(
                   color: p.textPrimary,
                   fontSize: 18,
@@ -195,7 +211,9 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
             children: [
               Expanded(
                 child: Text(
-                  'Order #${_order.orderId}',
+                  context.l10n
+                      .t('Order #{v1}')
+                      .replaceAll('{v1}', (_order.orderId).toString()),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -237,7 +255,11 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
           const SizedBox(height: 12),
           Row(
             children: [
-              Icon(Icons.calendar_today_outlined, size: 14, color: p.textSecondary),
+              Icon(
+                Icons.calendar_today_outlined,
+                size: 14,
+                color: p.textSecondary,
+              ),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -265,7 +287,11 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
     );
   }
 
-  Widget _buildInfoCard(BuildContext context, String title, List<Widget> children) {
+  Widget _buildInfoCard(
+    BuildContext context,
+    String title,
+    List<Widget> children,
+  ) {
     final p = context.palette;
     return Container(
       width: double.infinity,

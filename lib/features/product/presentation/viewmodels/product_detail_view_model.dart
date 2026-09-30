@@ -27,7 +27,10 @@ class ProductDetailViewModel extends BaseViewModel {
     setLoading(true);
     resetError();
     try {
-      _detail = await _repository.getDetail(productId, cancelToken: cancelToken);
+      _detail = await _repository.getDetail(
+        productId,
+        cancelToken: cancelToken,
+      );
     } on ApiException catch (e) {
       setError(e.message);
     } catch (e) {

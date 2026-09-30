@@ -1,14 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:posfrontend/shared/theme/app_palette.dart';
-import 'package:posfrontend/shared/theme/palette_x.dart';
-import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
-import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
+import 'package:posfrontend/shared/l10n/status_l10n.dart';
+import 'package:flutter/services.dart';
+import 'package:posfrontend/core/network/app_exceptions.dart';
+import 'package:posfrontend/features/cart/domain/entities/cart_item_entity.dart';
+import 'package:posfrontend/features/cart/presentation/widgets/cart_actions.dart';
+import 'package:posfrontend/features/product/data/models/product_create_models.dart';
+import 'package:posfrontend/features/product/data/repositories/product_create_repository_impl.dart';
 import 'package:posfrontend/features/product/data/repositories/product_repository_impl.dart';
+import 'package:posfrontend/features/product/domain/entities/product_detail.dart';
+import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart';
 import 'package:posfrontend/features/product/presentation/screens/add_product_screen.dart';
 import 'package:posfrontend/features/product/presentation/viewmodels/product_detail_view_model.dart';
-import 'package:posfrontend/features/product/domain/entities/product_detail.dart';
-import 'package:posfrontend/shared/widgets/refreshable_body.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_palette.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
+import 'package:posfrontend/shared/widgets/app_message.dart';
+import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
+import 'package:posfrontend/shared/widgets/pressable_card.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
+import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final String productId;
@@ -30,6 +41,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Color get _mutedColor => _p.textSecondary;
   Color get _accentColor => _p.primary;
   Color get _borderColor => _p.border;
+
+  bool _isBuying = false;
 
   @override
   void initState() {
@@ -71,7 +84,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Column(
       children: [
         AppScreenTopBar(
-          title: 'Product Detail',
+          title: context.l10n.t('Product Detail'),
           showBackButton: true,
           showMenuButton: false,
         ),
@@ -82,9 +95,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ? SizedBox(
                     height: 300,
                     child: Center(
-                      child: CircularProgressIndicator(
-                        color: _accentColor,
-                      ),
+                      child: CircularProgressIndicator(color: _accentColor),
                     ),
                   )
                 : _viewModel.hasError
@@ -101,7 +112,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           const SizedBox(height: 12),
                           ElevatedButton(
                             onPressed: _viewModel.load,
-                            child: const Text('Retry'),
+                            child: Text(context.l10n.t('Retry')),
                           ),
                         ],
                       ),
@@ -111,9 +122,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ? SizedBox(
                     height: 300,
                     child: Center(
-                      child: CircularProgressIndicator(
-                        color: _accentColor,
-                      ),
+                      child: CircularProgressIndicator(color: _accentColor),
                     ),
                   )
                 : Padding(
@@ -171,8 +180,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               color: const Color(0xFF16A34A),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Text(
-              'Active',
+            child: Text(
+              context.l10n.t('Active'),
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 13,
@@ -340,7 +349,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Overview',
+          context.l10n.t('Overview'),
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -353,7 +362,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         _overviewChips(d),
         const SizedBox(height: 24),
         Text(
-          'Identification',
+          context.l10n.t('Identification'),
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -367,7 +376,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ]),
         const SizedBox(height: 24),
         Text(
-          'Attributes',
+          context.l10n.t('Attributes'),
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -386,7 +395,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         if (d.createdBy.isNotEmpty || d.updatedBy.isNotEmpty) ...[
           const SizedBox(height: 24),
           Text(
-            'Audit Information',
+            context.l10n.t('Audit Information'),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -408,7 +417,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         if (variants.isNotEmpty) ...[
           const SizedBox(height: 24),
           Text(
-            'Variants',
+            context.l10n.t('Variants'),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -416,57 +425,58 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          ...variants.map(
-            (v) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: _p.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: _borderColor),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: _p.selectionTint,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          Icons.inventory_2,
-                          color: _accentColor,
-                          size: 20,
-                        ),
+          ...variants.map((v) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: _p.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _borderColor),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: _p.selectionTint,
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
+                      child: Icon(
+                        Icons.inventory_2,
+                        color: _accentColor,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                              v.size.isNotEmpty
-                                  ? v.size
-                                  : (v.color.isNotEmpty ? v.color : 'Default'),
+                            v.size.isNotEmpty
+                                ? v.size
+                                : (v.color.isNotEmpty ? v.color : 'Default'),
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 14,
                               color: _titleColor,
                             ),
                           ),
-                            if (v.color.isNotEmpty && v.size.isNotEmpty)
-                              Text(
-                                v.color,
+                          if (v.color.isNotEmpty && v.size.isNotEmpty)
+                            Text(
+                              v.color,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: _mutedColor,
                               ),
                             ),
                           Text(
-                            'Qty: ${v.quantity}',
+                            context.l10n
+                                .t('Qty: {v1}')
+                                .replaceAll('{v1}', (v.quantity).toString()),
                             style: TextStyle(fontSize: 12, color: _mutedColor),
                           ),
                         ],
@@ -480,12 +490,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         color: _accentColor,
                       ),
                     ),
-                    ],
-                  ),
+                  ],
                 ),
-              );
-            },
-          ),
+              ),
+            );
+          }),
         ],
       ],
     );
@@ -499,9 +508,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ? _p.successFg
         : (d.stockStatus == 'Mid-Cap Stock'
               ? const Color(0xFF60A5FA)
-              : (d.stockStatus == 'Low Stock'
-                    ? _p.warningFg
-                    : _p.dangerFg));
+              : (d.stockStatus == 'Low Stock' ? _p.warningFg : _p.dangerFg));
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -530,7 +537,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${d.stockAvailable}',
+                      context.l10n
+                          .t('{v1}')
+                          .replaceAll('{v1}', (d.stockAvailable).toString()),
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
@@ -538,7 +547,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       ),
                     ),
                     Text(
-                      'Units in Stock',
+                      context.l10n.t('Units in Stock'),
                       style: TextStyle(fontSize: 13, color: _mutedColor),
                     ),
                   ],
@@ -554,7 +563,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  'Active',
+                  context.l10n.t('Active'),
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -567,7 +576,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
         const SizedBox(height: 24),
         Text(
-          'Stock Info',
+          context.l10n.t('Stock Info'),
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -577,8 +586,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         const SizedBox(height: 12),
         _card([
           _row(Icons.check_box, 'Available', '${d.stockAvailable} units'),
-          _row(Icons.remove_circle, 'Minimum', '${d.minStock} units'),
-          _row(Icons.inventory, 'Maximum', '${d.maxCapacity} units'),
         ]),
         const SizedBox(height: 16),
         Container(
@@ -595,12 +602,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               Row(
                 children: [
                   Text(
-                    'Current Stock Status',
+                    context.l10n.t('Current Stock Status'),
                     style: TextStyle(fontSize: 14, color: _mutedColor),
                   ),
                   const Spacer(),
                   Text(
-                    d.stockStatus,
+                    d.stockStatus.localized(context.l10n),
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -619,6 +626,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ],
           ),
         ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(child: _stockAddButton()),
+            const SizedBox(width: 12),
+            Expanded(child: _directBuyButton()),
+          ],
+        ),
       ],
     );
   }
@@ -629,7 +644,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Supplier Information',
+          context.l10n.t('Supplier Information'),
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -644,6 +659,177 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           _row(Icons.calendar_today, 'Supplier Since', d.supplierSince),
         ]),
       ],
+    );
+  }
+
+  /// Restocks this product: opens the inline add-stock dialog where every
+  /// variant (including currently 0-stock ones) can be topped up freely.
+  Future<void> _stockAdd() async {
+    if (_isBuying) return;
+    final d = _viewModel.detail;
+    if (d == null || !mounted) return;
+    final added = await showDialog<bool>(
+      context: context,
+      builder: (_) => _RestockDialog(product: d),
+    );
+    if (added == true && mounted) _viewModel.load();
+  }
+
+  /// Buys this product with the regular cart flow: pick variants (or a
+  /// quantity for simple products), add the items to a cart card, then run
+  /// the sale from there — the same path as the category product list.
+  Future<void> _directBuy() async {
+    if (_isBuying) return;
+    final d = _viewModel.detail;
+    if (d == null || !mounted) return;
+    final items = await _buildCartItems(d);
+    if (items.isEmpty || !mounted) return;
+    setState(() => _isBuying = true);
+    try {
+      await addItemsToCart(context, items, d.name);
+    } finally {
+      if (mounted) setState(() => _isBuying = false);
+    }
+  }
+
+  /// Resolves the single product into cart items, opening the variant picker
+  /// (or the quantity picker) first.
+  Future<List<CartItemEntity>> _buildCartItems(ProductDetailEntity d) async {
+    if (d.variants.isNotEmpty) {
+      final picks = await _openVariantPicker(d);
+      if (picks == null || picks.isEmpty) return const [];
+      return picks
+          .map(
+            (p) => CartItemEntity(
+              productId: d.id,
+              productName: d.name,
+              imageUrl: d.imageUrl,
+              unitPrice: p.price,
+              quantity: p.qty,
+              category: d.categoryName,
+              size: p.size.isNotEmpty ? p.size : null,
+              color: p.color.isNotEmpty ? p.color : null,
+            ),
+          )
+          .toList();
+    }
+    final qty = await _pickQuantity(d);
+    if (qty <= 0) return const [];
+    return [
+      CartItemEntity(
+        productId: d.id,
+        productName: d.name,
+        imageUrl: d.imageUrl,
+        unitPrice: d.price,
+        quantity: qty,
+        category: d.categoryName,
+      ),
+    ];
+  }
+
+  Future<List<VariantPick>?> _openVariantPicker(ProductDetailEntity d) {
+    return showVariantPicker(
+      context,
+      productName: d.name,
+      productStock: d.stockAvailable,
+      variants: d.variants
+          .map(
+            (v) => VariantOption(
+              size: v.size,
+              color: v.color,
+              quantity: v.quantity,
+              price: v.price,
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  Future<int> _pickQuantity(ProductDetailEntity d) async {
+    if (d.stockAvailable <= 0) {
+      showErrorMessage(
+        context,
+        context.l10n
+            .t('{v1} is out of stock')
+            .replaceAll('{v1}', (d.name).toString()),
+      );
+      return 0;
+    }
+    final picked = await showDialog<int>(
+      context: context,
+      builder: (_) => _QuantityPickDialog(
+        productName: d.name,
+        price: d.price,
+        maxQty: d.stockAvailable,
+      ),
+    );
+    return picked ?? 0;
+  }
+
+  Widget _stockAddButton() {
+    return OutlinedButton.icon(
+      onPressed: _isBuying ? null : _stockAdd,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: _accentColor,
+        side: BorderSide(color: _accentColor.withValues(alpha: 0.6)),
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      icon: const Icon(Icons.add_chart, size: 18),
+      label: Text(
+        context.l10n.t('Stock Add'),
+        style: TextStyle(fontWeight: FontWeight.w700),
+      ),
+    );
+  }
+
+  Widget _directBuyButton() {
+    return Container(
+      height: 48,
+      decoration: BoxDecoration(
+        gradient: _isBuying
+            ? null
+            : LinearGradient(
+                colors: [AppColors.primaryLight, _accentColor],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+        color: _isBuying ? _p.textMuted : null,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: _isBuying ? null : _directBuy,
+          child: Center(
+            child: _isBuying
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: Colors.white,
+                    ),
+                  )
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.bolt, size: 18, color: Colors.white),
+                      const SizedBox(width: 8),
+                      Text(
+                        context.l10n.t('Direct Buy'),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -816,6 +1002,448 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Quantity picker for products that carry no variants. The stepper and field
+/// mirror the variant picker so every buying entry point reads the same way.
+class _QuantityPickDialog extends StatefulWidget {
+  final String productName;
+  final double price;
+  final int maxQty;
+
+  const _QuantityPickDialog({
+    required this.productName,
+    required this.price,
+    required this.maxQty,
+  });
+
+  @override
+  State<_QuantityPickDialog> createState() => _QuantityPickDialogState();
+}
+
+class _QuantityPickDialogState extends State<_QuantityPickDialog> {
+  AppPalette get _p => context.palette;
+  Color get _mutedColor => _p.textSecondary;
+  Color get _accentColor => _p.primary;
+  Color get _titleColor => _p.textPrimary;
+
+  final TextEditingController _ctrl = TextEditingController(text: '1');
+  int _qty = 1;
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  void _setQty(int qty) {
+    if (qty < 0) qty = 0;
+    if (qty > widget.maxQty) qty = widget.maxQty;
+    setState(() {
+      _qty = qty;
+      _ctrl.value = TextEditingValue(
+        text: '$qty',
+        selection: TextSelection.collapsed(offset: '$qty'.length),
+      );
+    });
+  }
+
+  void _fromCtrl(String txt) {
+    _setQty(int.tryParse(txt) ?? 0);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: _p.surface,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            context.l10n.t('Choose Quantity'),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            widget.productName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 12, color: _mutedColor),
+          ),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                context.l10n
+                    .t('Stock: {v1}')
+                    .replaceAll('{v1}', (widget.maxQty).toString()),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: _accentColor,
+                ),
+              ),
+              const Spacer(),
+              PriceText(
+                widget.price,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Center(
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: _p.borderStrong),
+                borderRadius: BorderRadius.circular(10),
+                color: Colors.white,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _stepBtn(
+                    Icons.remove,
+                    _qty > 0 ? () => _setQty(_qty - 1) : null,
+                  ),
+                  SizedBox(
+                    width: 56,
+                    child: TextField(
+                      controller: _ctrl,
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.center,
+                      maxLength: 4,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: _titleColor,
+                      ),
+                      decoration: const InputDecoration(
+                        counterText: '',
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
+                        isDense: true,
+                      ),
+                      onChanged: _fromCtrl,
+                    ),
+                  ),
+                  _stepBtn(
+                    Icons.add,
+                    _qty < widget.maxQty ? () => _setQty(_qty + 1) : null,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          style: TextButton.styleFrom(foregroundColor: _mutedColor),
+          child: Text(context.l10n.t('Cancel')),
+        ),
+        FilledButton(
+          onPressed: _qty > 0 ? () => Navigator.of(context).pop(_qty) : null,
+          style: FilledButton.styleFrom(
+            backgroundColor: _accentColor,
+            foregroundColor: Colors.white,
+          ),
+          child: Text(context.l10n.t('Add')),
+        ),
+      ],
+    );
+  }
+
+  Widget _stepBtn(IconData icon, VoidCallback? onTap) {
+    return PressableCard(
+      onTap: onTap,
+      haptic: HapticFeedback.selectionClick,
+      pressedScale: 0.88,
+      child: Container(
+        width: 32,
+        height: 32,
+        alignment: Alignment.center,
+        color: Colors.transparent,
+        child: Icon(
+          icon,
+          size: 16,
+          color: onTap == null ? _p.borderStrong : _mutedColor,
+        ),
+      ),
+    );
+  }
+}
+
+/// Inline restock dialog. Unlike the shopping variant picker, every variant —
+/// including ones currently at 0 stock — can be topped up by any amount.
+class _RestockDialog extends StatefulWidget {
+  final ProductDetailEntity product;
+
+  const _RestockDialog({required this.product});
+
+  @override
+  State<_RestockDialog> createState() => _RestockDialogState();
+}
+
+class _RestockDialogState extends State<_RestockDialog> {
+  AppPalette get _p => context.palette;
+  Color get _mutedColor => _p.textSecondary;
+  Color get _accentColor => _p.primary;
+  Color get _titleColor => _p.textPrimary;
+  Color get _borderColor => _p.border;
+
+  late final List<TextEditingController> _addControllers;
+  bool _saving = false;
+  final ProductCreateRepositoryImpl _repository = ProductCreateRepositoryImpl();
+
+  ProductDetailEntity get _product => widget.product;
+
+  @override
+  void initState() {
+    super.initState();
+    _addControllers = _product.variants.isEmpty
+        ? [TextEditingController()]
+        : List.generate(
+            _product.variants.length,
+            (_) => TextEditingController(),
+          );
+  }
+
+  @override
+  void dispose() {
+    for (final c in _addControllers) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  String _variantLabelFor(int i) {
+    final v = _product.variants[i];
+    final size = v.size.trim();
+    final color = v.color.trim();
+    if (size.isEmpty && color.isEmpty) return 'Variant ${i + 1}';
+    if (size.isEmpty) return color;
+    if (color.isEmpty) return size;
+    return '$size · $color';
+  }
+
+  Future<void> _submit() async {
+    if (_addControllers.any(
+      (c) =>
+          c.text.trim().isNotEmpty && (int.tryParse(c.text.trim()) ?? -1) < 0,
+    )) {
+      showErrorMessage(context, context.l10n.t('Enter a valid stock amount'));
+      return;
+    }
+    setState(() => _saving = true);
+    try {
+      await _repository.updateProduct(_product.id, _buildRequest());
+      if (!mounted) return;
+      showSuccessMessage(context, context.l10n.t('Stock added successfully'));
+      Navigator.of(context).pop(true);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      showErrorMessage(context, e.message);
+    } catch (_) {
+      if (!mounted) return;
+      showErrorMessage(context, context.l10n.t('Failed to add stock'));
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  ProductCreateRequest _buildRequest() {
+    if (_product.variants.isEmpty) {
+      final added = int.tryParse(_addControllers.first.text.trim()) ?? 0;
+      return ProductCreateRequest(
+        name: _product.name,
+        stock: _product.stockAvailable + added,
+        variants: const [],
+      );
+    }
+    final variants = _product.variants.asMap().entries.map((e) {
+      final v = e.value;
+      final added = int.tryParse(_addControllers[e.key].text.trim()) ?? 0;
+      return ProductCreateVariant(
+        size: v.size,
+        color: v.color,
+        quantity: v.quantity + added,
+        price: v.price,
+      );
+    }).toList();
+    return ProductCreateRequest(name: _product.name, variants: variants);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasVariants = _product.variants.isNotEmpty;
+    return AlertDialog(
+      backgroundColor: _p.surface,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            context.l10n.t('Stock Add'),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            _product.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 12, color: _mutedColor),
+          ),
+        ],
+      ),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 420),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (!hasVariants)
+                _restockRow('Stock', 'Current: ${_product.stockAvailable}', 0)
+              else
+                ...List.generate(
+                  _product.variants.length,
+                  (i) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _restockRow(
+                      _variantLabelFor(i),
+                      'Current: ${_product.variants[i].quantity}',
+                      i,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _saving ? null : () => Navigator.of(context).pop(),
+          style: TextButton.styleFrom(foregroundColor: _mutedColor),
+          child: Text(context.l10n.t('Cancel')),
+        ),
+        _submitButton(),
+      ],
+    );
+  }
+
+  Widget _restockRow(String label, String current, int index) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 2,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: _titleColor,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(current, style: TextStyle(fontSize: 12, color: _mutedColor)),
+            ],
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: TextField(
+            controller: _addControllers[index],
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              hintText: context.l10n.t('Add'),
+              hintStyle: TextStyle(color: _p.textSecondary, fontSize: 14),
+              filled: true,
+              fillColor: _p.surface,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 12,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: _borderColor),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: _borderColor),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: _accentColor),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _submitButton() {
+    return Container(
+      height: 42,
+      decoration: BoxDecoration(
+        gradient: _saving
+            ? null
+            : LinearGradient(
+                colors: [AppColors.primaryLight, _accentColor],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+        color: _saving ? _p.textMuted : null,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: _saving ? null : _submit,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Center(
+              child: _saving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(
+                      context.l10n.t('Add Stock'),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                    ),
+            ),
+          ),
+        ),
       ),
     );
   }

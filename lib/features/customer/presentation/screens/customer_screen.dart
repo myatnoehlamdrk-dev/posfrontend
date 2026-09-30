@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/features/customer/presentation/viewmodels/customer_view_model.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
@@ -77,7 +78,7 @@ class _CustomerScreenState extends State<CustomerScreen>
                   const SizedBox(height: 12),
                   ElevatedButton(
                     onPressed: () => _viewModel.loadAnalytics(),
-                    child: const Text('Retry'),
+                    child: Text(context.l10n.t('Retry')),
                   ),
                 ],
               ),
@@ -86,7 +87,7 @@ class _CustomerScreenState extends State<CustomerScreen>
           return Column(
             children: [
               AppScreenTopBar(
-                title: 'Customer Data',
+                title: context.l10n.t('Customer Data'),
                 showBackButton: true,
               ),
               Container(

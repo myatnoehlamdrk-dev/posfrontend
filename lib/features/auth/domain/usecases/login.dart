@@ -9,10 +9,7 @@ class LoginUseCase extends UseCase<LoginResult, LoginParams> {
 
   @override
   Future<LoginResult> call(LoginParams params) {
-    return _repository.login(
-      email: params.email,
-      password: params.password,
-    );
+    return _repository.login(email: params.email, password: params.password);
   }
 }
 

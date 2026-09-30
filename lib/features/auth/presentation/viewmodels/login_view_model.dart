@@ -9,7 +9,7 @@ class LoginViewModel extends BaseViewModel with FormValidationMixin {
   final LoginUseCase _loginUseCase;
 
   LoginViewModel({required LoginUseCase loginUseCase})
-      : _loginUseCase = loginUseCase;
+    : _loginUseCase = loginUseCase;
 
   String _email = '';
   String _password = '';
@@ -56,10 +56,9 @@ class LoginViewModel extends BaseViewModel with FormValidationMixin {
 
     setLoading(true);
     try {
-      final result = await _loginUseCase(LoginParams(
-        email: _email.trim(),
-        password: _password,
-      ));
+      final result = await _loginUseCase(
+        LoginParams(email: _email.trim(), password: _password),
+      );
       _user = result.user;
       _accessToken = result.accessToken;
       await TokenStorage.saveToken(result.accessToken);

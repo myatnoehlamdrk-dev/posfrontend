@@ -6,7 +6,7 @@ class InventoryViewModel extends BaseViewModel {
   final InventoryRepository _repository;
 
   InventoryViewModel({required InventoryRepository repository})
-      : _repository = repository;
+    : _repository = repository;
 
   List<InventoryOptionEntity> get options => _repository.getOptions();
 }

@@ -22,15 +22,14 @@ class CreatePackageUseCase {
     String? description,
     String? location,
     String? stockStatus,
-  }) =>
-      _repository.createPackage(
-        categoryId: categoryId,
-        name: name,
-        productLimit: productLimit,
-        description: description,
-        location: location,
-        stockStatus: stockStatus,
-      );
+  }) => _repository.createPackage(
+    categoryId: categoryId,
+    name: name,
+    productLimit: productLimit,
+    description: description,
+    location: location,
+    stockStatus: stockStatus,
+  );
 }
 
 class UpdatePackageUseCase {
@@ -46,14 +45,13 @@ class UpdatePackageUseCase {
     String? description,
     String? location,
     String? stockStatus,
-  }) =>
-      _repository.updatePackage(
-        id: id,
-        categoryId: categoryId,
-        name: name,
-        productLimit: productLimit,
-        description: description,
-        location: location,
-        stockStatus: stockStatus,
-      );
+  }) => _repository.updatePackage(
+    id: id,
+    categoryId: categoryId,
+    name: name,
+    productLimit: productLimit,
+    description: description,
+    location: location,
+    stockStatus: stockStatus,
+  );
 }

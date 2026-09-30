@@ -3,12 +3,7 @@ import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/features/package/domain/entities/package.dart';
 import 'package:posfrontend/features/package/domain/repositories/package_repository.dart';
 
-enum PackageSort {
-  dateNewest,
-  dateOldest,
-  nameAz,
-  nameZa,
-}
+enum PackageSort { dateNewest, dateOldest, nameAz, nameZa }
 
 class PackageViewModel extends BaseViewModel {
   final PackageRepository _repository;
@@ -20,7 +15,7 @@ class PackageViewModel extends BaseViewModel {
   PackageViewModel({
     required PackageRepository repository,
     required this.categoryId,
-  })  : _repository = repository {
+  }) : _repository = repository {
     load();
   }
 
@@ -28,7 +23,10 @@ class PackageViewModel extends BaseViewModel {
     setLoading(true);
     resetError();
     try {
-      _packages = await _repository.getPackages(categoryId, cancelToken: cancelToken);
+      _packages = await _repository.getPackages(
+        categoryId,
+        cancelToken: cancelToken,
+      );
     } on ApiException catch (e) {
       setError(e.message);
     } finally {

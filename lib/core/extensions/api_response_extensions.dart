@@ -11,7 +11,4 @@ List<T> parseTypedList<T>(
   dynamic data,
   T Function(Map<String, dynamic>) fromJson,
 ) =>
-    parseApiList(data)
-        .whereType<Map<String, dynamic>>()
-        .map(fromJson)
-        .toList();
+    parseApiList(data).whereType<Map<String, dynamic>>().map(fromJson).toList();

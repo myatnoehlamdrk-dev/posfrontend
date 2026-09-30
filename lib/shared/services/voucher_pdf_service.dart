@@ -11,6 +11,10 @@ import 'package:posfrontend/core/extensions/number_extensions.dart';
 import 'package:posfrontend/core/extensions/datetime_extensions.dart';
 import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
+import 'package:posfrontend/shared/l10n/app_language.dart';
+import 'package:posfrontend/shared/l10n/app_strings.dart';
+import 'package:posfrontend/shared/l10n/locale_notifier.dart';
+import 'package:posfrontend/shared/services/pdf_fonts.dart';
 
 String _fmt(double value) => value.withCommas();
 
@@ -187,8 +191,13 @@ class PdfBuildParams {
   });
 }
 
-Future<Uint8List> _buildA4PdfBytes(PdfBuildParams params) async {
-  final pdf = pw.Document();
+Future<Uint8List> _buildA4PdfBytes(
+  PdfBuildParams params,
+  AppLanguage language,
+  PdfFontBytes? fontBytes,
+) async {
+  final t = AppStrings.ofLanguage(language);
+  final pdf = pw.Document(theme: PdfFonts.theme(fontBytes));
   final dateStr = params.dateTime.toShortDate();
   final timeStr = params.dateTime
       .toFormattedDateTime()
@@ -269,7 +278,7 @@ Future<Uint8List> _buildA4PdfBytes(PdfBuildParams params) async {
                 ),
               pw.SizedBox(height: 10),
               pw.Text(
-                'INVOICE',
+                t.t('INVOICE'),
                 style: pw.TextStyle(
                   color: PdfColors.white,
                   fontSize: 20,
@@ -292,15 +301,20 @@ Future<Uint8List> _buildA4PdfBytes(PdfBuildParams params) async {
           padding: const pw.EdgeInsets.all(20),
           child: pw.Column(
             children: [
-              _infoRow('Voucher ID', params.voucherNo, titleColor, grayColor),
+              _infoRow(
+                t.t('Voucher ID'),
+                params.voucherNo,
+                titleColor,
+                grayColor,
+              ),
               pw.SizedBox(height: 6),
-              _infoRow('Order ID', params.orderId, titleColor, grayColor),
+              _infoRow(t.t('Order ID'), params.orderId, titleColor, grayColor),
               pw.SizedBox(height: 6),
-              _infoRow('Date', dateStr, titleColor, grayColor),
+              _infoRow(t.t('Date'), dateStr, titleColor, grayColor),
               pw.SizedBox(height: 6),
-              _infoRow('Time', timeStr, titleColor, grayColor),
+              _infoRow(t.t('Time'), timeStr, titleColor, grayColor),
               pw.SizedBox(height: 6),
-              _infoRow('Staff', params.staffName, titleColor, grayColor),
+              _infoRow(t.t('Staff'), params.staffName, titleColor, grayColor),
             ],
           ),
         ),
@@ -334,7 +348,7 @@ Future<Uint8List> _buildA4PdfBytes(PdfBuildParams params) async {
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
                   pw.Text(
-                    'Customer',
+                    t.t('Customer'),
                     style: pw.TextStyle(fontSize: 11, color: grayColor),
                   ),
                   pw.SizedBox(height: 2),
@@ -367,7 +381,7 @@ Future<Uint8List> _buildA4PdfBytes(PdfBuildParams params) async {
               pw.Expanded(
                 flex: 4,
                 child: pw.Text(
-                  'Item',
+                  t.t('Item'),
                   style: pw.TextStyle(
                     fontSize: 11,
                     fontWeight: pw.FontWeight.bold,
@@ -378,7 +392,7 @@ Future<Uint8List> _buildA4PdfBytes(PdfBuildParams params) async {
               pw.Expanded(
                 flex: 1,
                 child: pw.Text(
-                  'Qty',
+                  t.t('Qty'),
                   textAlign: pw.TextAlign.center,
                   style: pw.TextStyle(
                     fontSize: 11,
@@ -390,7 +404,7 @@ Future<Uint8List> _buildA4PdfBytes(PdfBuildParams params) async {
               pw.Expanded(
                 flex: 2,
                 child: pw.Text(
-                  'Price',
+                  t.t('Price'),
                   textAlign: pw.TextAlign.right,
                   style: pw.TextStyle(
                     fontSize: 11,
@@ -402,7 +416,7 @@ Future<Uint8List> _buildA4PdfBytes(PdfBuildParams params) async {
               pw.Expanded(
                 flex: 2,
                 child: pw.Text(
-                  'Total',
+                  t.t('Total'),
                   textAlign: pw.TextAlign.right,
                   style: pw.TextStyle(
                     fontSize: 11,
@@ -499,14 +513,21 @@ Future<Uint8List> _buildA4PdfBytes(PdfBuildParams params) async {
           padding: const pw.EdgeInsets.all(20),
           child: pw.Column(
             children: [
-              _summaryRow('Subtotal', params.subtotal, titleColor, grayColor),
+              _summaryRow(
+                t.t('Subtotal'),
+                params.subtotal,
+                titleColor,
+                grayColor,
+              ),
               if (params.discountPct > 0) ...[
                 pw.SizedBox(height: 6),
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Text(
-                      'Discount (${params.discountPct.asPercent()}%)',
+                      t
+                          .t('Discount ({v1}%)')
+                          .replaceAll('{v1}', params.discountPct.asPercent()),
                       style: pw.TextStyle(fontSize: 13, color: grayColor),
                     ),
                     pw.Text(
@@ -527,7 +548,7 @@ Future<Uint8List> _buildA4PdfBytes(PdfBuildParams params) async {
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
                   pw.Text(
-                    'Total Payable',
+                    t.t('Total Payable'),
                     style: pw.TextStyle(
                       fontSize: 15,
                       fontWeight: pw.FontWeight.bold,
@@ -559,7 +580,7 @@ Future<Uint8List> _buildA4PdfBytes(PdfBuildParams params) async {
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Text(
-                      'Payment Method',
+                      t.t('Payment Method'),
                       style: pw.TextStyle(fontSize: 13, color: grayColor),
                     ),
                     pw.Text(
@@ -591,7 +612,7 @@ Future<Uint8List> _buildA4PdfBytes(PdfBuildParams params) async {
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
                   pw.Text(
-                    'Notes',
+                    t.t('Notes'),
                     style: pw.TextStyle(
                       fontSize: 11,
                       fontWeight: pw.FontWeight.bold,
@@ -624,7 +645,7 @@ Future<Uint8List> _buildA4PdfBytes(PdfBuildParams params) async {
           child: pw.Column(
             children: [
               pw.Text(
-                'Thank you for your purchase!',
+                t.t('Thank you for your purchase!'),
                 style: pw.TextStyle(
                   fontSize: 13,
                   fontWeight: pw.FontWeight.bold,
@@ -633,7 +654,9 @@ Future<Uint8List> _buildA4PdfBytes(PdfBuildParams params) async {
               ),
               pw.SizedBox(height: 4),
               pw.Text(
-                'Total Items: ${params.items.length}',
+                t
+                    .t('Total Items: {v1}')
+                    .replaceAll('{v1}', '${params.items.length}'),
                 style: pw.TextStyle(fontSize: 12, color: grayColor),
               ),
             ],
@@ -646,7 +669,12 @@ Future<Uint8List> _buildA4PdfBytes(PdfBuildParams params) async {
   return await pdf.save();
 }
 
-Future<Uint8List> _buildReceiptPdfBytes(PdfBuildParams params) async {
+Future<Uint8List> _buildReceiptPdfBytes(
+  PdfBuildParams params,
+  AppLanguage language,
+  PdfFontBytes? fontBytes,
+) async {
+  final t = AppStrings.ofLanguage(language);
   final pdf = pw.Document();
   final dateStr = params.dateTime.toShortDate();
   final timeStr = params.dateTime
@@ -671,10 +699,7 @@ Future<Uint8List> _buildReceiptPdfBytes(PdfBuildParams params) async {
         297 * PdfPageFormat.mm,
       ),
       margin: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      theme: pw.ThemeData.withFont(
-        base: pw.Font.courier(),
-        bold: pw.Font.courierBold(),
-      ),
+      theme: PdfFonts.theme(fontBytes),
       build: (context) => [
         if (shopImg != null)
           pw.Center(
@@ -691,31 +716,46 @@ Future<Uint8List> _buildReceiptPdfBytes(PdfBuildParams params) async {
           ),
         if (shopImg != null) pw.SizedBox(height: 4),
         if (params.shopName != null && params.shopName!.isNotEmpty)
-          _receiptInfoRow('Shop name', params.shopName!, titleColor, grayColor),
+          _receiptInfoRow(
+            t.t('Shop name'),
+            params.shopName!,
+            titleColor,
+            grayColor,
+          ),
         if (params.shopAddress != null && params.shopAddress!.isNotEmpty)
           _receiptInfoRow(
-            'Location',
+            t.t('Location'),
             params.shopAddress!,
             titleColor,
             grayColor,
           ),
         if (params.shopPhone != null && params.shopPhone!.isNotEmpty)
           _receiptInfoRow(
-            'Shop Contact',
+            t.t('Shop Contact'),
             params.shopPhone!,
             titleColor,
             grayColor,
           ),
-        _receiptInfoRow('Invoice no', params.voucherNo, titleColor, grayColor),
+        _receiptInfoRow(
+          t.t('Invoice no'),
+          params.voucherNo,
+          titleColor,
+          grayColor,
+        ),
         pw.SizedBox(height: 4),
         pw.Container(height: 0.5, color: borderColor),
         pw.SizedBox(height: 4),
-        _receiptInfoRow('Date', dateStr, titleColor, grayColor),
-        _receiptInfoRow('Time', timeStr, titleColor, grayColor),
-        _receiptInfoRow('Customer', params.customerName, titleColor, grayColor),
+        _receiptInfoRow(t.t('Date'), dateStr, titleColor, grayColor),
+        _receiptInfoRow(t.t('Time'), timeStr, titleColor, grayColor),
+        _receiptInfoRow(
+          t.t('Customer'),
+          params.customerName,
+          titleColor,
+          grayColor,
+        ),
         if (params.customerPhone != null && params.customerPhone!.isNotEmpty)
           _receiptInfoRow(
-            'Phone',
+            t.t('Phone'),
             params.customerPhone!,
             titleColor,
             grayColor,
@@ -723,7 +763,7 @@ Future<Uint8List> _buildReceiptPdfBytes(PdfBuildParams params) async {
         if (params.customerLocation != null &&
             params.customerLocation!.isNotEmpty)
           _receiptInfoRow(
-            'Location',
+            t.t('Location'),
             params.customerLocation!,
             titleColor,
             grayColor,
@@ -736,7 +776,7 @@ Future<Uint8List> _buildReceiptPdfBytes(PdfBuildParams params) async {
             pw.Expanded(
               flex: 4,
               child: pw.Text(
-                'Item',
+                t.t('Item'),
                 style: pw.TextStyle(
                   fontSize: 7,
                   fontWeight: pw.FontWeight.bold,
@@ -747,7 +787,7 @@ Future<Uint8List> _buildReceiptPdfBytes(PdfBuildParams params) async {
             pw.Expanded(
               flex: 1,
               child: pw.Text(
-                'Qty',
+                t.t('Qty'),
                 textAlign: pw.TextAlign.center,
                 style: pw.TextStyle(
                   fontSize: 7,
@@ -759,7 +799,7 @@ Future<Uint8List> _buildReceiptPdfBytes(PdfBuildParams params) async {
             pw.Expanded(
               flex: 2,
               child: pw.Text(
-                'Total',
+                t.t('Total'),
                 textAlign: pw.TextAlign.right,
                 style: pw.TextStyle(
                   fontSize: 7,
@@ -811,14 +851,16 @@ Future<Uint8List> _buildReceiptPdfBytes(PdfBuildParams params) async {
         pw.Container(height: 0.5, color: borderColor),
         pw.SizedBox(height: 4),
         _receiptSummaryRow(
-          'Subtotal',
+          t.t('Subtotal'),
           _fmt(params.subtotal),
           titleColor,
           grayColor,
         ),
         if (params.discountPct > 0)
           _receiptSummaryRow(
-            'Discount (${params.discountPct.asPercent()}%)',
+            t
+                .t('Discount ({v1}%)')
+                .replaceAll('{v1}', params.discountPct.asPercent()),
             '-${_fmt(params.discountAmt)}',
             PdfColor.fromHex('#EF4444'),
             grayColor,
@@ -830,7 +872,7 @@ Future<Uint8List> _buildReceiptPdfBytes(PdfBuildParams params) async {
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
             pw.Text(
-              'TOTAL',
+              t.t('TOTAL'),
               style: pw.TextStyle(
                 fontSize: 10,
                 fontWeight: pw.FontWeight.bold,
@@ -852,7 +894,7 @@ Future<Uint8List> _buildReceiptPdfBytes(PdfBuildParams params) async {
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
             pw.Text(
-              'Payment',
+              t.t('Payment'),
               style: pw.TextStyle(fontSize: 8, color: grayColor),
             ),
             pw.Text(
@@ -868,14 +910,14 @@ Future<Uint8List> _buildReceiptPdfBytes(PdfBuildParams params) async {
         if (params.notes != null && params.notes!.isNotEmpty) ...[
           pw.SizedBox(height: 4),
           pw.Text(
-            'Notes: ${params.notes}',
+            t.t('Notes: {v1}').replaceAll('{v1}', params.notes ?? ''),
             style: pw.TextStyle(fontSize: 7, color: grayColor),
           ),
         ],
         pw.SizedBox(height: 6),
         pw.Center(
           child: pw.Text(
-            'Thank you!',
+            t.t('Thank you!'),
             style: pw.TextStyle(
               fontSize: 9,
               fontWeight: pw.FontWeight.bold,
@@ -886,7 +928,7 @@ Future<Uint8List> _buildReceiptPdfBytes(PdfBuildParams params) async {
         pw.SizedBox(height: 2),
         pw.Center(
           child: pw.Text(
-            'Items: ${params.items.length}',
+            t.t('Items: {v1}').replaceAll('{v1}', '${params.items.length}'),
             style: pw.TextStyle(fontSize: 7, color: grayColor),
           ),
         ),
@@ -962,8 +1004,12 @@ class VoucherPdfService {
       shopImageBytes: imageBytes,
     );
 
-    final pdfBytes = await Isolate.run(() => _buildA4PdfBytes(params));
+    final language = LocaleNotifier.instance.language;
+    final fontBytes = await PdfFonts.forLanguage(language);
 
+    final pdfBytes = await Isolate.run(
+      () => _buildA4PdfBytes(params, language, fontBytes),
+    );
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat format) async => pdfBytes,
       name: 'Voucher_$voucherNo',
@@ -1016,8 +1062,12 @@ class VoucherPdfService {
       customerLocation: customerLocation,
     );
 
-    final pdfBytes = await Isolate.run(() => _buildReceiptPdfBytes(params));
+    final language = LocaleNotifier.instance.language;
+    final fontBytes = await PdfFonts.forLanguage(language);
 
+    final pdfBytes = await Isolate.run(
+      () => _buildReceiptPdfBytes(params, language, fontBytes),
+    );
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat format) async => pdfBytes,
       name: 'Receipt_$voucherNo',
@@ -1069,7 +1119,10 @@ class VoucherPdfService {
       shopImageBytes: imageBytes,
     );
 
-    return await Isolate.run(() => _buildA4PdfBytes(params));
+    final language = LocaleNotifier.instance.language;
+    final fontBytes = await PdfFonts.forLanguage(language);
+
+    return Isolate.run(() => _buildA4PdfBytes(params, language, fontBytes));
   }
 
   static Future<Uint8List> exportReceiptPdf({
@@ -1118,6 +1171,11 @@ class VoucherPdfService {
       customerLocation: customerLocation,
     );
 
-    return await Isolate.run(() => _buildReceiptPdfBytes(params));
+    final language = LocaleNotifier.instance.language;
+    final fontBytes = await PdfFonts.forLanguage(language);
+
+    return Isolate.run(
+      () => _buildReceiptPdfBytes(params, language, fontBytes),
+    );
   }
 }

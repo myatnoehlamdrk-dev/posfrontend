@@ -13,7 +13,12 @@ class SettingsRepositoryImpl implements SettingsRepository {
   }
 
   @override
-  Future<SettingsEntity> updateSettings({String? themeMode, String? language, String? shopType, String? shopImage}) async {
+  Future<SettingsEntity> updateSettings({
+    String? themeMode,
+    String? language,
+    String? shopType,
+    String? shopImage,
+  }) async {
     final body = <String, dynamic>{};
     if (themeMode != null) body['theme_mode'] = themeMode;
     if (language != null) body['language'] = language;

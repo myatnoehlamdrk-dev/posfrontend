@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
+import 'package:posfrontend/shared/l10n/status_l10n.dart';
 import 'package:posfrontend/features/category/domain/entities/category.dart';
 import 'package:posfrontend/features/package/domain/entities/package.dart';
 import 'package:posfrontend/features/package/data/repositories/package_repository_impl.dart';
@@ -73,12 +75,16 @@ class _PackageScreenState extends State<PackageScreen> {
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             return AlertDialog(
-              title: const Text('Delete Package'),
-              content: Text('Are you sure you want to delete "${p.name}"?'),
+              title: Text(context.l10n.t('Delete Package')),
+              content: Text(
+                context.l10n
+                    .t('Are you sure you want to delete "{v1}"?')
+                    .replaceAll('{v1}', (p.name).toString()),
+              ),
               actions: [
                 TextButton(
                   onPressed: deleting ? null : () => Navigator.pop(ctx),
-                  child: const Text('Cancel'),
+                  child: Text(context.l10n.t('Cancel')),
                 ),
                 TextButton(
                   onPressed: deleting
@@ -103,8 +109,8 @@ class _PackageScreenState extends State<PackageScreen> {
                             color: Colors.red,
                           ),
                         )
-                      : const Text(
-                          'Delete',
+                      : Text(
+                          context.l10n.t('Delete'),
                           style: TextStyle(color: Colors.red),
                         ),
                 ),
@@ -202,7 +208,12 @@ class _PackageScreenState extends State<PackageScreen> {
                           )
                         else ...[
                           Text(
-                            'List of Packages (${_viewModel.total})',
+                            context.l10n
+                                .t('List of Packages ({v1})')
+                                .replaceAll(
+                                  '{v1}',
+                                  (_viewModel.total).toString(),
+                                ),
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -236,16 +247,8 @@ class _PackageScreenState extends State<PackageScreen> {
       children: [
         GestureDetector(
           onTap: () {},
-          child: const Text(
-            'Dashboard',
-            style: TextStyle(fontSize: 13, color: purple),
-          ),
-        ),
-        Text('  >  ', style: style),
-        GestureDetector(
-          onTap: () {},
-          child: const Text(
-            'Inventory',
+          child: Text(
+            context.l10n.t('Dashboard'),
             style: TextStyle(fontSize: 13, color: purple),
           ),
         ),
@@ -253,7 +256,15 @@ class _PackageScreenState extends State<PackageScreen> {
         GestureDetector(
           onTap: () {},
           child: Text(
-            'Self Inventory',
+            context.l10n.t('Inventory'),
+            style: TextStyle(fontSize: 13, color: purple),
+          ),
+        ),
+        Text('  >  ', style: style),
+        GestureDetector(
+          onTap: () {},
+          child: Text(
+            context.l10n.t('Self Inventory'),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontSize: 13, color: purple),
@@ -284,7 +295,7 @@ class _PackageScreenState extends State<PackageScreen> {
               ),
               const SizedBox(height: 6),
               Text(
-                'Manage your category here...',
+                context.l10n.t('Manage your category here...'),
                 style: TextStyle(fontSize: 16, color: p.textSecondary),
               ),
             ],
@@ -303,18 +314,18 @@ class _PackageScreenState extends State<PackageScreen> {
                   ? null
                   : _viewModel.sort,
               hint: Text(
-                'Sort',
+                context.l10n.t('Sort'),
                 style: TextStyle(color: p.textPrimary, fontSize: 14),
               ),
               style: TextStyle(color: p.textPrimary, fontSize: 14),
               items: [
                 DropdownMenuItem(
                   value: PackageSort.dateNewest,
-                  child: const Text('Newest'),
+                  child: Text(context.l10n.t('Newest')),
                 ),
                 DropdownMenuItem(
                   value: PackageSort.dateOldest,
-                  child: const Text('Oldest'),
+                  child: Text(context.l10n.t('Oldest')),
                 ),
               ],
               onChanged: (v) => _viewModel.setSort(v!),
@@ -332,7 +343,7 @@ class _PackageScreenState extends State<PackageScreen> {
         padding: const EdgeInsets.symmetric(vertical: 40),
         child: Center(
           child: Text(
-            'No packages found.',
+            context.l10n.t('No packages found.'),
             style: TextStyle(color: p.textSecondary),
           ),
         ),
@@ -445,7 +456,10 @@ class _PackageScreenState extends State<PackageScreen> {
                     children: [
                       Flexible(
                         child: Text(
-                          'Qty: ${p.quantity} in ${p.productLimit}',
+                          context.l10n
+                              .t('Qty: {v1} in {v2}')
+                              .replaceAll('{v1}', (p.quantity).toString())
+                              .replaceAll('{v2}', (p.productLimit).toString()),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -480,7 +494,9 @@ class _PackageScreenState extends State<PackageScreen> {
                   if (p.createdBy.isNotEmpty) ...[
                     const SizedBox(height: 6),
                     Text(
-                      'by ${p.createdBy}',
+                      context.l10n
+                          .t('by {v1}')
+                          .replaceAll('{v1}', (p.createdBy).toString()),
                       style: TextStyle(
                         fontSize: 11,
                         color: pal.textMuted,
@@ -548,7 +564,7 @@ class _PackageScreenState extends State<PackageScreen> {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        stockLabel(s),
+        stockLabel(s).localized(context.l10n),
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,

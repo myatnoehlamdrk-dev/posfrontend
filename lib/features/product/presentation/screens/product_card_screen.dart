@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
+import 'package:posfrontend/shared/l10n/status_l10n.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart';
@@ -123,9 +125,7 @@ class _ProductCardScreenState extends State<ProductCardScreen> {
               if (isWide) {
                 return Scaffold(
                   backgroundColor: palette.scaffoldBg,
-                  body: SafeArea(
-                    child: _buildContent(filtered, palette),
-                  ),
+                  body: SafeArea(child: _buildContent(filtered, palette)),
                 );
               }
               return Scaffold(
@@ -143,7 +143,7 @@ class _ProductCardScreenState extends State<ProductCardScreen> {
     return Column(
       children: [
         AppScreenTopBar(
-          title: 'Products',
+          title: context.l10n.t('Products'),
           showBackButton: true,
         ),
         Expanded(
@@ -158,7 +158,9 @@ class _ProductCardScreenState extends State<ProductCardScreen> {
                 children: [
                   SearchInputBar(
                     controller: _search,
-                    hintText: 'Search products by name, brand, SKU...',
+                    hintText: context.l10n.t(
+                      'Search products by name, brand, SKU...',
+                    ),
                     onChanged: (_) {},
                   ),
                   const SizedBox(height: 20),
@@ -172,9 +174,14 @@ class _ProductCardScreenState extends State<ProductCardScreen> {
     );
   }
 
-  Widget _buildProductGrid(List<CatalogProductView> products, AppPalette palette) {
+  Widget _buildProductGrid(
+    List<CatalogProductView> products,
+    AppPalette palette,
+  ) {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: AppColors.teal));
+      return const Center(
+        child: CircularProgressIndicator(color: AppColors.teal),
+      );
     }
     if (_error != null) {
       return Center(
@@ -187,7 +194,7 @@ class _ProductCardScreenState extends State<ProductCardScreen> {
             ElevatedButton.icon(
               onPressed: _loadProducts,
               icon: const Icon(Icons.refresh, size: 18),
-              label: const Text('Retry'),
+              label: Text(context.l10n.t('Retry')),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.teal,
                 foregroundColor: Colors.white,
@@ -201,10 +208,14 @@ class _ProductCardScreenState extends State<ProductCardScreen> {
       return Center(
         child: Column(
           children: [
-            Icon(Icons.inventory_2_outlined, size: 64, color: palette.textMuted),
+            Icon(
+              Icons.inventory_2_outlined,
+              size: 64,
+              color: palette.textMuted,
+            ),
             const SizedBox(height: 16),
             Text(
-              'No products found',
+              context.l10n.t('No products found'),
               style: TextStyle(fontSize: 16, color: palette.textSecondary),
             ),
           ],
@@ -249,9 +260,7 @@ class _ProductCardScreenState extends State<ProductCardScreen> {
 
   void _openProduct(CatalogProductView p) {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ProductDetailScreen(productId: p.id),
-      ),
+      MaterialPageRoute(builder: (_) => ProductDetailScreen(productId: p.id)),
     );
   }
 }
@@ -261,7 +270,11 @@ class _ProductCard extends StatelessWidget {
   final VoidCallback? onTap;
   final AppPalette palette;
 
-  const _ProductCard({required this.product, required this.palette, this.onTap});
+  const _ProductCard({
+    required this.product,
+    required this.palette,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -292,11 +305,15 @@ class _ProductCard extends StatelessWidget {
                 aspectRatio: 1,
                 child: Container(
                   decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(16),
+                    ),
                     color: palette.surfaceAlt,
                   ),
                   child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(16),
+                    ),
                     child: product.imageUrl != null
                         ? Image.network(
                             product.imageUrl!,
@@ -329,7 +346,10 @@ class _ProductCard extends StatelessWidget {
                         product.brand,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 12, color: palette.textSecondary),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: palette.textSecondary,
+                        ),
                       ),
                     ],
                     const SizedBox(height: 8),
@@ -346,13 +366,16 @@ class _ProductCard extends StatelessWidget {
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: stockColor.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
-                            stockLabel,
+                            stockLabel.localized(context.l10n),
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
@@ -368,7 +391,10 @@ class _ProductCard extends StatelessWidget {
                         product.category,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 11, color: palette.textSecondary),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: palette.textSecondary,
+                        ),
                       ),
                     ],
                   ],

@@ -13,7 +13,8 @@ class GetProfileUseCase extends UseCase<ProfileEntity, NoParams> {
   }
 }
 
-class UpdateProfileUseCase extends UseCase<ProfileEntity, Map<String, dynamic>> {
+class UpdateProfileUseCase
+    extends UseCase<ProfileEntity, Map<String, dynamic>> {
   final ProfileRepository repository;
 
   UpdateProfileUseCase(this.repository);
@@ -44,5 +45,9 @@ class ChangePasswordParams {
   final String newPassword;
   final String confirmPassword;
 
-  ChangePasswordParams({required this.currentPassword, required this.newPassword, required this.confirmPassword});
+  ChangePasswordParams({
+    required this.currentPassword,
+    required this.newPassword,
+    required this.confirmPassword,
+  });
 }

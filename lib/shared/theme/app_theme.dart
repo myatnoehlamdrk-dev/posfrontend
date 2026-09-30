@@ -25,14 +25,26 @@ class AppTheme {
       error: AppColors.red,
     );
 
+    // Per-glyph fallback for the non-Latin languages. Flutter walks this list
+    // only for characters the primary face is missing, so Burmese and Thai
+    // text resolves to Noto while Latin stays on Poppins. Japanese is not
+    // listed: the platform already supplies a CJK face, and bundling
+    // NotoSansJP into the UI would add 10MB for no benefit.
+    const fallbacks = <String>['NotoSansMyanmar', 'NotoSansThai'];
+
     return ThemeData(
       colorScheme: colorScheme,
       useMaterial3: true,
+      // The fallback has to be set on the TextTheme as well as on ThemeData:
+      // GoogleFonts.poppinsTextTheme() hands back styles that already carry a
+      // fontFamily, and ThemeData does not merge its fallback into those.
       textTheme: GoogleFonts.poppinsTextTheme().apply(
         bodyColor: palette.textPrimary,
         displayColor: palette.textPrimary,
+        fontFamilyFallback: fallbacks,
       ),
       fontFamily: GoogleFonts.poppins().fontFamily,
+      fontFamilyFallback: fallbacks,
       extensions: <ThemeExtension<dynamic>>[palette],
       scaffoldBackgroundColor: palette.scaffoldBg,
       canvasColor: palette.surface,
@@ -68,7 +80,10 @@ class AppTheme {
           borderSide: const BorderSide(color: AppColors.red, width: 1.5),
         ),
         hintStyle: TextStyle(color: palette.textMuted),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: palette.surface,

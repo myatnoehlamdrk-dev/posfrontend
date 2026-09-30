@@ -7,21 +7,21 @@ class InventoryRepositoryImpl implements InventoryRepository {
   final InventoryRemoteDataSource _dataSource;
 
   InventoryRepositoryImpl({InventoryRemoteDataSource? dataSource})
-      : _dataSource = dataSource ?? InventoryRemoteDataSource();
+    : _dataSource = dataSource ?? InventoryRemoteDataSource();
 
   @override
   List<InventoryOptionEntity> getOptions() => const [
-        InventoryOptionEntity(
-          key: 'self',
-          title: 'Self Inventory',
-          description: 'Manage products and stocks only for your own shop.',
-        ),
-        InventoryOptionEntity(
-          key: 'public',
-          title: 'Public Inventory',
-          description: 'View and manage products and stocks shared publicly.',
-        ),
-      ];
+    InventoryOptionEntity(
+      key: 'self',
+      title: 'Self Inventory',
+      description: 'Manage products and stocks only for your own shop.',
+    ),
+    InventoryOptionEntity(
+      key: 'public',
+      title: 'Public Inventory',
+      description: 'View and manage products and stocks shared publicly.',
+    ),
+  ];
 
   @override
   Future<InventoryEntity> getInventoryByType(String type) async {

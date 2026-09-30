@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/features/cart/data/cart_store.dart';
 import 'package:posfrontend/features/cart/domain/entities/cart_card_entity.dart';
@@ -119,7 +120,9 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
           final card = _draftCardFrom(item);
           if (card != null) fresh.add(card);
         }
-        final lastPage = meta is Map<String, dynamic> ? meta['last_page'] : null;
+        final lastPage = meta is Map<String, dynamic>
+            ? meta['last_page']
+            : null;
         if (lastPage is num && page >= lastPage.toInt()) break;
         if (lastPage is! num && data.length < _perPage) break;
         if (page >= 100) break;
@@ -153,26 +156,29 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
       final qty = (raw['quantity'] as num?)?.toInt() ?? 0;
       final price = (raw['unitPrice'] as num?)?.toDouble() ?? 0.0;
       if (qty <= 0) continue;
-      items.add(CartItemEntity(
-        productId: raw['productId']?.toString() ?? '',
-        productName: raw['productName']?.toString() ?? '',
-        imageUrl: resolveMediaUrl(raw['imageUrl']?.toString()),
-        unitPrice: price,
-        quantity: qty,
-        size: (raw['size'] as String?)?.trim().isNotEmpty == true
-            ? (raw['size'] as String?)!.trim()
-            : null,
-        color: (raw['color'] as String?)?.trim().isNotEmpty == true
-            ? (raw['color'] as String?)!.trim()
-            : null,
-      ));
+      items.add(
+        CartItemEntity(
+          productId: raw['productId']?.toString() ?? '',
+          productName: raw['productName']?.toString() ?? '',
+          imageUrl: resolveMediaUrl(raw['imageUrl']?.toString()),
+          unitPrice: price,
+          quantity: qty,
+          size: (raw['size'] as String?)?.trim().isNotEmpty == true
+              ? (raw['size'] as String?)!.trim()
+              : null,
+          color: (raw['color'] as String?)?.trim().isNotEmpty == true
+              ? (raw['color'] as String?)!.trim()
+              : null,
+        ),
+      );
     }
     if (items.isEmpty) return null;
     return CartCardEntity(
       id: 'backend-$orderId',
       orderId: orderId,
       createdAt:
-          DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now(),
+          DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+          DateTime.now(),
       items: items,
     );
   }
@@ -183,12 +189,12 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: context.palette.scaffoldBg,
-      drawer: const AppDrawer(activeItem: 'Add to Cart'),
+      drawer: const AppDrawer(active: DrawerDestination.addToCart),
       body: SafeArea(
         child: Column(
           children: [
             AppScreenTopBar(
-              title: 'Add to Cart',
+              title: context.l10n.t('Add to Cart'),
               showMenuButton: true,
               onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
             ),
@@ -227,12 +233,16 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
           Icon(Icons.shopping_cart_outlined, size: 80, color: p.textMuted),
           const SizedBox(height: 20),
           Text(
-            'Cart is empty',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: p.textSecondary),
+            context.l10n.t('Cart is empty'),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: p.textSecondary,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Add products to your cart',
+            context.l10n.t('Add products to your cart'),
             style: TextStyle(fontSize: 14, color: p.textMuted),
           ),
         ],
@@ -269,7 +279,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                 ),
               )
             : Text(
-                'No more items',
+                context.l10n.t('No more items'),
                 style: TextStyle(
                   color: context.palette.textSecondary,
                   fontSize: 13,
@@ -300,9 +310,9 @@ class _CardTile extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => CartCardScreen(card: card)),
-          );
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => CartCardScreen(card: card)));
         },
         child: Container(
           padding: const EdgeInsets.all(14),
@@ -322,7 +332,11 @@ class _CardTile extends StatelessWidget {
                       color: p.chipBg,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(Icons.receipt_long_outlined, size: 18, color: accentColor),
+                    child: Icon(
+                      Icons.receipt_long_outlined,
+                      size: 18,
+                      color: accentColor,
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -330,7 +344,21 @@ class _CardTile extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${card.totalQuantity} item${card.totalQuantity == 1 ? '' : 's'}',
+                          // Two keys rather than a `{v1}` in one template:
+                          // "1 item" and "5 items" are different words, and
+                          // collapsing them would force one of them to be
+                          // wrong. The other three languages have no plural
+                          // distinction, so they simply ignore the second.
+                          context.l10n
+                              .t(
+                                card.totalQuantity == 1
+                                    ? '1 item'
+                                    : '{v1} items',
+                              )
+                              .replaceAll(
+                                '{v1}',
+                                card.totalQuantity.toString(),
+                              ),
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -372,13 +400,14 @@ class _CardTile extends StatelessWidget {
               Divider(height: 20, color: p.border),
               for (final item in card.items.take(2)) ...[
                 CartItemRow(item: item, dense: true),
-                if (item != card.items.take(2).last)
-                  const SizedBox(height: 8),
+                if (item != card.items.take(2).last) const SizedBox(height: 8),
               ],
               if (card.items.length > 2) ...[
                 const SizedBox(height: 8),
                 Text(
-                  '+${card.items.length - 2} more',
+                  context.l10n
+                      .t('+{v1} more')
+                      .replaceAll('{v1}', (card.items.length - 2).toString()),
                   style: TextStyle(
                     fontSize: 11,
                     color: accentColor,
@@ -404,16 +433,23 @@ class _CardTile extends StatelessWidget {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: const Text('Delete Cart'),
-          content: Text('Are you sure you want to delete this cart "${card.totalQuantity} items"?'),
+          title: Text(context.l10n.t('Delete Cart')),
+          content: Text(
+            context.l10n
+                .t('Are you sure you want to delete this cart "{v1} items"?')
+                .replaceAll('{v1}', (card.totalQuantity).toString()),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel'),
+              child: Text(context.l10n.t('Cancel')),
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: Text('Delete', style: TextStyle(color: dangerFg)),
+              child: Text(
+                context.l10n.t('Delete'),
+                style: TextStyle(color: dangerFg),
+              ),
             ),
           ],
         );

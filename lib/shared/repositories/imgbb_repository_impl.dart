@@ -11,11 +11,17 @@ class ImgbbRepositoryImpl implements ImgbbRepository {
   ImgbbRepositoryImpl([Dio? dio]) : _dio = dio ?? ApiClient.create();
 
   @override
-  Future<ImgbbUploadResult> uploadImage(Uint8List bytes, {String? fileName, CancelToken? cancelToken}) async {
+  Future<ImgbbUploadResult> uploadImage(
+    Uint8List bytes, {
+    String? fileName,
+    CancelToken? cancelToken,
+  }) async {
     try {
-      final name = fileName ??
-          'upload_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final ext = name.contains('.') ? name.split('.').last.toLowerCase() : 'jpg';
+      final name =
+          fileName ?? 'upload_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final ext = name.contains('.')
+          ? name.split('.').last.toLowerCase()
+          : 'jpg';
       final MediaType contentType;
       switch (ext) {
         case 'png':

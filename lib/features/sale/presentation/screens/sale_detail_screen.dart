@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/core/extensions/datetime_extensions.dart';
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
 import 'package:posfrontend/features/sale/presentation/screens/new_sale_screen.dart';
@@ -118,7 +119,12 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                                     ),
                                   ),
                                   Text(
-                                    'x${item.quantity}',
+                                    context.l10n
+                                        .t('x{v1}')
+                                        .replaceAll(
+                                          '{v1}',
+                                          (item.quantity).toString(),
+                                        ),
                                     style: const TextStyle(
                                       fontSize: 12,
                                       color: gray,
@@ -160,8 +166,8 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
-                              'Total Amount',
+                            Text(
+                              context.l10n.t('Total Amount'),
                               style: TextStyle(fontSize: 13, color: gray),
                             ),
                             const SizedBox(width: 12),
@@ -219,7 +225,7 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                               Icons.shopping_cart_outlined,
                               size: 18,
                             ),
-                            label: const Text('Up to Sale'),
+                            label: Text(context.l10n.t('Up to Sale')),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF6D28D9),
                               foregroundColor: Colors.white,
@@ -253,10 +259,10 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
       child: Row(
         children: [
           const CustomBackButton(),
-          const Expanded(
+          Expanded(
             child: Center(
               child: Text(
-                'Sale Detail',
+                context.l10n.t('Sale Detail'),
                 style: TextStyle(
                   color: titleColor,
                   fontSize: 18,

@@ -70,7 +70,11 @@ abstract class BaseViewModel extends ChangeNotifier {
         await redirectToLogin();
         return null;
       }
-      setError(errorPrefix != null ? '$errorPrefix: ${appException.message}' : appException.message);
+      setError(
+        errorPrefix != null
+            ? '$errorPrefix: ${appException.message}'
+            : appException.message,
+      );
       return null;
     } catch (e) {
       setError(errorPrefix != null ? '$errorPrefix: $e' : e.toString());

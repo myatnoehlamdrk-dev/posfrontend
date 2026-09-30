@@ -2,7 +2,11 @@ import 'package:dio/dio.dart';
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
 
 abstract class SaleProductRepository {
-  Future<Map<String, dynamic>> getProducts({int page = 1, int perPage = 10, CancelToken? cancelToken});
+  Future<Map<String, dynamic>> getProducts({
+    int page = 1,
+    int perPage = 10,
+    CancelToken? cancelToken,
+  });
 }
 
 abstract class SaleRepository {
@@ -37,7 +41,10 @@ abstract class OrderRepository {
     String status = 'draft',
   });
 
-  Future<void> updateOrderStatus({required String orderId, required String status});
+  Future<void> updateOrderStatus({
+    required String orderId,
+    required String status,
+  });
   Future<String> addOrderItems({
     required String orderId,
     required List<SaleItemEntity> items,

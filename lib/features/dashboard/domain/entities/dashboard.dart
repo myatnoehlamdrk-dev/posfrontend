@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:posfrontend/features/dashboard/domain/entities/dashboard_tables.dart';
 
 class DashboardEntity extends Equatable {
   final List<MetricEntity> metrics;
@@ -19,13 +20,13 @@ class DashboardEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        metrics,
-        categoryDistribution,
-        categoryQuantity,
-        mostBought,
-        leastBought,
-        noBought,
-      ];
+    metrics,
+    categoryDistribution,
+    categoryQuantity,
+    mostBought,
+    leastBought,
+    noBought,
+  ];
 }
 
 class MetricEntity extends Equatable {
@@ -36,6 +37,9 @@ class MetricEntity extends Equatable {
   final String label;
   final String value;
 
+  /// Which table "View all" opens. Null for a tile that has no drill-down.
+  final DashboardTableKey? tableKey;
+
   const MetricEntity({
     required this.iconCodePoint,
     required this.iconFontFamily,
@@ -43,17 +47,19 @@ class MetricEntity extends Equatable {
     required this.iconColorValue,
     required this.label,
     required this.value,
+    this.tableKey,
   });
 
   @override
   List<Object?> get props => [
-        iconCodePoint,
-        iconFontFamily,
-        iconBgValue,
-        iconColorValue,
-        label,
-        value,
-      ];
+    iconCodePoint,
+    iconFontFamily,
+    iconBgValue,
+    iconColorValue,
+    label,
+    value,
+    tableKey,
+  ];
 }
 
 class CategoryDistributionEntity extends Equatable {
@@ -88,10 +94,7 @@ class MonthlySalesEntity extends Equatable {
   final int month;
   final int total;
 
-  const MonthlySalesEntity({
-    required this.month,
-    required this.total,
-  });
+  const MonthlySalesEntity({required this.month, required this.total});
 
   @override
   List<Object?> get props => [month, total];

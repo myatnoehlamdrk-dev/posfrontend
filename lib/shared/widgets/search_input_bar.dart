@@ -30,7 +30,10 @@ class SearchInputBar extends StatelessWidget {
           hintStyle: TextStyle(color: p.textMuted, fontSize: 14),
           prefixIcon: Icon(Icons.search, color: p.textMuted, size: 22),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
         ),
       ),
     );

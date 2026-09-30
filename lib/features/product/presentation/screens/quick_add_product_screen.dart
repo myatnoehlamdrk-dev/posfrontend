@@ -1,3 +1,4 @@
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -11,6 +12,7 @@ import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
+import 'package:posfrontend/shared/widgets/premium_image_upload.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
 const Color kPurple700 = Color(0xFF7C3AED);
@@ -132,22 +134,25 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
 
   Future<void> _submit() async {
     if (_uploading) {
-      showErrorMessage(context, 'Please wait for image upload to finish');
+      showErrorMessage(
+        context,
+        context.l10n.t('Please wait for image upload to finish'),
+      );
       return;
     }
     final name = _name.text.trim();
     if (name.isEmpty) {
-      showErrorMessage(context, 'Product name is required');
+      showErrorMessage(context, context.l10n.t('Product name is required'));
       return;
     }
     final stock = int.tryParse(_stock.text.trim());
     if (stock == null || stock < 0) {
-      showErrorMessage(context, 'Enter a valid stock amount');
+      showErrorMessage(context, context.l10n.t('Enter a valid stock amount'));
       return;
     }
     final price = double.tryParse(_price.text.trim());
     if (price == null || price <= 0) {
-      showErrorMessage(context, 'Enter a valid price');
+      showErrorMessage(context, context.l10n.t('Enter a valid price'));
       return;
     }
 
@@ -167,7 +172,7 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
     } on ApiException catch (e) {
       showErrorMessage(context, e.message);
     } catch (e) {
-      showErrorMessage(context, 'Failed to add product');
+      showErrorMessage(context, context.l10n.t('Failed to add product'));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -181,8 +186,8 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            const AppScreenTopBar(
-              title: 'Quick Add Product',
+            AppScreenTopBar(
+              title: context.l10n.t('Quick Add Product'),
               showMenuButton: false,
               showBackButton: true,
             ),
@@ -193,13 +198,15 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     FormCard(
-                      label: 'Product Image',
-                      helper: 'Take a photo or upload an image.',
+                      label: context.l10n.t('Product Image'),
+                      helper: context.l10n.t(
+                        'Take a photo or upload an image.',
+                      ),
                       child: _imageSection(),
                     ),
                     const SizedBox(height: 16),
                     FormCard(
-                      label: 'Basic Info',
+                      label: context.l10n.t('Basic Info'),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -241,41 +248,34 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
   }
 
   Widget _imageSection() {
-    final p = context.palette;
-    final hasPreview = _imageFile != null;
-    return GestureDetector(
+    final file = _imageFile;
+    return PremiumImageUpload(
+      isBusy: _uploading,
       onTap: _uploading ? null : _pickImage,
-      child: _DashedBox(
-        child: hasPreview
-            ? ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: kIsWeb
-                    ? Image.network(
-                        _imageFile!.path,
-                        key: _imageKey,
-                        height: 160,
-                        fit: BoxFit.cover,
-                      )
-                    : Image.file(
-                        _imageFile!,
-                        key: _imageKey,
-                        height: 160,
-                        fit: BoxFit.cover,
-                      ),
-              )
-            : _uploading
-            ? const CircularProgressIndicator(color: kPurple700)
-            : Column(
-                children: [
-                  const Icon(Icons.add_a_photo_outlined, size: 42, color: kPurple700),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Take a photo or choose an image',
-                    style: TextStyle(fontSize: 14, color: p.textSecondary),
-                  ),
-                ],
-              ),
-      ),
+      height: 168,
+      icon: Icons.add_a_photo_outlined,
+      title: context.l10n.t('Product image'),
+      subtitle: context.l10n.t('Take a photo or choose an image'),
+      hint: context.l10n.t('JPG or PNG up to 5MB'),
+      changeLabel: context.l10n.t('Change photo'),
+      image: file == null
+          ? null
+          : ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: kIsWeb
+                  ? Image.network(
+                      file.path,
+                      key: _imageKey,
+                      height: 168,
+                      fit: BoxFit.cover,
+                    )
+                  : Image.file(
+                      file,
+                      key: _imageKey,
+                      height: 168,
+                      fit: BoxFit.cover,
+                    ),
+            ),
     );
   }
 
@@ -301,8 +301,7 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
                 color: p.textPrimary,
               ),
             ),
-            if (req)
-              const Text(' *', style: TextStyle(color: kRed, fontSize: 14)),
+            if (req) Text(' *', style: TextStyle(color: kRed, fontSize: 14)),
           ],
         ),
         const SizedBox(height: 8),
@@ -382,8 +381,8 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
                         strokeWidth: 2.5,
                       ),
                     )
-                  : const Text(
-                      'Add Product',
+                  : Text(
+                      context.l10n.t('Add Product'),
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
@@ -396,52 +395,4 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
       ),
     );
   }
-}
-
-class _DashedBox extends StatelessWidget {
-  final Widget child;
-  const _DashedBox({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _DashedPainter(),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(24),
-        child: child,
-      ),
-    );
-  }
-}
-
-class _DashedPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = kPurple700.withValues(alpha: 0.5)
-      ..strokeWidth = 1.5
-      ..style = PaintingStyle.stroke;
-    const double dash = 6;
-    const double gap = 4;
-    const r = 16.0;
-    final path = Path()
-      ..addRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(0.75, 0.75, size.width - 1.5, size.height - 1.5),
-          const Radius.circular(r),
-        ),
-      );
-    for (final metric in path.computeMetrics()) {
-      var dist = 0.0;
-      while (dist < metric.length) {
-        final next = dist + dash;
-        canvas.drawPath(metric.extractPath(dist, next), paint);
-        dist = next + gap;
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter old) => false;
 }

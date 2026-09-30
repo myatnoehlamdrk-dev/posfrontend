@@ -24,10 +24,13 @@ class ProfileRepositoryImpl implements ProfileRepository {
     required String newPassword,
     required String confirmPassword,
   }) async {
-    await dio.put('/api/auth/profile/password', data: {
-      'current_password': currentPassword,
-      'new_password': newPassword,
-      'new_password_confirmation': confirmPassword,
-    });
+    await dio.put(
+      '/api/auth/profile/password',
+      data: {
+        'current_password': currentPassword,
+        'new_password': newPassword,
+        'new_password_confirmation': confirmPassword,
+      },
+    );
   }
 }

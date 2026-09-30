@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/core/di/injection.dart';
 import 'package:posfrontend/features/auth/domain/usecases/login.dart';
 import 'package:posfrontend/features/auth/presentation/viewmodels/login_view_model.dart';
@@ -36,9 +37,12 @@ class _LoginScreenState extends State<LoginScreen> {
     super.initState();
     _viewModel = LoginViewModel(loginUseCase: getIt<LoginUseCase>());
 
-    _emailController.addListener(() => _viewModel.setEmail(_emailController.text));
-    _passwordController
-        .addListener(() => _viewModel.setPassword(_passwordController.text));
+    _emailController.addListener(
+      () => _viewModel.setEmail(_emailController.text),
+    );
+    _passwordController.addListener(
+      () => _viewModel.setPassword(_passwordController.text),
+    );
   }
 
   @override
@@ -92,7 +96,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     _buildHeaderIcon(),
                     const SizedBox(height: 20),
                     Text(
-                      'Welcome Back!',
+                      context.l10n.t('Welcome Back!'),
                       style: TextStyle(
                         color: p.textPrimary,
                         fontSize: 26,
@@ -101,11 +105,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Please login to your account',
-                      style: TextStyle(
-                        color: p.textMuted,
-                        fontSize: 14,
-                      ),
+                      context.l10n.t('Please login to your account'),
+                      style: TextStyle(color: p.textMuted, fontSize: 14),
                     ),
                     const SizedBox(height: 36),
                     Align(
@@ -119,7 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       decoration: appInputDecoration(
                         context,
                         icon: Icons.email_outlined,
-                        hint: 'Enter your email',
+                        hint: context.l10n.t('Enter your email'),
                         errorText: errors['email'],
                       ),
                     ),
@@ -136,7 +137,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       decoration: appInputDecoration(
                         context,
                         icon: Icons.lock_outline,
-                        hint: 'Enter your password',
+                        hint: context.l10n.t('Enter your password'),
                         errorText: errors['password'],
                         suffixIcon: IconButton(
                           onPressed: () {
@@ -165,8 +166,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           );
                         },
-                        child: const Text(
-                          'Forgot Password?',
+                        child: Text(
+                          context.l10n.t('Forgot Password?'),
                           style: TextStyle(
                             color: AppColors.primary,
                             fontSize: 13,
@@ -177,7 +178,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 24),
                     GradientButton(
-                      label: 'Login',
+                      label: context.l10n.t('Login'),
                       loading: loading,
                       onPressed: _submit,
                     ),
@@ -208,8 +209,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                                     );
                                   },
-                                  child: const Text(
-                                    'Verify Email',
+                                  child: Text(
+                                    context.l10n.t('Verify Email'),
                                     style: TextStyle(
                                       color: AppColors.primary,
                                       fontSize: 13,
@@ -254,7 +255,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(
-            'OR',
+            context.l10n.t('OR'),
             style: TextStyle(color: p.textMuted, fontSize: 13),
           ),
         ),
@@ -280,8 +281,8 @@ class _LoginScreenState extends State<LoginScreen> {
               MaterialPageRoute(builder: (_) => const ShopScreen()),
             );
           },
-          child: const Text(
-            'Register',
+          child: Text(
+            context.l10n.t('Register'),
             style: TextStyle(
               color: AppColors.primary,
               fontSize: 14,

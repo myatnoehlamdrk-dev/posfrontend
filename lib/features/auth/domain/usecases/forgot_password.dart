@@ -19,7 +19,10 @@ class VerifyForgotPasswordOtpUseCase extends UseCase<String, VerifyOtpParams> {
 
   @override
   Future<String> call(VerifyOtpParams params) {
-    return _repository.verifyForgotPasswordOtp(email: params.email, otp: params.otp);
+    return _repository.verifyForgotPasswordOtp(
+      email: params.email,
+      otp: params.otp,
+    );
   }
 }
 

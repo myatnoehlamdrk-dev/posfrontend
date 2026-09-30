@@ -4,6 +4,7 @@ import 'package:posfrontend/features/product/presentation/widgets/category_showc
 import 'package:posfrontend/features/product/presentation/widgets/category_tile.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
+import 'package:posfrontend/shared/l10n/app_strings.dart';
 
 class CategoryShowcaseCard extends StatelessWidget {
   final CategoryShowcaseData category;
@@ -99,7 +100,7 @@ class CategoryShowcaseCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 24),
         child: Center(
           child: Text(
-            'No products',
+            AppStrings.current.t('No products'),
             style: TextStyle(fontSize: 13, color: p.textMuted),
           ),
         ),

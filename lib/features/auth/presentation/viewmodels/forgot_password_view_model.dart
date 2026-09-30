@@ -12,9 +12,9 @@ class ForgotPasswordViewModel extends BaseViewModel with FormValidationMixin {
     required SendForgotPasswordOtpUseCase sendOtpUseCase,
     required VerifyForgotPasswordOtpUseCase verifyOtpUseCase,
     required ResetPasswordUseCase resetPasswordUseCase,
-  })  : _sendOtpUseCase = sendOtpUseCase,
-        _verifyOtpUseCase = verifyOtpUseCase,
-        _resetPasswordUseCase = resetPasswordUseCase;
+  }) : _sendOtpUseCase = sendOtpUseCase,
+       _verifyOtpUseCase = verifyOtpUseCase,
+       _resetPasswordUseCase = resetPasswordUseCase;
 
   String _email = '';
   String _otp = '';
@@ -30,11 +30,29 @@ class ForgotPasswordViewModel extends BaseViewModel with FormValidationMixin {
   bool get otpSent => _otpSent;
   bool get otpVerified => _otpVerified;
 
-  void setEmail(String value) { _email = value; clearFieldError('email'); }
-  void setOtp(String value) { _otp = value; clearFieldError('otp'); }
-  void setNewPassword(String value) { _newPassword = value; clearFieldError('password'); }
-  void setConfirmPassword(String value) { _confirmPassword = value; clearFieldError('password_confirmation'); }
-  void setResetToken(String value) { _resetToken = value; }
+  void setEmail(String value) {
+    _email = value;
+    clearFieldError('email');
+  }
+
+  void setOtp(String value) {
+    _otp = value;
+    clearFieldError('otp');
+  }
+
+  void setNewPassword(String value) {
+    _newPassword = value;
+    clearFieldError('password');
+  }
+
+  void setConfirmPassword(String value) {
+    _confirmPassword = value;
+    clearFieldError('password_confirmation');
+  }
+
+  void setResetToken(String value) {
+    _resetToken = value;
+  }
 
   bool _validateEmail() {
     clearAllFieldErrors();
@@ -104,7 +122,9 @@ class ForgotPasswordViewModel extends BaseViewModel with FormValidationMixin {
 
     setLoading(true);
     try {
-      _resetToken = await _verifyOtpUseCase(VerifyOtpParams(email: _email.trim(), otp: _otp.trim()));
+      _resetToken = await _verifyOtpUseCase(
+        VerifyOtpParams(email: _email.trim(), otp: _otp.trim()),
+      );
       _otpVerified = true;
       notifyListeners();
       return true;
@@ -127,11 +147,13 @@ class ForgotPasswordViewModel extends BaseViewModel with FormValidationMixin {
 
     setLoading(true);
     try {
-      await _resetPasswordUseCase(ResetPasswordParams(
-        email: _email.trim(),
-        resetToken: _resetToken,
-        password: _newPassword,
-      ));
+      await _resetPasswordUseCase(
+        ResetPasswordParams(
+          email: _email.trim(),
+          resetToken: _resetToken,
+          password: _newPassword,
+        ),
+      );
       return true;
     } catch (e) {
       if (e is AppException) {

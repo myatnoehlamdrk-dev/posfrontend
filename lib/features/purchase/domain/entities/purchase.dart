@@ -67,10 +67,16 @@ class PurchaseOrderEntity extends Equatable {
       supplierId: json['supplierId']?.toString() ?? '',
       supplierName: json['supplierName']?.toString() ?? '',
       productName: json['productName']?.toString() ?? '',
-      quantity: json['quantity'] is int ? json['quantity'] as int : int.tryParse('${json['quantity']}') ?? 0,
-      unitPrice: json['unitPrice'] is int ? json['unitPrice'] as int : int.tryParse('${json['unitPrice']}') ?? 0,
+      quantity: json['quantity'] is int
+          ? json['quantity'] as int
+          : int.tryParse('${json['quantity']}') ?? 0,
+      unitPrice: json['unitPrice'] is int
+          ? json['unitPrice'] as int
+          : int.tryParse('${json['unitPrice']}') ?? 0,
       date: json['date']?.toString() ?? '',
-      status: json['status'] == 'completed' ? PurchaseStatus.completed : PurchaseStatus.pending,
+      status: json['status'] == 'completed'
+          ? PurchaseStatus.completed
+          : PurchaseStatus.pending,
       notes: json['notes']?.toString() ?? '',
       createdBy: json['createdBy']?.toString() ?? '',
       updatedBy: json['updatedBy']?.toString() ?? '',

@@ -38,11 +38,11 @@ class CategoryApiModel {
     final rawImages = json['productImages'];
     final productImages = (rawImages is List)
         ? rawImages
-            .whereType<String>()
-            .map(resolveMediaUrl)
-            .whereType<String>()
-            .where((s) => s.isNotEmpty)
-            .toList()
+              .whereType<String>()
+              .map(resolveMediaUrl)
+              .whereType<String>()
+              .where((s) => s.isNotEmpty)
+              .toList()
         : <String>[];
 
     return CategoryApiModel(
@@ -57,7 +57,8 @@ class CategoryApiModel {
       packageLimit: json['packageLimit'] is int
           ? json['packageLimit'] as int
           : int.tryParse(json['packageLimit']?.toString() ?? '') ?? 0,
-      createdDate: json['createdDate']?.toString() ??
+      createdDate:
+          json['createdDate']?.toString() ??
           json['createdAt']?.toString() ??
           '',
       createdBy: json['createdBy'] ?? '',

@@ -7,10 +7,18 @@ class PurchaseRemoteDataSource {
 
   PurchaseRemoteDataSource({Dio? dio}) : _dio = dio ?? ApiClient.create();
 
-  Future<Map<String, dynamic>> getPurchaseItems({int page = 1, String? status, CancelToken? cancelToken}) async {
+  Future<Map<String, dynamic>> getPurchaseItems({
+    int page = 1,
+    String? status,
+    CancelToken? cancelToken,
+  }) async {
     final params = <String, dynamic>{'page': page};
     if (status != null) params['status'] = status;
-    final response = await _dio.get('/api/purchase-items', queryParameters: params, cancelToken: cancelToken);
+    final response = await _dio.get(
+      '/api/purchase-items',
+      queryParameters: params,
+      cancelToken: cancelToken,
+    );
     final payload = response.data;
     if (payload is Map<String, dynamic>) {
       return payload;
@@ -55,7 +63,11 @@ class PurchaseRemoteDataSource {
     if (sku != null && sku.isNotEmpty) {
       data['sku'] = sku;
     }
-    final response = await _dio.post('/api/purchase-items', data: data, cancelToken: cancelToken);
+    final response = await _dio.post(
+      '/api/purchase-items',
+      data: data,
+      cancelToken: cancelToken,
+    );
     final payload = response.data;
     if (payload is Map<String, dynamic>) {
       return payload;
@@ -68,7 +80,11 @@ class PurchaseRemoteDataSource {
     required String status,
     CancelToken? cancelToken,
   }) async {
-    final response = await _dio.put('/api/purchase-items/$id', data: {'status': status}, cancelToken: cancelToken);
+    final response = await _dio.put(
+      '/api/purchase-items/$id',
+      data: {'status': status},
+      cancelToken: cancelToken,
+    );
     final payload = response.data;
     if (payload is Map<String, dynamic>) {
       return payload;
@@ -80,7 +96,9 @@ class PurchaseRemoteDataSource {
     await _dio.delete('/api/purchase-items/$id', cancelToken: cancelToken);
   }
 
-  Future<List<SupplierApiModel>> getSuppliers({CancelToken? cancelToken}) async {
+  Future<List<SupplierApiModel>> getSuppliers({
+    CancelToken? cancelToken,
+  }) async {
     final response = await _dio.get('/api/suppliers', cancelToken: cancelToken);
     final payload = response.data;
     List<dynamic> itemsList;
@@ -103,20 +121,27 @@ class PurchaseRemoteDataSource {
     String? address,
     CancelToken? cancelToken,
   }) async {
-    final data = <String, dynamic>{
-      'name': name,
-    };
+    final data = <String, dynamic>{'name': name};
     if (contact != null && contact.isNotEmpty) {
       data['contact'] = contact;
     }
     if (address != null && address.isNotEmpty) {
       data['address'] = address;
     }
-    final response = await _dio.post('/api/suppliers', data: data, cancelToken: cancelToken);
+    final response = await _dio.post(
+      '/api/suppliers',
+      data: data,
+      cancelToken: cancelToken,
+    );
     final payload = response.data;
     if (payload is Map<String, dynamic>) {
       return SupplierApiModel.fromJson(payload);
     }
-    return SupplierApiModel(id: '', name: name, phone: contact ?? '', address: address ?? '');
+    return SupplierApiModel(
+      id: '',
+      name: name,
+      phone: contact ?? '',
+      address: address ?? '',
+    );
   }
 }

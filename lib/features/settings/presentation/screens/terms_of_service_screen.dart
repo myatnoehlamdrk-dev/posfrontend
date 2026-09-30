@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/shared/widgets/legal_document_screen.dart';
 
 class TermsOfServiceScreen extends StatelessWidget {
@@ -87,8 +88,8 @@ class TermsOfServiceScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const LegalDocumentScreen(
-      title: 'Terms of Service',
+    return LegalDocumentScreen(
+      title: context.l10n.t('Terms of Service'),
       lastUpdated: 'September 25, 2026',
       sections: _sections,
     );

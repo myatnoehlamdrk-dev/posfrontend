@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:flutter/services.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/core/network/media_url.dart';
@@ -367,7 +368,13 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
       }
       final available = _stockFor(p);
       if (qty > available) {
-        showErrorMessage(context, '${p.name} has only $available in stock');
+        showErrorMessage(
+          context,
+          context.l10n
+              .t('{v1} has only {v2} in stock')
+              .replaceAll('{v1}', (p.name).toString())
+              .replaceAll('{v2}', (available).toString()),
+        );
         return;
       }
       items.add(
@@ -454,7 +461,12 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
       return;
     } catch (e) {
       if (!mounted) return;
-      showErrorMessage(context, 'Failed to add to existing card: $e');
+      showErrorMessage(
+        context,
+        context.l10n
+            .t('Failed to add to existing card: {v1}')
+            .replaceAll('{v1}', (e).toString()),
+      );
       return;
     }
 
@@ -504,7 +516,12 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
       return;
     } catch (e) {
       if (!mounted) return;
-      showErrorMessage(context, 'Failed to add to cart: $e');
+      showErrorMessage(
+        context,
+        context.l10n
+            .t('Failed to add to cart: {v1}')
+            .replaceAll('{v1}', (e).toString()),
+      );
       return;
     }
 
@@ -588,11 +605,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
             return Center(
               child: Column(
                 children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 48,
-                    color: _p.textMuted,
-                  ),
+                  Icon(Icons.error_outline, size: 48, color: _p.textMuted),
                   const SizedBox(height: 16),
                   Text(
                     _error!,
@@ -610,7 +623,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                       _loadProducts();
                     },
                     icon: const Icon(Icons.refresh, size: 18),
-                    label: const Text('Retry'),
+                    label: Text(context.l10n.t('Retry')),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _accentColor,
                       foregroundColor: Colors.white,
@@ -632,7 +645,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'No products in this category',
+                    context.l10n.t('No products in this category'),
                     style: TextStyle(fontSize: 16, color: _p.textSecondary),
                   ),
                 ],
@@ -740,7 +753,9 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                         borderRadius: BorderRadius.all(Radius.circular(10)),
                       ),
                       child: Text(
-                        '$_selectedCount',
+                        context.l10n
+                            .t('{v1}')
+                            .replaceAll('{v1}', (_selectedCount).toString()),
                         style: const TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
@@ -791,9 +806,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                 decoration: BoxDecoration(
                   gradient: (_isAddingToCart || _selectedCount == 0)
                       ? null
-                      : LinearGradient(
-                          colors: [_accentColor, _p.primaryDark],
-                        ),
+                      : LinearGradient(colors: [_accentColor, _p.primaryDark]),
                   color: (_isAddingToCart || _selectedCount == 0)
                       ? _p.borderStrong
                       : null,
@@ -925,7 +938,9 @@ class _ProductCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        'Stock: ${product.stock}',
+                        context.l10n
+                            .t('Stock: {v1}')
+                            .replaceAll('{v1}', (product.stock).toString()),
                         style: const TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
@@ -1007,14 +1022,19 @@ class _ProductCard extends StatelessWidget {
                                 : '${product.variants.length} Variants',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 11, color: p.textSecondary),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: p.textSecondary,
+                            ),
                           ),
                         ),
                       ],
                     )
                   else
                     Text(
-                      'Stock: $_displayStock',
+                      context.l10n
+                          .t('Stock: {v1}')
+                          .replaceAll('{v1}', (_displayStock).toString()),
                       style: TextStyle(fontSize: 11, color: p.textSecondary),
                     ),
                   if (selected) ...[
@@ -1044,11 +1064,11 @@ class _ProductCard extends StatelessWidget {
                                 color: p.primary,
                               ),
                             ),
-                            const SizedBox(height: 6),
+                            SizedBox(height: 6),
                             if (onEditVariants != null)
                               GestureDetector(
                                 onTap: onEditVariants,
-                                child: const Row(
+                                child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(
@@ -1058,7 +1078,7 @@ class _ProductCard extends StatelessWidget {
                                     ),
                                     SizedBox(width: 4),
                                     Text(
-                                      'Edit variants',
+                                      context.l10n.t('Edit variants'),
                                       style: TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w600,
@@ -1078,7 +1098,7 @@ class _ProductCard extends StatelessWidget {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    'Quantity',
+                                    context.l10n.t('Quantity'),
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
@@ -1096,7 +1116,7 @@ class _ProductCard extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Total',
+                                context.l10n.t('Total'),
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
@@ -1316,8 +1336,8 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            'Choose Variants',
+          Text(
+            context.l10n.t('Choose Variants'),
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 2),
@@ -1332,7 +1352,10 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
             children: [
               Expanded(
                 child: Text(
-                  '$_totalPicked / $_productStock pieces',
+                  context.l10n
+                      .t('{v1} / {v2} pieces')
+                      .replaceAll('{v1}', (_totalPicked).toString())
+                      .replaceAll('{v2}', (_productStock).toString()),
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -1357,7 +1380,7 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
                       Icon(Icons.bolt, size: 13, color: _accentColor),
                       SizedBox(width: 4),
                       Text(
-                        'Fill all stock',
+                        context.l10n.t('Fill all stock'),
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -1387,7 +1410,7 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
           style: TextButton.styleFrom(foregroundColor: _mutedColor),
-          child: const Text('Cancel'),
+          child: Text(context.l10n.t('Cancel')),
         ),
         FilledButton(
           onPressed: _totalPicked > 0 ? _confirm : null,
@@ -1395,7 +1418,7 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
             backgroundColor: _accentColor,
             foregroundColor: Colors.white,
           ),
-          child: const Text('Add'),
+          child: Text(context.l10n.t('Add')),
         ),
       ],
     );
@@ -1421,7 +1444,11 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
         children: [
           Row(
             children: [
-              Icon(Icons.tune, size: 16, color: qty > 0 ? _accentColor : _mutedColor),
+              Icon(
+                Icons.tune,
+                size: 16,
+                color: qty > 0 ? _accentColor : _mutedColor,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Column(
@@ -1438,7 +1465,9 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Stock: ${v.quantity}',
+                      context.l10n
+                          .t('Stock: {v1}')
+                          .replaceAll('{v1}', (v.quantity).toString()),
                       style: TextStyle(fontSize: 11, color: _mutedColor),
                     ),
                   ],
@@ -1460,7 +1489,10 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
             children: [
               Text(
                 qty > 0 ? 'Selected: $qty' : 'Tap + to select',
-                style: TextStyle(fontSize: 11, color: qty > 0 ? _accentColor : _mutedColor),
+                style: TextStyle(
+                  fontSize: 11,
+                  color: qty > 0 ? _accentColor : _mutedColor,
+                ),
               ),
               Container(
                 decoration: BoxDecoration(
@@ -1541,7 +1573,7 @@ class _AddToCartChoiceDialog extends StatelessWidget {
     return AlertDialog(
       backgroundColor: p.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: const Text(
+      title: Text(
         'Add to Cart',
         style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
       ),
@@ -1551,16 +1583,18 @@ class _AddToCartChoiceDialog extends StatelessWidget {
           _option(
             context,
             icon: Icons.add_card,
-            title: 'New Card',
-            subtitle: 'Create a new cart card for these items',
+            title: context.l10n.t('New Card'),
+            subtitle: context.l10n.t('Create a new cart card for these items'),
             choice: _AddToCartChoice.newCard,
           ),
           const SizedBox(height: 10),
           _option(
             context,
             icon: Icons.folder_open,
-            title: 'Existing Card',
-            subtitle: 'Load an old card and add items to it (merge categories)',
+            title: context.l10n.t('Existing Card'),
+            subtitle: context.l10n.t(
+              'Load an old card and add items to it (merge categories)',
+            ),
             choice: _AddToCartChoice.existingCard,
           ),
         ],
@@ -1658,7 +1692,7 @@ class _ExistingCardPickerState extends State<_ExistingCardPicker> {
                 children: [
                   Expanded(
                     child: Text(
-                      'Existing Cards',
+                      context.l10n.t('Existing Cards'),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -1715,7 +1749,12 @@ class _ExistingCardPickerState extends State<_ExistingCardPicker> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  '${card.totalQuantity} items',
+                                  context.l10n
+                                      .t('{v1} items')
+                                      .replaceAll(
+                                        '{v1}',
+                                        (card.totalQuantity).toString(),
+                                      ),
                                   style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w700,

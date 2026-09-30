@@ -34,7 +34,12 @@ class CreateCategoryParams {
   final String? description;
   final String? inventoryId;
   final String? type;
-  const CreateCategoryParams({required this.name, this.description, this.inventoryId, this.type});
+  const CreateCategoryParams({
+    required this.name,
+    this.description,
+    this.inventoryId,
+    this.type,
+  });
 }
 
 class UpdateCategoryUseCase extends UseCase<void, UpdateCategoryParams> {
@@ -44,7 +49,12 @@ class UpdateCategoryUseCase extends UseCase<void, UpdateCategoryParams> {
 
   @override
   Future<void> call(UpdateCategoryParams params) {
-    return _repository.updateCategory(params.id, name: params.name, description: params.description, active: params.active);
+    return _repository.updateCategory(
+      params.id,
+      name: params.name,
+      description: params.description,
+      active: params.active,
+    );
   }
 }
 
@@ -53,5 +63,10 @@ class UpdateCategoryParams {
   final String? name;
   final String? description;
   final bool? active;
-  const UpdateCategoryParams({required this.id, this.name, this.description, this.active});
+  const UpdateCategoryParams({
+    required this.id,
+    this.name,
+    this.description,
+    this.active,
+  });
 }

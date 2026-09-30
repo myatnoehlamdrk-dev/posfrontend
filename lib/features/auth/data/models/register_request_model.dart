@@ -28,17 +28,17 @@ class RegisterRequestModel {
   });
 
   Map<String, dynamic> toJson() => {
-        'fullName': fullName,
-        'email': email,
-        'password': password,
-        'phone': phone,
-        'social': social,
-        'role': role,
-        'address': address,
-        'nrc': nrc,
-        'billingWay': billingWay,
-        'dob': dob,
-        'gender': gender,
-        'shopId': shopId,
-      };
+    'fullName': fullName,
+    'email': email,
+    'password': password,
+    'phone': phone,
+    'social': social,
+    'role': role,
+    'address': address,
+    'nrc': nrc,
+    'billingWay': billingWay,
+    'dob': dob,
+    'gender': gender,
+    'shopId': shopId,
+  };
 }

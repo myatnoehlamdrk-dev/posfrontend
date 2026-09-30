@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
@@ -11,6 +12,7 @@ import 'package:posfrontend/features/profile/presentation/viewmodels/profile_vie
 import 'package:posfrontend/features/shop/data/repositories/shop_api_repository_impl.dart';
 import 'package:posfrontend/shared/repositories/imgbb_repository_impl.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
+import 'package:posfrontend/shared/widgets/premium_image_upload.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -192,37 +194,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return [
         _shopInfoRow(
           icon: Icons.store_outlined,
-          label: 'Shop Name',
+          label: context.l10n.t('Shop Name'),
           value: _viewModel.shop?.name ?? '-',
         ),
         const SizedBox(height: 10),
         _shopInfoRow(
           icon: Icons.category_outlined,
-          label: 'Shop Type',
+          label: context.l10n.t('Shop Type'),
           value: _viewModel.shop?.type ?? '-',
         ),
         const SizedBox(height: 10),
         _shopInfoRow(
           icon: Icons.location_on_outlined,
-          label: 'Address',
+          label: context.l10n.t('Address'),
           value: _viewModel.shop?.physicalAddress ?? '-',
         ),
         const SizedBox(height: 10),
         _shopInfoRow(
           icon: Icons.person_outline,
-          label: 'Owner',
+          label: context.l10n.t('Owner'),
           value: _viewModel.shop?.ownerInformation.name ?? '-',
         ),
         const SizedBox(height: 10),
         _shopInfoRow(
           icon: Icons.email_outlined,
-          label: 'Owner Email',
+          label: context.l10n.t('Owner Email'),
           value: _viewModel.shop?.ownerInformation.email ?? '-',
         ),
         const SizedBox(height: 10),
         _shopInfoRow(
           icon: Icons.phone_outlined,
-          label: 'Owner Phone',
+          label: context.l10n.t('Owner Phone'),
           value: _viewModel.shop?.ownerInformation.phone ?? '-',
         ),
       ];
@@ -231,38 +233,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return [
       _shopField(
         controller: _shopNameController,
-        label: 'Shop Name',
+        label: context.l10n.t('Shop Name'),
         icon: Icons.store_outlined,
       ),
       const SizedBox(height: 12),
       _shopField(
         controller: _shopTypeController,
-        label: 'Shop Type',
+        label: context.l10n.t('Shop Type'),
         icon: Icons.category_outlined,
       ),
       const SizedBox(height: 12),
       _shopField(
         controller: _shopAddressController,
-        label: 'Address',
+        label: context.l10n.t('Address'),
         icon: Icons.location_on_outlined,
       ),
       const SizedBox(height: 12),
       _shopField(
         controller: _ownerNameController,
-        label: 'Owner Name',
+        label: context.l10n.t('Owner Name'),
         icon: Icons.person_outline,
       ),
       const SizedBox(height: 12),
       _shopField(
         controller: _ownerEmailController,
-        label: 'Owner Email',
+        label: context.l10n.t('Owner Email'),
         icon: Icons.email_outlined,
         keyboardType: TextInputType.emailAddress,
       ),
       const SizedBox(height: 12),
       _shopField(
         controller: _ownerPhoneController,
-        label: 'Owner Phone',
+        label: context.l10n.t('Owner Phone'),
         icon: Icons.phone_outlined,
         keyboardType: TextInputType.phone,
       ),
@@ -276,7 +278,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       _gradientButton(
-        label: 'Save Shop',
+        label: context.l10n.t('Save Shop'),
         icon: Icons.store_outlined,
         loading: _viewModel.isSavingShop,
         onTap: _saveShop,
@@ -306,7 +308,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           controller: controller,
           keyboardType: keyboardType,
           decoration: _inputDecoration(
-            hint: 'Enter ${label.toLowerCase()}',
+            hint: context.l10n
+                .t('Enter {v1}')
+                .replaceAll('{v1}', (label.toLowerCase()).toString()),
             icon: icon,
           ),
         ),
@@ -337,7 +341,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   title: Text(
-                    'Change Password',
+                    context.l10n.t('Change Password'),
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       color: labelColor,
@@ -353,7 +357,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             controller: _currentPasswordController,
                             obscureText: _obscureCurrent,
                             decoration: InputDecoration(
-                              hintText: 'Current password',
+                              hintText: context.l10n.t('Current password'),
                               errorText: _viewModel.getFieldError(
                                 'currentPassword',
                               ),
@@ -396,7 +400,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             controller: _newPasswordController,
                             obscureText: _obscureNew,
                             decoration: InputDecoration(
-                              hintText: 'New password',
+                              hintText: context.l10n.t('New password'),
                               errorText: _viewModel.getFieldError(
                                 'newPassword',
                               ),
@@ -439,7 +443,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             controller: _confirmPasswordController,
                             obscureText: _obscureConfirm,
                             decoration: InputDecoration(
-                              hintText: 'Confirm new password',
+                              hintText: context.l10n.t('Confirm new password'),
                               errorText: _viewModel.getFieldError(
                                 'confirmPassword',
                               ),
@@ -485,7 +489,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     TextButton(
                       onPressed: () => Navigator.pop(ctx),
                       child: Text(
-                        'Cancel',
+                        context.l10n.t('Cancel'),
                         style: TextStyle(color: hintColor),
                       ),
                     ),
@@ -530,7 +534,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 strokeWidth: 2,
                               ),
                             )
-                          : const Text('Change Password'),
+                          : Text(context.l10n.t('Change Password')),
                     ),
                   ],
                 );
@@ -634,7 +638,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   const SizedBox(height: 12),
                                   _buildTextField(
                                     controller: _nameController,
-                                    label: 'Full Name',
+                                    label: context.l10n.t('Full Name'),
                                     icon: Icons.person_outline,
                                     errorText: errors['name'],
                                     onChanged: _viewModel.setName,
@@ -642,7 +646,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   const SizedBox(height: 16),
                                   _buildTextField(
                                     controller: _emailController,
-                                    label: 'Email',
+                                    label: context.l10n.t('Email'),
                                     icon: Icons.email_outlined,
                                     keyboardType: TextInputType.emailAddress,
                                     errorText: errors['email'],
@@ -651,7 +655,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   const SizedBox(height: 16),
                                   _buildTextField(
                                     controller: _phoneController,
-                                    label: 'Phone',
+                                    label: context.l10n.t('Phone'),
                                     icon: Icons.phone_outlined,
                                     keyboardType: TextInputType.phone,
                                     onChanged: _viewModel.setPhone,
@@ -659,7 +663,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   const SizedBox(height: 16),
                                   _buildTextField(
                                     controller: _socialController,
-                                    label: 'Social Media',
+                                    label: context.l10n.t('Social Media'),
                                     icon: Icons.link,
                                     onChanged: _viewModel.setSocial,
                                   ),
@@ -668,28 +672,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   const SizedBox(height: 12),
                                   _buildTextField(
                                     controller: _typeController,
-                                    label: 'Type',
+                                    label: context.l10n.t('Type'),
                                     icon: Icons.category_outlined,
                                     onChanged: _viewModel.setType,
                                   ),
                                   const SizedBox(height: 16),
                                   _buildTextField(
                                     controller: _roleController,
-                                    label: 'Role',
+                                    label: context.l10n.t('Role'),
                                     icon: Icons.admin_panel_settings_outlined,
                                     onChanged: _viewModel.setRole,
                                   ),
                                   const SizedBox(height: 16),
                                   _buildTextField(
                                     controller: _nrcNoController,
-                                    label: 'NRC No',
+                                    label: context.l10n.t('NRC No'),
                                     icon: Icons.badge_outlined,
                                     onChanged: _viewModel.setNrcNo,
                                   ),
                                   const SizedBox(height: 16),
                                   _buildTextField(
                                     controller: _billingWayController,
-                                    label: 'Billing Way for Service',
+                                    label: context.l10n.t(
+                                      'Billing Way for Service',
+                                    ),
                                     icon: Icons.receipt_long_outlined,
                                     onChanged: _viewModel.setBillingWay,
                                   ),
@@ -698,7 +704,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   const SizedBox(height: 12),
                                   _buildTextField(
                                     controller: _dobController,
-                                    label: 'Date of Birth',
+                                    label: context.l10n.t('Date of Birth'),
                                     icon: Icons.cake_outlined,
                                     readOnly: true,
                                     onTap: _pickDob,
@@ -706,14 +712,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   const SizedBox(height: 16),
                                   _buildTextField(
                                     controller: _genderController,
-                                    label: 'Gender',
+                                    label: context.l10n.t('Gender'),
                                     icon: Icons.wc_outlined,
                                     onChanged: _viewModel.setGender,
                                   ),
                                   const SizedBox(height: 16),
                                   _buildTextField(
                                     controller: _addressController,
-                                    label: 'Address',
+                                    label: context.l10n.t('Address'),
                                     icon: Icons.location_on_outlined,
                                     maxLines: 2,
                                     onChanged: _viewModel.setAddress,
@@ -724,7 +730,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ..._buildShopFields(),
                                   const SizedBox(height: 24),
                                   _gradientButton(
-                                    label: 'Change Password',
+                                    label: context.l10n.t('Change Password'),
                                     icon: Icons.vpn_key_outlined,
                                     loading: false,
                                     onTap: _showChangePasswordDialog,
@@ -744,7 +750,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ),
                                     ),
                                   _gradientButton(
-                                    label: 'Save Profile',
+                                    label: context.l10n.t('Save Profile'),
                                     icon: Icons.save_outlined,
                                     loading: saving,
                                     onTap: _save,
@@ -777,7 +783,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Expanded(
             child: Center(
               child: Text(
-                'My Profile',
+                context.l10n.t('My Profile'),
                 style: TextStyle(
                   color: labelColor,
                   fontSize: 18,
@@ -797,59 +803,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Center(
       child: Column(
         children: [
-          GestureDetector(
-            onTap: _uploadingImage ? null : _pickImage,
-            child: Stack(
-              children: [
-                CircleAvatar(
-                  radius: 50,
-                  backgroundColor: _p.selectionTint,
-                  backgroundImage: image.isNotEmpty
-                      ? NetworkImage(image)
-                      : null,
-                  onBackgroundImageError: image.isNotEmpty
-                      ? (e, s) {
-                          _viewModel.setImageUrl('');
-                          ProfileImageNotifier.instance.update('');
-                        }
-                      : null,
-                  child: image.isEmpty
-                      ? Icon(Icons.person, size: 50, color: primary)
-                      : null,
-                ),
-                if (_uploadingImage)
-                  const Positioned.fill(
-                    child: CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Color(0x80000000),
-                      child: SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2.5,
-                        ),
-                      ),
-                    ),
+          PremiumAvatarUpload(
+            onTap: _pickImage,
+            isBusy: _uploadingImage,
+            imageUrl: image,
+            radius: 54,
+            image: image.isEmpty
+                ? null
+                : Image.network(
+                    image,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      _viewModel.setImageUrl('');
+                      ProfileImageNotifier.instance.update('');
+                      return const SizedBox.shrink();
+                    },
                   ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: primary,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.camera_alt,
-                      color: Colors.white,
-                      size: 18,
-                    ),
-                  ),
-                ),
-              ],
-            ),
           ),
           const SizedBox(height: 12),
           Text(
@@ -960,7 +929,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           onChanged: onChanged,
           onTap: onTap,
           decoration: _inputDecoration(
-            hint: 'Enter ${label.toLowerCase()}',
+            hint: context.l10n
+                .t('Enter {v1}')
+                .replaceAll('{v1}', (label.toLowerCase()).toString()),
             errorText: errorText,
             icon: icon,
             suffixIcon: suffixIcon,

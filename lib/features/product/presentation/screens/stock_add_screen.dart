@@ -1,3 +1,4 @@
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -118,7 +119,7 @@ class _StockAddScreenState extends State<StockAddScreen> {
       (c) =>
           c.text.trim().isNotEmpty && (int.tryParse(c.text.trim()) ?? -1) < 0,
     )) {
-      showErrorMessage(context, 'Enter a valid stock amount');
+      showErrorMessage(context, context.l10n.t('Enter a valid stock amount'));
       return;
     }
 
@@ -127,12 +128,12 @@ class _StockAddScreenState extends State<StockAddScreen> {
       final request = _buildRequest(product);
       await _repository.updateProduct(product.id, request);
       if (!mounted) return;
-      showSuccessMessage(context, 'Stock added successfully');
+      showSuccessMessage(context, context.l10n.t('Stock added successfully'));
       _deselect();
     } on ApiException catch (e) {
       showErrorMessage(context, e.message);
     } catch (_) {
-      showErrorMessage(context, 'Failed to add stock');
+      showErrorMessage(context, context.l10n.t('Failed to add stock'));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -178,8 +179,8 @@ class _StockAddScreenState extends State<StockAddScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            const AppScreenTopBar(
-              title: 'Stock Add',
+            AppScreenTopBar(
+              title: context.l10n.t('Stock Add'),
               showMenuButton: false,
               showBackButton: true,
             ),
@@ -190,8 +191,8 @@ class _StockAddScreenState extends State<StockAddScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     FormCard(
-                      label: 'Search Product',
-                      helper: 'Search a product to add stock.',
+                      label: context.l10n.t('Search Product'),
+                      helper: context.l10n.t('Search a product to add stock.'),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -214,8 +215,10 @@ class _StockAddScreenState extends State<StockAddScreen> {
                     if (_selected != null) ...[
                       const SizedBox(height: 16),
                       FormCard(
-                        label: 'Add Stock',
-                        helper: 'Enter the amount of stock to add.',
+                        label: context.l10n.t('Add Stock'),
+                        helper: context.l10n.t(
+                          'Enter the amount of stock to add.',
+                        ),
                         child: _stockForm(),
                       ),
                     ],
@@ -236,7 +239,7 @@ class _StockAddScreenState extends State<StockAddScreen> {
       controller: _search,
       onChanged: _onSearchChanged,
       decoration: InputDecoration(
-        hintText: 'Search products...',
+        hintText: context.l10n.t('Search products...'),
         hintStyle: TextStyle(color: p.textSecondary, fontSize: 14),
         prefixIcon: Icon(Icons.search, color: p.textSecondary),
         filled: true,
@@ -304,14 +307,20 @@ class _StockAddScreenState extends State<StockAddScreen> {
                   if (p.brand.isNotEmpty)
                     Text(
                       p.brand,
-                      style: TextStyle(fontSize: 12, color: palette.textSecondary),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: palette.textSecondary,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   Text(
                     p.variants.isEmpty
                         ? 'Stock: ${p.stock}'
                         : 'Stock: ${p.stock} · ${p.variants.length} variants',
-                    style: TextStyle(fontSize: 12, color: palette.textSecondary),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: palette.textSecondary,
+                    ),
                   ),
                 ],
               ),
@@ -396,7 +405,7 @@ class _StockAddScreenState extends State<StockAddScreen> {
             controller: c,
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
-              hintText: 'Add',
+              hintText: context.l10n.t('Add'),
               hintStyle: TextStyle(color: p.textSecondary, fontSize: 14),
               filled: true,
               fillColor: p.surface,
@@ -465,8 +474,8 @@ class _StockAddScreenState extends State<StockAddScreen> {
                         strokeWidth: 2.5,
                       ),
                     )
-                  : const Text(
-                      'Add Stock',
+                  : Text(
+                      context.l10n.t('Add Stock'),
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,

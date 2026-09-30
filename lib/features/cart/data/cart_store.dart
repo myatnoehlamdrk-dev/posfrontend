@@ -80,10 +80,13 @@ class CartStore extends ValueNotifier<List<CartCardEntity>> {
   Future<void> mergeCards(List<CartCardEntity> extras) async {
     if (extras.isEmpty) return;
     final existing = value;
-    final existingOrderIds =
-        existing.map((c) => c.orderId).where((o) => o.isNotEmpty).toSet();
-    final toAdd =
-        extras.where((c) => !existingOrderIds.contains(c.orderId)).toList();
+    final existingOrderIds = existing
+        .map((c) => c.orderId)
+        .where((o) => o.isNotEmpty)
+        .toSet();
+    final toAdd = extras
+        .where((c) => !existingOrderIds.contains(c.orderId))
+        .toList();
     if (toAdd.isEmpty) return;
     final updated = [...existing, ...toAdd];
     value = List.of(updated);

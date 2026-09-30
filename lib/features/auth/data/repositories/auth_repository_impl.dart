@@ -9,7 +9,7 @@ class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _remoteDataSource;
 
   AuthRepositoryImpl({AuthRemoteDataSource? remoteDataSource})
-      : _remoteDataSource = remoteDataSource ?? AuthRemoteDataSource();
+    : _remoteDataSource = remoteDataSource ?? AuthRemoteDataSource();
 
   @override
   Future<LoginResult> login({
@@ -75,7 +75,10 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<String> verifyForgotPasswordOtp({required String email, required String otp}) {
+  Future<String> verifyForgotPasswordOtp({
+    required String email,
+    required String otp,
+  }) {
     return _remoteDataSource.verifyForgotPasswordOtp(email, otp);
   }
 

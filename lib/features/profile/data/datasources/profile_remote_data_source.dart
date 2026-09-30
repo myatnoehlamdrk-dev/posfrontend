@@ -2,7 +2,10 @@ import 'package:dio/dio.dart';
 
 abstract class ProfileRemoteDataSource {
   Future<Response> getProfile({CancelToken? cancelToken});
-  Future<Response> updateProfile(Map<String, dynamic> data, {CancelToken? cancelToken});
+  Future<Response> updateProfile(
+    Map<String, dynamic> data, {
+    CancelToken? cancelToken,
+  });
   Future<Response> changePassword({
     required String currentPassword,
     required String newPassword,
@@ -22,7 +25,10 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
   }
 
   @override
-  Future<Response> updateProfile(Map<String, dynamic> data, {CancelToken? cancelToken}) {
+  Future<Response> updateProfile(
+    Map<String, dynamic> data, {
+    CancelToken? cancelToken,
+  }) {
     return dio.patch('/api/auth/profile', data: data, cancelToken: cancelToken);
   }
 
@@ -33,10 +39,14 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     required String confirmPassword,
     CancelToken? cancelToken,
   }) {
-    return dio.put('/api/auth/profile/password', data: {
-      'current_password': currentPassword,
-      'new_password': newPassword,
-      'new_password_confirmation': confirmPassword,
-    }, cancelToken: cancelToken);
+    return dio.put(
+      '/api/auth/profile/password',
+      data: {
+        'current_password': currentPassword,
+        'new_password': newPassword,
+        'new_password_confirmation': confirmPassword,
+      },
+      cancelToken: cancelToken,
+    );
   }
 }

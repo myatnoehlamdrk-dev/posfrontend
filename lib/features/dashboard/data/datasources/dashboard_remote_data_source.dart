@@ -31,7 +31,7 @@ class DashboardRemoteDataSource {
   }
 
   /// One of the paginated "View all" tables. [query] carries whatever the table
-  /// filters on (search, low-stock flag, most/least direction).
+  /// filters on (low-stock flag, most/least direction, month).
   Future<Map<String, dynamic>> getTable({
     required String endpoint,
     required int page,
@@ -41,11 +41,7 @@ class DashboardRemoteDataSource {
   }) async {
     final response = await _dio.get(
       endpoint,
-      queryParameters: {
-        'page': page,
-        'per_page': perPage,
-        ...query,
-      },
+      queryParameters: {'page': page, 'per_page': perPage, ...query},
       cancelToken: cancelToken,
     );
     return response.data as Map<String, dynamic>;

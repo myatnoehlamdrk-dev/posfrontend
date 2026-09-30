@@ -2,7 +2,13 @@ import 'package:dio/dio.dart';
 
 abstract class SettingsRemoteDataSource {
   Future<Response> getSettings({CancelToken? cancelToken});
-  Future<Response> updateSettings({String? themeMode, String? language, String? shopType, String? shopImage, CancelToken? cancelToken});
+  Future<Response> updateSettings({
+    String? themeMode,
+    String? language,
+    String? shopType,
+    String? shopImage,
+    CancelToken? cancelToken,
+  });
 }
 
 class SettingsRemoteDataSourceImpl implements SettingsRemoteDataSource {
@@ -16,7 +22,13 @@ class SettingsRemoteDataSourceImpl implements SettingsRemoteDataSource {
   }
 
   @override
-  Future<Response> updateSettings({String? themeMode, String? language, String? shopType, String? shopImage, CancelToken? cancelToken}) {
+  Future<Response> updateSettings({
+    String? themeMode,
+    String? language,
+    String? shopType,
+    String? shopImage,
+    CancelToken? cancelToken,
+  }) {
     final body = <String, dynamic>{};
     if (themeMode != null) body['theme_mode'] = themeMode;
     if (language != null) body['language'] = language;

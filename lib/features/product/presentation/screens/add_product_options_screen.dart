@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/features/product/presentation/screens/add_product_screen.dart';
 import 'package:posfrontend/features/product/presentation/screens/quick_add_product_screen.dart';
 import 'package:posfrontend/features/product/presentation/screens/stock_add_screen.dart';
@@ -23,12 +24,12 @@ class _AddProductOptionsScreenState extends State<AddProductOptionsScreen> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: p.scaffoldBg,
-      drawer: const AppDrawer(activeItem: 'Add Product'),
+      drawer: const AppDrawer(active: DrawerDestination.addProduct),
       body: SafeArea(
         child: Column(
           children: [
             AppScreenTopBar(
-              title: 'Add Product',
+              title: context.l10n.t('Add Product'),
               showMenuButton: true,
               onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
             ),
@@ -39,7 +40,7 @@ class _AddProductOptionsScreenState extends State<AddProductOptionsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Choose how you want to add a product',
+                      context.l10n.t('Choose how you want to add a product'),
                       style: TextStyle(color: p.textSecondary, fontSize: 14),
                     ),
                     const SizedBox(height: 32),
@@ -47,9 +48,10 @@ class _AddProductOptionsScreenState extends State<AddProductOptionsScreen> {
                       icon: Icons.flash_on_rounded,
                       iconBgColor: const Color(0xFFFFF7ED),
                       iconColor: const Color(0xFFEA580C),
-                      title: 'Quick Add',
-                      subtitle:
-                          'Add a product with minimal details — name, price, and stock only.',
+                      title: context.l10n.t('Quick Add'),
+                      subtitle: context.l10n.t(
+                        'Add a product with minimal details — name, price, and stock only.',
+                      ),
                       onTap: () => _navigateTo(context, 'quick'),
                     ),
                     const SizedBox(height: 16),
@@ -57,9 +59,10 @@ class _AddProductOptionsScreenState extends State<AddProductOptionsScreen> {
                       icon: Icons.inventory_2_outlined,
                       iconBgColor: const Color(0xFFF0FDF4),
                       iconColor: const Color(0xFF16A34A),
-                      title: 'Stock Add',
-                      subtitle:
-                          'Add stock to an existing product or create with detailed inventory tracking.',
+                      title: context.l10n.t('Stock Add'),
+                      subtitle: context.l10n.t(
+                        'Add stock to an existing product or create with detailed inventory tracking.',
+                      ),
                       onTap: () => _navigateTo(context, 'stock'),
                     ),
                     const SizedBox(height: 16),
@@ -67,9 +70,10 @@ class _AddProductOptionsScreenState extends State<AddProductOptionsScreen> {
                       icon: Icons.edit_note_rounded,
                       iconBgColor: p.selectionTint,
                       iconColor: const Color(0xFF7C3AED),
-                      title: 'Normal Add',
-                      subtitle:
-                          'Full product creation with all details — image, variants, categories, and supply chain.',
+                      title: context.l10n.t('Normal Add'),
+                      subtitle: context.l10n.t(
+                        'Full product creation with all details — image, variants, categories, and supply chain.',
+                      ),
                       onTap: () => _navigateTo(context, 'normal'),
                     ),
                   ],

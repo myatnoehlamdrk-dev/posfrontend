@@ -14,17 +14,13 @@ class AssignProductToPackageViewModel extends BaseViewModel {
     required this.package,
   }) : _productRepository = productRepository;
 
+  /// Upper bound for the single page this screen loads. The endpoint has no
+  /// maximum, so this only caps how large a response the picker will ask for;
+  /// a shop with more products than this would need real pagination.
+  static const int _pageSize = 200;
+
   List<CatalogProductView> _allProducts = [];
   List<CatalogProductView> get allProducts => _allProducts;
-
-  List<String> _categories = ['All'];
-  List<String> get categories => _categories;
-
-  String _searchQuery = '';
-  String get searchQuery => _searchQuery;
-
-  String _selectedCategory = 'All';
-  String get selectedCategory => _selectedCategory;
 
   final Set<String> _selectedIds = {};
   Set<String> get selectedIds => _selectedIds;
@@ -34,31 +30,20 @@ class AssignProductToPackageViewModel extends BaseViewModel {
 
   int get selectedCount => _selectedIds.length;
 
+  /// Every product in the shop that is not in a package yet, newest and oldest
+  /// alike. The list is deliberately unsorted by recency on screen: the screen
+  /// used to read only the first page of `/api/products`, whose default page
+  /// size is 10, so any unassigned product older than the ten newest was never
+  /// fetched and could not be assigned from here.
   List<CatalogProductView> get filtered {
-    return _allProducts.where((p) {
-      final matchCat = _selectedCategory == 'All' || p.category == _selectedCategory;
-      final matchSearch = _searchQuery.isEmpty ||
-          p.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          p.sku.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          p.brand.toLowerCase().contains(_searchQuery.toLowerCase());
-      final hasNoPackage = p.packageId.isEmpty || p.packageId == '—';
-      return matchCat && matchSearch && hasNoPackage;
-    }).toList();
+    return _allProducts
+        .where((p) => p.packageId.isEmpty || p.packageId == '—')
+        .toList();
   }
 
   bool get allFilteredSelected {
     final items = filtered;
     return _selectedIds.length == items.length && items.isNotEmpty;
-  }
-
-  void setSearchQuery(String value) {
-    _searchQuery = value;
-    notifyListeners();
-  }
-
-  void setSelectedCategory(String value) {
-    _selectedCategory = value;
-    notifyListeners();
   }
 
   void toggleSelect(String id) {
@@ -84,7 +69,13 @@ class AssignProductToPackageViewModel extends BaseViewModel {
     setLoading(true);
     resetError();
     try {
-      final response = await _productRepository.getProducts(cancelToken: cancelToken);
+      // perPage defaults to 10 in the repository, which silently cut the list
+      // off at the ten newest products. Ask for a page big enough to cover the
+      // whole shop so an old unassigned product can still be assigned here.
+      final response = await _productRepository.getProducts(
+        perPage: _pageSize,
+        cancelToken: cancelToken,
+      );
       final rawList = response['data'];
       final List<dynamic> items = rawList is List ? rawList : [];
       _allProducts = items.map((json) {
@@ -127,14 +118,6 @@ class AssignProductToPackageViewModel extends BaseViewModel {
           createdBy: createdBy,
         );
       }).toList();
-      _categories = [
-        'All',
-        ..._allProducts
-            .map((p) => p.category)
-            .where((c) => c.isNotEmpty)
-            .toSet()
-            .toList(),
-      ];
     } on ApiException catch (e) {
       setError(e.message);
     } catch (e) {

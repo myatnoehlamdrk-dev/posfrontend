@@ -30,7 +30,10 @@ class SettingsSkeleton extends StatelessWidget {
             _HeaderSkeleton(width: 96),
             SizedBox(height: 10),
             _SettingsCardSkeleton(
-              rows: [_RowSkeleton(switchLike: true), _RowSkeleton(switchLike: true)],
+              rows: [
+                _RowSkeleton(switchLike: true),
+                _RowSkeleton(switchLike: true),
+              ],
             ),
             SizedBox(height: 28),
             _HeaderSkeleton(width: 72),
@@ -45,9 +48,7 @@ class SettingsSkeleton extends StatelessWidget {
             SizedBox(height: 28),
             _HeaderSkeleton(width: 70),
             SizedBox(height: 10),
-            _SettingsCardSkeleton(
-              rows: [_RowSkeleton(), _RowSkeleton()],
-            ),
+            _SettingsCardSkeleton(rows: [_RowSkeleton(), _RowSkeleton()]),
             SizedBox(height: 28),
             _HeaderSkeleton(width: 48),
             SizedBox(height: 10),
@@ -186,8 +187,6 @@ class _SignOutSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: SkeletonBox(width: 124, height: 48, radius: 16),
-    );
+    return const Center(child: SkeletonBox(width: 124, height: 48, radius: 16));
   }
 }

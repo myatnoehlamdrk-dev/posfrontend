@@ -2,7 +2,8 @@ import 'package:posfrontend/core/base/use_case.dart';
 import 'package:posfrontend/features/dashboard/domain/entities/dashboard.dart';
 import 'package:posfrontend/features/dashboard/domain/repositories/dashboard_repository.dart';
 
-class GetDashboardDataUseCase extends UseCase<DashboardEntity, DashboardParams> {
+class GetDashboardDataUseCase
+    extends UseCase<DashboardEntity, DashboardParams> {
   final DashboardRepository _repository;
 
   GetDashboardDataUseCase(this._repository);

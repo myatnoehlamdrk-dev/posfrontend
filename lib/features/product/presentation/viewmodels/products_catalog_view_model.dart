@@ -10,8 +10,7 @@ import 'package:posfrontend/features/product/presentation/widgets/category_showc
 class ProductsCatalogViewModel extends BaseViewModel {
   final Dio _dio;
 
-  ProductsCatalogViewModel({Dio? dio})
-      : _dio = dio ?? ApiClient.create();
+  ProductsCatalogViewModel({Dio? dio}) : _dio = dio ?? ApiClient.create();
 
   List<CategoryShowcaseData> _categories = [];
   List<CategoryShowcaseData> get categories => _categories;
@@ -82,8 +81,8 @@ class ProductsCatalogViewModel extends BaseViewModel {
       final List<dynamic> items = response.data is List
           ? response.data as List
           : (response.data is Map
-              ? ((response.data as Map)['data'] as List? ?? const [])
-              : const []);
+                ? ((response.data as Map)['data'] as List? ?? const [])
+                : const []);
 
       if (rev != _searchRevision) return;
 
@@ -132,9 +131,7 @@ class ProductsCatalogViewModel extends BaseViewModel {
     resetError();
 
     try {
-      final queryParams = <String, dynamic>{
-        'productLimit': 4,
-      };
+      final queryParams = <String, dynamic>{'productLimit': 4};
       if (_searchQuery.isNotEmpty) {
         queryParams['search'] = _searchQuery;
       }
@@ -146,7 +143,9 @@ class ProductsCatalogViewModel extends BaseViewModel {
       );
 
       final data = response.data;
-      final List<dynamic> items = data is Map ? (data['data'] ?? []) : (data as List? ?? []);
+      final List<dynamic> items = data is Map
+          ? (data['data'] ?? [])
+          : (data as List? ?? []);
 
       _categories = items.map((json) {
         final cat = json as Map<String, dynamic>;
@@ -199,8 +198,9 @@ class ProductsCatalogViewModel extends BaseViewModel {
       );
 
       final data = response.data;
-      final List<dynamic> items =
-          data is Map ? (data['data'] ?? []) : (data as List? ?? []);
+      final List<dynamic> items = data is Map
+          ? (data['data'] ?? [])
+          : (data as List? ?? []);
 
       _hotProducts = items.map((p) {
         final product = p as Map<String, dynamic>;

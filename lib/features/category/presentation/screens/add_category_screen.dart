@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:get_it/get_it.dart';
 import 'package:posfrontend/features/category/domain/entities/category.dart';
 import 'package:posfrontend/features/category/domain/repositories/category_repository.dart';
@@ -124,8 +125,8 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Breadcrumb([
-                    const BreadcrumbItem('Dashboard', false),
-                    const BreadcrumbItem('Inventory', false),
+                    BreadcrumbItem(context.l10n.t('Dashboard'), false),
+                    BreadcrumbItem(context.l10n.t('Inventory'), false),
                     const BreadcrumbItem('Categories', false),
                     BreadcrumbItem(
                       isEdit ? 'Edit Category' : 'Add Category',
@@ -150,21 +151,22 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                   ),
                   const SizedBox(height: 24),
                   FormCard(
-                    label: 'Category Name',
+                    label: context.l10n.t('Category Name'),
                     required: true,
-                    helper: 'Enter a name for this category.',
+                    helper: context.l10n.t('Enter a name for this category.'),
                     child: CounterTextField(
                       controller: _nameController,
-                      hint: 'Enter category name',
+                      hint: context.l10n.t('Enter category name'),
                       max: 100,
                       onChanged: _viewModel.setName,
                     ),
                   ),
                   const SizedBox(height: 16),
                   FormCard(
-                    label: 'Amount of Packages (Limit)',
-                    helper:
-                        'Maximum number of packages this category can hold.',
+                    label: context.l10n.t('Amount of Packages (Limit)'),
+                    helper: context.l10n.t(
+                      'Maximum number of packages this category can hold.',
+                    ),
                     child: CounterTextField(
                       controller: _amountController,
                       hint: '0',
@@ -175,11 +177,13 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                   ),
                   const SizedBox(height: 16),
                   FormCard(
-                    label: 'Description',
-                    helper: 'Enter a brief description of this category.',
+                    label: context.l10n.t('Description'),
+                    helper: context.l10n.t(
+                      'Enter a brief description of this category.',
+                    ),
                     child: CounterTextField(
                       controller: _descController,
-                      hint: 'Enter category description',
+                      hint: context.l10n.t('Enter category description'),
                       max: 300,
                       maxLines: 4,
                       onChanged: _viewModel.setDescription,

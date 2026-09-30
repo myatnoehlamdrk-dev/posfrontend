@@ -29,8 +29,7 @@ class CategorySkeleton extends StatelessWidget {
           }
 
           final spacing = 16.0;
-          final cardW =
-              (w - (spacing * (crossAxisCount - 1))) / crossAxisCount;
+          final cardW = (w - (spacing * (crossAxisCount - 1))) / crossAxisCount;
 
           return Wrap(
             spacing: spacing,

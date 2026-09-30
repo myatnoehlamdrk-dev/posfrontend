@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/shared/widgets/legal_document_screen.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
@@ -68,8 +69,8 @@ class PrivacyPolicyScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const LegalDocumentScreen(
-      title: 'Privacy Policy',
+    return LegalDocumentScreen(
+      title: context.l10n.t('Privacy Policy'),
       lastUpdated: 'September 25, 2026',
       sections: _sections,
     );

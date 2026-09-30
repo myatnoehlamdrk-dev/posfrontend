@@ -8,7 +8,7 @@ class DashboardRepositoryImpl implements DashboardRepository {
   final DashboardRemoteDataSource _remoteDataSource;
 
   DashboardRepositoryImpl({DashboardRemoteDataSource? remoteDataSource})
-      : _remoteDataSource = remoteDataSource ?? DashboardRemoteDataSource();
+    : _remoteDataSource = remoteDataSource ?? DashboardRemoteDataSource();
 
   @override
   Future<DashboardEntity> getDashboardData({int days = 30}) async {

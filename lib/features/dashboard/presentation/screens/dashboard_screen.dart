@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:posfrontend/core/network/api_client.dart';
@@ -68,12 +69,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: p.scaffoldBg,
-      drawer: const AppDrawer(activeItem: 'Dashboard'),
+      drawer: const AppDrawer(active: DrawerDestination.dashboard),
       body: SafeArea(
         child: Column(
           children: [
             AppScreenTopBar(
-              title: 'Dashboard',
+              title: context.l10n.t('Dashboard'),
               showMenuButton: true,
               onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
             ),
@@ -119,7 +120,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ElevatedButton.icon(
                                       onPressed: () => _viewModel.load(),
                                       icon: const Icon(Icons.refresh, size: 18),
-                                      label: const Text('Retry'),
+                                      label: Text(context.l10n.t('Retry')),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: purpleAction,
                                         foregroundColor: Colors.white,
@@ -133,7 +134,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             const DashboardSkeleton()
                           else ...[
                             Text(
-                              'Summary',
+                              context.l10n.t('Summary'),
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -154,7 +155,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             _buildMonthlySalesSection(),
                             const SizedBox(height: 24),
                             Text(
-                              'Product Trend',
+                              context.l10n.t('Product Trend'),
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -217,13 +218,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          Text(m.label, style: TextStyle(fontSize: 13, color: p.textSecondary)),
+          Text(
+            context.l10n.t(m.label),
+            style: TextStyle(fontSize: 13, color: p.textSecondary),
+          ),
           const SizedBox(height: 6),
           // Both the number and "View all" open the same table. The number used
           // to open a dialog that just repeated it, which is a dead end: the
           // card is a summary, and the rows behind it are somewhere else.
           GestureDetector(
-            onTap: () => _openSummaryTable(m.label),
+            onTap: () => _openSummaryTable(m.tableKey),
             child: Text(
               m.value.length > 12 ? '${m.value.substring(0, 12)}...' : m.value,
               style: TextStyle(
@@ -237,11 +241,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           const SizedBox(height: 8),
           GestureDetector(
-            onTap: () => _openSummaryTable(m.label),
+            onTap: () => _openSummaryTable(m.tableKey),
             child: Row(
               children: [
-                const Text(
-                  'View all',
+                Text(
+                  context.l10n.t('View all'),
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -261,16 +265,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
   /// Maps a summary card to the table of rows behind it. Total Sales is the
   /// only card whose value is money rather than a count, but it has a table
   /// too, so the mapping is on the label for all four.
-  void _openSummaryTable(String label) {
-    final route = switch (label) {
-      'Total Products' => DashboardTableScreen.route(spec: DashboardTables.products),
-      'In Stock' => DashboardTableScreen.route(spec: DashboardTables.inStock),
-      'Low Stock' => DashboardTableScreen.route(
-          spec: DashboardTables.lowStock,
-          query: const {'low': 1},
-        ),
-      'Total Sales' => DashboardTableScreen.route(spec: DashboardTables.sales),
-      _ => null,
+  void _openSummaryTable(DashboardTableKey? key) {
+    final route = switch (key) {
+      DashboardTableKey.products => DashboardTableScreen.route(
+        spec: DashboardTables.products,
+      ),
+      DashboardTableKey.inStock => DashboardTableScreen.route(
+        spec: DashboardTables.inStock,
+      ),
+      DashboardTableKey.lowStock => DashboardTableScreen.route(
+        spec: DashboardTables.lowStock,
+        query: const {'low': 1},
+      ),
+      DashboardTableKey.sales => DashboardTableScreen.route(
+        spec: DashboardTables.sales,
+      ),
+      null => null,
     };
 
     if (route == null) return;
@@ -401,14 +411,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Product Distribution by Category',
+          context.l10n.t('Product Distribution by Category'),
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: p.textPrimary,
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(20),
@@ -425,9 +435,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
           child: items.isEmpty
-              ? const SizedBox(
+              ? SizedBox(
                   height: 200,
-                  child: Center(child: Text('No category data')),
+                  child: Center(
+                    child: Text(context.l10n.t('No category data')),
+                  ),
                 )
               : LayoutBuilder(
                   builder: (context, constraints) {
@@ -463,14 +475,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Quantity Sold by Category',
+          context.l10n.t('Quantity Sold by Category'),
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: p.textPrimary,
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(20),
@@ -487,9 +499,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
           child: items.isEmpty
-              ? const SizedBox(
+              ? SizedBox(
                   height: 200,
-                  child: Center(child: Text('No sales data')),
+                  child: Center(child: Text(context.l10n.t('No sales data'))),
                 )
               : _HorizontalCategoryChart(items: items, palette: p),
         ),
@@ -513,7 +525,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             Expanded(
               child: Text(
-                'Monthly Sales',
+                context.l10n.t('Monthly Sales'),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -528,7 +540,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(20),
@@ -547,14 +559,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: _viewModel.isLoadingMonthly
               ? const MonthlySalesChartSkeleton()
               : _viewModel.monthlySales.isEmpty
-              ? const SizedBox(
+              ? SizedBox(
                   height: 260,
-                  child: Center(child: Text('No sales data')),
+                  child: Center(child: Text(context.l10n.t('No sales data'))),
                 )
-              : _HorizontalBarChart(
-                  items: _viewModel.monthlySales,
-                  palette: p,
-                ),
+              : _HorizontalBarChart(items: _viewModel.monthlySales, palette: p),
         ),
       ],
     );
@@ -567,7 +576,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   ) {
     final p = context.palette;
     final mostCard = _ProductListCard(
-      title: 'Most Bought',
+      title: context.l10n.t('Most Bought'),
       titleColor: const Color(0xFF16A34A),
       items: most,
       onViewAll: () => Navigator.of(context).push(
@@ -578,7 +587,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
     final leastCard = _ProductListCard(
-      title: 'Least Bought',
+      title: context.l10n.t('Least Bought'),
       titleColor: const Color(0xFFEF4444),
       items: least,
       onViewAll: () => Navigator.of(context).push(
@@ -590,12 +599,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
     final noBoughtCard = _ProductListCard(
-      title: 'No Bought',
+      title: context.l10n.t('No Bought'),
       titleColor: p.textSecondary,
       items: noBought,
-      onViewAll: () => Navigator.of(context).push(
-        DashboardTableScreen.route(spec: DashboardTables.noBought),
-      ),
+      onViewAll: () => Navigator.of(
+        context,
+      ).push(DashboardTableScreen.route(spec: DashboardTables.noBought)),
     );
 
     return LayoutBuilder(
@@ -707,13 +716,14 @@ class _ProductListCard extends StatelessWidget {
                               ? Image.network(
                                   p.image,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) => Icon(
-                                    IconData(
-                                      p.iconCodePoint,
-                                      fontFamily: p.iconFontFamily,
-                                    ),
-                                    color: pal.textSecondary,
-                                  ),
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      Icon(
+                                        IconData(
+                                          p.iconCodePoint,
+                                          fontFamily: p.iconFontFamily,
+                                        ),
+                                        color: pal.textSecondary,
+                                      ),
                                 )
                               : Icon(
                                   IconData(
@@ -769,7 +779,7 @@ class _ProductListCard extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'View all',
+                    context.l10n.t('View all'),
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -989,9 +999,7 @@ class _HorizontalBarChart extends StatelessWidget {
     return SizedBox(
       height: 300,
       width: double.infinity,
-      child: CustomPaint(
-        painter: _HorizontalBarChartPainter(items, palette),
-      ),
+      child: CustomPaint(painter: _HorizontalBarChartPainter(items, palette)),
     );
   }
 }

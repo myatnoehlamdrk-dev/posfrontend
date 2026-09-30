@@ -9,10 +9,16 @@ import 'package:posfrontend/shared/widgets/skeleton.dart';
 /// header and the rows land in the same place once the data arrives. A centred
 /// spinner would be shorter to write and would cause everything below it to
 /// jump when the rows show up.
+///
+/// The real table prepends a row-number column, so the skeleton reserves that
+/// slot too; otherwise every header cell would shift right when loading ends.
 class DashboardTableSkeleton extends StatelessWidget {
   final List<TableColumn> columns;
   final double totalWidth;
   final int rowCount;
+
+  /// Matches the row-number column in DashboardTableScreen.
+  static const double _numberWidth = 48;
 
   const DashboardTableSkeleton({
     super.key,
@@ -58,6 +64,7 @@ class DashboardTableSkeleton extends StatelessWidget {
                         ),
                         child: Row(
                           children: [
+                            _numberCell(),
                             for (final column in columns)
                               SizedBox(
                                 width: column.width,
@@ -77,6 +84,7 @@ class DashboardTableSkeleton extends StatelessWidget {
                           ),
                           child: Row(
                             children: [
+                              _numberCell(),
                               for (final column in columns)
                                 SizedBox(
                                   width: column.width,
@@ -96,6 +104,13 @@ class DashboardTableSkeleton extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _numberCell() {
+    return const SizedBox(
+      width: _numberWidth,
+      child: SkeletonBox(height: 12, width: 24),
     );
   }
 }

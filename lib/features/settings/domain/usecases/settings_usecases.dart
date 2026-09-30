@@ -13,7 +13,8 @@ class GetSettingsUseCase extends UseCase<SettingsEntity, NoParams> {
   }
 }
 
-class UpdateSettingsUseCase extends UseCase<SettingsEntity, UpdateSettingsParams> {
+class UpdateSettingsUseCase
+    extends UseCase<SettingsEntity, UpdateSettingsParams> {
   final SettingsRepository repository;
 
   UpdateSettingsUseCase(this.repository);
@@ -35,5 +36,10 @@ class UpdateSettingsParams {
   final String? shopType;
   final String? shopImage;
 
-  UpdateSettingsParams({this.themeMode, this.language, this.shopType, this.shopImage});
+  UpdateSettingsParams({
+    this.themeMode,
+    this.language,
+    this.shopType,
+    this.shopImage,
+  });
 }

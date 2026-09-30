@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/custom_back_button.dart';
@@ -145,12 +146,27 @@ class InventoryBottomNav extends StatelessWidget {
       unselectedItemColor: p.textSecondary,
       type: BottomNavigationBarType.fixed,
       onTap: onTap,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Dashboard'),
-        BottomNavigationBarItem(icon: Icon(Icons.inventory_2), label: 'Inventory'),
-        BottomNavigationBarItem(icon: Icon(Icons.category), label: 'Product'),
-        BottomNavigationBarItem(icon: Icon(Icons.point_of_sale), label: 'Sale'),
-        BottomNavigationBarItem(icon: Icon(Icons.more_horiz), label: 'More'),
+      items: [
+        BottomNavigationBarItem(
+          icon: Icon(Icons.dashboard),
+          label: context.l10n.t('Dashboard'),
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.inventory_2),
+          label: context.l10n.t('Inventory'),
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.category),
+          label: context.l10n.t('Product'),
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.point_of_sale),
+          label: context.l10n.t('Sale'),
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.more_horiz),
+          label: context.l10n.t('More'),
+        ),
       ],
     );
   }
@@ -228,7 +244,7 @@ class FormCard extends StatelessWidget {
                 ),
               ),
               if (required)
-                const Text(' *', style: TextStyle(color: kRed, fontSize: 15)),
+                Text(' *', style: TextStyle(color: kRed, fontSize: 15)),
             ],
           ),
           if (helper != null) ...[
@@ -323,7 +339,10 @@ class CounterTextField extends StatelessWidget {
           child: ListenableBuilder(
             listenable: controller,
             builder: (context, _) => Text(
-              '${controller.text.length} / $max',
+              context.l10n
+                  .t('{v1} / {v2}')
+                  .replaceAll('{v1}', (controller.text.length).toString())
+                  .replaceAll('{v2}', (max).toString()),
               style: TextStyle(fontSize: 12, color: p.textSecondary),
             ),
           ),
@@ -361,7 +380,10 @@ class DropdownField extends StatelessWidget {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
-          hint: Text(hint, style: TextStyle(color: p.textSecondary, fontSize: 14)),
+          hint: Text(
+            hint,
+            style: TextStyle(color: p.textSecondary, fontSize: 14),
+          ),
           isExpanded: true,
           items: items
               .map((e) => DropdownMenuItem(value: e, child: Text(e)))
@@ -404,7 +426,7 @@ class FormActions extends StatelessWidget {
                 ),
               ),
               child: Text(
-                'Cancel',
+                context.l10n.t('Cancel'),
                 style: TextStyle(
                   color: p.textPrimary,
                   fontWeight: FontWeight.w600,

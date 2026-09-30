@@ -7,7 +7,10 @@ class CustomerRepositoryImpl implements CustomerRepository {
   final dio = ApiClient.instance;
 
   @override
-  Future<Map<String, dynamic>> getCustomers({String? search, int page = 1}) async {
+  Future<Map<String, dynamic>> getCustomers({
+    String? search,
+    int page = 1,
+  }) async {
     final params = <String, dynamic>{'page': page};
     if (search != null && search.isNotEmpty) params['search'] = search;
     final response = await dio.get('/api/customers', queryParameters: params);
@@ -27,8 +30,13 @@ class CustomerRepositoryImpl implements CustomerRepository {
   }
 
   @override
-  Future<List<CustomerSearchResultEntity>> searchCustomers({String? query}) async {
-    final response = await dio.get('/api/customers/search', queryParameters: {'query': query ?? ''});
+  Future<List<CustomerSearchResultEntity>> searchCustomers({
+    String? query,
+  }) async {
+    final response = await dio.get(
+      '/api/customers/search',
+      queryParameters: {'query': query ?? ''},
+    );
     return CustomerApiModel.searchResultsFromJson(response.data);
   }
 }

@@ -165,11 +165,11 @@ class ProductCreateVariant {
   int get hashCode => Object.hash(size, color, quantity, price);
 
   Map<String, dynamic> toJson() => {
-        'size': size,
-        'color': color,
-        'quantity': quantity,
-        'price': price,
-      };
+    'size': size,
+    'color': color,
+    'quantity': quantity,
+    'price': price,
+  };
 }
 
 class ProductCreateRequest {
@@ -215,22 +215,31 @@ class ProductCreateRequest {
       variants.fold(0, (sum, v) => sum + (v.quantity > 0 ? v.quantity : 0));
 
   Map<String, dynamic> toJson() => {
-        'isSet': isSet,
-        'name': name,
-        'image': imageUrl.isEmpty ? null : imageUrl,
-        'brand': brand.isEmpty ? null : brand,
-        'sku': sku.isEmpty ? null : sku,
-        'stock': stock ?? totalStock,
-        if (variants.isNotEmpty) 'size': variants.first.size,
-        if (variants.isNotEmpty) 'color': variants.first.color,
-        'variants': variants.map((v) => v.toJson()).toList(),
-        if (supplierId.isNotEmpty) 'supplierId': int.tryParse(supplierId),
-        'supplierName': supplierName.isEmpty ? null : supplierName,
-        'supplierContact': supplierContact.isEmpty ? null : supplierContact,
-        'supplierSince': supplierSince.isEmpty ? null : supplierSince,
-        'supplierAddress': supplierAddress.isEmpty ? null : supplierAddress,
-        'imageDeleteUrl': imageDeleteUrl.isEmpty ? null : imageDeleteUrl,
-        'packageId': packageId.isEmpty ? null : int.tryParse(packageId),
-        'purchaseItemId': purchaseItemId.isEmpty ? null : int.tryParse(purchaseItemId),
-      };
+    'isSet': isSet,
+    'name': name,
+    'image': imageUrl.isEmpty ? null : imageUrl,
+    'brand': brand.isEmpty ? null : brand,
+    'sku': sku.isEmpty ? null : sku,
+    'stock': stock ?? totalStock,
+    if (variants.isNotEmpty) 'size': variants.first.size,
+    if (variants.isNotEmpty) 'color': variants.first.color,
+    'variants': variants.map((v) => v.toJson()).toList(),
+    if (supplierId.isNotEmpty) 'supplierId': int.tryParse(supplierId),
+    'supplierName': supplierName.isEmpty ? null : supplierName,
+    'supplierContact': supplierContact.isEmpty ? null : supplierContact,
+    'supplierSince': supplierSince.isEmpty ? null : supplierSince,
+    'supplierAddress': supplierAddress.isEmpty ? null : supplierAddress,
+    'imageDeleteUrl': imageDeleteUrl.isEmpty ? null : imageDeleteUrl,
+    // Omitted rather than sent as null when empty. The backend reads
+    // array_key_exists('packageId') to decide whether the package should
+    // change, and the stock-add screens build a request with no package, so
+    // emitting null here silently detached the product from its package
+    // (and with no package and no created_by it fell out of the dashboard
+    // and out of every category). Unassigning stays an explicit action that
+    // sends packageId: null directly.
+    if (packageId.isNotEmpty) 'packageId': int.tryParse(packageId),
+    'purchaseItemId': purchaseItemId.isEmpty
+        ? null
+        : int.tryParse(purchaseItemId),
+  };
 }

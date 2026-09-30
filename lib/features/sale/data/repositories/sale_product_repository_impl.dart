@@ -6,10 +6,14 @@ class SaleProductRepositoryImpl implements SaleProductRepository {
   final ProductRemoteDataSource _remoteDataSource;
 
   SaleProductRepositoryImpl({ProductRemoteDataSource? remoteDataSource})
-      : _remoteDataSource = remoteDataSource ?? ProductRemoteDataSource();
+    : _remoteDataSource = remoteDataSource ?? ProductRemoteDataSource();
 
   @override
-  Future<Map<String, dynamic>> getProducts({int page = 1, int perPage = 10, CancelToken? cancelToken}) async {
+  Future<Map<String, dynamic>> getProducts({
+    int page = 1,
+    int perPage = 10,
+    CancelToken? cancelToken,
+  }) async {
     return await _remoteDataSource.getProducts(
       page: page,
       perPage: perPage,

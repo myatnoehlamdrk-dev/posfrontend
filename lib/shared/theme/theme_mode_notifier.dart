@@ -36,23 +36,24 @@ class ThemeModeNotifier extends ValueNotifier<ThemeMode> {
 
   /// Resolve the system preference. Used when the user has never chosen, and
   /// by 'follow system'.
-  static ThemeMode get system => switch (PlatformDispatcher.instance.platformBrightness) {
+  static ThemeMode get system =>
+      switch (PlatformDispatcher.instance.platformBrightness) {
         Brightness.dark => ThemeMode.dark,
         Brightness.light => ThemeMode.light,
       };
 
   static ThemeMode _decode(String? raw) => switch (raw) {
-        'dark' => ThemeMode.dark,
-        'light' => ThemeMode.light,
-        'system' => ThemeMode.system,
-        _ => ThemeMode.light,
-      };
+    'dark' => ThemeMode.dark,
+    'light' => ThemeMode.light,
+    'system' => ThemeMode.system,
+    _ => ThemeMode.light,
+  };
 
   static String _encode(ThemeMode mode) => switch (mode) {
-        ThemeMode.dark => 'dark',
-        ThemeMode.system => 'system',
-        ThemeMode.light => 'light',
-      };
+    ThemeMode.dark => 'dark',
+    ThemeMode.system => 'system',
+    ThemeMode.light => 'light',
+  };
 
   void setMode(ThemeMode mode) {
     if (value == mode) return;

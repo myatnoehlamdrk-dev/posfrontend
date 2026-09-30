@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/features/purchase/presentation/viewmodels/purchase_item_view_model.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
@@ -25,7 +26,8 @@ class _AddPurchaseSheetState extends State<AddPurchaseSheet> {
   final _sizeController = TextEditingController();
   final _colorController = TextEditingController();
   final _dateController = TextEditingController(
-    text: '${DateTime.now().month.toString().padLeft(2, '0')}/${DateTime.now().day.toString().padLeft(2, '0')}/${DateTime.now().year}',
+    text:
+        '${DateTime.now().month.toString().padLeft(2, '0')}/${DateTime.now().day.toString().padLeft(2, '0')}/${DateTime.now().year}',
   );
   final _notesController = TextEditingController();
 
@@ -45,7 +47,9 @@ class _AddPurchaseSheetState extends State<AddPurchaseSheet> {
   Widget build(BuildContext context) {
     final p = context.palette;
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Container(
         padding: const EdgeInsets.all(20),
         child: SingleChildScrollView(
@@ -57,7 +61,10 @@ class _AddPurchaseSheetState extends State<AddPurchaseSheet> {
                 child: Container(
                   width: 40,
                   height: 4,
-                  decoration: BoxDecoration(color: p.border, borderRadius: BorderRadius.circular(2)),
+                  decoration: BoxDecoration(
+                    color: p.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -65,8 +72,12 @@ class _AddPurchaseSheetState extends State<AddPurchaseSheet> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'New Purchase Order',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: p.textPrimary),
+                    context.l10n.t('New Purchase Order'),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: p.textPrimary,
+                    ),
                   ),
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
@@ -77,16 +88,27 @@ class _AddPurchaseSheetState extends State<AddPurchaseSheet> {
               const SizedBox(height: 20),
               Row(
                 children: [
-                  Text('Supplier', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: p.textPrimary)),
+                  Text(
+                    context.l10n.t('Supplier'),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: p.textPrimary,
+                    ),
+                  ),
                   const Spacer(),
                   GestureDetector(
                     onTap: () {
                       Navigator.pop(context);
                       widget.onAddSupplier();
                     },
-                    child: const Text(
-                      '+ Add Supplier',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.teal),
+                    child: Text(
+                      context.l10n.t('+ Add Supplier'),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.teal,
+                      ),
                     ),
                   ),
                 ],
@@ -102,37 +124,93 @@ class _AddPurchaseSheetState extends State<AddPurchaseSheet> {
                   child: DropdownButton<String>(
                     isExpanded: true,
                     value: _selectedSupplierId,
-                    hint: Text('Select a supplier...', style: TextStyle(color: p.textSecondary, fontSize: 14)),
-                    items: widget.viewModel.suppliers.map((s) => DropdownMenuItem(
-                      value: s.id,
-                      child: Text(s.name, style: const TextStyle(fontSize: 14)),
-                    )).toList(),
-                    onChanged: (val) => setState(() => _selectedSupplierId = val),
+                    hint: Text(
+                      context.l10n.t('Select a supplier...'),
+                      style: TextStyle(color: p.textSecondary, fontSize: 14),
+                    ),
+                    items: widget.viewModel.suppliers
+                        .map(
+                          (s) => DropdownMenuItem(
+                            value: s.id,
+                            child: Text(
+                              s.name,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (val) =>
+                        setState(() => _selectedSupplierId = val),
                   ),
                 ),
               ),
               const SizedBox(height: 16),
-              _inputField(context, 'Item / Product Name', 'e.g. All-Purpose Flour (50kg)', _nameController),
+              _inputField(
+                context,
+                'Item / Product Name',
+                'e.g. All-Purpose Flour (50kg)',
+                _nameController,
+              ),
               const SizedBox(height: 16),
               Row(
                 children: [
-                  Expanded(child: _inputField(context, 'Size (optional)', 'e.g. Large', _sizeController)),
+                  Expanded(
+                    child: _inputField(
+                      context,
+                      'Size (optional)',
+                      'e.g. Large',
+                      _sizeController,
+                    ),
+                  ),
                   const SizedBox(width: 12),
-                  Expanded(child: _inputField(context, 'Color (optional)', 'e.g. Red', _colorController)),
+                  Expanded(
+                    child: _inputField(
+                      context,
+                      'Color (optional)',
+                      'e.g. Red',
+                      _colorController,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
               Row(
                 children: [
-                  Expanded(child: _inputField(context, 'Quantity', '0', _qtyController, isNumber: true)),
+                  Expanded(
+                    child: _inputField(
+                      context,
+                      'Quantity',
+                      '0',
+                      _qtyController,
+                      isNumber: true,
+                    ),
+                  ),
                   const SizedBox(width: 12),
-                  Expanded(child: _inputField(context, 'Unit Price (MMK)', '0', _priceController, isNumber: true)),
+                  Expanded(
+                    child: _inputField(
+                      context,
+                      'Unit Price (MMK)',
+                      '0',
+                      _priceController,
+                      isNumber: true,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
-              _inputField(context, 'Purchase Date (MM/DD/YYYY)', 'mm/dd/yyyy', _dateController),
+              _inputField(
+                context,
+                'Purchase Date (MM/DD/YYYY)',
+                'mm/dd/yyyy',
+                _dateController,
+              ),
               const SizedBox(height: 16),
-              _inputField(context, 'Notes (optional)', 'Any notes...', _notesController),
+              _inputField(
+                context,
+                'Notes (optional)',
+                'Any notes...',
+                _notesController,
+              ),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
@@ -161,9 +239,14 @@ class _AddPurchaseSheetState extends State<AddPurchaseSheet> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.teal,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  child: const Text('Create Purchase Order', style: TextStyle(fontWeight: FontWeight.w600)),
+                  child: Text(
+                    context.l10n.t('Create Purchase Order'),
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
@@ -174,12 +257,25 @@ class _AddPurchaseSheetState extends State<AddPurchaseSheet> {
     );
   }
 
-  Widget _inputField(BuildContext context, String label, String hint, TextEditingController controller, {bool isNumber = false}) {
+  Widget _inputField(
+    BuildContext context,
+    String label,
+    String hint,
+    TextEditingController controller, {
+    bool isNumber = false,
+  }) {
     final p = context.palette;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: p.textPrimary)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: p.textPrimary,
+          ),
+        ),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
@@ -187,10 +283,22 @@ class _AddPurchaseSheetState extends State<AddPurchaseSheet> {
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(color: p.textSecondary, fontSize: 14),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: p.border)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: p.border)),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.teal, width: 1.5)),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: p.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: p.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.teal, width: 1.5),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 12,
+            ),
           ),
         ),
       ],

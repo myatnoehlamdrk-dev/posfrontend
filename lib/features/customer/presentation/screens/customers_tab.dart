@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/features/customer/domain/entities/customer.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 
@@ -41,7 +42,7 @@ class _CustomersTabState extends State<CustomersTab> {
           child: TextField(
             controller: _searchController,
             decoration: InputDecoration(
-              hintText: 'Search customers...',
+              hintText: context.l10n.t('Search customers...'),
               prefixIcon: Icon(Icons.search, color: p.textSecondary),
               suffixIcon: _searchQuery.isNotEmpty
                   ? IconButton(
@@ -52,12 +53,24 @@ class _CustomersTabState extends State<CustomersTab> {
                       },
                     )
                   : null,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: p.border)),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: p.border)),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: purple)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: p.border),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: p.border),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: purple),
+              ),
               filled: true,
               fillColor: p.surfaceAlt,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
             ),
             onChanged: (v) => setState(() => _searchQuery = v),
           ),
@@ -67,7 +80,7 @@ class _CustomersTabState extends State<CustomersTab> {
           Expanded(
             child: Center(
               child: Text(
-                'No customer data yet.',
+                context.l10n.t('No customer data yet.'),
                 style: TextStyle(color: p.textSecondary, fontSize: 14),
               ),
             ),
@@ -99,13 +112,27 @@ class _CustomersTabState extends State<CustomersTab> {
         child: Center(
           child: Text(
             c.name.isNotEmpty ? c.name[0].toUpperCase() : '?',
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: purple),
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: purple,
+            ),
           ),
         ),
       ),
-      title: Text(c.name, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: p.textPrimary)),
+      title: Text(
+        c.name,
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: p.textPrimary,
+        ),
+      ),
       subtitle: Text(
-        '${c.totalOrders} orders · MMK ${c.totalSpending}',
+        context.l10n
+            .t('{v1} orders · MMK {v2}')
+            .replaceAll('{v1}', (c.totalOrders).toString())
+            .replaceAll('{v2}', (c.totalSpending).toString()),
         style: TextStyle(fontSize: 12, color: p.textSecondary),
       ),
       children: [
@@ -126,20 +153,49 @@ class _CustomersTabState extends State<CustomersTab> {
                 Divider(height: 16, color: p.border),
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: Text('Top Products', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: p.textPrimary)),
+                  child: Text(
+                    context.l10n.t('Top Products'),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: p.textPrimary,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 6),
-                ...c.topProducts.map((item) => Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Row(
-                    children: [
-                      Icon(Icons.shopping_bag_outlined, size: 14, color: p.textSecondary),
-                      const SizedBox(width: 6),
-                      Expanded(child: Text(item.name, style: TextStyle(fontSize: 12, color: p.textPrimary))),
-                      Text('x${item.count}', style: TextStyle(fontSize: 12, color: p.textSecondary)),
-                    ],
+                ...c.topProducts.map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.shopping_bag_outlined,
+                          size: 14,
+                          color: p.textSecondary,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            item.name,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: p.textPrimary,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          context.l10n
+                              .t('x{v1}')
+                              .replaceAll('{v1}', (item.count).toString()),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: p.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                )),
+                ),
               ],
             ],
           ),
@@ -156,7 +212,14 @@ class _CustomersTabState extends State<CustomersTab> {
         children: [
           Text(label, style: TextStyle(fontSize: 12, color: p.textSecondary)),
           const Spacer(),
-          Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: p.textPrimary)),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: p.textPrimary,
+            ),
+          ),
         ],
       ),
     );

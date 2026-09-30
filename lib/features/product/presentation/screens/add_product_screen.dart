@@ -1,3 +1,4 @@
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:posfrontend/core/network/api_client.dart';
@@ -5,10 +6,14 @@ import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/features/product/data/models/product_create_models.dart';
 import 'package:posfrontend/features/product/domain/entities/product_detail.dart';
 import 'package:posfrontend/features/product/presentation/viewmodels/add_product_view_model.dart';
+import 'package:posfrontend/features/product/presentation/widgets/purchase_item_picker_view.dart';
+import 'package:posfrontend/features/purchase/data/repositories/purchase_repository_impl.dart';
+import 'package:posfrontend/features/purchase/domain/entities/purchase.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
+import 'package:posfrontend/shared/widgets/premium_image_upload.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
 const Color kPurple700 = Color(0xFF7C3AED);
@@ -26,6 +31,13 @@ class AddProductScreen extends StatefulWidget {
 class _AddProductScreenState extends State<AddProductScreen> {
   late final AddProductViewModel _vm;
   bool _saving = false;
+
+  /// 0 = the normal add-product form, 1 = the purchase-item search page.
+  int _addMode = 0;
+
+  /// The pending purchase item the form was seeded from, if any. Completing the
+  /// create turns it into a completed purchase item.
+  PurchaseOrderEntity? _sourcePurchaseItem;
 
   @override
   void initState() {
@@ -57,16 +69,17 @@ class _AddProductScreenState extends State<AddProductScreen> {
           builder: (ctx, constraints) {
             final isWide = constraints.maxWidth >= 768;
             final body = _content();
+            final bottomBar = _addMode == 0 ? _createButton() : null;
             final scaffold = isWide
                 ? Scaffold(
                     backgroundColor: p.scaffoldBg,
                     body: body,
-                    bottomNavigationBar: _createButton(),
+                    bottomNavigationBar: bottomBar,
                   )
                 : Scaffold(
                     backgroundColor: p.scaffoldBg,
                     body: body,
-                    bottomNavigationBar: _createButton(),
+                    bottomNavigationBar: bottomBar,
                   );
             return scaffold;
           },
@@ -86,180 +99,293 @@ class _AddProductScreenState extends State<AddProductScreen> {
             showMenuButton: false,
             showBackButton: true,
           ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  FormCard(
-                    label: 'Inventory Type',
-                    helper: 'Choose which inventory this product belongs to.',
-                    child: _inventoryTypeToggle(),
-                  ),
-                  const SizedBox(height: 16),
-                  FormCard(
-                    label: 'Product Image',
-                    helper: 'Upload a product photo from your device.',
-                    child: _imageSection(),
-                  ),
-                  const SizedBox(height: 16),
-                  FormCard(label: 'Basic Info', child: _basicInfo()),
-                  const SizedBox(height: 16),
-                  FormCard(
-                    label: 'Category & Package',
-                    child: _categoryPackage(),
-                  ),
-                  const SizedBox(height: 16),
-                  FormCard(
-                    label: 'Variants, Stock & Price',
-                    helper:
-                        'Split total stock into sizes and colors. Each variant has its own quantity and price.',
-                    child: _variantsSection(),
-                  ),
-                  const SizedBox(height: 16),
-                  FormCard(
-                    label: 'Supply Chain',
-                    helper: 'Supplier is optional.',
-                    child: _supplyChain(),
-                  ),
-                  const SizedBox(height: 100),
-                ],
-              ),
+          if (widget.existingProduct == null) ...[
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: _modeSwitch(),
             ),
+          ],
+          const SizedBox(height: 16),
+          Expanded(child: _addMode == 0 ? _normalForm() : _purchasePage()),
+        ],
+      ),
+    );
+  }
+
+  /// Two ways to add a product: fill the form directly, or start from an
+  /// existing purchase item.
+  Widget _modeSwitch() {
+    final p = context.palette;
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: p.chipBg,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          _modeOption(0, context.l10n.t('Normal Add'), Icons.edit_outlined),
+          _modeOption(
+            1,
+            context.l10n.t('Purchase Item'),
+            Icons.inventory_2_outlined,
           ),
         ],
       ),
     );
   }
 
-  Widget _inventoryTypeToggle() {
+  Widget _modeOption(int mode, String label, IconData icon) {
     final p = context.palette;
-    return Container(
-      decoration: BoxDecoration(
-        color: p.selectionTint,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      padding: const EdgeInsets.all(4),
-      child: Row(
-        children: [
-          _toggleOption('self', 'Self Inventory'),
-          _toggleOption('public', 'Public Inventory'),
-        ],
-      ),
-    );
-  }
-
-  Widget _toggleOption(String value, String label) {
-    final selected = _vm.inventoryType == value;
+    final active = _addMode == mode;
     return Expanded(
       child: GestureDetector(
         onTap: () {
-          if (_vm.inventoryType == value) return;
-          _vm.setInventoryType(value);
+          if (_addMode == mode) return;
+          setState(() => _addMode = mode);
         },
         child: Container(
           height: 42,
           decoration: BoxDecoration(
-            color: selected ? kPurple700 : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
+            color: active ? p.surface : Colors.transparent,
+            borderRadius: BorderRadius.circular(9),
+            boxShadow: active
+                ? [
+                    BoxShadow(
+                      color: p.cardShadow,
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ]
+                : null,
           ),
-          child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: selected ? Colors.white : kPurple600,
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 16,
+                color: active ? kPurple700 : p.textSecondary,
               ),
-            ),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    color: active ? kPurple700 : p.textSecondary,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
+  Widget _purchasePage() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            context.l10n.t('Search Purchase Item'),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: context.palette.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            context.l10n.t(
+              'Pick a pending purchase item to copy its name, stock, price and supplier into the form. It is marked completed once the product is created.',
+            ),
+            style: TextStyle(
+              fontSize: 13,
+              color: context.palette.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: PurchaseItemPickerView(onSelected: _onPurchaseItemSelected),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _onPurchaseItemSelected(PurchaseOrderEntity order) {
+    _vm.applyPurchaseItem(order);
+    setState(() {
+      _sourcePurchaseItem = order;
+      _addMode = 0;
+    });
+    showSuccessMessage(
+      context,
+      context.l10n.t('Purchase item copied into the form'),
+    );
+  }
+
+  /// Marks the purchase item this product came from as completed. A failure
+  /// here must not undo a successful product create, so it is swallowed.
+  Future<void> _completeSourcePurchaseItem() async {
+    final order = _sourcePurchaseItem;
+    if (order == null || widget.existingProduct != null) return;
+    try {
+      await PurchaseRepositoryImpl().updatePurchaseItemStatus(
+        id: order.orderId,
+        status: 'completed',
+      );
+    } catch (_) {}
+  }
+
+  Widget _normalForm() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          FormCard(
+            label: context.l10n.t('Inventory Type'),
+            helper: context.l10n.t(
+              'Choose which inventory this product belongs to.',
+            ),
+            child: _inventoryTypeDropdown(),
+          ),
+          const SizedBox(height: 16),
+          FormCard(
+            label: context.l10n.t('Product Image'),
+            helper: context.l10n.t('Upload a product photo from your device.'),
+            child: _imageSection(),
+          ),
+          const SizedBox(height: 16),
+          FormCard(label: context.l10n.t('Basic Info'), child: _basicInfo()),
+          const SizedBox(height: 16),
+          FormCard(
+            label: context.l10n.t('Category & Package'),
+            child: _categoryPackage(),
+          ),
+          const SizedBox(height: 16),
+          FormCard(
+            label: context.l10n.t('Variants, Stock & Price'),
+            helper: context.l10n.t(
+              'Split total stock into sizes and colors. Each variant has its own quantity and price.',
+            ),
+            child: _variantsSection(),
+          ),
+          const SizedBox(height: 16),
+          FormCard(
+            label: context.l10n.t('Supply Chain'),
+            helper: context.l10n.t('Supplier is optional.'),
+            child: _supplyChain(),
+          ),
+          const SizedBox(height: 100),
+        ],
+      ),
+    );
+  }
+
+  static const Map<String, String> _inventoryLabels = {
+    'self': 'Self Inventory',
+    'public': 'Public Inventory',
+  };
+
+  Widget _inventoryTypeDropdown() {
+    return _dropdown(
+      'Inventory Type',
+      _inventoryLabels[_vm.inventoryType] ?? _inventoryLabels['self'],
+      _inventoryLabels.values.toList(),
+      (v) {
+        final entry = _inventoryLabels.entries.firstWhere((e) => e.value == v);
+        if (entry.key != _vm.inventoryType) _vm.setInventoryType(entry.key);
+      },
+    );
+  }
+
   Widget _imageSection() {
     final p = context.palette;
-    final hasPreview =
-        _vm.imageFile != null || (_vm.imageUrl?.isNotEmpty ?? false);
+    final file = _vm.imageFile;
+    final url = _vm.imageUrl;
+    final hasPreview = file != null || (url?.isNotEmpty ?? false);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        GestureDetector(
+        PremiumImageUpload(
+          isBusy: _vm.uploading,
+          icon: Icons.image_outlined,
+          height: 168,
+          title: context.l10n.t('Product image'),
+          subtitle: context.l10n.t('Tap to choose an image file'),
+          hint: context.l10n.t('JPG or PNG up to 5MB'),
+          changeLabel: context.l10n.t('Change photo'),
+          image: !hasPreview
+              ? null
+              : RepaintBoundary(
+                  child: file != null
+                      ? (kIsWeb
+                            ? Image.network(
+                                file.path,
+                                key: _vm.imageKey,
+                                height: 168,
+                                fit: BoxFit.cover,
+                              )
+                            : Image.file(
+                                file,
+                                key: _vm.imageKey,
+                                height: 168,
+                                fit: BoxFit.cover,
+                              ))
+                      : Image.network(
+                          resolveMediaUrl(url!)!,
+                          key: _vm.imageKey,
+                          height: 168,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (_, child, progress) =>
+                              progress == null
+                              ? child
+                              : Center(
+                                  child: CircularProgressIndicator(
+                                    color: p.primary,
+                                  ),
+                                ),
+                          errorBuilder: (_, _, _) => const Center(
+                            child: Icon(
+                              Icons.broken_image_outlined,
+                              size: 42,
+                              color: kPurple700,
+                            ),
+                          ),
+                        ),
+                ),
           onTap: _vm.uploading
               ? null
               : () async {
                   await _vm.pickAndUpload();
                   if (!mounted) return;
                   if (_vm.errorMessage == null) {
-                    showSuccessMessage(context, 'Image uploaded');
+                    showSuccessMessage(
+                      context,
+                      context.l10n.t('Image uploaded'),
+                    );
                   } else {
                     _showError();
                     _vm.resetError();
                   }
                 },
-          child: _DashedBox(
-            child: hasPreview
-                ? RepaintBoundary(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: _vm.imageFile != null
-                          ? (kIsWeb
-                                ? Image.network(
-                                    _vm.imageFile!.path,
-                                    key: _vm.imageKey,
-                                    height: 160,
-                                    fit: BoxFit.cover,
-                                  )
-                                : Image.file(
-                                    _vm.imageFile!,
-                                    key: _vm.imageKey,
-                                    height: 160,
-                                    fit: BoxFit.cover,
-                                  ))
-                          : Image.network(
-                              resolveMediaUrl(_vm.imageUrl!)!,
-                              key: _vm.imageKey,
-                              height: 160,
-                              fit: BoxFit.cover,
-                              loadingBuilder: (_, child, progress) =>
-                                  progress == null
-                                  ? child
-                                  : const Center(
-                                      child: CircularProgressIndicator(
-                                        color: kPurple700,
-                                      ),
-                                    ),
-                              errorBuilder: (_, _, _) => const Center(
-                                child: Icon(
-                                  Icons.broken_image_outlined,
-                                  size: 42,
-                                  color: kPurple700,
-                                ),
-                              ),
-                            ),
-                    ),
-                  )
-                : _vm.uploading
-                ? const CircularProgressIndicator(color: kPurple700)
-                : Column(
-                    children: [
-                      const Icon(Icons.image_outlined, size: 42, color: kPurple700),
-                      const SizedBox(height: 10),
-                      Text(
-                        'Tap to choose an image file',
-                        style: TextStyle(fontSize: 14, color: p.textSecondary),
-                      ),
-                    ],
-                  ),
-          ),
         ),
-        if (_vm.imageUrl?.isNotEmpty ?? false)
+        if (url?.isNotEmpty ?? false)
           Padding(
-            padding: const EdgeInsets.only(top: 8),
+            padding: const EdgeInsets.only(top: 10),
             child: Text(
-              _vm.imageUrl!,
+              url!,
               style: TextStyle(fontSize: 12, color: p.textSecondary),
               overflow: TextOverflow.ellipsis,
             ),
@@ -288,7 +414,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Is Set / Bundle',
+              context.l10n.t('Is Set / Bundle'),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -361,7 +487,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 : null,
           );
         }),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         GestureDetector(
           onTap: _vm.addVariant,
           child: Container(
@@ -371,9 +497,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
               border: Border.all(color: kPurple700, style: BorderStyle.solid),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Center(
+            child: Center(
               child: Text(
-                '+ Add Variant',
+                context.l10n.t('+ Add Variant'),
                 style: TextStyle(
                   color: kPurple700,
                   fontWeight: FontWeight.w600,
@@ -392,8 +518,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
           ),
           child: Row(
             children: [
-              const Text(
-                'Total Stock',
+              Text(
+                context.l10n.t('Total Stock'),
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -402,7 +528,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
               ),
               const Spacer(),
               Text(
-                '$_totalStock',
+                context.l10n
+                    .t('{v1}')
+                    .replaceAll('{v1}', (_totalStock).toString()),
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -433,7 +561,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       isExpanded: true,
                       value: _vm.selectedSupplierId,
                       hint: Text(
-                        'Select a supplier...',
+                        context.l10n.t('Select a supplier...'),
                         style: TextStyle(color: p.textSecondary, fontSize: 14),
                       ),
                       items: _vm.suppliers
@@ -467,8 +595,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     color: kPurple700,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Text(
-                    '+ Add',
+                  child: Text(
+                    context.l10n.t('+ Add'),
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
@@ -527,7 +655,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Add New Supplier',
+                            context.l10n.t('Add New Supplier'),
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
@@ -620,8 +748,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                     strokeWidth: 2.5,
                                   ),
                                 )
-                              : const Text(
-                                  'Save Supplier',
+                              : Text(
+                                  context.l10n.t('Save Supplier'),
                                   style: TextStyle(fontWeight: FontWeight.w600),
                                 ),
                         ),
@@ -672,7 +800,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
         const SizedBox(height: 8),
         DropdownField(
           value: value,
-          hint: 'Select',
+          hint: context.l10n.t('Select'),
           items: items,
           onChanged: onChanged,
         ),
@@ -692,7 +820,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
             color: p.textPrimary,
           ),
         ),
-        if (req) const Text(' *', style: TextStyle(color: kRed, fontSize: 14)),
+        if (req) Text(' *', style: TextStyle(color: kRed, fontSize: 14)),
       ],
     );
   }
@@ -761,6 +889,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       );
                       if (!mounted) return;
                       if (success) {
+                        await _completeSourcePurchaseItem();
+                        if (!mounted) return;
                         Navigator.of(context).pop(true);
                       } else {
                         _showError();
@@ -881,7 +1011,9 @@ class _VariantTileState extends State<_VariantTile> {
           Row(
             children: [
               Text(
-                'Variant ${widget.index + 1}',
+                context.l10n
+                    .t('Variant {v1}')
+                    .replaceAll('{v1}', (widget.index + 1).toString()),
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -917,12 +1049,7 @@ class _VariantTileState extends State<_VariantTile> {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: _miniField(
-                  'Price',
-                  _price,
-                  TextInputType.number,
-                  _emit,
-                ),
+                child: _miniField('Price', _price, TextInputType.number, _emit),
               ),
             ],
           ),
@@ -945,7 +1072,7 @@ class _VariantTileState extends State<_VariantTile> {
         const SizedBox(height: 4),
         DropdownField(
           value: value.isEmpty ? null : value,
-          hint: 'Select',
+          hint: context.l10n.t('Select'),
           items: items,
           onChanged: onChanged,
         ),
@@ -966,7 +1093,10 @@ class _VariantTileState extends State<_VariantTile> {
       children: [
         Row(
           children: [
-            Text('Color', style: TextStyle(fontSize: 12, color: p.textSecondary)),
+            Text(
+              context.l10n.t('Color'),
+              style: TextStyle(fontSize: 12, color: p.textSecondary),
+            ),
             const SizedBox(width: 6),
             Container(
               width: 14,
@@ -982,7 +1112,7 @@ class _VariantTileState extends State<_VariantTile> {
         const SizedBox(height: 4),
         DropdownField(
           value: _color.isEmpty ? null : _color,
-          hint: 'Select',
+          hint: context.l10n.t('Select'),
           items: colorLabels,
           onChanged: (v) {
             _color = v ?? '';
@@ -1031,52 +1161,4 @@ class _VariantTileState extends State<_VariantTile> {
       ],
     );
   }
-}
-
-class _DashedBox extends StatelessWidget {
-  final Widget child;
-  const _DashedBox({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _DashedPainter(),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(24),
-        child: child,
-      ),
-    );
-  }
-}
-
-class _DashedPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = kPurple700.withValues(alpha: 0.5)
-      ..strokeWidth = 1.5
-      ..style = PaintingStyle.stroke;
-    const double dash = 6;
-    const double gap = 4;
-    const r = 16.0;
-    final path = Path()
-      ..addRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(0.75, 0.75, size.width - 1.5, size.height - 1.5),
-          const Radius.circular(r),
-        ),
-      );
-    for (final metric in path.computeMetrics()) {
-      var dist = 0.0;
-      while (dist < metric.length) {
-        final next = dist + dash;
-        canvas.drawPath(metric.extractPath(dist, next), paint);
-        dist = next + gap;
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter old) => false;
 }

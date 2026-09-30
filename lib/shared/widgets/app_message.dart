@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/core/network/app_exceptions.dart';
+import 'package:posfrontend/shared/l10n/api_message_l10n.dart';
+import 'package:posfrontend/shared/l10n/app_strings.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 
 /// Unified success/error message style for the whole app.
@@ -44,7 +46,12 @@ class AppMessageBanner extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              message,
+              // Translated here rather than at each call site. Most messages
+              // originate in ViewModels, which have no BuildContext, so this is
+              // the one place that can localise them. `localizedMessage` also
+              // normalises the fixed English sentences the API returns;
+              // anything unrecognised is passed through untouched.
+              message.localizedMessage(AppStrings.of(context)),
               style: TextStyle(
                 color: foreground,
                 fontSize: 14,
@@ -57,7 +64,7 @@ class AppMessageBanner extends StatelessWidget {
             TextButton(
               onPressed: onAction,
               style: TextButton.styleFrom(foregroundColor: foreground),
-              child: Text(actionLabel!),
+              child: Text(AppStrings.of(context).t(actionLabel!)),
             ),
           ],
         ],

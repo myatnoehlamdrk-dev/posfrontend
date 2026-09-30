@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:posfrontend/core/extensions/datetime_extensions.dart';
@@ -233,7 +234,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       child: Column(
         children: [
           AppScreenTopBar(
-            title: 'New Sale',
+            title: context.l10n.t('New Sale'),
             showMenuButton: false,
             showBackButton: true,
           ),
@@ -325,7 +326,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         Row(
           children: [
             Text(
-              'Items',
+              context.l10n.t('Items'),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -341,7 +342,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             child: Padding(
               padding: EdgeInsets.symmetric(vertical: 32),
               child: Text(
-                'No items added yet.',
+                context.l10n.t('No items added yet.'),
                 style: TextStyle(color: _mutedColor, fontSize: 14),
               ),
             ),
@@ -462,7 +463,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
               _qtyLabel(index),
               const Spacer(),
               Text(
-                'Total:',
+                context.l10n.t('Total:'),
                 style: TextStyle(fontSize: 11, color: _mutedColor),
               ),
               const SizedBox(width: 4),
@@ -494,9 +495,12 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('Qty: ', style: TextStyle(fontSize: 13, color: _mutedColor)),
           Text(
-            '$qty',
+            context.l10n.t('Qty: '),
+            style: TextStyle(fontSize: 13, color: _mutedColor),
+          ),
+          Text(
+            context.l10n.t('{v1}').replaceAll('{v1}', (qty).toString()),
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -562,14 +566,14 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             children: [
               Expanded(
                 child: Text(
-                  'Payment Method',
+                  context.l10n.t('Payment Method'),
                   style: TextStyle(fontSize: 14, color: _mutedColor),
                 ),
               ),
               Expanded(
                 flex: 2,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
                     border: Border.all(color: _borderColor),
                     borderRadius: BorderRadius.circular(8),
@@ -578,15 +582,24 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                     child: DropdownButton<String>(
                       value: _viewModel.paymentMethod,
                       isExpanded: true,
-                      icon: const Icon(Icons.keyboard_arrow_down, size: 18),
-                      items: const [
-                        DropdownMenuItem(value: 'Cash', child: Text('Cash')),
-                        DropdownMenuItem(value: 'Card', child: Text('Card')),
+                      icon: Icon(Icons.keyboard_arrow_down, size: 18),
+                      items: [
+                        DropdownMenuItem(
+                          value: 'Cash',
+                          child: Text(context.l10n.t('Cash')),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Card',
+                          child: Text(context.l10n.t('Card')),
+                        ),
                         DropdownMenuItem(
                           value: 'Mobile Pay',
-                          child: Text('Mobile Pay'),
+                          child: Text(context.l10n.t('Mobile Pay')),
                         ),
-                        DropdownMenuItem(value: 'Other', child: Text('Other')),
+                        DropdownMenuItem(
+                          value: 'Other',
+                          child: Text(context.l10n.t('Other')),
+                        ),
                       ],
                       onChanged: (v) {
                         if (v != null) _viewModel.setPaymentMethod(v);
@@ -603,7 +616,10 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Notes', style: TextStyle(fontSize: 14, color: _mutedColor)),
+              Text(
+                context.l10n.t('Notes'),
+                style: TextStyle(fontSize: 14, color: _mutedColor),
+              ),
               const SizedBox(height: 8),
               TextField(
                 controller: _notesCtrl,
@@ -611,7 +627,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                 style: TextStyle(fontSize: 14, color: _titleColor),
                 onChanged: (v) => _viewModel.setNotes(v),
                 decoration: InputDecoration(
-                  hintText: 'Enter notes...',
+                  hintText: context.l10n.t('Enter notes...'),
                   hintStyle: TextStyle(color: _p.textMuted),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -850,7 +866,13 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         );
       }
     } catch (e) {
-      if (mounted) showErrorMessage(context, 'PDF export failed: $e');
+      if (mounted)
+        showErrorMessage(
+          context,
+          context.l10n
+              .t('PDF export failed: {v1}')
+              .replaceAll('{v1}', (e).toString()),
+        );
     }
   }
 
@@ -901,7 +923,13 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         );
       }
     } catch (e) {
-      if (mounted) showErrorMessage(context, 'Thermal printing failed: $e');
+      if (mounted)
+        showErrorMessage(
+          context,
+          context.l10n
+              .t('Thermal printing failed: {v1}')
+              .replaceAll('{v1}', (e).toString()),
+        );
     }
   }
 
@@ -941,7 +969,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Print Settings',
+                            context.l10n.t('Print Settings'),
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
@@ -957,8 +985,8 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                       const SizedBox(height: 24),
                       _toggleRow(
                         icon: Icons.picture_as_pdf,
-                        title: 'Export PDF',
-                        subtitle: 'Save PDF file after sale',
+                        title: context.l10n.t('Export PDF'),
+                        subtitle: context.l10n.t('Save PDF file after sale'),
                         value: _pdfExportEnabled,
                         onChanged: (v) {
                           setSheetState(() => _pdfExportEnabled = v);
@@ -969,8 +997,8 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                       const SizedBox(height: 16),
                       _toggleRow(
                         icon: Icons.print_outlined,
-                        title: 'Print Voucher',
-                        subtitle: 'Auto-print after sale',
+                        title: context.l10n.t('Print Voucher'),
+                        subtitle: context.l10n.t('Auto-print after sale'),
                         value: _printVoucherEnabled,
                         onChanged: (v) {
                           setSheetState(() => _printVoucherEnabled = v);
@@ -981,7 +1009,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                       if (_printVoucherEnabled) ...[
                         const SizedBox(height: 20),
                         Text(
-                          'Print Format',
+                          context.l10n.t('Print Format'),
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -1009,7 +1037,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                           _printFormat == 'thermal') ...[
                         const SizedBox(height: 20),
                         Text(
-                          'Paper Size',
+                          context.l10n.t('Paper Size'),
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -1074,7 +1102,11 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         ),
         child: Row(
           children: [
-            Icon(icon, color: isSelected ? _accentColor : _mutedColor, size: 20),
+            Icon(
+              icon,
+              color: isSelected ? _accentColor : _mutedColor,
+              size: 20,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -1117,7 +1149,11 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: isSelected ? _accentColor : _mutedColor, size: 20),
+            Icon(
+              icon,
+              color: isSelected ? _accentColor : _mutedColor,
+              size: 20,
+            ),
             const SizedBox(width: 8),
             Text(
               label,

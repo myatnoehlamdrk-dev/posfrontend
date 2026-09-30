@@ -13,8 +13,7 @@ class GetInventoryOptionsUseCase
   }
 }
 
-class GetInventoryUseCase
-    extends UseCase<InventoryEntity, GetInventoryParams> {
+class GetInventoryUseCase extends UseCase<InventoryEntity, GetInventoryParams> {
   final InventoryRepository _repository;
   GetInventoryUseCase(this._repository);
 

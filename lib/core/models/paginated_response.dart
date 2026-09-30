@@ -30,10 +30,7 @@ class PaginatedResponse<T> {
     }
 
     return PaginatedResponse(
-      data: items
-          .whereType<Map<String, dynamic>>()
-          .map(fromJson)
-          .toList(),
+      data: items.whereType<Map<String, dynamic>>().map(fromJson).toList(),
       lastPage: lastPage,
       currentPage: currentPage,
       total: total,

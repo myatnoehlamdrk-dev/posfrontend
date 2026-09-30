@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/features/category/domain/entities/category.dart';
 import 'package:posfrontend/features/category/data/repositories/category_repository_impl.dart';
@@ -180,8 +181,8 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Breadcrumb([
-                    const BreadcrumbItem('Dashboard', false),
-                    const BreadcrumbItem('Inventory', false),
+                    BreadcrumbItem(context.l10n.t('Dashboard'), false),
+                    BreadcrumbItem(context.l10n.t('Inventory'), false),
                     const BreadcrumbItem('Packages', false),
                     BreadcrumbItem(
                       isEdit ? 'Edit Package' : 'Add Package',
@@ -206,12 +207,14 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
                   ),
                   const SizedBox(height: 24),
                   FormCard(
-                    label: 'Category',
+                    label: context.l10n.t('Category'),
                     required: true,
-                    helper: 'Select the category for this package.',
+                    helper: context.l10n.t(
+                      'Select the category for this package.',
+                    ),
                     child: DropdownField(
                       value: selectedLabel,
-                      hint: 'Select category',
+                      hint: context.l10n.t('Select category'),
                       items: categoryLabels,
                       onChanged: (v) => setState(() {
                         _selectedCategory = _categoryObjects.firstWhere(
@@ -223,20 +226,22 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
                   ),
                   const SizedBox(height: 16),
                   FormCard(
-                    label: 'Package Name',
+                    label: context.l10n.t('Package Name'),
                     required: true,
-                    helper: 'Enter a name for this package.',
+                    helper: context.l10n.t('Enter a name for this package.'),
                     child: CounterTextField(
                       controller: _nameController,
-                      hint: 'Enter package name',
+                      hint: context.l10n.t('Enter package name'),
                       max: 100,
                     ),
                   ),
                   const SizedBox(height: 16),
                   FormCard(
-                    label: 'Amount of Products (Limit)',
+                    label: context.l10n.t('Amount of Products (Limit)'),
                     required: true,
-                    helper: 'Maximum number of products this package can hold.',
+                    helper: context.l10n.t(
+                      'Maximum number of products this package can hold.',
+                    ),
                     child: TextField(
                       controller: _amountController,
                       keyboardType: TextInputType.number,
@@ -249,22 +254,28 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
                   ),
                   const SizedBox(height: 16),
                   FormCard(
-                    label: 'Description',
-                    helper: 'Enter a brief description of this package.',
+                    label: context.l10n.t('Description'),
+                    helper: context.l10n.t(
+                      'Enter a brief description of this package.',
+                    ),
                     child: CounterTextField(
                       controller: _descController,
-                      hint: 'Enter package description',
+                      hint: context.l10n.t('Enter package description'),
                       max: 300,
                       maxLines: 4,
                     ),
                   ),
                   const SizedBox(height: 16),
                   FormCard(
-                    label: 'Location',
-                    helper: 'Specify where this package is stored.',
+                    label: context.l10n.t('Location'),
+                    helper: context.l10n.t(
+                      'Specify where this package is stored.',
+                    ),
                     child: CounterTextField(
                       controller: _locationController,
-                      hint: 'Enter location (e.g., Aisle 1, Shelf 2)',
+                      hint: context.l10n.t(
+                        'Enter location (e.g., Aisle 1, Shelf 2)',
+                      ),
                       max: 100,
                     ),
                   ),

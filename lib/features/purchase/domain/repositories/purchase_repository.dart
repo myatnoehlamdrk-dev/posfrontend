@@ -2,7 +2,11 @@ import 'package:dio/dio.dart';
 import 'package:posfrontend/features/purchase/domain/entities/purchase.dart';
 
 abstract class PurchaseItemRepository {
-  Future<Map<String, dynamic>> getPurchaseItems({int page = 1, String? status, CancelToken? cancelToken});
+  Future<Map<String, dynamic>> getPurchaseItems({
+    int page = 1,
+    String? status,
+    CancelToken? cancelToken,
+  });
   Future<Map<String, dynamic>> createPurchaseItem({
     required String productName,
     required int quantity,

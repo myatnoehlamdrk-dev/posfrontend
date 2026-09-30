@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/features/onboarding/presentation/screens/get_started_screen.dart';
 
 /// The single splash. Carries the logo, the wordmark and the credit, then hands
@@ -80,10 +81,7 @@ class _SplashScreenState extends State<SplashScreen>
                 opacity: _intro,
                 child: ScaleTransition(
                   scale: Tween(begin: 0.86, end: 1.0).animate(
-                    CurvedAnimation(
-                      parent: _intro,
-                      curve: Curves.easeOutCubic,
-                    ),
+                    CurvedAnimation(parent: _intro, curve: Curves.easeOutCubic),
                   ),
                   child: Image.asset(
                     'assets/launcher.png',
@@ -105,8 +103,8 @@ class _SplashScreenState extends State<SplashScreen>
                   parent: _intro,
                   curve: const Interval(0.35, 1.0, curve: Curves.easeOut),
                 ),
-                child: const Text(
-                  'MDRK POS',
+                child: Text(
+                  context.l10n.t('MDRK POS'),
                   style: TextStyle(
                     fontSize: 40,
                     fontWeight: FontWeight.w800,
@@ -126,7 +124,7 @@ class _SplashScreenState extends State<SplashScreen>
                   curve: const Interval(0.6, 1.0, curve: Curves.easeOut),
                 ),
                 child: Text(
-                  'Powered by MDRK',
+                  context.l10n.t('Powered by MDRK'),
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,

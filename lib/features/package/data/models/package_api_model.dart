@@ -42,11 +42,11 @@ class PackageApiModel {
     final rawImages = json['productImages'];
     final productImages = (rawImages is List)
         ? rawImages
-            .whereType<String>()
-            .map(resolveMediaUrl)
-            .whereType<String>()
-            .where((s) => s.isNotEmpty)
-            .toList()
+              .whereType<String>()
+              .map(resolveMediaUrl)
+              .whereType<String>()
+              .where((s) => s.isNotEmpty)
+              .toList()
         : <String>[];
     return PackageApiModel(
       id: id,
@@ -91,20 +91,20 @@ class PackageApiModel {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'categoryId': categoryId,
-        'name': name,
-        'description': spec,
-        'amountOfProduct': quantity,
-        'productLimit': productLimit,
-        'location': location,
-        'stockStatus': stockStatusToString(status),
-        'productImages': productImages,
-        'createdBy': createdBy,
-        'updatedBy': updatedBy,
-        'createdAt': createdAt,
-        'updatedAt': updatedAt,
-      };
+    'id': id,
+    'categoryId': categoryId,
+    'name': name,
+    'description': spec,
+    'amountOfProduct': quantity,
+    'productLimit': productLimit,
+    'location': location,
+    'stockStatus': stockStatusToString(status),
+    'productImages': productImages,
+    'createdBy': createdBy,
+    'updatedBy': updatedBy,
+    'createdAt': createdAt,
+    'updatedAt': updatedAt,
+  };
 }
 
 StockStatus stockStatusFromString(String? value) {

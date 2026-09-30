@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/core/extensions/datetime_extensions.dart';
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
 import 'package:posfrontend/features/sale/presentation/viewmodels/sale_history_view_model.dart';
@@ -42,11 +43,11 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
     final p = context.palette;
     return Scaffold(
       backgroundColor: p.scaffoldBg,
-      drawer: const AppDrawer(activeItem: 'Sale Item'),
+      drawer: AppDrawer(active: DrawerDestination.saleItem),
       body: SafeArea(
         child: Column(
           children: [
-            const AppScreenTopBar(title: 'Sales Items'),
+            AppScreenTopBar(title: context.l10n.t('Sales Items')),
             Expanded(
               child: ListenableBuilder(
                 listenable: _viewModel,
@@ -71,11 +72,14 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
           children: [
             const Icon(Icons.error_outline, color: Colors.red, size: 48),
             const SizedBox(height: 12),
-            Text(_viewModel.errorMessage!, style: TextStyle(color: p.textSecondary)),
+            Text(
+              _viewModel.errorMessage!,
+              style: TextStyle(color: p.textSecondary),
+            ),
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: () => _viewModel.loadAll(refresh: true),
-              child: const Text('Retry'),
+              child: Text(context.l10n.t('Retry')),
             ),
           ],
         ),
@@ -100,7 +104,9 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
             children: [
               const SizedBox(height: 12),
               Text(
-                'Products that are already sale and will be sale (Order)',
+                context.l10n.t(
+                  'Products that are already sale and will be sale (Order)',
+                ),
                 style: TextStyle(fontSize: 13, color: p.textSecondary),
               ),
               const SizedBox(height: 16),
@@ -116,10 +122,12 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              ..._viewModel.filteredOrders.asMap().entries.map((entry) => KeyedSubtree(
-                key: ValueKey('${entry.value.orderId}_${entry.key}'),
-                child: _buildOrderCard(entry.value),
-              )),
+              ..._viewModel.filteredOrders.asMap().entries.map(
+                (entry) => KeyedSubtree(
+                  key: ValueKey('${entry.value.orderId}_${entry.key}'),
+                  child: _buildOrderCard(entry.value),
+                ),
+              ),
               if (_viewModel.isLoading && _viewModel.filteredOrders.isNotEmpty)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
@@ -132,7 +140,7 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   child: Center(
                     child: Text(
-                      'No more items',
+                      context.l10n.t('No more items'),
                       style: TextStyle(color: p.textSecondary, fontSize: 13),
                     ),
                   ),
@@ -188,7 +196,11 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                 color: p.chipBg,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(Icons.fastfood_outlined, color: p.textSecondary, size: 28),
+              child: Icon(
+                Icons.fastfood_outlined,
+                color: p.textSecondary,
+                size: 28,
+              ),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -199,7 +211,9 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                     children: [
                       Expanded(
                         child: Text(
-                          order.voucherNo.isNotEmpty ? order.voucherNo : 'Order #${order.orderId}',
+                          order.voucherNo.isNotEmpty
+                              ? order.voucherNo
+                              : 'Order #${order.orderId}',
                           style: TextStyle(
                             fontSize: 12,
                             color: p.textSecondary,
@@ -208,7 +222,10 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
                           color: isAlreadySale ? p.successBg : p.warningBg,
                           borderRadius: BorderRadius.circular(6),
@@ -225,7 +242,11 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                       const SizedBox(width: 6),
                       GestureDetector(
                         onTap: () => _confirmDelete(order),
-                        child: const Icon(Icons.delete_outline, color: AppColors.red, size: 20),
+                        child: const Icon(
+                          Icons.delete_outline,
+                          color: AppColors.red,
+                          size: 20,
+                        ),
                       ),
                     ],
                   ),
@@ -250,8 +271,14 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                   if (order.createdBy.isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Text(
-                      'by ${order.createdBy}',
-                      style: TextStyle(fontSize: 11, color: p.textSecondary, fontStyle: FontStyle.italic),
+                      context.l10n
+                          .t('by {v1}')
+                          .replaceAll('{v1}', (order.createdBy).toString()),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: p.textSecondary,
+                        fontStyle: FontStyle.italic,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -260,18 +287,31 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                   Row(
                     children: [
                       Text(
-                        'x${order.quantity}',
-                        style: TextStyle(fontSize: 12, color: p.textSecondary, fontWeight: FontWeight.w500),
+                        context.l10n
+                            .t('x{v1}')
+                            .replaceAll('{v1}', (order.quantity).toString()),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: p.textSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                       const SizedBox(width: 10),
-                      Icon(Icons.calendar_today_outlined, size: 12, color: p.textSecondary),
+                      Icon(
+                        Icons.calendar_today_outlined,
+                        size: 12,
+                        color: p.textSecondary,
+                      ),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           _formatDate(order.date),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 11, color: p.textSecondary),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: p.textSecondary,
+                          ),
                         ),
                       ),
                       Flexible(
@@ -311,15 +351,23 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Delete Item', style: TextStyle(fontWeight: FontWeight.w600, color: p.textPrimary)),
+        title: Text(
+          context.l10n.t('Delete Item'),
+          style: TextStyle(fontWeight: FontWeight.w600, color: p.textPrimary),
+        ),
         content: Text(
-          'Are you sure you want to delete "${order.productName}"?',
+          context.l10n
+              .t('Are you sure you want to delete "{v1}"?')
+              .replaceAll('{v1}', (order.productName).toString()),
           style: TextStyle(color: p.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: TextStyle(color: p.textSecondary)),
+            child: Text(
+              context.l10n.t('Cancel'),
+              style: TextStyle(color: p.textSecondary),
+            ),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -341,9 +389,11 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.red,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
-            child: const Text('Delete'),
+            child: Text(context.l10n.t('Delete')),
           ),
         ],
       ),

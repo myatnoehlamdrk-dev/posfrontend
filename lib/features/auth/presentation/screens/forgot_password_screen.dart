@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/core/di/injection.dart';
 import 'package:posfrontend/features/auth/domain/usecases/forgot_password.dart';
 import 'package:posfrontend/features/auth/presentation/viewmodels/forgot_password_view_model.dart';
@@ -32,7 +33,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       verifyOtpUseCase: getIt<VerifyForgotPasswordOtpUseCase>(),
       resetPasswordUseCase: getIt<ResetPasswordUseCase>(),
     );
-    _emailController.addListener(() => _viewModel.setEmail(_emailController.text));
+    _emailController.addListener(
+      () => _viewModel.setEmail(_emailController.text),
+    );
     _otpController.addListener(() => _viewModel.setOtp(_otpController.text));
   }
 
@@ -89,7 +92,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     _buildHeaderIcon(),
                     const SizedBox(height: 20),
                     Text(
-                      'Forgot Password?',
+                      context.l10n.t('Forgot Password?'),
                       style: TextStyle(
                         color: p.textPrimary,
                         fontSize: 26,
@@ -101,10 +104,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       otpSent
                           ? 'Enter the OTP sent to your email'
                           : 'Enter your email to receive a verification code',
-                      style: TextStyle(
-                        color: p.textMuted,
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: p.textMuted, fontSize: 14),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 36),
@@ -120,14 +120,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       decoration: appInputDecoration(
                         context,
                         icon: Icons.email_outlined,
-                        hint: 'Enter your email',
+                        hint: context.l10n.t('Enter your email'),
                         errorText: errors['email'],
                       ),
                     ),
                     if (!otpSent) ...[
                       const SizedBox(height: 24),
                       GradientButton(
-                        label: 'Send OTP',
+                        label: context.l10n.t('Send OTP'),
                         loading: loading,
                         onPressed: _handleSendOtp,
                       ),
@@ -146,15 +146,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         decoration: appInputDecoration(
                           context,
                           icon: Icons.pin_outlined,
-                          hint: 'Enter 6-digit OTP',
+                          hint: context.l10n.t('Enter 6-digit OTP'),
                           errorText: errors['otp'],
                         ),
                       ),
                       const SizedBox(height: 8),
                       GestureDetector(
                         onTap: loading ? null : _handleSendOtp,
-                        child: const Text(
-                          'Resend OTP',
+                        child: Text(
+                          context.l10n.t('Resend OTP'),
                           style: TextStyle(
                             color: AppColors.primary,
                             fontSize: 13,
@@ -164,7 +164,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       ),
                       const SizedBox(height: 24),
                       GradientButton(
-                        label: 'Verify OTP',
+                        label: context.l10n.t('Verify OTP'),
                         loading: loading,
                         onPressed: _handleVerifyOtp,
                       ),
@@ -209,14 +209,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          'Remember your password?',
+          context.l10n.t('Remember your password?'),
           style: TextStyle(color: p.textMuted, fontSize: 14),
         ),
         const SizedBox(width: 6),
         GestureDetector(
           onTap: () => Navigator.pop(context),
-          child: const Text(
-            'Back to Login',
+          child: Text(
+            context.l10n.t('Back to Login'),
             style: TextStyle(
               color: AppColors.primary,
               fontSize: 14,

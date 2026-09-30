@@ -14,7 +14,7 @@ class CustomerViewModel extends BaseViewModel {
   List<CustomerSearchResultEntity> get searchResults => _searchResults;
 
   CustomerViewModel({CustomerRepository? repository})
-      : _repository = repository ?? CustomerRepositoryImpl();
+    : _repository = repository ?? CustomerRepositoryImpl();
 
   Future<void> loadAnalytics() async {
     setLoading(true);

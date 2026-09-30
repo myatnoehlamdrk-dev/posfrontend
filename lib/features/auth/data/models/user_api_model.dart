@@ -23,11 +23,6 @@ class UserApiModel {
   }
 
   UserEntity toEntity() {
-    return UserEntity(
-      id: id,
-      fullName: fullName,
-      email: email,
-      shopId: shopId,
-    );
+    return UserEntity(id: id, fullName: fullName, email: email, shopId: shopId);
   }
 }

@@ -30,18 +30,21 @@ class ProductEntity extends Equatable {
     this.createdBy = '',
   });
 
-  List<String> get sizes => variants
-      .map((v) => v.size)
-      .where((s) => s.isNotEmpty)
-      .toSet()
-      .toList();
+  List<String> get sizes =>
+      variants.map((v) => v.size).where((s) => s.isNotEmpty).toSet().toList();
 
-  List<String> get colors => variants
-      .map((v) => v.color)
-      .where((c) => c.isNotEmpty)
-      .toSet()
-      .toList();
+  List<String> get colors =>
+      variants.map((v) => v.color).where((c) => c.isNotEmpty).toSet().toList();
 
   @override
-  List<Object?> get props => [id, name, brand, sku, price, stock, category, variants];
+  List<Object?> get props => [
+    id,
+    name,
+    brand,
+    sku,
+    price,
+    stock,
+    category,
+    variants,
+  ];
 }

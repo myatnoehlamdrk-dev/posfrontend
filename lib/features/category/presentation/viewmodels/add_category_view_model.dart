@@ -8,11 +8,12 @@ class AddCategoryViewModel extends BaseViewModel with FormValidationMixin {
   final CategoryRepository _repository;
 
   AddCategoryViewModel({CategoryRepository? repository})
-      : _repository = repository ?? _defaultRepository();
+    : _repository = repository ?? _defaultRepository();
 
   static CategoryRepository _defaultRepository() {
     throw UnimplementedError(
-        'CategoryRepository must be injected into AddCategoryViewModel');
+      'CategoryRepository must be injected into AddCategoryViewModel',
+    );
   }
 
   String _name = '';
@@ -36,7 +37,9 @@ class AddCategoryViewModel extends BaseViewModel with FormValidationMixin {
   void loadExisting(Category category) {
     _name = category.name;
     _description = category.description;
-    _packageLimit = category.packageLimit > 0 ? category.packageLimit.toString() : '';
+    _packageLimit = category.packageLimit > 0
+        ? category.packageLimit.toString()
+        : '';
     notifyListeners();
   }
 

@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 enum AppThemeMode { light, dark }
+
 enum ShopType { shop, service, restaurant, store }
 
 class SettingsEntity extends Equatable {
@@ -41,7 +42,8 @@ class SettingsEntity extends Equatable {
       shopImage: shopImage ?? this.shopImage,
       appVersion: appVersion ?? this.appVersion,
       privacyPolicyVersion: privacyPolicyVersion ?? this.privacyPolicyVersion,
-      termsOfServiceVersion: termsOfServiceVersion ?? this.termsOfServiceVersion,
+      termsOfServiceVersion:
+          termsOfServiceVersion ?? this.termsOfServiceVersion,
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
     );
   }
