@@ -37,6 +37,10 @@ class MetricEntity extends Equatable {
   final String label;
   final String value;
 
+  /// A small breakdown shown under the headline number, e.g. the stock tiers
+  /// behind an "In Stock" count. Empty for a tile that is a single figure.
+  final List<MetricDetailEntity> details;
+
   /// Which table "View all" opens. Null for a tile that has no drill-down.
   final DashboardTableKey? tableKey;
 
@@ -47,6 +51,7 @@ class MetricEntity extends Equatable {
     required this.iconColorValue,
     required this.label,
     required this.value,
+    this.details = const [],
     this.tableKey,
   });
 
@@ -58,8 +63,19 @@ class MetricEntity extends Equatable {
     iconColorValue,
     label,
     value,
+    details,
     tableKey,
   ];
+}
+
+class MetricDetailEntity extends Equatable {
+  final String label;
+  final String value;
+
+  const MetricDetailEntity({required this.label, required this.value});
+
+  @override
+  List<Object?> get props => [label, value];
 }
 
 class CategoryDistributionEntity extends Equatable {

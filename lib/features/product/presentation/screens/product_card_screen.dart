@@ -48,7 +48,7 @@ class _ProductCardScreenState extends State<ProductCardScreen> {
     });
     try {
       final dio = ApiClient.create();
-      final resp = await dio.get('/api/products');
+      final resp = await dio.get('/products');
       final data = resp.data;
       final items = _extractList(data);
       final products = items.map((item) {

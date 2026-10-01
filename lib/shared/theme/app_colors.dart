@@ -19,6 +19,14 @@ class AppColors {
   static const Color purple = Color(0xFF6D28D9);
   static const Color purple700 = Color(0xFF7C3AED);
 
+  /// The two lighter steps of the violet ramp, used for hover states and for
+  /// accent text that has to stay legible on a dark surface. Kept next to
+  /// [purple700] so a page assembling a violet ramp picks them from one place
+  /// rather than re-deriving the hue from memory.
+  static const Color violet400 = Color(0xFF8B5CF6);
+  static const Color violet300 = Color(0xFFA78BFA);
+  static const Color lavender = Color(0xFFC4B5FD);
+
   // Teal
   static const Color teal = Color(0xFF14B8A6);
   static const Color tealDark = Color(0xFF0F9D8A);

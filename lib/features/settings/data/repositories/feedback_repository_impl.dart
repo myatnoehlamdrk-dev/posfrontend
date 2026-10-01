@@ -12,7 +12,7 @@ class FeedbackRepositoryImpl implements FeedbackRepository {
     required String message,
   }) async {
     final response = await dio.post(
-      '/api/feedback',
+      '/feedback',
       data: {'type': type.value, 'message': message},
     );
 

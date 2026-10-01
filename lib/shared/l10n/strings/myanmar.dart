@@ -180,6 +180,20 @@ const Map<String, String> myStrings = {
   // Inventory
   'Inventory': 'ငှားရမ်း',
   'More': 'နောက်ထပ်',
+  'Private': 'သီးသန့်',
+  'Shared': 'မျှင်မှင်',
+  'Open': 'ဖွင့်ရန်',
+  'Choose an inventory to manage your items.':
+      'ပစ္စည်းများကိုစီမံနိုင်ရန် ငှားရမ်းရွေးပါ။',
+  "What's the difference?": 'ဘာကွာခြားလဲ။',
+  'Self Inventory: Only you can view and manage.':
+      'မိမိတိုက်စွာငှားရမ်း - မိမိသာ ကြည့်ရှုနှင့်စီမံနိုင်သည်။',
+  'Public Inventory: Shared and visible to other users.':
+      'ပေါ်ပိုင်းငှားရမ်း - မျှင်မှင်ပြီး အခြားသုံးသူများ မြင်နိုင်သည်။',
+  'Manage products and stocks only for your own shop.':
+      'မိမိဆိုင်များ၏ ကုန်ပစ္စည်းနှင့်ပစ္စည်းများကိုသာ စီမံပါ။',
+  'View and manage products and stocks shared publicly.':
+      'ပေါ်ပိုင်း မျှင်မှင်ထားသော ကုန်ပစ္စည်းများကို ကြည့်ရှုနှင့်စီမံပါ။',
 
   // Cart
   'Add to Cart': 'ခရက်လွှာထဲထည့်ရန်',

@@ -700,7 +700,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                     try {
                                       final dio = ApiClient.create();
                                       final resp = await dio.post(
-                                        '/api/suppliers',
+                                        '/suppliers',
                                         data: {
                                           'name': nameController.text.trim(),
                                           'contact': phoneController.text

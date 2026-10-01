@@ -18,7 +18,7 @@ class SettingsRemoteDataSourceImpl implements SettingsRemoteDataSource {
 
   @override
   Future<Response> getSettings({CancelToken? cancelToken}) {
-    return dio.get('/api/settings', cancelToken: cancelToken);
+    return dio.get('/settings', cancelToken: cancelToken);
   }
 
   @override
@@ -34,6 +34,6 @@ class SettingsRemoteDataSourceImpl implements SettingsRemoteDataSource {
     if (language != null) body['language'] = language;
     if (shopType != null) body['shop_type'] = shopType;
     if (shopImage != null) body['shop_image'] = shopImage;
-    return dio.patch('/api/settings', data: body, cancelToken: cancelToken);
+    return dio.patch('/settings', data: body, cancelToken: cancelToken);
   }
 }

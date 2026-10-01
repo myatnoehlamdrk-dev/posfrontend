@@ -13,6 +13,7 @@ import 'package:posfrontend/features/cart/presentation/screens/add_to_cart_scree
 
 import 'package:posfrontend/shared/l10n/app_strings.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
@@ -135,9 +136,9 @@ class AppDrawer extends StatelessWidget {
               ),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFF7C3AED), Color(0xFF5B21B6)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                  colors: AppColors.brandRamp,
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
                 ),
               ),
               child: Row(
@@ -310,7 +311,7 @@ class _LogoutTileState extends State<_LogoutTile> {
     setState(() => _isLoading = true);
     try {
       final dio = ApiClient.create();
-      await dio.post('/api/auth/logout');
+      await dio.post('/auth/logout');
     } catch (_) {
       // Logout API failure is non-critical; proceed with local cleanup
     }

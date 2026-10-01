@@ -103,7 +103,7 @@ class CategoryViewModel extends BaseViewModel {
   Future<bool> deleteCategory(String categoryId) async {
     try {
       final dio = ApiClient.create();
-      await dio.delete('/api/categories/$categoryId', cancelToken: cancelToken);
+      await dio.delete('/categories/$categoryId', cancelToken: cancelToken);
       _categories.removeWhere((c) => c.id == categoryId);
       notifyListeners();
       return true;

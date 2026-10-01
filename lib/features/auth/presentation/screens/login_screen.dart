@@ -43,6 +43,33 @@ class _LoginLayout {
   static const double gutter = 24;
   static const double cardPadding = 32;
   static const double panePadding = 40;
+
+  /// Hero image bounds on the stacked layouts.
+  ///
+  /// [logoMax] is the point of the design — on a phone the mark is the first
+  /// thing on screen and should read as a mark, not as a 24px favicon in the
+  /// middle of a mostly empty column. [logoMin] keeps it from collapsing into a
+  /// thumbnail on a very short window, where the layout falls back to scrolling
+  /// rather than to an unusable image.
+  static const double logoMax = 320;
+  static const double logoMin = 150;
+
+  /// The logo's share of the window width.
+  ///
+  /// 0.78 of the width is deliberate: full-bleed looks like a splash screen,
+  /// and anything much under half starts reading as an icon again.
+  static const double logoWidthShare = 0.78;
+
+  /// Vertical space the stacked layout needs for everything that is *not* the
+  /// logo: heading, two labelled inputs, forgot-password link, button, divider,
+  /// register prompt, and the gaps and page padding between them. Measured off
+  /// the widget sizes above rather than guessed, because the logo's size is
+  /// whatever is left of the window after this.
+  static const double formReserve = 520;
+
+  /// Extra reserve for the carded layout, where the form additionally sits
+  /// inside a surface with its own padding all round.
+  static const double cardReserve = 64;
 }
 
 class LoginScreen extends StatefulWidget {
@@ -118,7 +145,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 }
                 return _buildStacked(
                   carded: constraints.maxWidth >= _LoginLayout.cardFrom,
-                  logoSize: _logoSize(constraints.maxWidth),
+                  logoSize: _logoSize(
+                    constraints.maxWidth,
+                    constraints.maxHeight,
+                    carded: constraints.maxWidth >= _LoginLayout.cardFrom,
+                  ),
                 );
               },
             ),
@@ -545,16 +576,24 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  /// Keeps the hero logo at its original 220 wherever there is room, and scales
-  /// it down rather than letting it push the form below the fold on a small
-  /// phone.
-  double _logoSize(double maxWidth) {
-    if (maxWidth < 360) return 150;
-    if (maxWidth < _LoginLayout.cardFrom) {
-      final scaled = maxWidth * 0.55;
-      return scaled > 220 ? 220 : scaled;
-    }
-    return 200;
+  /// Sizes the hero mark for the stacked layouts.
+  ///
+  /// Bounded by width and by height, and the height bound is the one that
+  /// matters. A tall phone can give the logo several hundred pixels and the
+  /// sign-in button still lands above the fold; a short one cannot, and a logo
+  /// that ignores that pushes the button below it. The login form is the whole
+  /// point of this screen, so it gets first claim on the height and the image
+  /// takes the remainder, floored at [logoMin].
+  double _logoSize(double maxWidth, double maxHeight, {required bool carded}) {
+    final byWidth = maxWidth * _LoginLayout.logoWidthShare;
+    final byHeight =
+        maxHeight -
+        _LoginLayout.formReserve -
+        (carded ? _LoginLayout.cardReserve : 0);
+
+    final size = byWidth < byHeight ? byWidth : byHeight;
+
+    return size.clamp(_LoginLayout.logoMin, _LoginLayout.logoMax);
   }
 
   Widget _buildHeaderIcon() {
@@ -567,13 +606,22 @@ class _LoginScreenState extends State<LoginScreen> {
 class _BrandMark extends StatelessWidget {
   const _BrandMark();
 
+  /// Decode size for [Image.asset], in physical pixels.
+  ///
+  /// Sized for the hero rather than the pane: the mark can now render at up to
+  /// 320 logical px, which is 960 physical on a 3x phone, so the previous 600
+  /// would have shown a visibly soft edge on exactly the screens it was
+  /// enlarged for. Above the 1000px source there is nothing left to resolve, so
+  /// this costs nothing extra.
+  static const int _decodeSize = 1200;
+
   @override
   Widget build(BuildContext context) {
     return Image.asset(
       'assets/shop.png',
       fit: BoxFit.contain,
-      cacheWidth: 600,
-      cacheHeight: 600,
+      cacheWidth: _decodeSize,
+      cacheHeight: _decodeSize,
     );
   }
 }

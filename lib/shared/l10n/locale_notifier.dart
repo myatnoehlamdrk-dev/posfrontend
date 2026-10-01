@@ -16,7 +16,7 @@ import 'package:posfrontend/shared/l10n/app_language.dart';
 /// when the user changes the language in Settings, and read back on login to
 /// reconcile a device that syncs across installs.
 class LocaleNotifier extends ValueNotifier<Locale> {
-  LocaleNotifier._() : super(AppLanguage.myanmar.locale);
+  LocaleNotifier._() : super(AppLanguage.english.locale);
 
   static final LocaleNotifier instance = LocaleNotifier._();
 
@@ -32,8 +32,9 @@ class LocaleNotifier extends ValueNotifier<Locale> {
         prefs.getString(_prefsKey),
       ).locale;
     } catch (_) {
-      // A missing preference must not block startup; the enum's default stands.
-      instance.value = AppLanguage.myanmar.locale;
+      // A missing preference must not block startup; English is the language
+      // every translation set is complete in, so it is the safe seed.
+      instance.value = AppLanguage.english.locale;
     }
   }
 

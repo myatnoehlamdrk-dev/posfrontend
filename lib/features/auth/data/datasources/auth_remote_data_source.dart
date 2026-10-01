@@ -13,7 +13,7 @@ class AuthRemoteDataSource {
   Future<LoginResponseModel> login(LoginRequestModel request) async {
     try {
       final response = await _dio.post(
-        '/api/auth/login',
+        '/auth/login',
         data: request.toJson(),
       );
       return LoginResponseModel.fromJson(response.data as Map<String, dynamic>);
@@ -25,7 +25,7 @@ class AuthRemoteDataSource {
   Future<UserApiModel> register(RegisterRequestModel request) async {
     try {
       final response = await _dio.post(
-        '/api/auth/register',
+        '/auth/register',
         data: request.toJson(),
       );
       return UserApiModel.fromJson(response.data as Map<String, dynamic>);
@@ -36,7 +36,7 @@ class AuthRemoteDataSource {
 
   Future<void> sendOtp(String email) async {
     try {
-      await _dio.post('/api/auth/register/send-otp', data: {'email': email});
+      await _dio.post('/auth/register/send-otp', data: {'email': email});
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
@@ -45,7 +45,7 @@ class AuthRemoteDataSource {
   Future<void> verifyOtp(String email, String otp) async {
     try {
       await _dio.post(
-        '/api/auth/register/verify-otp',
+        '/auth/register/verify-otp',
         data: {'email': email, 'otp': otp},
       );
     } on DioException catch (e) {
@@ -56,7 +56,7 @@ class AuthRemoteDataSource {
   Future<void> sendForgotPasswordOtp(String email) async {
     try {
       await _dio.post(
-        '/api/auth/forgot-password/send-otp',
+        '/auth/forgot-password/send-otp',
         data: {'email': email},
       );
     } on DioException catch (e) {
@@ -67,7 +67,7 @@ class AuthRemoteDataSource {
   Future<String> verifyForgotPasswordOtp(String email, String otp) async {
     try {
       final response = await _dio.post(
-        '/api/auth/forgot-password/verify-otp',
+        '/auth/forgot-password/verify-otp',
         data: {'email': email, 'otp': otp},
       );
       return response.data['reset_token'] as String;
@@ -83,7 +83,7 @@ class AuthRemoteDataSource {
   }) async {
     try {
       await _dio.post(
-        '/api/auth/forgot-password/reset',
+        '/auth/forgot-password/reset',
         data: {
           'email': email,
           'reset_token': resetToken,

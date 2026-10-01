@@ -73,7 +73,7 @@ class ProductsCatalogViewModel extends BaseViewModel {
 
     try {
       final response = await _dio.get(
-        '/api/products/search',
+        '/products/search',
         queryParameters: {'q': query},
         cancelToken: cancelToken,
       );
@@ -137,7 +137,7 @@ class ProductsCatalogViewModel extends BaseViewModel {
       }
 
       final response = await _dio.get(
-        '/api/categories/with-products',
+        '/categories/with-products',
         queryParameters: queryParams,
         cancelToken: cancelToken,
       );
@@ -192,7 +192,7 @@ class ProductsCatalogViewModel extends BaseViewModel {
   Future<void> _loadHotProducts() async {
     try {
       final response = await _dio.get(
-        '/api/products/latest',
+        '/products/latest',
         queryParameters: {'limit': 4},
         cancelToken: cancelToken,
       );
@@ -246,7 +246,7 @@ class ProductsCatalogViewModel extends BaseViewModel {
 
   Future<bool> deleteProduct(String productId) async {
     try {
-      await _dio.delete('/api/products/$productId', cancelToken: cancelToken);
+      await _dio.delete('/products/$productId', cancelToken: cancelToken);
       for (final cat in _categories) {
         cat.products.removeWhere((p) => p.id == productId);
       }

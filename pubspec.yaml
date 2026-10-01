@@ -91,6 +91,7 @@ flutter:
 
   assets:
     - assets/shop.png
+    - assets/shop_rotated.png
     - assets/launcher.png
 
   # Poppins carries no Burmese, Thai or CJK glyphs, so text in those languages

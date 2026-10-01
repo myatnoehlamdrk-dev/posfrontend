@@ -37,7 +37,7 @@ class ProductRemoteDataSource {
         queryParams['order'] = order;
       }
       final response = await _dio.get(
-        '/api/products',
+        '/products',
         queryParameters: queryParams,
         cancelToken: cancelToken,
       );
@@ -63,7 +63,7 @@ class ProductRemoteDataSource {
   }) async {
     try {
       final response = await _dio.get(
-        '/api/products/$productId',
+        '/products/$productId',
         cancelToken: cancelToken,
       );
       final data = response.data;
@@ -76,7 +76,7 @@ class ProductRemoteDataSource {
 
   Future<void> deleteProduct(String productId) async {
     try {
-      await _dio.delete('/api/products/$productId');
+      await _dio.delete('/products/$productId');
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
@@ -85,7 +85,7 @@ class ProductRemoteDataSource {
   Future<List<ProductApiModel>> searchProducts(String query) async {
     try {
       final response = await _dio.get(
-        '/api/products',
+        '/products',
         queryParameters: {'search': query},
       );
       final data = response.data;
@@ -102,7 +102,7 @@ class ProductRemoteDataSource {
 
   Future<List<Map<String, dynamic>>> getSuppliers() async {
     try {
-      final response = await _dio.get('/api/suppliers');
+      final response = await _dio.get('/suppliers');
       final data = response.data;
       final List<dynamic> items = data is Map
           ? (data['data'] ?? [])
@@ -115,7 +115,7 @@ class ProductRemoteDataSource {
 
   Future<List<Map<String, dynamic>>> getPackages() async {
     try {
-      final response = await _dio.get('/api/packages');
+      final response = await _dio.get('/packages');
       final data = response.data;
       final List<dynamic> items = data is Map
           ? (data['data'] ?? [])
@@ -128,7 +128,7 @@ class ProductRemoteDataSource {
 
   Future<void> createProduct(Map<String, dynamic> data) async {
     try {
-      await _dio.post('/api/products', data: data);
+      await _dio.post('/products', data: data);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
@@ -139,7 +139,7 @@ class ProductRemoteDataSource {
     Map<String, dynamic> data,
   ) async {
     try {
-      await _dio.patch('/api/products/$productId', data: data);
+      await _dio.patch('/products/$productId', data: data);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
@@ -147,7 +147,7 @@ class ProductRemoteDataSource {
 
   Future<List<Map<String, dynamic>>> getPendingPurchaseItems() async {
     try {
-      final response = await _dio.get('/api/purchase-items/pending');
+      final response = await _dio.get('/purchase-items/pending');
       final data = response.data;
       final List<dynamic> items = data is Map
           ? (data['data'] ?? [])
@@ -160,7 +160,7 @@ class ProductRemoteDataSource {
 
   Future<void> completePurchaseItem(String itemId) async {
     try {
-      await _dio.put('/api/purchase-items/$itemId/complete');
+      await _dio.put('/purchase-items/$itemId/complete');
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
@@ -168,7 +168,7 @@ class ProductRemoteDataSource {
 
   Future<List<CategoryApiModel>> getCategories() async {
     try {
-      final response = await _dio.get('/api/categories');
+      final response = await _dio.get('/categories');
       final data = response.data;
       final List<dynamic> items = data is Map
           ? (data['data'] ?? [])
@@ -194,7 +194,7 @@ class ProductRemoteDataSource {
         queryParams['search'] = search;
       }
       final response = await _dio.get(
-        '/api/categories/with-products',
+        '/categories/with-products',
         queryParameters: queryParams,
         cancelToken: cancelToken,
       );
@@ -216,7 +216,7 @@ class ProductRemoteDataSource {
   }) async {
     try {
       await _dio.post(
-        '/api/categories',
+        '/categories',
         data: {
           'name': name,
           if (description != null) 'description': description,
@@ -237,7 +237,7 @@ class ProductRemoteDataSource {
   }) async {
     try {
       await _dio.patch(
-        '/api/categories/$id',
+        '/categories/$id',
         data: {
           if (name != null) 'name': name,
           if (description != null) 'description': description,

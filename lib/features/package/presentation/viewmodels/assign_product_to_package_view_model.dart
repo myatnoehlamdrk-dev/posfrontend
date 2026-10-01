@@ -141,7 +141,7 @@ class AssignProductToPackageViewModel extends BaseViewModel {
       for (final productId in _selectedIds) {
         try {
           await dio.patch(
-            '/api/products/$productId',
+            '/products/$productId',
             data: {'packageId': int.tryParse(package.id)},
             cancelToken: cancelToken,
           );

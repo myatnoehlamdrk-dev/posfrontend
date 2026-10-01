@@ -123,20 +123,45 @@ class RegisterViewModel extends BaseViewModel with FormValidationMixin {
     }
   }
 
-  bool validate() {
+  /// Step 1 gate: the three fields the account cannot exist without. Everything
+  /// else in this form is optional and the backend accepts it as null, so
+  /// holding step 2 for its own sake would only add a tap.
+  bool validateUserInfoStep() {
     clearAllFieldErrors();
-    if (_name.trim().isEmpty) setFieldError('name', 'Full name is required');
+
+    if (_name.trim().isEmpty) {
+      setFieldError('name', 'Full name is required');
+    }
     if (_email.trim().isEmpty) {
       setFieldError('email', 'Email is required');
     } else if (!isValidEmail(_email)) {
       setFieldError('email', 'Enter a valid email');
     }
-    if (_password.isEmpty) setFieldError('password', 'Password is required');
-    if (_billingWay.trim().isEmpty)
-      setFieldError('billingWay', 'Billing way is required');
+    if (_password.isEmpty) {
+      setFieldError('password', 'Password is required');
+    }
+
     notifyListeners();
     return fieldErrors.isEmpty;
   }
+
+  /// Step 2 is all optional, so there is nothing to reject.
+  bool validateDetailStep() => true;
+
+  /// Step 3 gate. The shop itself was created on the previous screen, so the
+  /// only thing this step owns is how the user is billed against it.
+  bool validateShopStep() {
+    clearAllFieldErrors();
+
+    if (_billingWay.trim().isEmpty) {
+      setFieldError('billingWay', 'Billing way is required');
+    }
+
+    notifyListeners();
+    return fieldErrors.isEmpty;
+  }
+
+  bool validate() => validateUserInfoStep() && validateShopStep();
 
   Future<bool> register() async {
     resetError();

@@ -11,7 +11,7 @@ class DashboardRemoteDataSource {
     CancelToken? cancelToken,
   }) async {
     final response = await _dio.get(
-      '/api/dashboard/all',
+      '/dashboard/all',
       queryParameters: {'days': days},
       cancelToken: cancelToken,
     );
@@ -23,7 +23,7 @@ class DashboardRemoteDataSource {
     CancelToken? cancelToken,
   }) async {
     final response = await _dio.get(
-      '/api/dashboard/monthly-sales',
+      '/dashboard/monthly-sales',
       queryParameters: {'year': year},
       cancelToken: cancelToken,
     );

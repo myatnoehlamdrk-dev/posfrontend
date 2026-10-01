@@ -93,7 +93,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
     try {
       final dio = ApiClient.create();
       final response = await dio.get(
-        '/api/products',
+        '/products',
         queryParameters: {
           'categoryId': widget.categoryId,
           'page': _currentPage,
@@ -157,7 +157,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
     try {
       final dio = ApiClient.create();
       final response = await dio.get(
-        '/api/products',
+        '/products',
         queryParameters: {
           'categoryId': widget.categoryId,
           'page': 1,

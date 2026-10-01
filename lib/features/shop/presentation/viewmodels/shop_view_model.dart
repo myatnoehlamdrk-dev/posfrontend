@@ -180,7 +180,22 @@ class ShopViewModel extends BaseViewModel with FormValidationMixin {
     clearFieldError('ownerPhone');
   }
 
-  bool validate() {
+  /// The keys each wizard step owns, so a step can be validated on its own and
+  /// an error from step 1 is not re-reported while the user is on step 2.
+  static const List<String> shopStepFields = [
+    'name',
+    'type',
+    'physicalAddress',
+  ];
+
+  static const List<String> ownerStepFields = [
+    'ownerName',
+    'ownerEmail',
+    'ownerPhone',
+  ];
+
+  /// Step 1 gate. Called before advancing, so only this step's fields report.
+  bool validateShopStep() {
     clearAllFieldErrors();
 
     if (_name.trim().isEmpty) {
@@ -192,6 +207,15 @@ class ShopViewModel extends BaseViewModel with FormValidationMixin {
     if (_physicalAddress.trim().isEmpty) {
       setFieldError('physicalAddress', 'Physical address is required');
     }
+
+    notifyListeners();
+    return !_hasErrorsIn(shopStepFields);
+  }
+
+  /// Step 2 gate, and the same check the submit runs.
+  bool validateOwnerStep() {
+    clearAllFieldErrors();
+
     if (_ownerName.trim().isEmpty) {
       setFieldError('ownerName', "Owner's name is required");
     }
@@ -205,8 +229,13 @@ class ShopViewModel extends BaseViewModel with FormValidationMixin {
     }
 
     notifyListeners();
-    return fieldErrors.isEmpty;
+    return !_hasErrorsIn(ownerStepFields);
   }
+
+  bool _hasErrorsIn(List<String> keys) =>
+      keys.any((key) => (fieldErrors[key] ?? '').isNotEmpty);
+
+  bool validate() => validateShopStep() && validateOwnerStep();
 
   Future<bool> createShop() async {
     resetError();

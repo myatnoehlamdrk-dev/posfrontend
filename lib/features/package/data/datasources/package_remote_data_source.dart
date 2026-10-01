@@ -13,7 +13,7 @@ class PackageRemoteDataSource {
   }) async {
     try {
       final resp = await _dio.get(
-        '/api/packages',
+        '/packages',
         queryParameters: {'categoryId': categoryId},
         cancelToken: cancelToken,
       );
@@ -46,7 +46,7 @@ class PackageRemoteDataSource {
   }) async {
     try {
       final resp = await _dio.post(
-        '/api/packages',
+        '/packages',
         data: {
           'categoryId': int.tryParse(categoryId),
           'name': name,
@@ -83,7 +83,7 @@ class PackageRemoteDataSource {
   }) async {
     try {
       final resp = await _dio.patch(
-        '/api/packages/$id',
+        '/packages/$id',
         data: {
           'categoryId': int.tryParse(categoryId),
           'name': name,
@@ -106,7 +106,7 @@ class PackageRemoteDataSource {
 
   Future<void> deletePackage(String id, {CancelToken? cancelToken}) async {
     try {
-      await _dio.delete('/api/packages/$id', cancelToken: cancelToken);
+      await _dio.delete('/packages/$id', cancelToken: cancelToken);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }

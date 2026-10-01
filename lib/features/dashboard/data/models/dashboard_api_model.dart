@@ -44,6 +44,18 @@ class DashboardApiModel {
     final lowStock = stats.integer('low_stock_count');
     final totalSales = stats.integer('total_sales');
 
+    final totalCategories = stats.integer('total_categories');
+    final totalPackages = stats.integer('total_packages');
+    final brandCount = stats.integer('brand_count');
+    final categoryless = stats.integer('categoryless_products');
+    final highStock = stats.integer('high_stock_count');
+    final midStock = stats.integer('mid_stock_count');
+    final outStock = stats.integer('out_stock_count');
+    final inCart = stats.integer('in_cart_count');
+    final salesCount = stats.integer('sales_count');
+    final avgSale = stats.integer('avg_sale_last10');
+    final avgProducts = stats.integer('avg_products_last10');
+
     final metrics = [
       MetricEntity(
         iconCodePoint: '0xe04c',
@@ -52,7 +64,19 @@ class DashboardApiModel {
         iconColorValue: 0xFF16A34A,
         tableKey: DashboardTableKey.products,
         label: 'Total Products',
-        value: totalProducts.withCommas(),
+        value: totalProducts.compact(),
+        details: [
+          MetricDetailEntity(
+            label: 'Categories',
+            value: totalCategories.compact(),
+          ),
+          MetricDetailEntity(label: 'Packages', value: totalPackages.compact()),
+          MetricDetailEntity(label: 'Brands', value: brandCount.compact()),
+          MetricDetailEntity(
+            label: 'No Category',
+            value: categoryless.compact(),
+          ),
+        ],
       ),
       MetricEntity(
         iconCodePoint: '0xe5ca',
@@ -61,7 +85,13 @@ class DashboardApiModel {
         iconColorValue: 0xFF3B82F6,
         tableKey: DashboardTableKey.inStock,
         label: 'In Stock',
-        value: inStock.withCommas(),
+        value: inStock.compact(),
+        details: [
+          MetricDetailEntity(label: 'High', value: highStock.compact()),
+          MetricDetailEntity(label: 'Mid', value: midStock.compact()),
+          MetricDetailEntity(label: 'Low', value: lowStock.compact()),
+          MetricDetailEntity(label: 'Out', value: outStock.compact()),
+        ],
       ),
       MetricEntity(
         iconCodePoint: '0xe002',
@@ -70,7 +100,13 @@ class DashboardApiModel {
         iconColorValue: 0xFFF59E0B,
         tableKey: DashboardTableKey.lowStock,
         label: 'Low Stock',
-        value: lowStock.withCommas(),
+        value: lowStock.compact(),
+        details: [
+          MetricDetailEntity(label: 'High', value: highStock.compact()),
+          MetricDetailEntity(label: 'Mid', value: midStock.compact()),
+          MetricDetailEntity(label: 'Low', value: lowStock.compact()),
+          MetricDetailEntity(label: 'Out', value: outStock.compact()),
+        ],
       ),
       MetricEntity(
         iconCodePoint: '0xe227',
@@ -79,7 +115,16 @@ class DashboardApiModel {
         iconColorValue: 0xFF8B5CF6,
         tableKey: DashboardTableKey.sales,
         label: 'Total Sales',
-        value: 'MMK ${totalSales.withCommas()}',
+        value: 'MMK ${totalSales.compact()}',
+        details: [
+          MetricDetailEntity(label: 'In Cart', value: inCart.compact()),
+          MetricDetailEntity(label: 'Sales', value: salesCount.compact()),
+          MetricDetailEntity(label: 'Avg Sale', value: avgSale.compact()),
+          MetricDetailEntity(
+            label: 'Avg Products',
+            value: avgProducts.toString(),
+          ),
+        ],
       ),
     ];
 

@@ -13,19 +13,19 @@ class CustomerRepositoryImpl implements CustomerRepository {
   }) async {
     final params = <String, dynamic>{'page': page};
     if (search != null && search.isNotEmpty) params['search'] = search;
-    final response = await dio.get('/api/customers', queryParameters: params);
+    final response = await dio.get('/customers', queryParameters: params);
     return response.data;
   }
 
   @override
   Future<Map<String, dynamic>> getCustomer(String id) async {
-    final response = await dio.get('/api/customers/$id');
+    final response = await dio.get('/customers/$id');
     return response.data;
   }
 
   @override
   Future<CustomerAnalyticsEntity> getAnalytics() async {
-    final response = await dio.get('/api/customers/analytics');
+    final response = await dio.get('/customers/analytics');
     return CustomerApiModel.analyticsFromJson(response.data);
   }
 
@@ -34,7 +34,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
     String? query,
   }) async {
     final response = await dio.get(
-      '/api/customers/search',
+      '/customers/search',
       queryParameters: {'query': query ?? ''},
     );
     return CustomerApiModel.searchResultsFromJson(response.data);

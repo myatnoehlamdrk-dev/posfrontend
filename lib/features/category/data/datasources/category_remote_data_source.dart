@@ -16,7 +16,7 @@ class CategoryRemoteDataSource {
     if (inventoryId != null) queryParameters['inventoryId'] = inventoryId;
     if (type != null) queryParameters['type'] = type;
     final resp = await _dio.get(
-      '/api/categories',
+      '/categories',
       queryParameters: queryParameters.isNotEmpty ? queryParameters : null,
       cancelToken: cancelToken,
     );
@@ -31,7 +31,7 @@ class CategoryRemoteDataSource {
     CancelToken? cancelToken,
   }) async {
     final resp = await _dio.post(
-      '/api/categories',
+      '/categories',
       data: {
         'type': type,
         'name': name,
@@ -52,7 +52,7 @@ class CategoryRemoteDataSource {
     CancelToken? cancelToken,
   }) async {
     final resp = await _dio.patch(
-      '/api/categories/$id',
+      '/categories/$id',
       data: {
         'name': name,
         'description': description,
@@ -68,6 +68,6 @@ class CategoryRemoteDataSource {
   }
 
   Future<void> deleteCategory(String id, {CancelToken? cancelToken}) async {
-    await _dio.delete('/api/categories/$id', cancelToken: cancelToken);
+    await _dio.delete('/categories/$id', cancelToken: cancelToken);
   }
 }

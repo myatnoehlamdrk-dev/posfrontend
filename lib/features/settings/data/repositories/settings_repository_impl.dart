@@ -8,7 +8,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
 
   @override
   Future<SettingsEntity> getSettings() async {
-    final response = await dio.get('/api/settings');
+    final response = await dio.get('/settings');
     return SettingsApiModel.fromJson(response.data as Map<String, dynamic>);
   }
 
@@ -25,7 +25,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
     if (shopType != null) body['shop_type'] = shopType;
     if (shopImage != null) body['shop_image'] = shopImage;
 
-    final response = await dio.patch('/api/settings', data: body);
+    final response = await dio.patch('/settings', data: body);
     return SettingsApiModel.fromJson(response.data as Map<String, dynamic>);
   }
 }

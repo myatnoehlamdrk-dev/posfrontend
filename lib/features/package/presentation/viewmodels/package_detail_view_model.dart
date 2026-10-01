@@ -103,7 +103,7 @@ class PackageDetailViewModel extends BaseViewModel {
     try {
       final dio = ApiClient.create();
       await dio.patch(
-        '/api/products/${product.id}',
+        '/products/${product.id}',
         data: {'packageId': null},
         cancelToken: cancelToken,
       );

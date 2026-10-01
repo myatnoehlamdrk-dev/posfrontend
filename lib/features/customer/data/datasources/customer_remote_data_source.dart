@@ -25,7 +25,7 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
     final params = <String, dynamic>{'page': page};
     if (search != null && search.isNotEmpty) params['search'] = search;
     return dio.get(
-      '/api/customers',
+      '/customers',
       queryParameters: params,
       cancelToken: cancelToken,
     );
@@ -33,18 +33,18 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
 
   @override
   Future<Response> getCustomer(String id, {CancelToken? cancelToken}) {
-    return dio.get('/api/customers/$id', cancelToken: cancelToken);
+    return dio.get('/customers/$id', cancelToken: cancelToken);
   }
 
   @override
   Future<Response> getAnalytics({CancelToken? cancelToken}) {
-    return dio.get('/api/customers/analytics', cancelToken: cancelToken);
+    return dio.get('/customers/analytics', cancelToken: cancelToken);
   }
 
   @override
   Future<Response> searchCustomers({String? query, CancelToken? cancelToken}) {
     return dio.get(
-      '/api/customers/search',
+      '/customers/search',
       queryParameters: {'query': query ?? ''},
       cancelToken: cancelToken,
     );

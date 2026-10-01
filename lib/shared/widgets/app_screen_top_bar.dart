@@ -14,6 +14,12 @@ class AppScreenTopBar extends StatelessWidget {
   final bool showBackButton;
   final VoidCallback? onBackTap;
 
+  /// Overrides the bar's fill. Defaults to the palette surface, which is right
+  /// for a page on the scaffold. A page that paints its own background wants
+  /// [Colors.transparent] instead, so the bar does not lay an opaque rectangle
+  /// across it.
+  final Color? backgroundColor;
+
   const AppScreenTopBar({
     super.key,
     required this.title,
@@ -21,6 +27,7 @@ class AppScreenTopBar extends StatelessWidget {
     this.onMenuTap,
     this.showBackButton = false,
     this.onBackTap,
+    this.backgroundColor,
   });
 
   @override
@@ -30,7 +37,7 @@ class AppScreenTopBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       decoration: BoxDecoration(
-        color: p.surface,
+        color: backgroundColor ?? p.surface,
         border: Border(bottom: BorderSide(color: p.border, width: 1)),
       ),
       child: Row(

@@ -43,7 +43,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     try {
       final dio = ApiClient.create();
       final resp = await dio.get(
-        '/api/auth/profile',
+        '/auth/profile',
         cancelToken: _cancelToken,
       );
       final data = resp.data;
@@ -133,16 +133,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           else if (_viewModel.data == null)
                             const DashboardSkeleton()
                           else ...[
-                            Text(
+                            _buildMetricSection(
                               context.l10n.t('Summary'),
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: p.textPrimary,
-                              ),
+                              _viewModel.data!.metrics,
                             ),
-                            const SizedBox(height: 12),
-                            _buildSummaryGrid(_viewModel.data!.metrics),
                             const SizedBox(height: 24),
                             _buildCategoryDistributionSection(
                               _viewModel.data!.categoryDistribution,
@@ -199,64 +193,136 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Color(m.iconBgValue),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              IconData(
-                int.parse(m.iconCodePoint),
-                fontFamily: m.iconFontFamily,
-              ),
-              color: Color(m.iconColorValue),
-              size: 24,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            context.l10n.t(m.label),
-            style: TextStyle(fontSize: 13, color: p.textSecondary),
-          ),
-          const SizedBox(height: 6),
-          // Both the number and "View all" open the same table. The number used
-          // to open a dialog that just repeated it, which is a dead end: the
-          // card is a summary, and the rows behind it are somewhere else.
-          GestureDetector(
-            onTap: () => _openSummaryTable(m.tableKey),
-            child: Text(
-              m.value.length > 12 ? '${m.value.substring(0, 12)}...' : m.value,
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.w700,
-                color: p.textPrimary,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.clip,
-            ),
-          ),
-          const SizedBox(height: 8),
-          GestureDetector(
-            onTap: () => _openSummaryTable(m.tableKey),
-            child: Row(
+          Expanded(
+            flex: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  context.l10n.t('View all'),
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: purpleAction,
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Color(m.iconBgValue),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    IconData(
+                      int.parse(m.iconCodePoint),
+                      fontFamily: m.iconFontFamily,
+                    ),
+                    color: Color(m.iconColorValue),
+                    size: 24,
                   ),
                 ),
-                const SizedBox(width: 2),
-                const Icon(Icons.chevron_right, size: 14, color: purpleAction),
+                const SizedBox(height: 12),
+                Text(
+                  context.l10n.t(m.label),
+                  style: TextStyle(fontSize: 13, color: p.textSecondary),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  m.value.length > 12
+                      ? '${m.value.substring(0, 12)}...'
+                      : m.value,
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w700,
+                    color: p.textPrimary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.clip,
+                ),
+                if (m.tableKey != null) ...[
+                  const SizedBox(height: 8),
+                  GestureDetector(
+                    onTap: () => _openSummaryTable(m.tableKey),
+                    child: Row(
+                      children: [
+                        Text(
+                          context.l10n.t('View all'),
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: purpleAction,
+                          ),
+                        ),
+                        const SizedBox(width: 2),
+                        const Icon(
+                          Icons.chevron_right,
+                          size: 13,
+                          color: purpleAction,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
+          if (m.details.isNotEmpty) ...[
+            const SizedBox(width: 16),
+            Expanded(
+              flex: 2,
+              child: Table(
+                columnWidths: const {
+                  0: FlexColumnWidth(1),
+                  1: FlexColumnWidth(1),
+                },
+                defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                border: TableBorder(
+                  horizontalInside: BorderSide(
+                    color: Color(m.iconColorValue),
+                    width: 1,
+                  ),
+                  verticalInside: BorderSide(
+                    color: Color(m.iconColorValue),
+                    width: 1,
+                  ),
+                ),
+                children: [
+                  for (final d in m.details)
+                    TableRow(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 5,
+                          ),
+                          child: Text(
+                            context.l10n.t(d.label),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: p.textSecondary,
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 5,
+                          ),
+                          child: Text(
+                            d.value,
+                            textAlign: TextAlign.right,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: p.textPrimary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -287,11 +353,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
     Navigator.of(context).push(route);
   }
 
-  Widget _buildSummaryGrid(List<MetricEntity> metrics) {
+  Widget _buildMetricSection(String title, List<MetricEntity> metrics) {
+    if (metrics.isEmpty) return const SizedBox.shrink();
+    final p = context.palette;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: p.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildMetricGrid(metrics),
+      ],
+    );
+  }
+
+  /// Lays the cards out two per row, the way the summary has always read, and
+  /// falls back to a single column on the narrowest phones.
+  Widget _buildMetricGrid(List<MetricEntity> metrics) {
     return LayoutBuilder(
       builder: (ctx, constraints) {
         final cards = metrics.map(_summaryCard).toList();
-        if (constraints.maxWidth < 360) {
+        final width = constraints.maxWidth;
+        final columns = width < 360 ? 1 : 2;
+
+        if (columns == 1) {
           return Column(
             children: cards
                 .map(
@@ -303,25 +394,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 .toList(),
           );
         }
-        return Column(
-          children: [
+
+        final rows = <Widget>[];
+        for (var i = 0; i < cards.length; i += columns) {
+          final rowCards = cards.sublist(
+            i,
+            i + columns > cards.length ? cards.length : i + columns,
+          );
+          rows.add(
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(child: cards[0]),
-                const SizedBox(width: 12),
-                Expanded(child: cards[1]),
+                for (var j = 0; j < columns; j++) ...[
+                  if (j > 0) const SizedBox(width: 12),
+                  Expanded(
+                    child: j < rowCards.length
+                        ? rowCards[j]
+                        : const SizedBox.shrink(),
+                  ),
+                ],
               ],
             ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(child: cards[2]),
-                const SizedBox(width: 12),
-                Expanded(child: cards[3]),
-              ],
-            ),
-          ],
-        );
+          );
+          if (i + columns < cards.length) rows.add(const SizedBox(height: 12));
+        }
+        return Column(children: rows);
       },
     );
   }

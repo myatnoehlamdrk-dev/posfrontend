@@ -1,3 +1,5 @@
+import 'dart:io' show HttpDate, HttpException;
+
 import 'package:dio/dio.dart';
 
 /// Base exception for all API/network errors.
@@ -53,6 +55,49 @@ class ServerException extends AppException {
   });
 }
 
+/// Authenticated, but not allowed to do this. Distinct from [AuthException]
+/// because it must not clear the token: the session is valid, the request
+/// simply was not permitted, and logging the user out would lose their cart.
+class ForbiddenException extends AppException {
+  const ForbiddenException({
+    super.message = "You don't have permission to do this.",
+    super.statusCode = 403,
+  });
+}
+
+/// Rate limited. [retryAfterSeconds] is the wait parsed from the standard
+/// `Retry-After` header, or null when the server did not send a usable one.
+class TooManyRequestsException extends AppException {
+  final int? retryAfterSeconds;
+
+  /// Not const, unlike its siblings: it interpolates the wait into the
+  /// message, and a const constructor cannot call a function. Callers read the
+  /// result through the inherited [message], which is all any error surface
+  /// uses anyway.
+  TooManyRequestsException({
+    String? message,
+    this.retryAfterSeconds,
+  }) : super(
+         message: message ?? _rateLimitMessage(retryAfterSeconds),
+         statusCode: 429,
+       );
+
+  /// The wait is baked into the message rather than left to the UI to compose,
+  /// because every surface that shows an error already renders `message` and
+  /// none of them know about rate limiting. Null reads better than "in 0
+  /// seconds", so an absent header gets no number at all.
+  static String _rateLimitMessage(int? seconds) {
+    if (seconds == null || seconds <= 0) {
+      return 'Too many attempts. Please try again later.';
+    }
+    if (seconds < 60) {
+      return 'Too many attempts. Try again in ${seconds}s.';
+    }
+    final minutes = (seconds / 60).ceil();
+    return 'Too many attempts. Try again in $minutes minute${minutes == 1 ? '' : 's'}.';
+  }
+}
+
 /// Request was cancelled by the user navigating away.
 class CancelledException extends AppException {
   const CancelledException() : super(message: 'Request cancelled.');
@@ -102,6 +147,15 @@ AppException _fromBadResponse(DioException e) {
   switch (statusCode) {
     case 401:
       return AuthException(message: message);
+    case 403:
+      return ForbiddenException(message: message);
+    case 429:
+      return TooManyRequestsException(
+        message: message,
+        retryAfterSeconds: parseRetryAfterSeconds(
+          e.response?.headers.value('retry-after'),
+        ),
+      );
     case 422:
       final fieldErrors = <String, String>{};
       if (data is Map<String, dynamic> && data['errors'] is Map) {
@@ -119,6 +173,54 @@ AppException _fromBadResponse(DioException e) {
       return ServerException(message: message, statusCode: statusCode);
     default:
       return ApiException(statusCode: statusCode, message: message);
+  }
+}
+
+/// Parses the standard `Retry-After` header into whole seconds.
+///
+/// Returns null for anything unusable: an absent header, an unparseable value,
+/// or an HTTP-date that has already passed. Callers treat null as "no
+/// information" and fall back to their own backoff, which is safer than
+/// trusting a stale date to mean "retry immediately".
+int? parseRetryAfterSeconds(String? raw) {
+  if (raw == null) return null;
+  final value = raw.trim();
+  if (value.isEmpty) return null;
+
+  final seconds = int.tryParse(value);
+  if (seconds != null) return seconds < 0 ? 0 : seconds;
+
+  final until = _parseHttpDate(value);
+  if (until == null) return null;
+
+  final wait = until.difference(DateTime.now()).inSeconds;
+  return wait < 0 ? 0 : wait;
+}
+
+/// Reads the HTTP-date form of `Retry-After`.
+///
+/// Hand-rolled rather than `DateTime.parse`, which returns null for the format
+/// every RFC 9110 server actually emits: `Wed, 21 Oct 2015 07:28:00 GMT`. That
+/// silently reduced this header to its delta-seconds form alone, so a server
+/// that reports a reset window as a date got treated as having sent nothing at
+/// all.
+///
+/// `dart:io`'s [HttpDate] covers IMF-fixdate. Its RFC 850 handling misreads the
+/// two-digit year, but that format was obsoleted in 1997 and nothing emits it;
+/// accepting a wrong year there would be worse than rejecting it outright.
+///
+/// Imported directly rather than through a conditional import: this app targets
+/// Android and desktop terminals, never web.
+DateTime? _parseHttpDate(String value) {
+  try {
+    return HttpDate.parse(value);
+  } on HttpException {
+    // What `HttpDate.parse` throws on an unrecognised date.
+    return null;
+  } on FormatException {
+    return null;
+  } on ArgumentError {
+    return null;
   }
 }
 

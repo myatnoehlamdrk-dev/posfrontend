@@ -166,6 +166,20 @@ const Map<String, String> thaiStrings = {
 
   // Inventory
   'Inventory': 'สินค้าคงคลัง',
+  'Private': 'ส่วนตัว',
+  'Shared': 'ใช้ร่วมกัน',
+  'Open': 'เปิด',
+  'Choose an inventory to manage your items.':
+      'เลือกคลังสินค้าเพื่อจัดการสินค้าของคุณ',
+  "What's the difference?": 'ต่างกันอย่างไร',
+  'Self Inventory: Only you can view and manage.':
+      'สินค้าส่วนตัว - คุณเท่านั้นที่ดูและจัดการได้',
+  'Public Inventory: Shared and visible to other users.':
+      'สินค้าสาธารณะ - ใช้ร่วมกันและผู้ใช้อื่นเห็นได้',
+  'Manage products and stocks only for your own shop.':
+      'จัดการสินค้าและสต็อกของร้านคุณเท่านั้น',
+  'View and manage products and stocks shared publicly.':
+      'ดูและจัดการสินค้าและสต็อกที่แชร์สาธารณะ',
   'More': 'เพิ่มเติม',
 
   // Cart

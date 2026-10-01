@@ -48,7 +48,7 @@ class DashboardTables {
   /// Total Products: product name, stock, category, package, who created, when.
   static const products = DashboardTableSpec(
     title: 'Total Products',
-    endpoint: '/api/dashboard/tables/products',
+    endpoint: '/dashboard/tables/products',
     columns: [
       TableColumn(label: 'Product Name', width: 210, jsonKey: 'name'),
       TableColumn(
@@ -72,14 +72,14 @@ class DashboardTables {
 
   static const inStock = DashboardTableSpec(
     title: 'In Stock',
-    endpoint: '/api/dashboard/tables/stock',
+    endpoint: '/dashboard/tables/stock',
     note: 'One row per variant.',
     columns: _variantColumns,
   );
 
   static const lowStock = DashboardTableSpec(
     title: 'Low Stock',
-    endpoint: '/api/dashboard/tables/stock',
+    endpoint: '/dashboard/tables/stock',
     note: 'One row per variant. Low stock means 1 to 5 left.',
     columns: _variantColumns,
   );
@@ -104,7 +104,7 @@ class DashboardTables {
   /// up, and the time.
   static const sales = DashboardTableSpec(
     title: 'Total Sales',
-    endpoint: '/api/dashboard/tables/sales',
+    endpoint: '/dashboard/tables/sales',
     showMonthFilter: true,
     columns: [
       TableColumn(
@@ -141,7 +141,7 @@ class DashboardTables {
   /// differ only by the `direction` query parameter.
   static const bought = DashboardTableSpec(
     title: 'Most Bought',
-    endpoint: '/api/dashboard/tables/bought-products',
+    endpoint: '/dashboard/tables/bought-products',
     note: 'Last 30 days.',
     columns: [
       TableColumn(label: 'Product Name', width: 240, jsonKey: 'name'),
@@ -179,7 +179,7 @@ class DashboardTables {
   /// No bought: product name, price, who created it, when.
   static const noBought = DashboardTableSpec(
     title: 'No Bought',
-    endpoint: '/api/dashboard/tables/no-bought-products',
+    endpoint: '/dashboard/tables/no-bought-products',
     columns: [
       TableColumn(label: 'Product Name', width: 240, jsonKey: 'name'),
       TableColumn(

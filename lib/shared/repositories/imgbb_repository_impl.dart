@@ -46,7 +46,7 @@ class ImgbbRepositoryImpl implements ImgbbRepository {
       });
 
       final response = await _dio.post(
-        '/api/images',
+        '/images',
         data: form,
         cancelToken: cancelToken,
       );

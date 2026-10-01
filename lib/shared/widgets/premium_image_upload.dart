@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 
 /// Premium, mobile-first image upload surface.
@@ -165,10 +166,7 @@ class PremiumImageUpload extends StatelessWidget {
                         )
                       else
                         Positioned.fill(
-                          child: _EmptyState(
-                            title: title,
-                            icon: icon,
-                          ),
+                          child: _EmptyState(title: title, icon: icon),
                         ),
                       IgnorePointer(
                         child: DecoratedBox(
@@ -205,10 +203,7 @@ class _EmptyState extends StatelessWidget {
   final String title;
   final IconData icon;
 
-  const _EmptyState({
-    required this.title,
-    required this.icon,
-  });
+  const _EmptyState({required this.title, required this.icon});
 
   @override
   Widget build(BuildContext context) {
@@ -231,10 +226,13 @@ class _EmptyState extends StatelessWidget {
             width: 68,
             height: 68,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [p.primary, p.primaryDark],
+              // The shared brand ramp rather than a primary-to-primaryDark pair,
+              // so the empty-state badge is recognisably the same gradient as the
+              // button the user will press to submit the form it sits above.
+              gradient: const LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: AppColors.brandRamp,
               ),
               borderRadius: BorderRadius.circular(22),
               boxShadow: [
@@ -366,10 +364,7 @@ class PremiumAvatarUpload extends StatelessWidget {
                                     base64Decode(imageBase64!),
                                     fit: BoxFit.cover,
                                   )
-                                : Image.network(
-                                    imageUrl!,
-                                    fit: BoxFit.cover,
-                                  )))
+                                : Image.network(imageUrl!, fit: BoxFit.cover)))
                       else if (isBusy)
                         const Center(
                           child: SizedBox(
@@ -411,7 +406,11 @@ class PremiumAvatarUpload extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(7),
                   decoration: BoxDecoration(
-                    color: p.primary,
+                    gradient: const LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: AppColors.brandRamp,
+                    ),
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(

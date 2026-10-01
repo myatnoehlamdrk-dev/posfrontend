@@ -11,6 +11,11 @@ abstract class Failure extends Equatable {
   factory Failure.fromException(AppException e) {
     return switch (e) {
       AuthException() => AuthFailure(e.message),
+      ForbiddenException() => ForbiddenFailure(e.message),
+      TooManyRequestsException() => RateLimitFailure(
+        e.message,
+        retryAfterSeconds: e.retryAfterSeconds,
+      ),
       NetworkException() => NetworkFailure(e.message),
       TimeoutException() => TimeoutFailure(e.message),
       ValidationException() => ValidationFailure(
@@ -35,6 +40,21 @@ class NetworkFailure extends Failure {
 
 class AuthFailure extends Failure {
   const AuthFailure(super.message);
+}
+
+/// Kept distinct from [AuthFailure] for the same reason as
+/// [ForbiddenException]: a permission problem is not a session problem, and
+/// folding one into the other would make a caller clear a valid token.
+class ForbiddenFailure extends Failure {
+  const ForbiddenFailure(super.message);
+}
+
+/// Carries the wait so a UI that wants to show a countdown rather than a
+/// sentence can, without re-reading the response headers.
+class RateLimitFailure extends Failure {
+  final int? retryAfterSeconds;
+
+  const RateLimitFailure(super.message, {this.retryAfterSeconds});
 }
 
 class ValidationFailure extends Failure {

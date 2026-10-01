@@ -8,13 +8,13 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
   @override
   Future<ProfileEntity> getProfile() async {
-    final response = await dio.get('/api/auth/profile');
+    final response = await dio.get('/auth/profile');
     return ProfileApiModel.fromJson(response.data as Map<String, dynamic>);
   }
 
   @override
   Future<ProfileEntity> updateProfile(Map<String, dynamic> data) async {
-    final response = await dio.patch('/api/auth/profile', data: data);
+    final response = await dio.patch('/auth/profile', data: data);
     return ProfileApiModel.fromJson(response.data as Map<String, dynamic>);
   }
 
@@ -25,7 +25,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
     required String confirmPassword,
   }) async {
     await dio.put(
-      '/api/auth/profile/password',
+      '/auth/profile/password',
       data: {
         'current_password': currentPassword,
         'new_password': newPassword,

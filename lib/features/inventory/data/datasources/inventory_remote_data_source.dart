@@ -14,7 +14,7 @@ class InventoryRemoteDataSource {
     final queryParameters = <String, dynamic>{};
     if (type != null) queryParameters['type'] = type;
     final resp = await _dio.get(
-      '/api/inventories',
+      '/inventories',
       queryParameters: queryParameters.isNotEmpty ? queryParameters : null,
       cancelToken: cancelToken,
     );
@@ -26,7 +26,7 @@ class InventoryRemoteDataSource {
     CancelToken? cancelToken,
   }) async {
     final resp = await _dio.post(
-      '/api/inventories',
+      '/inventories',
       data: {'type': type},
       cancelToken: cancelToken,
     );

@@ -15,7 +15,7 @@ class PurchaseRemoteDataSource {
     final params = <String, dynamic>{'page': page};
     if (status != null) params['status'] = status;
     final response = await _dio.get(
-      '/api/purchase-items',
+      '/purchase-items',
       queryParameters: params,
       cancelToken: cancelToken,
     );
@@ -64,7 +64,7 @@ class PurchaseRemoteDataSource {
       data['sku'] = sku;
     }
     final response = await _dio.post(
-      '/api/purchase-items',
+      '/purchase-items',
       data: data,
       cancelToken: cancelToken,
     );
@@ -81,7 +81,7 @@ class PurchaseRemoteDataSource {
     CancelToken? cancelToken,
   }) async {
     final response = await _dio.put(
-      '/api/purchase-items/$id',
+      '/purchase-items/$id',
       data: {'status': status},
       cancelToken: cancelToken,
     );
@@ -93,13 +93,13 @@ class PurchaseRemoteDataSource {
   }
 
   Future<void> deletePurchaseItem(String id, {CancelToken? cancelToken}) async {
-    await _dio.delete('/api/purchase-items/$id', cancelToken: cancelToken);
+    await _dio.delete('/purchase-items/$id', cancelToken: cancelToken);
   }
 
   Future<List<SupplierApiModel>> getSuppliers({
     CancelToken? cancelToken,
   }) async {
-    final response = await _dio.get('/api/suppliers', cancelToken: cancelToken);
+    final response = await _dio.get('/suppliers', cancelToken: cancelToken);
     final payload = response.data;
     List<dynamic> itemsList;
     if (payload is Map<String, dynamic>) {
@@ -129,7 +129,7 @@ class PurchaseRemoteDataSource {
       data['address'] = address;
     }
     final response = await _dio.post(
-      '/api/suppliers',
+      '/suppliers',
       data: data,
       cancelToken: cancelToken,
     );

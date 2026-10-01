@@ -41,7 +41,7 @@ enum AppLanguage {
   /// translation set is guaranteed to be complete in.
   static AppLanguage fromServer(String? raw) {
     final value = raw?.trim().toLowerCase();
-    if (value == null || value.isEmpty) return AppLanguage.myanmar;
+    if (value == null || value.isEmpty) return AppLanguage.english;
     for (final language in AppLanguage.values) {
       if (language.serverValue.toLowerCase() == value) return language;
       if (language.code == value) return language;

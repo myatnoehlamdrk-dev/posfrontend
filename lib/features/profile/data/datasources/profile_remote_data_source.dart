@@ -21,7 +21,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
 
   @override
   Future<Response> getProfile({CancelToken? cancelToken}) {
-    return dio.get('/api/auth/profile', cancelToken: cancelToken);
+    return dio.get('/auth/profile', cancelToken: cancelToken);
   }
 
   @override
@@ -29,7 +29,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     Map<String, dynamic> data, {
     CancelToken? cancelToken,
   }) {
-    return dio.patch('/api/auth/profile', data: data, cancelToken: cancelToken);
+    return dio.patch('/auth/profile', data: data, cancelToken: cancelToken);
   }
 
   @override
@@ -40,7 +40,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     CancelToken? cancelToken,
   }) {
     return dio.put(
-      '/api/auth/profile/password',
+      '/auth/profile/password',
       data: {
         'current_password': currentPassword,
         'new_password': newPassword,

@@ -13,7 +13,7 @@ class ShopApiDataSource {
   }) async {
     try {
       final response = await _dio.post(
-        '/api/shops',
+        '/shops',
         data: shop.toApiJson(),
         cancelToken: cancelToken,
       );
@@ -29,7 +29,7 @@ class ShopApiDataSource {
   }) async {
     try {
       final response = await _dio.get(
-        '/api/shops',
+        '/shops',
         queryParameters: (query == null || query.trim().isEmpty)
             ? null
             : {'q': query.trim()},
@@ -53,7 +53,7 @@ class ShopApiDataSource {
   }) async {
     try {
       final response = await _dio.get(
-        '/api/shops/$id',
+        '/shops/$id',
         cancelToken: cancelToken,
       );
       return ShopApiModel.fromJson(response.data as Map<String, dynamic>);
@@ -69,7 +69,7 @@ class ShopApiDataSource {
   }) async {
     try {
       final response = await _dio.patch(
-        '/api/shops/$id',
+        '/shops/$id',
         data: shop.toApiJson(),
         cancelToken: cancelToken,
       );

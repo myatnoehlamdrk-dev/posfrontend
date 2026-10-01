@@ -16,7 +16,7 @@ class ProductCreateRepositoryImpl implements ProductCreateRepository {
   Future<List<SupplierOption>> getSuppliers({CancelToken? cancelToken}) async {
     try {
       final dio = ApiClient.create();
-      final resp = await dio.get('/api/suppliers', cancelToken: cancelToken);
+      final resp = await dio.get('/suppliers', cancelToken: cancelToken);
       return parseTypedList(
         resp.data,
         (e) => SupplierOption(
@@ -55,7 +55,7 @@ class ProductCreateRepositoryImpl implements ProductCreateRepository {
     try {
       final dio = ApiClient.create();
       await dio.post(
-        '/api/products',
+        '/products',
         data: request.toJson(),
         cancelToken: cancelToken,
       );
@@ -73,7 +73,7 @@ class ProductCreateRepositoryImpl implements ProductCreateRepository {
     try {
       final dio = ApiClient.create();
       await dio.patch(
-        '/api/products/$id',
+        '/products/$id',
         data: request.toJson(),
         cancelToken: cancelToken,
       );
@@ -90,7 +90,7 @@ class ProductCreateRepositoryImpl implements ProductCreateRepository {
     try {
       final dio = ApiClient.create();
       final resp = await dio.get(
-        '/api/products/search',
+        '/products/search',
         queryParameters: {'q': query},
         cancelToken: cancelToken,
       );
@@ -107,7 +107,7 @@ class ProductCreateRepositoryImpl implements ProductCreateRepository {
     try {
       final dio = ApiClient.create();
       final resp = await dio.get(
-        '/api/purchase-items',
+        '/purchase-items',
         queryParameters: {'status': 'pending'},
         cancelToken: cancelToken,
       );
@@ -125,7 +125,7 @@ class ProductCreateRepositoryImpl implements ProductCreateRepository {
     try {
       final dio = ApiClient.create();
       await dio.put(
-        '/api/purchase-items/$id',
+        '/purchase-items/$id',
         data: {'status': 'completed'},
         cancelToken: cancelToken,
       );

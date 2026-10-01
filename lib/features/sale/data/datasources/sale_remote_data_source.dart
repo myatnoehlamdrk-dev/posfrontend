@@ -51,7 +51,7 @@ class SaleRemoteDataSource {
     };
 
     try {
-      final resp = await _dio.post('/api/sales', data: payload);
+      final resp = await _dio.post('/sales', data: payload);
       if (resp.statusCode != 201) {
         throw ApiException(
           statusCode: resp.statusCode,
@@ -106,7 +106,7 @@ class SaleRemoteDataSource {
     };
 
     try {
-      final resp = await _dio.post('/api/orders', data: payload);
+      final resp = await _dio.post('/orders', data: payload);
       if (resp.statusCode != 201) {
         throw ApiException(
           statusCode: resp.statusCode,
@@ -128,7 +128,7 @@ class SaleRemoteDataSource {
     required String status,
   }) async {
     try {
-      await _dio.put('/api/orders/$orderId', data: {'status': status});
+      await _dio.put('/orders/$orderId', data: {'status': status});
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
@@ -155,7 +155,7 @@ class SaleRemoteDataSource {
 
     try {
       final resp = await _dio.post(
-        '/api/orders/$orderId/items',
+        '/orders/$orderId/items',
         data: {'items': itemsData},
       );
       if (resp.statusCode != 200) {
@@ -176,7 +176,7 @@ class SaleRemoteDataSource {
 
   Future<void> deleteOrder(String orderId) async {
     try {
-      await _dio.delete('/api/orders/$orderId');
+      await _dio.delete('/orders/$orderId');
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
@@ -188,7 +188,7 @@ class SaleRemoteDataSource {
   }) async {
     try {
       final response = await _dio.get(
-        '/api/sales',
+        '/sales',
         queryParameters: {'page': page, 'per_page': perPage},
       );
       final data = response.data;
@@ -213,7 +213,7 @@ class SaleRemoteDataSource {
   }) async {
     try {
       final response = await _dio.get(
-        '/api/orders',
+        '/orders',
         queryParameters: {'page': page, 'per_page': perPage},
       );
       final data = response.data;
@@ -234,7 +234,7 @@ class SaleRemoteDataSource {
 
   Future<SaleOrderApiModel> getSaleById(String id) async {
     try {
-      final response = await _dio.get('/api/sales/$id');
+      final response = await _dio.get('/sales/$id');
       final payload = response.data;
       if (payload is Map<String, dynamic>) {
         return SaleOrderApiModel.fromJson(payload);
@@ -247,7 +247,7 @@ class SaleRemoteDataSource {
 
   Future<void> deleteSale(String id) async {
     try {
-      await _dio.delete('/api/sales/$id');
+      await _dio.delete('/sales/$id');
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
@@ -255,7 +255,7 @@ class SaleRemoteDataSource {
 
   Future<SaleOrderApiModel> deleteSaleItem(String saleId, String itemId) async {
     try {
-      final response = await _dio.delete('/api/sales/$saleId/items/$itemId');
+      final response = await _dio.delete('/sales/$saleId/items/$itemId');
       final payload = response.data;
       if (payload is Map<String, dynamic>) {
         return SaleOrderApiModel.fromJson(payload);
