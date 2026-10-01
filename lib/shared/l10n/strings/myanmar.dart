@@ -41,7 +41,8 @@ const Map<String, String> myStrings = {
   'Enter billing way': 'ငှားရမ်းနည်းလမ်းဖြည့်ပါ',
   'Select gender': 'လိပ်စာရွေးပါ',
   'Verify Your Email': 'သင့်အီးမေးလ်အတည်ပြုပါ',
-  'We sent a 6-digit verification code to': 'စတင် verification code 6 လုံးကိုပို့ပြီးပါပြီ',
+  'We sent a 6-digit verification code to':
+      'စတင် verification code 6 လုံးကိုပို့ပြီးပါပြီ',
   'Enter 6-digit code': 'နံပါတ် 6 လုံးရိုက်ထည့်ပါ',
   'Enter 6-digit OTP': 'OTP နံပါတ် 6 လုံးထည့်ပါ',
   'Verify OTP': 'OTP အတည်ပြုရန်',
@@ -127,8 +128,10 @@ const Map<String, String> myStrings = {
   'Search Product': 'ကုန်ပစ္စည်းရှာဖွေရန်',
   'Search...': 'ရှာဖွေရန်...',
   'Search products...': 'ကုန်ပစ္စည်းများရှာဖွေရန်...',
-  'Try a different keyword or brand': 'စကားလုံးသို့မဟုတ်အမှတ်အသားကိန်းပြန်လည်ရွေးပါ',
-  'Add products to see categories here': 'ကဏ္ဍများကြည့်ရန် ကုန်ပစ္စည်းများထည့်ပါ',
+  'Try a different keyword or brand':
+      'စကားလုံးသို့မဟုတ်အမှတ်အသားကိန်းပြန်လည်ရွေးပါ',
+  'Add products to see categories here':
+      'ကဏ္ဍများကြည့်ရန် ကုန်ပစ္စည်းများထည့်ပါ',
   'Delete Product': 'ကုန်ပစ္စည်းဖျက်ရန်',
   'Delete': 'ဖျက်ရန်',
   'Cancel': 'ပယ်ဖျက်ရန်',
@@ -202,7 +205,8 @@ const Map<String, String> myStrings = {
   'Checkout': 'ငှားရမ်း',
   'No more items': 'နောက်ထပ်ပစ္စည်းမရှိပါ',
   'Fill all stock': 'တန်ဖိုးအားလုံးဖြည့်ပါ',
-  'Create a new cart card for these items': 'ဤပစ္စည်းများအတွက်ခရက်လွှာအသစ်ဖန်တီးပါ',
+  'Create a new cart card for these items':
+      'ဤပစ္စည်းများအတွက်ခရက်လွှာအသစ်ဖန်တီးပါ',
   'New Card': 'ကဒ်အသစ်',
   'Existing Card': 'တရားရှိသောကဒ်',
   'Existing Cards': 'တရားရှိသောကဒ်များ',
@@ -316,7 +320,8 @@ const Map<String, String> myStrings = {
   // Purchase
   'Purchase Items': 'ပေးသွင်းခြင်းပစ္စည်းများ',
   'Purchase Detail': 'ပေးသွင်းခြင်းအသေးစိတ်',
-  'Manage purchase orders from your suppliers': 'ပေးသွင်းသူများမှငှားရမ်းမှတ်တမ်းများစီမံပါ',
+  'Manage purchase orders from your suppliers':
+      'ပေးသွင်းသူများမှငှားရမ်းမှတ်တမ်းများစီမံပါ',
   'New Purchase Order': 'ငှားရမ်းမှတ်တမ်းအသစ်',
   'Create Purchase Order': 'ငှားရမ်းမှတ်တမ်းဖန်တီးရန်',
   'Mark Completed': 'ပြီးပြီဟုမှတ်ရန်',
@@ -331,16 +336,24 @@ const Map<String, String> myStrings = {
   'Continue': 'ဆက်လက်လုပ်ဆောင်ရန်',
   'Enter shop name': 'ဆေးဖောင်းအမည်ဖြည့်ပါ',
   'Select type': 'အမျိုးအစားရွေးပါ',
-  'Search shop by name, address or owner': 'အမည်၊လိပ်စာ သို့မဟုတ် ပိုင်ရှင်အလိုက်ဆေးဖောင်းရှာပါ',
+  'Search shop by name, address or owner':
+      'အမည်၊လိပ်စာ သို့မဟုတ် ပိုင်ရှင်အလိုက်ဆေးဖောင်းရှာပါ',
   'JPG or PNG · up to 5MB': 'JPG သို့မဟုတ် PNG သာလွဲ 5MB အထိ',
   'Tap to browse your gallery': 'သင့်ပရိဘောဂရွေးရန်နှိုပ်ပါ',
 
   // Onboarding
   'MDRK POS': 'MDRK POS',
   'INVENTORY MANAGEMENT': 'ငှားရမ်းစီမံမှု',
-  'SMART POS': 'စမတ်� POS',
+  'SMART POS': 'စမတ် POS',
   'Powered by MDRK': 'MDRK မှပြုလုပ်ထားသည်',
   'Swipe to get started': 'စတင်ရန်လှမ်းလျှော့ပါ',
+  'Manage sales, stock, and reports from your pocket.':
+      'ရောင်းချမှု၊ ပစ္စည်းနှင့် အစာရင်းအညွှန်းများကို ဖုန်းဖြင့် စီမံပါ',
+  'Fast checkout': 'အမြန်မြန် ငွေပေးချေမှု',
+  'Live inventory tracking':
+      'ပစ္စည်းလက်ကမား အချက်အလက်ကို အချက်ချင်းခန့်ကြည့်ခြင်း',
+  'Daily sales reports': 'နေ့စဉ် ရောင်းချမှု အစာရင်းအညွှန်းများ',
+  'Get Started': 'စတင်ပါ',
 
   // Shared drawer
   'Product': 'ကုန်ပစ္စည်း',
@@ -383,4 +396,3 @@ const Map<String, String> myStrings = {
   'Send OTP': 'OTP ပို့ရန်',
   'Supply Chain': 'ပေးသွင်းခြင်းလင့်ခြင်း',
 };
-

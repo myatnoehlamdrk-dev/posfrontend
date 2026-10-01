@@ -84,7 +84,8 @@ const Map<String, String> thaiStrings = {
   'JPG or PNG up to 5MB': 'JPG หรือ PNG ขนาดไม่เกิน 5MB',
   'Take a photo or choose an image': 'ถ่ายรูปหรือเลือกรูป',
   'Tap to choose an image file': 'แตะเพื่อเลือกไฟล์รูป',
-  'Upload a product photo from your device.': 'อัปโหลดรูปสินค้าจากอุปกรณ์ของคุณ',
+  'Upload a product photo from your device.':
+      'อัปโหลดรูปสินค้าจากอุปกรณ์ของคุณ',
   'Image uploaded': 'อัปโหลดรูปเรียบร้อย',
   'Overview': 'ภาพรวม',
   'Variants': 'ตัวเลือกสินค้า',
@@ -189,7 +190,8 @@ const Map<String, String> thaiStrings = {
   'Checkout': 'ชำระเงิน',
   'No more items': 'ไม่มีสินค้าเพิ่มเติม',
   'Fill all stock': 'กรอกสต็อกทั้งหมด',
-  'Create a new cart card for these items': 'สร้างรายการใหม่สำหรับสินค้าเหล่านี้',
+  'Create a new cart card for these items':
+      'สร้างรายการใหม่สำหรับสินค้าเหล่านี้',
   'New Card': 'บัตรใหม่',
   'Existing Card': 'บัตรที่มีอยู่',
   'Existing Cards': 'บัตรที่มีอยู่',
@@ -318,7 +320,8 @@ const Map<String, String> thaiStrings = {
   'Continue': 'ดำเนินการต่อ',
   'Enter shop name': 'กรุณากรอกชื่อร้านค้า',
   'Select type': 'เลือกประเภท',
-  'Search shop by name, address or owner': 'ค้นหาร้านตามชื่อ ที่อยู่ หรือเจ้าของ',
+  'Search shop by name, address or owner':
+      'ค้นหาร้านตามชื่อ ที่อยู่ หรือเจ้าของ',
   'JPG or PNG · up to 5MB': 'JPG หรือ PNG · สูงสุด 5MB',
   'Tap to browse your gallery': 'แตะเพื่อเลือกจากแกลเลอรี',
 
@@ -328,6 +331,12 @@ const Map<String, String> thaiStrings = {
   'SMART POS': 'สมาร์ต POS',
   'Powered by MDRK': 'พัฒนาโดย MDRK',
   'Swipe to get started': 'ปัดเพื่อเริ่มต้น',
+  'Manage sales, stock, and reports from your pocket.':
+      'จัดการยอดขาย สต็อกสินค้า และรายงานได้จากมือถือของคุณ',
+  'Fast checkout': 'ชำระเงินเร็วรวดลมรอบ',
+  'Live inventory tracking': 'ติดตามสต็อกสินค้าแบบเรียลไทม์',
+  'Daily sales reports': 'รายงานยอดขายรายวัน',
+  'Get Started': 'เริ่มต้นใช้งาน',
 
   // Shared drawer
   'Product': 'สินค้า',
@@ -370,4 +379,3 @@ const Map<String, String> thaiStrings = {
   'Send OTP': 'ส่ง OTP',
   'Supply Chain': 'ซัพพลายเชน',
 };
-

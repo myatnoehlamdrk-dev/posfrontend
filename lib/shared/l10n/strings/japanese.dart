@@ -169,15 +169,12 @@ const Map<String, String> japaneseStrings = {
   'Private': '非公開',
   'Shared': '共有',
   'Open': '開く',
-  'Choose an inventory to manage your items.':
-      '商品を管理する在庫を選択してください',
+  'Choose an inventory to manage your items.': '商品を管理する在庫を選択してください',
   "What's the difference?": '違いは何ですか',
-  'Self Inventory: Only you can view and manage.':
-      '自己在庫 - あなたにのみ表示・管理できます',
+  'Self Inventory: Only you can view and manage.': '自己在庫 - あなたにのみ表示・管理できます',
   'Public Inventory: Shared and visible to other users.':
       '公開在庫 - 共有され、他のユーザーにも表示されます',
-  'Manage products and stocks only for your own shop.':
-      '自分の店の商品と在庫のみを管理します',
+  'Manage products and stocks only for your own shop.': '自分の店の商品と在庫のみを管理します',
   'View and manage products and stocks shared publicly.':
       '公開されている商品と在庫を表示・管理します',
   'More': 'もっと見る',
@@ -328,6 +325,11 @@ const Map<String, String> japaneseStrings = {
   'SMART POS': 'スマートPOS',
   'Powered by MDRK': 'Powered by MDRK',
   'Swipe to get started': 'スワイプして開始',
+  'Manage sales, stock, and reports from your pocket.': '販売・在庫・レポートをポケットで管理',
+  'Fast checkout': '高速決済',
+  'Live inventory tracking': '在庫をリアルタイムで管理',
+  'Daily sales reports': '日次売上レポート',
+  'Get Started': 'はじめる',
 
   // Shared drawer
   'Product': '商品',
@@ -370,4 +372,3 @@ const Map<String, String> japaneseStrings = {
   'Send OTP': 'OTPを送信',
   'Supply Chain': 'サプライチェーン',
 };
-

@@ -6,20 +6,31 @@ import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/features/auth/presentation/screens/login_screen.dart';
 
-/// Layout thresholds, matching the login screen's so the two agree on what
-/// "wide" means.
+/// Layout thresholds for this screen.
 ///
-/// This screen was authored for a portrait phone. On a desktop window the
-/// content would otherwise float as a postage stamp, so the hero scales up to a
-/// ceiling and the bottom section is capped and centred.
+/// It was authored for a portrait phone. On a desktop window the content would
+/// otherwise float as a postage stamp, so the hero scales up to a ceiling and
+/// the wordmark is capped at a readable measure.
 class _OnboardingLayout {
-  static const double wideFrom = 900;
+  /// Above this the viewport is treated as tablet or desktop. Below it the
+  /// scattered-cards-over-illustration layout is kept, because that is what it
+  /// was drawn for and a phone has nowhere else to put the art.
+  static const double wideFrom = 700;
 
   static const double heroTextMaxWidth = 760;
 
+  /// Measure for the feature list on wide viewports. Wide enough for the
+  /// longest label in any language without the row stretching.
+  static const double listMaxWidth = 420;
+
+  static const double listItemGap = 12;
+
   static const double heroCeiling = 1.5;
 
+  /// Keeps the button off the middle group when the window is short and the
+  /// two gaps collapse to nothing.
   static const double ctaGap = 14;
+
   static const double buttonHeight = 56;
   static const double bottomPadding = 32;
 }
@@ -27,48 +38,36 @@ class _OnboardingLayout {
 class GetStartedScreen extends StatelessWidget {
   const GetStartedScreen({super.key});
 
-@override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.palette.scaffoldBg,
       body: Stack(
         children: [
-          // Background image + gradient covering entire screen
+          // Radial wash behind everything. A gradient has no intrinsic size, so
+          // filling the screen costs nothing visually here.
           Positioned.fill(
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: Image.asset(
-                    'assets/shop_rotated.png',
-                    width: MediaQuery.of(context).size.width * 0.7,
-                    fit: BoxFit.cover,
-                    alignment: Alignment.topCenter,
-                  ),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: const Alignment(0.95, -0.95),
+                  radius: 0.7,
+                  colors: [
+                    context.palette.primary.withValues(alpha: 0.22),
+                    context.palette.primary.withValues(alpha: 0.12),
+                    context.palette.primary.withValues(alpha: 0.0),
+                  ],
+                  stops: const [0.0, 0.45, 1.0],
                 ),
-                Positioned.fill(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: RadialGradient(
-                        center: const Alignment(0.95, -0.95),
-                        radius: 0.7,
-                        colors: [
-                          context.palette.primary.withValues(alpha: 0.22),
-                          context.palette.primary.withValues(alpha: 0.12),
-                          context.palette.primary.withValues(alpha: 0.0),
-                        ],
-                        stops: const [0.0, 0.45, 1.0],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
           // Content flow
           SafeArea(
             child: LayoutBuilder(
-              builder: (ctx, constraints) {
+              builder: (context, constraints) {
                 final wide = constraints.maxWidth >= _OnboardingLayout.wideFrom;
+
                 return ConstrainedBox(
                   constraints: BoxConstraints(
                     minHeight: constraints.maxHeight,
@@ -76,22 +75,47 @@ class GetStartedScreen extends StatelessWidget {
                     maxWidth: constraints.maxWidth,
                   ),
                   child: Column(
+                    // Three bands: wordmark at the top, illustration and cards
+                    // in the middle, CTA at the bottom. `spaceBetween` puts the
+                    // slack in the two gaps between them rather than splitting
+                    // it by a flex ratio, which left the middle group high.
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    // The default is `center`, which hands the CTA loose width
+                    // constraints and lets it shrink to its label instead of
+                    // spanning the window. The hero and the middle band are both
+                    // unaffected: they centre their own content internally.
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Flexible(
-                        flex: 3,
-                        child: _buildHeroSection(
-                          context,
-                          maxWidth: MediaQuery.of(context).size.width,
+                      _buildHeroSection(
+                        context,
+                        maxWidth: MediaQuery.of(context).size.width,
+                      ),
+                      // Takes all the slack between the two fixed-height bands
+                      // and centres the group in it. Also what bounds the stack:
+                      // a Column child that is not a flex slot gets unbounded
+                      // height, and RenderStack would fall back to
+                      // `constraints.biggest` and come out infinite.
+                      Expanded(
+                        child: wide
+                            ? _buildFeatureList(context)
+                            : _buildFeatures(context),
+                      ),
+                      // Button and its padding are one child, so `spaceBetween`
+                      // sees three bands and not four. As separate children the
+                      // padding became a third gap and lifted the button.
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          top: _OnboardingLayout.ctaGap,
+                          bottom: _OnboardingLayout.bottomPadding,
+                        ),
+                        child: _GetStartedButton(
+                          onPressed: () => _navigateToLogin(context),
                         ),
                       ),
-                    // Feature cards
-                    _buildFeatures(context, wide: true),
-                    const SizedBox(height: _OnboardingLayout.ctaGap),
-                    _GetStartedButton(onPressed: () => _navigateToLogin(context)),
-                    const SizedBox(height: _OnboardingLayout.bottomPadding),
-                  ],
+                    ],
+                  ),
                 );
-              };
+              },
             ),
           ),
         ],
@@ -234,28 +258,42 @@ class GetStartedScreen extends StatelessWidget {
     );
   }
 
-  /// Three separate floating cards rather than one large box with rules.
+  /// The feature items, as `(icon, label)` pairs.
+  ///
+  /// Shared by both layouts so the set and its order cannot drift between them.
+  /// Labels go through `t` here rather than at each call site for the same
+  /// reason.
+  List<(IconData, String)> _featureItems(BuildContext context) {
+    final s = context.l10n;
+    return [
+      (Icons.bolt_rounded, s.t('Fast checkout')),
+      (Icons.inventory_2_outlined, s.t('Live inventory tracking')),
+      (Icons.bar_chart_rounded, s.t('Daily sales reports')),
+    ];
+  }
+
+  /// Three separate floating cards over the illustration, for a phone.
   ///
   /// Cards read as distinct, tappable surfaces and the shadow gives them a
   /// physical lift off the page; a single bordered box reads as a form the user
-  /// is meant to fill in.
-  Widget _buildFeatures(BuildContext context, {required bool wide}) {
-    const items = <(IconData, String)>[
-      (Icons.bolt_rounded, 'Fast checkout'),
-      (Icons.inventory_2_outlined, 'Live inventory tracking'),
-      (Icons.bar_chart_rounded, 'Daily sales reports'),
-    ];
+  /// is meant to fill in. They sit in three different corners on purpose, so
+  /// the eye moves around the illustration rather than down one column.
+  Widget _buildFeatures(BuildContext context) {
+    final items = _featureItems(context);
 
     return Stack(
       clipBehavior: Clip.none,
       children: [
+        // The illustration fills the middle band rather than sitting inside a
+        // centred square. The source is square, so a square box would cap it at
+        // the band's width and leave the sides empty; `cover` uses the whole
+        // band instead. It bleeds past the slot, which is what a backdrop wants
+        // — the cards float on top of it and clip none of it away.
+        const Positioned.fill(child: _BackdropImage()),
         Positioned(
           top: 16,
           left: 16,
-          child: _FloatingCard(
-            icon: items[0].$1,
-            label: items[0].$2,
-          ),
+          child: _FloatingCard(icon: items[0].$1, label: items[0].$2),
         ),
         Positioned(
           top: 0,
@@ -263,21 +301,43 @@ class GetStartedScreen extends StatelessWidget {
           right: 16,
           child: Align(
             alignment: Alignment.centerRight,
-            child: _FloatingCard(
-              icon: items[1].$1,
-              label: items[1].$2,
-            ),
+            child: _FloatingCard(icon: items[1].$1, label: items[1].$2),
           ),
         ),
         Positioned(
           bottom: 16,
           left: 16,
-          child: _FloatingCard(
-            icon: items[2].$1,
-            label: items[2].$2,
-          ),
+          child: _FloatingCard(icon: items[2].$1, label: items[2].$2),
         ),
       ],
+    );
+  }
+
+  /// The same three features as a plain stacked list, for tablet and desktop.
+  ///
+  /// Without the illustration there is nothing to scatter cards around, and a
+  /// wide window has room to read them top to bottom. Each row is its own
+  /// raised surface here rather than a transparent overlay, since there is no
+  /// artwork behind it to lift off.
+  Widget _buildFeatureList(BuildContext context) {
+    final items = _featureItems(context);
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          maxWidth: _OnboardingLayout.listMaxWidth,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final (index, item) in items.indexed) ...[
+              if (index > 0)
+                const SizedBox(height: _OnboardingLayout.listItemGap),
+              _FeatureRow(icon: item.$1, label: item.$2, filled: true),
+            ],
+          ],
+        ),
+      ),
     );
   }
 
@@ -285,6 +345,31 @@ class GetStartedScreen extends StatelessWidget {
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
       (route) => false,
+    );
+  }
+}
+
+/// The illustration filling the band between the wordmark and the CTA.
+///
+/// `cover` so it occupies the whole band rather than the largest square that
+/// fits inside it, which is what a backdrop wants — a square source in a wide
+/// slot would leave both sides empty. The cards sit on top of it, so the parts
+/// that reach past the edges are decoration and not something being read.
+class _BackdropImage extends StatelessWidget {
+  const _BackdropImage();
+
+  /// Source is 1000x1000. The band can be wider than that on a desktop window,
+  /// so this is not raised past it: upscaling would only add memory and no
+  /// detail.
+  static const int _decodeSize = 1000;
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(
+      'assets/shop_rotated.png',
+      fit: BoxFit.cover,
+      cacheWidth: _decodeSize,
+      cacheHeight: _decodeSize,
     );
   }
 }
@@ -297,11 +382,34 @@ class _FloatingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return _FeatureRow(icon: icon, label: label, filled: false);
+  }
+}
+
+/// One feature line: an icon chip and its label.
+///
+/// [filled] is the difference between the two layouts. Over the illustration the
+/// row is transparent so it does not punch a hole in the artwork; in the wide
+/// list there is no artwork behind it, so it takes a surface colour and reads as
+/// its own card.
+class _FeatureRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool filled;
+
+  const _FeatureRow({
+    required this.icon,
+    required this.label,
+    required this.filled,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final p = context.palette;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: p.surface.withValues(alpha: 0.92),
+        color: filled ? p.surface : Colors.transparent,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -312,7 +420,6 @@ class _FloatingCard extends StatelessWidget {
         ],
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             width: 32,
@@ -324,25 +431,24 @@ class _FloatingCard extends StatelessWidget {
             child: Icon(icon, size: 18, color: p.primary),
           ),
           const SizedBox(width: 10),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: p.textPrimary,
+          // Stretched to the row's width so a long label wraps instead of
+          // overflowing it.
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: p.textPrimary,
+              ),
             ),
           ),
         ],
       ),
     );
   }
-}
-
-void _navigateToLogin(BuildContext context) {
-  Navigator.of(context).pushAndRemoveUntil(
-    MaterialPageRoute(builder: (_) => const LoginScreen()),
-    (route) => false,
-  );
 }
 
 /// The primary call to action: a full pill with a thick border painted in the
@@ -396,6 +502,7 @@ class _GetStartedButton extends StatelessWidget {
                     color: p.primary,
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
+                    fontStyle: FontStyle.italic,
                   ),
                 ),
                 const SizedBox(width: 8),
