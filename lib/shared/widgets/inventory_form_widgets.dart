@@ -6,13 +6,23 @@ import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 
 const Color kTitle = Color(0xFF111827);
 const Color kGray = Color(0xFF6B7280);
-const Color kPurple = Color(0xFF6D28D9);
 const Color kBorder = Color(0xFFE5E7EB);
 const Color kBg = Color(0xFFFFFFFF);
 const Color kRed = Color(0xFFEF4444);
 
+/// The one purple the inventory forms are built in, shared with the welcome
+/// screen's `Get started` button, the product prices and the sale buttons.
+///
+/// Named aliases for [AppColors.brandPurple] rather than fresh hex values: this
+/// file is the base every inventory form sits on — add category, add package,
+/// add product, quick add, add stock — so a second purple defined here would be
+/// one more place the accent could drift.
+const Color kPurple = AppColors.brandPurple;
+
+/// The purple ramp for filled actions. Both steps come from [AppColors] so the
+/// gradient cannot fade a brand purple into an unrelated violet.
 const LinearGradient kPurpleGradient = LinearGradient(
-  colors: [Color(0xFF7C3AED), Color(0xFF5B21B6)],
+  colors: [AppColors.brandPurple, AppColors.brandPurpleDark],
   begin: Alignment.centerLeft,
   end: Alignment.centerRight,
 );
@@ -441,9 +451,11 @@ class FormActions extends StatelessWidget {
           child: Container(
             height: 48,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.primaryLight, p.primary],
-              ),
+              // The shared ramp, not a gradient written out here: this button is
+              // the save action on every inventory form, and it was the one
+              // control still painted in the old violet-to-violet pair while the
+              // rest of the app moved to the brand purple.
+              gradient: kPurpleGradient,
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(

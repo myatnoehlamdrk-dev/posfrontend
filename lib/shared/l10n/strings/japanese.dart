@@ -371,4 +371,6 @@ const Map<String, String> japaneseStrings = {
   'Select category': 'カテゴリを選択',
   'Send OTP': 'OTPを送信',
   'Supply Chain': 'サプライチェーン',
+  '{v1} product': '{v1} 件',
+  '{v1} products': '{v1} 件',
 };

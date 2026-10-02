@@ -395,4 +395,6 @@ const Map<String, String> myStrings = {
   'Select category': 'ကဏ္ဍရွေးပါ',
   'Send OTP': 'OTP ပို့ရန်',
   'Supply Chain': 'ပေးသွင်းခြင်းလင့်ခြင်း',
+  '{v1} product': '{v1} ပစ္စည်း',
+  '{v1} products': '{v1} ပစ္စည်းများ',
 };

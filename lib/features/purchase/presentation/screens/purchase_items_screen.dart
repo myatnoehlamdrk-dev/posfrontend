@@ -48,7 +48,7 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
       drawer: const AppDrawer(active: DrawerDestination.purchaseItem),
       floatingActionButton: FloatingActionButton(
         onPressed: _showNewPurchaseSheet,
-        backgroundColor: AppColors.teal,
+        backgroundColor: AppColors.brandPurple,
         shape: const CircleBorder(),
         child: const Icon(Icons.add, color: Colors.white, size: 28),
       ),
@@ -143,7 +143,7 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
                   child: Center(
-                    child: CircularProgressIndicator(color: AppColors.teal),
+                    child: CircularProgressIndicator(color: AppColors.brandPurple),
                   ),
                 ),
               if (!_viewModel.hasMore && _viewModel.purchaseItems.isNotEmpty)
@@ -351,7 +351,7 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.tealDark,
+                    color: AppColors.brandPurple,
                   ),
                 ),
               ],

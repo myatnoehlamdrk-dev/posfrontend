@@ -1,3 +1,4 @@
+import 'package:posfrontend/core/auth/terminal_identity.dart';
 import 'package:posfrontend/core/auth/token_storage.dart';
 import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/core/base/form_validation_mixin.dart';
@@ -57,7 +58,13 @@ class LoginViewModel extends BaseViewModel with FormValidationMixin {
     setLoading(true);
     try {
       final result = await _loginUseCase(
-        LoginParams(email: _email.trim(), password: _password),
+        LoginParams(
+          email: _email.trim(),
+          password: _password,
+          // Labels the session server-side so an admin can tell which till is
+          // signed in and revoke just that device.
+          deviceName: await TerminalIdentity.label(),
+        ),
       );
       _user = result.user;
       _accessToken = result.accessToken;

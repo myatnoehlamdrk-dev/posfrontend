@@ -6,6 +6,7 @@ import 'package:posfrontend/features/cart/domain/entities/cart_card_entity.dart'
 import 'package:posfrontend/features/cart/presentation/widgets/cart_item_row.dart';
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
 import 'package:posfrontend/features/sale/presentation/screens/new_sale_screen.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/pressable_card.dart';
@@ -136,8 +137,10 @@ class _CartCardScreenState extends State<CartCardScreen> {
   /// The total above is the number being confirmed, so the action that follows
   /// it is supporting cast. A solid saturated button would pull focus off the
   /// amount and read as the primary thing on the screen, which is what it used
-  /// to do. Tinted fill, hairline border, primary-coloured label: present, but
-  /// no longer competing.
+  /// to do. Tinted fill, hairline border, light-violet label — the same violet
+  /// the welcome screen paints its caption in, and lighter than the brand
+  /// purple so it cannot pass for a second primary action: present, but no
+  /// longer competing.
   ///
   /// The ink ripple this used to carry is gone, replaced by press physics: this
   /// is the one tap on the screen that spends money, so it answers the finger
@@ -157,12 +160,18 @@ class _CartCardScreenState extends State<CartCardScreen> {
         decoration: BoxDecoration(
           color: p.selectionTint,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: p.primary.withValues(alpha: 0.35)),
+          border: Border.all(
+            color: AppColors.lightViolet.withValues(alpha: 0.5),
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.arrow_forward_rounded, size: 18, color: p.primary),
+            Icon(
+              Icons.arrow_forward_rounded,
+              size: 18,
+              color: AppColors.lightViolet,
+            ),
             const SizedBox(width: 8),
             Flexible(
               child: Text(
@@ -170,7 +179,7 @@ class _CartCardScreenState extends State<CartCardScreen> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: p.primary,
+                  color: AppColors.lightViolet,
                   fontWeight: FontWeight.w600,
                   fontSize: 15,
                 ),

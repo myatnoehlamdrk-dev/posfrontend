@@ -19,6 +19,26 @@ class AppColors {
   static const Color purple = Color(0xFF6D28D9);
   static const Color purple700 = Color(0xFF7C3AED);
 
+  /// The single interactive purple for the product flows: prices, the search
+  /// affordance and the welcome screen's `Get started` button are all painted
+  /// in this. Kept apart from [purple] and [primary] on purpose — those are the
+  /// older violets, and mixing the three on one screen is what made the same
+  /// control look like it belonged to two apps.
+  static const Color brandPurple = Color(0xFF7952DB);
+
+  /// The dark end of the [brandPurple] ramp, for gradients that need a second
+  /// step. It is a shade of the same hue rather than the theme's `primaryDark`:
+  /// pairing a brand purple with a different violet is what made the gradient
+  /// read as two colours rather than one button.
+  static const Color brandPurpleDark = Color(0xFF5A3DA4);
+
+  /// The light violet the welcome screen paints its caption and eyebrow dot in.
+  /// Used for the softer accents in the checkout flow, where the control is
+  /// supporting rather than the thing being confirmed. Lighter than
+  /// [brandPurple] on purpose, so it is a tint and not a second primary —
+  /// anything that has to carry meaning at small sizes stays on [brandPurple].
+  static const Color lightViolet = Color(0xFF9D7AD6);
+
   /// The two lighter steps of the violet ramp, used for hover states and for
   /// accent text that has to stay legible on a dark surface. Kept next to
   /// [purple700] so a page assembling a violet ramp picks them from one place

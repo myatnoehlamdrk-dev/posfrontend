@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class FilterTabs extends StatelessWidget {
@@ -33,7 +34,7 @@ class FilterTabs extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: active ? p.primary : p.surface,
+                  color: active ? AppColors.brandPurple : p.surface,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Center(

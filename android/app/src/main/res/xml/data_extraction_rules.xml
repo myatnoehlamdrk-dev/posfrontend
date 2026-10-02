@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Nothing in this app's storage should be restored onto another device.
+
+  flutter_secure_storage's Android values are encrypted with a key held in the
+  Keystore, and that key does not leave the device. A restored backup carries
+  the ciphertext but not the key, so the first read throws
+  `InvalidKeyException` -- and because `getToken` runs inside the Dio
+  interceptor, that turns into a failed request on every screen, with the user
+  stuck unable to reach the login screen to sign in again.
+
+  Excluding the secure-storage preferences is the belt to `allowBackup="false"`
+  as braces, for the OEM backup paths that ignore the application flag.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="file" path="." />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="file" path="." />
+    </device-transfer>
+</data-extraction-rules>

@@ -4,6 +4,7 @@ import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:flutter/services.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/core/network/media_url.dart';
+import 'package:posfrontend/features/cart/data/cart_card_mapper.dart';
 import 'package:posfrontend/features/cart/data/cart_store.dart';
 import 'package:posfrontend/features/cart/domain/entities/cart_card_entity.dart';
 import 'package:posfrontend/features/cart/domain/entities/cart_item_entity.dart';
@@ -66,6 +67,53 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
   final Map<String, TextEditingController> _qtyCtrls = {};
   final Map<String, List<VariantPick>> _variantPicks = {};
   bool _isAddingToCart = false;
+  bool _isLoadingExistingCards = false;
+
+  /// Resolved once per load, before the first await, so no `BuildContext` is
+  /// read across the gap.
+  Set<String> _ownerKeys() {
+    final user = AuthScope.userOf(context);
+    return cartOwnerKeys(
+      userId: user?.id,
+      fullName: user?.fullName,
+      email: user?.email,
+    );
+  }
+
+  /// Pulls the orders table into [CartStore] before the `Existing Card` picker
+  /// is shown. Two sources, because a card can live in either: what the device
+  /// saved locally, and what the server still holds as a draft. Idempotent and
+  /// guarded, so a double tap cannot fire two requests.
+  Future<void> _loadExistingCards() async {
+    if (_isLoadingExistingCards) return;
+    _isLoadingExistingCards = true;
+    final ownerKeys = _ownerKeys();
+    try {
+      await CartStore.instance.init();
+      final result = await SaleHistoryRepositoryImpl().getOrders(
+        page: 1,
+        perPage: 50,
+      );
+      final data = result['data'];
+      if (data is List) {
+        final cards = <CartCardEntity>[];
+        for (final item in data) {
+          if (item is! Map<String, dynamic>) continue;
+          // Never offer another shop's draft here: this picker feeds straight
+          // into `addOrderItems`, which would write into their order.
+          if (!cartOrderBelongsTo(item, ownerKeys)) continue;
+          final card = cartCardFromOrder(item);
+          if (card != null) cards.add(card);
+        }
+        await CartStore.instance.mergeCards(cards);
+      }
+    } catch (_) {
+      // A failed fetch is not fatal: whatever the store already holds is still
+      // offered, and the picker explains itself when there is nothing.
+    } finally {
+      _isLoadingExistingCards = false;
+    }
+  }
 
   AppPalette get _p => context.palette;
   Color get _titleColor => _p.textPrimary;
@@ -416,6 +464,14 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
   }
 
   Future<void> _addToExistingCard(List<CartItemEntity> items) async {
+    // The picker used to read `CartStore.value` directly and came back empty:
+    // this screen is not the cart screen, so nothing here had ever run
+    // `CartStore.init()` to rehydrate the locally saved cards, and nothing had
+    // pulled the draft orders back from the API either. Both happen before the
+    // sheet opens now, so `Existing Card` offers what the cart screen shows.
+    await _loadExistingCards();
+    if (!mounted) return;
+
     final cards = CartStore.instance.value
         .where((c) => c.orderId.isNotEmpty)
         .toList();
@@ -423,7 +479,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
       if (!mounted) return;
       showErrorMessage(
         context,
-        'No existing card to add into. Start a new card first.',
+        'No draft order to add into yet. Start a new card first.',
       );
       return;
     }
@@ -787,7 +843,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: _titleColor,
+                      color: AppColors.brandPurple,
                     ),
                   ),
                 ],
@@ -806,7 +862,12 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                 decoration: BoxDecoration(
                   gradient: (_isAddingToCart || _selectedCount == 0)
                       ? null
-                      : LinearGradient(colors: [_accentColor, _p.primaryDark]),
+                      : LinearGradient(
+                          colors: [
+                            AppColors.brandPurple,
+                            AppColors.brandPurpleDark,
+                          ],
+                        ),
                   color: (_isAddingToCart || _selectedCount == 0)
                       ? _p.borderStrong
                       : null,
@@ -907,7 +968,7 @@ class _ProductCard extends StatelessWidget {
           color: p.surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: selected ? p.primary : p.border,
+            color: selected ? AppColors.brandPurple : p.border,
             width: selected ? 2 : 1,
           ),
           boxShadow: [
@@ -959,11 +1020,13 @@ class _ProductCard extends StatelessWidget {
                         height: 26,
                         decoration: BoxDecoration(
                           color: selected
-                              ? p.primary
+                              ? AppColors.brandPurple
                               : Colors.white.withValues(alpha: 0.92),
                           borderRadius: BorderRadius.circular(7),
                           border: Border.all(
-                            color: selected ? p.primary : p.borderStrong,
+                            color: selected
+                                ? AppColors.brandPurple
+                                : p.borderStrong,
                           ),
                           boxShadow: [
                             BoxShadow(
@@ -1006,7 +1069,7 @@ class _ProductCard extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.teal,
+                      color: AppColors.brandPurple,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -1129,7 +1192,7 @@ class _ProductCard extends StatelessWidget {
                                   style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w700,
-                                    color: AppColors.teal,
+                                    color: AppColors.brandPurple,
                                   ),
                                 ),
                               ),
@@ -1478,7 +1541,7 @@ class _VariantPickDialogState extends State<_VariantPickDialog> {
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.teal,
+                  color: AppColors.brandPurple,
                 ),
               ),
             ],
@@ -1783,7 +1846,7 @@ class _ExistingCardPickerState extends State<_ExistingCardPicker> {
                             style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.teal,
+                              color: AppColors.brandPurple,
                             ),
                           ),
                         ],

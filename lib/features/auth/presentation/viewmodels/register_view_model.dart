@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:posfrontend/core/auth/password_policy.dart';
 import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/core/base/form_validation_mixin.dart';
 import 'package:posfrontend/features/auth/domain/entities/user.dart';
@@ -139,6 +140,13 @@ class RegisterViewModel extends BaseViewModel with FormValidationMixin {
     }
     if (_password.isEmpty) {
       setFieldError('password', 'Password is required');
+    } else if (_password.length < PasswordPolicy.minLength) {
+      // Matches the API's rule. Checking it here turns a round trip into
+      // immediate feedback, but the server stays the authority.
+      setFieldError(
+        'password',
+        'Password must be at least ${PasswordPolicy.minLength} characters',
+      );
     }
 
     notifyListeners();

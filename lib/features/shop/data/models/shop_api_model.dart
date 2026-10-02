@@ -99,9 +99,9 @@ class OwnerInformationModel {
 
   factory OwnerInformationModel.fromJson(Map<String, dynamic> json) {
     return OwnerInformationModel(
-      name: json['name'] as String,
-      email: json['email'] as String,
-      phone: json['phone'] as String,
+      name: json['name']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      phone: json['phone']?.toString() ?? '',
     );
   }
 

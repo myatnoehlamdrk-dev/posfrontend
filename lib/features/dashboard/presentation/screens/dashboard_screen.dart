@@ -29,7 +29,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   late final DashboardViewModel _viewModel;
   final CancelToken _cancelToken = CancelToken();
 
-  static const Color purpleAction = Color(0xFF6D28D9);
+  static const Color purpleAction = Color(0xFF7952DB);
 
   @override
   void initState() {
@@ -924,7 +924,7 @@ class _HorizontalCategoryChartPainter extends CustomPainter {
 
   _HorizontalCategoryChartPainter(this.items, this.palette);
 
-  static const Color _barColor = Color(0xFF6D28D9);
+  static const Color _barColor = Color(0xFF7952DB);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1122,7 +1122,7 @@ class _HorizontalBarChartPainter extends CustomPainter {
     'Dec',
   ];
 
-  static const Color _barColor = Color(0xFF6D28D9);
+  static const Color _barColor = Color(0xFF7952DB);
 
   @override
   void paint(Canvas canvas, Size size) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:posfrontend/core/network/media_url.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
@@ -57,8 +58,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // Brightness-dependent tokens, so the same screen serves light and dark.
   AppPalette get _p => context.palette;
-  Color get primary => _p.primary;
-  Color get primaryLight => _p.primaryDark;
+  /// The one purple the app's actions are painted in — the welcome screen's
+  /// `Get started` button, the product prices, Add to Cart and the sale buttons.
+  /// Held as a pair so the save button's gradient is that purple ramp rather
+  /// than the theme's violet fading into a darker violet.
+  Color get primary => AppColors.brandPurple;
+  Color get primaryLight => AppColors.brandPurpleDark;
   Color get borderColor => _p.border;
   Color get labelColor => _p.textPrimary;
   Color get hintColor => _p.textSecondary;

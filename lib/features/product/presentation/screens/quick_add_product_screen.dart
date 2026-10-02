@@ -15,10 +15,6 @@ import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/shared/widgets/premium_image_upload.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
-const Color kPurple700 = Color(0xFF7C3AED);
-const Color kPurple600 = Color(0xFF6D28D9);
-const Color kPurple900 = Color(0xFF5B21B6);
-
 class QuickAddProductScreen extends StatefulWidget {
   const QuickAddProductScreen({super.key});
 
@@ -126,7 +122,7 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
   ) {
     final p = ctx.palette;
     return ListTile(
-      leading: Icon(icon, color: kPurple700),
+      leading: Icon(icon, color: AppColors.brandPurple),
       title: Text(label, style: TextStyle(fontSize: 15, color: p.textPrimary)),
       onTap: () => Navigator.pop(ctx, source),
     );
@@ -331,7 +327,7 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: kPurple700),
+              borderSide: const BorderSide(color: AppColors.brandPurple),
             ),
           ),
         ),
@@ -359,7 +355,10 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
           gradient: _saving
               ? null
               : LinearGradient(
-                  colors: [AppColors.primaryLight, p.primary],
+                  colors: [
+                    AppColors.brandPurple,
+                    AppColors.brandPurpleDark,
+                  ],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),

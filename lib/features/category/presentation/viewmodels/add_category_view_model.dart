@@ -53,7 +53,13 @@ class AddCategoryViewModel extends BaseViewModel with FormValidationMixin {
       setFieldError('name', 'Category name is required');
     }
     notifyListeners();
-    if (fieldErrors.isNotEmpty) return false;
+    if (fieldErrors.isNotEmpty) {
+      // Set the message as well as the field error. A field error alone is
+      // invisible to a screen that only reports `hasError`, which made a
+      // rejected save look like the button did nothing at all.
+      setError('Category name is required');
+      return false;
+    }
 
     _isSaving = true;
     resetError();

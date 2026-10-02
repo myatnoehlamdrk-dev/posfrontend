@@ -2,7 +2,11 @@ import 'package:posfrontend/features/auth/domain/entities/login_result.dart';
 import 'package:posfrontend/features/auth/domain/entities/user.dart';
 
 abstract class AuthRepository {
-  Future<LoginResult> login({required String email, required String password});
+  Future<LoginResult> login({
+    required String email,
+    required String password,
+    String? deviceName,
+  });
 
   Future<UserEntity> register({
     required String fullName,

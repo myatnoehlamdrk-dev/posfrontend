@@ -176,6 +176,7 @@ class ProductsCatalogViewModel extends BaseViewModel {
           id: categoryId,
           name: categoryName,
           products: products,
+          productCount: _countFrom(cat, products.length),
         );
       }).toList();
     } on ApiException catch (e) {
@@ -189,8 +190,51 @@ class ProductsCatalogViewModel extends BaseViewModel {
     await _loadHotProducts();
   }
 
+  /// The category's real product total, if the endpoint reports one.
+  ///
+  /// `/categories/with-products` is called with a `productLimit`, so the
+  /// embedded `products` array is a preview and its length is not the total.
+  ///
+  /// Every spelling that has carried this field is read, and the **largest**
+  /// value wins — over the other spellings and over the loaded count. Taking
+  int _countFrom(Map<String, dynamic> category, int loadedCount) {
+    var best = loadedCount;
+    for (final key in const [
+      'productCount',
+      'product_count',
+      'productsCount',
+      'products_count',
+      'totalProducts',
+      'total_products',
+      'total',
+    ]) {
+      final value = category[key];
+      if (value is num && value >= 0 && value.toInt() > best) {
+        best = value.toInt();
+      }
+    }
+    // If the API reports a lower or missing total but the category also
+    // includes an embedded products list, trust what we actually loaded.
+    final embedded = category['products'];
+    if (embedded is List && embedded.length > best) {
+      best = embedded.length;
+    }
+    return best;
+  }
+      }
+    }
+    }
+    return best;
+    return best;
+  }
+  }
+
+
+  Future<void> _loadHotProducts() async {
   Future<void> _loadHotProducts() async {
     try {
+    try {
+      final response = await _dio.get(
       final response = await _dio.get(
         '/products/latest',
         queryParameters: {'limit': 4},

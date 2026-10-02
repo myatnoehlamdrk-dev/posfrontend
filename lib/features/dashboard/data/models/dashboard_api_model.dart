@@ -20,16 +20,31 @@ class DashboardApiModel {
     required this.noBought,
   });
 
-  static const List<int> _categoryColors = [
-    0xFF6D28D9,
-    0xFF14B8A6,
-    0xFFE53935,
-    0xFFFB8C00,
-    0xFF43A047,
-    0xFF3B82F6,
-    0xFFD97706,
-    0xFF8B5CF6,
-  ];
+/// One colour per category, assigned in order, and used by the product
+  /// distribution pie chart.
+///
+/// Sixteen entries rather than eight, and spaced so no two neighbours are close
+  /// enough to read as the same slice. The brand purple is deliberately not
+  /// here: this chart is categorical, and a second brand-purple slice sitting
+  /// beside another purple is exactly the confusion it is meant to avoid.
+static const List<int> _categoryColors = [
+  0xFF6D28D9, // violet
+  0xFF14B8A6, // teal
+  0xFFE53935, // red
+  0xFFFB8C00, // orange
+  0xFF43A047, // green
+  0xFF3B82F6, // blue
+  0xFFD97706, // amber
+  0xFFDB2777, // pink
+  0xFF8B5CF6, // light violet
+  0xFF0891B2, // cyan
+  0xFF65A30D, // lime
+  0xFF9333EA, // fuchsia
+  0xFF0EA5E9, // sky
+  0xFFB45309, // brown
+  0xFF64748B, // slate
+  0xFFBE185D, // rose
+];
 
   factory DashboardApiModel.fromJson(Map<String, dynamic> json) {
     final stats = json['stats'] as Map<String, dynamic>? ?? {};
@@ -112,7 +127,7 @@ class DashboardApiModel {
         iconCodePoint: '0xe227',
         iconFontFamily: 'MaterialIcons',
         iconBgValue: 0xFFF3E8FF,
-        iconColorValue: 0xFF8B5CF6,
+        iconColorValue: 0xFF7952DB,
         tableKey: DashboardTableKey.sales,
         label: 'Total Sales',
         value: 'MMK ${totalSales.compact()}',
@@ -137,7 +152,13 @@ class DashboardApiModel {
         CategoryDistributionEntity(
           category: item.str('category_name', 'Unknown'),
           productCount: count,
-          colorValue: _categoryColors[i % _categoryColors.length],
+          // Coloured by position in the list being built, not by `i`. `i` counts
+          // every row in the response, including the ones dropped just above for
+          // having no products, so two slices could land on the same entry of
+          // the palette — which is how Food and Home came out the same colour.
+          colorValue: _categoryColors[
+            categoryDistribution.length % _categoryColors.length
+          ],
         ),
       );
     }

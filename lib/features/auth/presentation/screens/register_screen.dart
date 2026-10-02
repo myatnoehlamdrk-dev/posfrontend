@@ -716,77 +716,110 @@ class _RegisterScreenState extends State<RegisterScreen> {
             // last field and under the action button, is the same colour on every
             // step and the same colour as the create-shop screen behind it.
             backgroundColor: p.scaffoldBg,
-            body: SafeArea(
-              child: Column(
-                children: [
-                  _buildHeader(),
-                  Expanded(
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final width = constraints.maxWidth;
-                        final isWide = width >= _RegisterLayout.twoPaneFrom;
-                        return SingleChildScrollView(
-                          padding: EdgeInsets.fromLTRB(
-                            _RegisterLayout.gutterFor(width),
-                            20,
-                            _RegisterLayout.gutterFor(width),
-                            32,
-                          ),
-                          child: Center(
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(
-                                maxWidth: _RegisterLayout.contentMaxWidth,
-                              ),
-                              child: Form(
-                                key: _formKey,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    _buildStepIndicator(),
-                                    const SizedBox(height: 20),
-                                    AnimatedSwitcher(
-                                      duration: const Duration(
-                                        milliseconds: 220,
-                                      ),
-                                      child: KeyedSubtree(
-                                        key: ValueKey(_step),
-                                        child: switch (_step) {
-                                          0 => _buildUserInfoStep(errors),
-                                          1 => _buildUserDetailStep(
-                                            isWide: isWide,
-                                          ),
-                                          _ => _buildShopInfoStep(
-                                            errors,
-                                            isWide: isWide,
-                                          ),
-                                        },
-                                      ),
-                                    ),
-                                    const SizedBox(height: 28),
-                                    _buildActions(),
-                                    if (_viewModel.errorMessage != null)
-                                      Padding(
-                                        padding: const EdgeInsets.only(top: 12),
-                                        child: Text(
-                                          _viewModel.errorMessage!,
-                                          style: const TextStyle(
-                                            color: Colors.red,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                      ),
-                                    const SizedBox(height: 12),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
+            body: Stack(
+              children: [
+                // Bloom anchored to the middle of the right edge here rather
+                // than the top-right used on sign-in and reset: the light sits
+                // alongside the two-pane form instead of behind a corner, so it
+                // shows on both the single-column and two-pane layouts.
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: RadialGradient(
+                        center: const Alignment(0.85, 0),
+                        radius: 1.0,
+                        colors: [
+                          p.primary.withValues(alpha: 0.26),
+                          p.primary.withValues(alpha: 0.12),
+                          p.primary.withValues(alpha: 0.0),
+                        ],
+                        stops: const [0.0, 0.45, 1.0],
+                      ),
                     ),
                   ),
-                ],
-              ),
+                ),
+                // `Positioned.fill` keeps the column's constraints tight: a
+                // plain Stack child is laid out loosely, which would give the
+                // Expanded scroll view an unbounded height.
+                Positioned.fill(
+                  child: SafeArea(
+                    child: Column(
+                      children: [
+                        _buildHeader(),
+                        Expanded(
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              final width = constraints.maxWidth;
+                              final isWide =
+                                  width >= _RegisterLayout.twoPaneFrom;
+                              return SingleChildScrollView(
+                                padding: EdgeInsets.fromLTRB(
+                                  _RegisterLayout.gutterFor(width),
+                                  20,
+                                  _RegisterLayout.gutterFor(width),
+                                  32,
+                                ),
+                                child: Center(
+                                  child: ConstrainedBox(
+                                    constraints: const BoxConstraints(
+                                      maxWidth: _RegisterLayout.contentMaxWidth,
+                                    ),
+                                    child: Form(
+                                      key: _formKey,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          _buildStepIndicator(),
+                                          const SizedBox(height: 20),
+                                          AnimatedSwitcher(
+                                            duration: const Duration(
+                                              milliseconds: 220,
+                                            ),
+                                            child: KeyedSubtree(
+                                              key: ValueKey(_step),
+                                              child: switch (_step) {
+                                                0 => _buildUserInfoStep(errors),
+                                                1 => _buildUserDetailStep(
+                                                  isWide: isWide,
+                                                ),
+                                                _ => _buildShopInfoStep(
+                                                  errors,
+                                                  isWide: isWide,
+                                                ),
+                                              },
+                                            ),
+                                          ),
+                                          const SizedBox(height: 28),
+                                          _buildActions(),
+                                          if (_viewModel.errorMessage != null)
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                top: 12,
+                                              ),
+                                              child: Text(
+                                                _viewModel.errorMessage!,
+                                                style: const TextStyle(
+                                                  color: Colors.red,
+                                                  fontSize: 13,
+                                                ),
+                                              ),
+                                            ),
+                                          const SizedBox(height: 12),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         );

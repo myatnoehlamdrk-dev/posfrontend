@@ -5,6 +5,7 @@ import 'package:posfrontend/features/package/domain/entities/package.dart';
 import 'package:posfrontend/features/package/presentation/viewmodels/assign_product_to_package_view_model.dart';
 import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart';
 import 'package:posfrontend/features/product/data/repositories/product_repository_impl.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/custom_back_button.dart';
@@ -33,7 +34,12 @@ class _AssignProductToPackageScreenState
   AppPalette get _p => context.palette;
   Color get _titleColor => _p.textPrimary;
   Color get _mutedColor => _p.textSecondary;
-  Color get _accentColor => _p.primary;
+
+  /// The brand purple, so a selected product and the `Add to Package` button
+  /// that acts on the selection are the same accent — and the same one the rest
+  /// of the app's actions use.
+  Color get _accentColor => AppColors.brandPurple;
+  Color get _accentDark => AppColors.brandPurpleDark;
   Color get _borderColor => _p.border;
 
   @override
@@ -364,7 +370,9 @@ class _AssignProductToPackageScreenState
                 ),
                 decoration: BoxDecoration(
                   gradient: !_viewModel.isAssigning
-                      ? LinearGradient(colors: [_accentColor, _p.primaryDark])
+                      ? LinearGradient(
+                          colors: [_accentColor, _accentDark],
+                        )
                       : null,
                   color: _viewModel.isAssigning ? _p.borderStrong : null,
                   borderRadius: BorderRadius.circular(12),

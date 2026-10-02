@@ -54,19 +54,41 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
       return;
     }
 
+    // The controllers are what the user is actually looking at, but the view
+    // model keeps its own copy of each field, filled from `onChanged` — which
+    // only fires for edits the user makes. Anything that fills a controller
+    // programmatically (a restored draft, an autofill, a paste through an IME
+    // commit) leaves the view model's copy stale, and it then rejects a name
+    // that is plainly on screen. Sync before saving so there is one source of
+    // truth instead of two that can disagree.
+    _viewModel
+      ..setName(name)
+      ..setDescription(_descController.text)
+      ..setPackageLimit(_amountController.text);
+
     final success = await _viewModel.save(
       isEditing: widget.isEditing,
       categoryId: widget.existingCategory?.id,
       inventoryType: widget.inventoryType,
     );
-    if (success && mounted) {
+    if (!mounted) return;
+    if (success) {
       showSuccessSnackBar(
         context,
         widget.isEditing ? 'Category updated' : 'Category created',
       );
       Navigator.of(context).pop(_viewModel.result);
-    } else if (_viewModel.hasError && mounted) {
-      showErrorSnackBar(context, _viewModel.errorMessage!);
+      return;
+    }
+
+    // `save` can fail without an error message — a field-level rejection sets
+    // `fieldErrors` only. Showing nothing here is what made the button look
+    // dead, so the field error is the fallback rather than the only answer.
+    final message = _viewModel.hasError
+        ? _viewModel.errorMessage
+        : _viewModel.getFieldError('name');
+    if (message != null && message.isNotEmpty) {
+      showErrorSnackBar(context, message);
     }
   }
 

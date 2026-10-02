@@ -1,9 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
-import 'package:posfrontend/core/network/media_url.dart';
+import 'package:posfrontend/features/cart/data/cart_card_mapper.dart';
 import 'package:posfrontend/features/cart/data/cart_store.dart';
 import 'package:posfrontend/features/cart/domain/entities/cart_card_entity.dart';
-import 'package:posfrontend/features/cart/domain/entities/cart_item_entity.dart';
 import 'package:posfrontend/features/cart/presentation/screens/cart_card_screen.dart';
 import 'package:posfrontend/features/cart/presentation/widgets/cart_item_row.dart';
 import 'package:posfrontend/features/cart/presentation/widgets/add_to_cart_skeleton.dart';
@@ -12,6 +12,7 @@ import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
@@ -33,12 +34,49 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
   bool _hasMore = true;
   bool _loadingMore = false;
 
+  /// The signed-in user's identity, used to drop other shops' orders. Resolved
+  /// once because the orders endpoint returns every shop's drafts and nothing
+  /// else on the page distinguishes them.
+  ///
+  /// Not `late final`: it is read in [didChangeDependencies] rather than
+  /// `initState`, because `AuthScope.userOf` goes through
+  /// `dependOnInheritedWidgetOfExactType` and Flutter forbids establishing an
+  /// inherited-widget dependency before `initState` has finished.
+  Set<String> _ownerKeys = const {};
+
+  /// Order ids confirmed to belong to this user, and whether that confirmation
+  /// has happened at all. Before the first successful fetch the store is shown
+  /// unfiltered — otherwise a failed request would look like an empty cart, and
+  /// the cached cards on the device would be unreachable.
+  final Set<String> _allowedOrderIds = {};
+  bool _ownershipChecked = false;
+
   @override
   void initState() {
     super.initState();
     CartStore.instance.addListener(_onCartChanged);
     CartStore.instance.init();
     _scrollCtrl.addListener(_onScroll);
+    _loadBackendCards();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final user = AuthScope.userOf(context);
+    final keys = cartOwnerKeys(
+      userId: user?.id,
+      fullName: user?.fullName,
+      email: user?.email,
+    );
+    // Re-filtering only matters if the signed-in user actually changed, which
+    // also stops the order fetch from being re-run on every unrelated rebuild.
+    if (setEquals(keys, _ownerKeys)) return;
+    _ownerKeys = keys;
+    _allowedOrderIds.clear();
+    _ownershipChecked = false;
+    _page = 1;
+    _hasMore = true;
     _loadBackendCards();
   }
 
@@ -79,10 +117,19 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
       }
       final cards = <CartCardEntity>[];
       for (final item in data) {
-        final card = _draftCardFrom(item);
+        if (item is! Map<String, dynamic>) continue;
+        // Another shop's draft is not ours to show, let alone to merge into.
+        if (!cartOrderBelongsTo(item, _ownerKeys)) continue;
+        final card = cartCardFromOrder(item);
         if (card != null) cards.add(card);
       }
       await CartStore.instance.mergeCards(cards);
+      if (mounted) {
+        setState(() {
+          _allowedOrderIds.addAll(cards.map((c) => c.orderId));
+          _ownershipChecked = true;
+        });
+      }
       final lastPage = meta is Map<String, dynamic> ? meta['last_page'] : null;
       _hasMore = lastPage is num
           ? _page < lastPage.toInt()
@@ -117,7 +164,9 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
         final meta = result['meta'];
         if (data is! List) break;
         for (final item in data) {
-          final card = _draftCardFrom(item);
+          if (item is! Map<String, dynamic>) continue;
+          if (!cartOrderBelongsTo(item, _ownerKeys)) continue;
+          final card = cartCardFromOrder(item);
           if (card != null) fresh.add(card);
         }
         final lastPage = meta is Map<String, dynamic>
@@ -129,6 +178,14 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
         page++;
       }
       await CartStore.instance.replaceAll([...localOnly, ...fresh]);
+      if (mounted) {
+        setState(() {
+          _allowedOrderIds
+            ..clear()
+            ..addAll(fresh.map((c) => c.orderId));
+          _ownershipChecked = true;
+        });
+      }
     } catch (_) {
       // Keep the current list if the reload fails
     } finally {
@@ -138,54 +195,23 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
     }
   }
 
-  CartCardEntity? _draftCardFrom(dynamic raw) {
-    if (raw is! Map<String, dynamic>) return null;
-    final status = raw['status']?.toString() ?? '';
-    if (status != 'draft') return null;
-    return _cardFromOrder(raw);
-  }
-
-  CartCardEntity? _cardFromOrder(Map<String, dynamic> json) {
-    final orderId = json['id']?.toString() ?? '';
-    if (orderId.isEmpty) return null;
-    final rawItems = json['items'];
-    if (rawItems is! List || rawItems.isEmpty) return null;
-    final items = <CartItemEntity>[];
-    for (final raw in rawItems) {
-      if (raw is! Map<String, dynamic>) continue;
-      final qty = (raw['quantity'] as num?)?.toInt() ?? 0;
-      final price = (raw['unitPrice'] as num?)?.toDouble() ?? 0.0;
-      if (qty <= 0) continue;
-      items.add(
-        CartItemEntity(
-          productId: raw['productId']?.toString() ?? '',
-          productName: raw['productName']?.toString() ?? '',
-          imageUrl: resolveMediaUrl(raw['imageUrl']?.toString()),
-          unitPrice: price,
-          quantity: qty,
-          size: (raw['size'] as String?)?.trim().isNotEmpty == true
-              ? (raw['size'] as String?)!.trim()
-              : null,
-          color: (raw['color'] as String?)?.trim().isNotEmpty == true
-              ? (raw['color'] as String?)!.trim()
-              : null,
-        ),
-      );
-    }
-    if (items.isEmpty) return null;
-    return CartCardEntity(
-      id: 'backend-$orderId',
-      orderId: orderId,
-      createdAt:
-          DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
-          DateTime.now(),
-      items: items,
-    );
-  }
+  // The order-row mapping now lives in `cartCardFromOrder` so this screen and
+  // the products screen agree on what an existing card is.
 
   @override
   Widget build(BuildContext context) {
-    final cards = CartStore.instance.value;
+    // Filtered here as well as at fetch time. Cards persisted by an earlier
+    // session — or by whoever used this device last — are still in the store,
+    // and the store has no notion of ownership, so the list is the last place
+    // another shop's card can be kept off the screen.
+    final cards = CartStore.instance.value
+        .where(
+          (card) =>
+              card.orderId.isEmpty ||
+              !_ownershipChecked ||
+              _allowedOrderIds.contains(card.orderId),
+        )
+        .toList();
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: context.palette.scaffoldBg,

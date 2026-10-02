@@ -378,4 +378,6 @@ const Map<String, String> thaiStrings = {
   'Select category': 'เลือกหมวดหมู่',
   'Send OTP': 'ส่ง OTP',
   'Supply Chain': 'ซัพพลายเชน',
+  '{v1} product': '{v1} รายการ',
+  '{v1} products': '{v1} รายการ',
 };

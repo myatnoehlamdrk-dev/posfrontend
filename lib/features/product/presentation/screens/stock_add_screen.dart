@@ -11,8 +11,6 @@ import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
-const Color kPurple700 = Color(0xFF7C3AED);
-const Color kPurple900 = Color(0xFF5B21B6);
 
 class StockAddScreen extends StatefulWidget {
   const StockAddScreen({super.key});
@@ -160,12 +158,25 @@ class _StockAddScreenState extends State<StockAddScreen> {
       name: product.name,
       variants: updated
           .map(
-            (v) => ProductCreateVariant(
-              size: (v['size'] ?? '').toString(),
-              color: (v['color'] ?? '').toString(),
-              quantity: (v['quantity'] as num).toInt(),
-              price: ((v['price'] ?? 0) as num).toDouble(),
-            ),
+            (v) {
+              // Read through the JSON helpers rather than casting. A variant
+              // that arrives without `quantity`, or with it as a string, used
+              // to throw "type 'Null' is not a subtype of type 'num'" out of
+              // this map and take the whole form down with it.
+              final quantity = (v['quantity'] as num?)?.toInt() ?? 0;
+              final rawPrice = v['price'];
+              final price = switch (rawPrice) {
+                final num n => n.toDouble(),
+                final String s => double.tryParse(s) ?? 0,
+                _ => 0.0,
+              };
+              return ProductCreateVariant(
+                size: (v['size'] ?? '').toString(),
+                color: (v['color'] ?? '').toString(),
+                quantity: quantity,
+                price: price,
+              );
+            },
           )
           .toList(),
     );
@@ -202,7 +213,7 @@ class _StockAddScreenState extends State<StockAddScreen> {
                               padding: EdgeInsets.symmetric(vertical: 16),
                               child: Center(
                                 child: CircularProgressIndicator(
-                                  color: kPurple700,
+                                  color: AppColors.brandPurple,
                                   strokeWidth: 2.5,
                                 ),
                               ),
@@ -258,7 +269,7 @@ class _StockAddScreenState extends State<StockAddScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: kPurple700),
+          borderSide: const BorderSide(color: AppColors.brandPurple),
         ),
       ),
     );
@@ -340,7 +351,7 @@ class _StockAddScreenState extends State<StockAddScreen> {
       color: p.selectionTint,
       child: const Icon(
         Icons.inventory_2_outlined,
-        color: kPurple700,
+        color: AppColors.brandPurple,
         size: 20,
       ),
     );
@@ -423,7 +434,7 @@ class _StockAddScreenState extends State<StockAddScreen> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: kPurple700),
+                borderSide: const BorderSide(color: AppColors.brandPurple),
               ),
             ),
           ),
@@ -452,7 +463,10 @@ class _StockAddScreenState extends State<StockAddScreen> {
           gradient: _saving
               ? null
               : LinearGradient(
-                  colors: [AppColors.primaryLight, p.primary],
+                  colors: [
+                    AppColors.brandPurple,
+                    AppColors.brandPurpleDark,
+                  ],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),

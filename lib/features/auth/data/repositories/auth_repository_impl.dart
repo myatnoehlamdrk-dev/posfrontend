@@ -15,9 +15,14 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<LoginResult> login({
     required String email,
     required String password,
+    String? deviceName,
   }) async {
     final response = await _remoteDataSource.login(
-      LoginRequestModel(email: email, password: password),
+      LoginRequestModel(
+        email: email,
+        password: password,
+        deviceName: deviceName,
+      ),
     );
     return LoginResult(
       user: response.toEntity(),

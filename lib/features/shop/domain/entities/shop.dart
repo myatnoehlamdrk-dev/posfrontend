@@ -13,10 +13,12 @@ class OwnerInformationEntity extends Equatable {
   });
 
   factory OwnerInformationEntity.fromJson(Map<String, dynamic> json) {
+    // Same tolerance as [ShopEntity.fromJson]: a missing field is an empty
+    // string, not a reason to fail the whole shop read.
     return OwnerInformationEntity(
-      name: json['name'] as String,
-      email: json['email'] as String,
-      phone: json['phone'] as String,
+      name: json['name']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      phone: json['phone']?.toString() ?? '',
     );
   }
 
@@ -50,15 +52,20 @@ class ShopEntity extends Equatable {
   });
 
   factory ShopEntity.fromJson(Map<String, dynamic> json) {
+    // Every field read tolerates its absence. A shop saved before a field
+    // existed — or one the API returns partially — used to throw a raw cast
+    // error here, which took down every screen that reads the shop rather than
+    // just falling back to an empty value.
+    final rawOwner = json['ownerInformation'];
     return ShopEntity(
       id: json['id']?.toString(),
       logoData: json['logoData'] as String?,
       logoUrl: resolveMediaUrl(json['logoUrl'] as String?),
-      name: json['name'] as String,
-      type: json['type'] as String,
-      physicalAddress: json['physicalAddress'] as String,
+      name: json['name']?.toString() ?? '',
+      type: json['type']?.toString() ?? '',
+      physicalAddress: json['physicalAddress']?.toString() ?? '',
       ownerInformation: OwnerInformationEntity.fromJson(
-        json['ownerInformation'] as Map<String, dynamic>,
+        rawOwner is Map<String, dynamic> ? rawOwner : const {},
       ),
     );
   }

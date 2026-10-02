@@ -276,7 +276,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: _accentColor,
+              color: AppColors.brandPurple,
             ),
           ),
         ],
@@ -487,7 +487,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
-                        color: _accentColor,
+                        color: AppColors.brandPurple,
                       ),
                     ),
                   ],

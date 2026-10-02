@@ -5,6 +5,7 @@ import 'package:posfrontend/features/product/presentation/widgets/category_tile.
 import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/l10n/app_strings.dart';
+import 'package:posfrontend/shared/l10n/l10n_x.dart';
 
 class CategoryShowcaseCard extends StatelessWidget {
   final CategoryShowcaseData category;
@@ -49,7 +50,7 @@ class CategoryShowcaseCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _header(p),
+                _header(context, p),
                 const SizedBox(height: 16),
                 _productGrid(p),
               ],
@@ -60,19 +61,50 @@ class CategoryShowcaseCard extends StatelessWidget {
     );
   }
 
-  Widget _header(AppPalette p) {
+  Widget _header(BuildContext context, AppPalette p) {
     return Row(
       children: [
         Expanded(
-          child: Text(
-            category.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: p.textPrimary,
-            ),
+          child: Row(
+            children: [
+              Flexible(
+                child: Text(
+                  category.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: p.textPrimary,
+                  ),
+                ),
+              ),
+              // The product total, kept deliberately quiet: a count beside the
+              // name is context, not a second headline, so it is set small and
+              // low-contrast and aligned to the name's baseline rather than
+              // given a chip of its own. Two keys so a single-product category
+              // does not read "1 products".
+              if (category.displayCount > 0) ...[
+                const SizedBox(width: 7),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 2),
+                  child: Text(
+                    context.l10n
+                        .t(
+                          category.displayCount == 1
+                              ? '{v1} product'
+                              : '{v1} products',
+                        )
+                        .replaceAll('{v1}', category.displayCount.toString()),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: p.textMuted.withValues(alpha: 0.75),
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
         const SizedBox(width: 8),

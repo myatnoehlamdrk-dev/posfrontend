@@ -70,7 +70,18 @@ class AuthRemoteDataSource {
         '/auth/forgot-password/verify-otp',
         data: {'email': email, 'otp': otp},
       );
-      return response.data['reset_token'] as String;
+      // Reported as a missing token rather than a raw cast failure: the reset
+      // token is the whole point of this call, so an absent one has to reach
+      // the user as an error they can read.
+      final token = response.data is Map
+          ? (response.data as Map)['reset_token']?.toString()
+          : null;
+      if (token == null || token.isEmpty) {
+        throw ApiException(
+          message: 'Verification failed: no reset token was returned.',
+        );
+      }
+      return token;
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }

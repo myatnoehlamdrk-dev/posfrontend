@@ -15,6 +15,7 @@ import 'package:posfrontend/features/sale/presentation/viewmodels/sale_view_mode
 import 'package:posfrontend/features/sale/presentation/widgets/percent_input_formatter.dart';
 import 'package:posfrontend/shared/services/voucher_pdf_service.dart';
 import 'package:posfrontend/features/sale/presentation/screens/sale_items_screen.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
@@ -46,7 +47,11 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   AppPalette get _p => context.palette;
   Color get _titleColor => _p.textPrimary;
   Color get _mutedColor => _p.textSecondary;
-  Color get _accentColor => _p.primary;
+  /// The one purple the whole app's actions are painted in, and the same one
+  /// the welcome screen's `Get started` button uses. It replaces the theme's
+  /// own violet here so selecting a payment method, toggling a switch and
+  /// saving the sale all read as the same accent as the rest of the product.
+  Color get _accentColor => AppColors.brandPurple;
   Color get _borderColor => _p.border;
 
   final TextEditingController _discountCtrl = TextEditingController(text: '0');
@@ -712,7 +717,10 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                 gradient: (_viewModel.isSubmitting || _viewModel.items.isEmpty)
                     ? null
                     : const LinearGradient(
-                        colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+                        colors: [
+                          AppColors.brandPurple,
+                          AppColors.brandPurpleDark,
+                        ],
                       ),
                 color: (_viewModel.isSubmitting || _viewModel.items.isEmpty)
                     ? _mutedColor
@@ -767,7 +775,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         height: 48,
         decoration: BoxDecoration(
           border: Border.all(
-            color: loading ? _borderColor : const Color(0xFF2563EB),
+            color: loading ? _borderColor : AppColors.brandPurple,
           ),
           borderRadius: BorderRadius.circular(12),
         ),
@@ -780,16 +788,16 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                 height: 16,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: Color(0xFF2563EB),
+                  color: AppColors.brandPurple,
                 ),
               )
             else
-              Icon(icon, color: const Color(0xFF2563EB), size: 18),
+              Icon(icon, color: AppColors.brandPurple, size: 18),
             const SizedBox(width: 6),
             Text(
               label,
               style: TextStyle(
-                color: loading ? _mutedColor : const Color(0xFF2563EB),
+                color: loading ? _mutedColor : AppColors.brandPurple,
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
               ),

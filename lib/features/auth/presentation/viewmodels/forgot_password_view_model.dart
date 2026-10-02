@@ -1,3 +1,4 @@
+import 'package:posfrontend/core/auth/password_policy.dart';
 import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/core/base/form_validation_mixin.dart';
 import 'package:posfrontend/core/network/app_exceptions.dart';
@@ -80,8 +81,11 @@ class ForgotPasswordViewModel extends BaseViewModel with FormValidationMixin {
     clearAllFieldErrors();
     if (_newPassword.isEmpty) {
       setFieldError('password', 'Password is required');
-    } else if (_newPassword.length < 6) {
-      setFieldError('password', 'Password must be at least 6 characters');
+    } else if (_newPassword.length < PasswordPolicy.minLength) {
+      setFieldError(
+        'password',
+        'Password must be at least ${PasswordPolicy.minLength} characters',
+      );
     }
     if (_confirmPassword.isEmpty) {
       setFieldError('password_confirmation', 'Please confirm your password');

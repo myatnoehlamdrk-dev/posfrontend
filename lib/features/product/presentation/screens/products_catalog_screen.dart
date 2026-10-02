@@ -16,6 +16,7 @@ import 'package:posfrontend/features/product/presentation/widgets/category_showc
 import 'package:posfrontend/features/product/presentation/widgets/category_showcase_grid.dart';
 import 'package:posfrontend/features/product/presentation/widgets/category_skeleton.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class ProductsCatalogScreen extends StatefulWidget {
@@ -39,6 +40,13 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
   Color get _accentColor => _p.primary;
   Color get _mutedColor => _p.textSecondary;
   Color get _borderColor => _p.border;
+
+  /// The purple the welcome screen's `Get started` button is painted in. Used
+  /// for the search glyph, the search FAB and the carousel's current-page dot so
+  /// those read as the same accent as the onboarding flow, rather than drifting
+  /// into the theme's own violet. Shared with the price colour through
+  /// [AppColors.brandPurple] so a screen cannot end up with two purples.
+  static const Color brandPurple = AppColors.brandPurple;
 
   @override
   void initState() {
@@ -139,7 +147,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                   floatingActionButton: FloatingActionButton(
                     onPressed: () =>
                         setState(() => _isSearchOpen = !_isSearchOpen),
-                    backgroundColor: _accentColor,
+                    backgroundColor: brandPurple,
                     child: Icon(
                       _isSearchOpen ? Icons.close : Icons.search,
                       color: Colors.white,
@@ -165,7 +173,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                 floatingActionButton: FloatingActionButton(
                   onPressed: () =>
                       setState(() => _isSearchOpen = !_isSearchOpen),
-                  backgroundColor: _accentColor,
+                  backgroundColor: brandPurple,
                   child: Icon(
                     _isSearchOpen ? Icons.close : Icons.search,
                     color: Colors.white,
@@ -512,7 +520,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
         ),
         prefixIcon: Icon(
           Icons.search,
-          color: context.palette.textSecondary,
+          color: brandPurple,
           size: 18,
         ),
         isDense: true,
@@ -585,10 +593,12 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                 (i) => AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   margin: const EdgeInsets.symmetric(horizontal: 3),
+                  // The dot for the banner on screen is the brand purple and
+                  // the long one; the rest stay muted.
                   width: i == _hotIndex ? 20 : 6,
                   height: 6,
                   decoration: BoxDecoration(
-                    color: i == _hotIndex ? _accentColor : _p.borderStrong,
+                    color: i == _hotIndex ? brandPurple : _p.borderStrong,
                     borderRadius: BorderRadius.circular(3),
                   ),
                 ),
@@ -672,7 +682,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF5B21B6),
+                              color: Color(0xFF7952DB),
                             ),
                           ),
                           const Spacer(),

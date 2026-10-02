@@ -63,7 +63,7 @@ class CatalogProductView {
       variants.map((v) => v.color).where((c) => c.isNotEmpty).toSet().toList();
 
   static const List<Color> _palette = [
-    Color(0xFF6D28D9),
+    Color(0xFF7952DB),
     Color(0xFF0EA5E9),
     Color(0xFF16A34A),
     Color(0xFFEA580C),

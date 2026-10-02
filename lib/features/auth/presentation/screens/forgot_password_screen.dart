@@ -93,44 +93,71 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
         return Scaffold(
           backgroundColor: p.scaffoldBg,
-          body: SafeArea(
-            child: LayoutBuilder(
-              builder: (ctx, c) {
-                final carded = c.maxWidth >= _ForgotLayout.cardFrom;
-                return _centeredScroll(
-                  maxWidth: carded
-                      ? _ForgotLayout.cardMaxWidth
-                      : _ForgotLayout.formMaxWidth,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 32,
+          body: Stack(
+            children: [
+              // Same violet bloom as the login screen, anchored to the
+              // top-right corner and sitting behind the layout, so moving
+              // from sign-in to reset reads as the same place. It is outside
+              // the LayoutBuilder on purpose: the glow must not change the
+              // width the breakpoints below are measured against.
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: const Alignment(0.85, -0.9),
+                      radius: 1.0,
+                      colors: [
+                        p.primary.withValues(alpha: 0.26),
+                        p.primary.withValues(alpha: 0.12),
+                        p.primary.withValues(alpha: 0.0),
+                      ],
+                      stops: const [0.0, 0.45, 1.0],
+                    ),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      _buildHeaderIcon(),
-                      const SizedBox(height: 20),
-                      _buildHeading(otpSent: otpSent),
-                      const SizedBox(height: 28),
-                      if (carded)
-                        _card(
-                          child: _buildForm(
-                            errors: errors,
-                            loading: loading,
-                            otpSent: otpSent,
-                          ),
-                        )
-                      else
-                        _buildForm(
-                          errors: errors,
-                          loading: loading,
-                          otpSent: otpSent,
+                ),
+              ),
+              Positioned.fill(
+                child: SafeArea(
+                  child: LayoutBuilder(
+                    builder: (ctx, c) {
+                      final carded = c.maxWidth >= _ForgotLayout.cardFrom;
+                      return _centeredScroll(
+                        maxWidth: carded
+                            ? _ForgotLayout.cardMaxWidth
+                            : _ForgotLayout.formMaxWidth,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 32,
                         ),
-                    ],
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            _buildHeaderIcon(),
+                            const SizedBox(height: 20),
+                            _buildHeading(otpSent: otpSent),
+                            const SizedBox(height: 28),
+                            if (carded)
+                              _card(
+                                child: _buildForm(
+                                  errors: errors,
+                                  loading: loading,
+                                  otpSent: otpSent,
+                                ),
+                              )
+                            else
+                              _buildForm(
+                                errors: errors,
+                                loading: loading,
+                                otpSent: otpSent,
+                              ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
+                ),
+              ),
+            ],
           ),
         );
       },

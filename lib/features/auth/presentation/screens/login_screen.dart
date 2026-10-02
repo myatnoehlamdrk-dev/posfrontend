@@ -132,27 +132,62 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
+
     return ListenableBuilder(
       listenable: _viewModel,
       builder: (context, _) {
         return Scaffold(
-          backgroundColor: context.palette.scaffoldBg,
-          body: SafeArea(
-            child: LayoutBuilder(
-              builder: (ctx, constraints) {
-                if (constraints.maxWidth >= _LoginLayout.splitFrom) {
-                  return _buildSplit();
-                }
-                return _buildStacked(
-                  carded: constraints.maxWidth >= _LoginLayout.cardFrom,
-                  logoSize: _logoSize(
-                    constraints.maxWidth,
-                    constraints.maxHeight,
-                    carded: constraints.maxWidth >= _LoginLayout.cardFrom,
+          backgroundColor: p.scaffoldBg,
+          body: Stack(
+            children: [
+              // Violet bloom anchored to the top-right corner. It sits behind
+              // the layout rather than inside either branch, so the split
+              // desktop layout and the stacked phone one get the same light
+              // without a breakpoint deciding anything. The corner is pulled in
+              // from the true edge (0.85 / -0.9) because a radial centred on the
+              // exact corner puts half its falloff off-screen and reads as a
+              // flat tint rather than a glow.
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: const Alignment(0.85, -0.9),
+                      radius: 1.0,
+                      colors: [
+                        p.primary.withValues(alpha: 0.26),
+                        p.primary.withValues(alpha: 0.12),
+                        p.primary.withValues(alpha: 0.0),
+                      ],
+                      stops: const [0.0, 0.45, 1.0],
+                    ),
                   ),
-                );
-              },
-            ),
+                ),
+              ),
+              // `Positioned.fill` rather than a plain child: a non-positioned
+              // Stack child is laid out loosely, which would hand the Row in
+              // [_buildSplit] and the LayoutBuilder below unbounded-by-intent
+              // constraints and change how the pane sizes itself.
+              Positioned.fill(
+                child: SafeArea(
+                  child: LayoutBuilder(
+                    builder: (ctx, constraints) {
+                      if (constraints.maxWidth >= _LoginLayout.splitFrom) {
+                        return _buildSplit();
+                      }
+                      return _buildStacked(
+                        carded: constraints.maxWidth >= _LoginLayout.cardFrom,
+                        logoSize: _logoSize(
+                          constraints.maxWidth,
+                          constraints.maxHeight,
+                          carded: constraints.maxWidth >= _LoginLayout.cardFrom,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
           ),
         );
       },

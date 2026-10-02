@@ -44,6 +44,10 @@ dependencies:
 
   # Local persistence for shop data (saved before register).
   shared_preferences: ^2.3.0
+  # Bearer token storage. Keystore on Android, Keychain on iOS -- the token is
+  # full account access, so it does not belong in SharedPreferences where any
+  # backup or root-level read picks it up in plaintext.
+  flutter_secure_storage: ^9.2.4
   # Pick shop image/file from device (optional, nullable).
   image_picker: ^1.1.0
   # HTTP client for backend API calls.

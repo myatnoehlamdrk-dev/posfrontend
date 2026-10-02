@@ -16,9 +16,6 @@ import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/shared/widgets/premium_image_upload.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
-const Color kPurple700 = Color(0xFF7C3AED);
-const Color kPurple600 = Color(0xFF6D28D9);
-const Color kPurple900 = Color(0xFF5B21B6);
 
 class AddProductScreen extends StatefulWidget {
   final ProductDetailEntity? existingProduct;
@@ -166,7 +163,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
               Icon(
                 icon,
                 size: 16,
-                color: active ? kPurple700 : p.textSecondary,
+                color: active ? AppColors.brandPurple : p.textSecondary,
               ),
               const SizedBox(width: 6),
               Flexible(
@@ -177,7 +174,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   style: TextStyle(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w600,
-                    color: active ? kPurple700 : p.textSecondary,
+                    color: active ? AppColors.brandPurple : p.textSecondary,
                   ),
                 ),
               ),
@@ -353,14 +350,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               ? child
                               : Center(
                                   child: CircularProgressIndicator(
-                                    color: p.primary,
+                                    color: AppColors.brandPurple,
                                   ),
                                 ),
                           errorBuilder: (_, _, _) => const Center(
                             child: Icon(
                               Icons.broken_image_outlined,
                               size: 42,
-                              color: kPurple700,
+                              color: AppColors.brandPurple,
                             ),
                           ),
                         ),
@@ -424,7 +421,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
             Switch(
               value: _vm.isSet,
               onChanged: _vm.setIsSet,
-              activeThumbColor: kPurple700,
+              activeThumbColor: AppColors.brandPurple,
               activeTrackColor: const Color(0xFFC4B5FD),
             ),
           ],
@@ -494,14 +491,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
             width: double.infinity,
             height: 44,
             decoration: BoxDecoration(
-              border: Border.all(color: kPurple700, style: BorderStyle.solid),
+              border: Border.all(color: AppColors.brandPurple, style: BorderStyle.solid),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Center(
               child: Text(
                 context.l10n.t('+ Add Variant'),
                 style: TextStyle(
-                  color: kPurple700,
+                  color: AppColors.brandPurple,
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
                 ),
@@ -523,7 +520,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: kPurple900,
+                  color: AppColors.brandPurple,
                 ),
               ),
               const Spacer(),
@@ -534,7 +531,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: kPurple900,
+                  color: AppColors.brandPurple,
                 ),
               ),
             ],
@@ -592,7 +589,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     vertical: 10,
                   ),
                   decoration: BoxDecoration(
-                    color: kPurple700,
+                    color: AppColors.brandPurple,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
@@ -733,7 +730,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                   }
                                 },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: kPurple700,
+                            backgroundColor: AppColors.brandPurple,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -843,7 +840,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: kPurple700),
+        borderSide: const BorderSide(color: AppColors.brandPurple),
       ),
     );
   }
@@ -868,7 +865,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
           gradient: _saving
               ? null
               : LinearGradient(
-                  colors: [AppColors.primaryLight, p.primary],
+                  colors: [
+                    AppColors.brandPurple,
+                    AppColors.brandPurpleDark,
+                  ],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),

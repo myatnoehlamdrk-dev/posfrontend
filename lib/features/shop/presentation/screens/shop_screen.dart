@@ -155,11 +155,6 @@ class _ShopScreenState extends State<ShopScreen> {
     setState(() => _step = 1);
   }
 
-  void _goToPreviousStep() {
-    FocusScope.of(context).unfocus();
-    setState(() => _step = 0);
-  }
-
   Future<void> _onCreateShop() async {
     final success = await _viewModel.createShop();
     if (success && mounted) {
@@ -538,49 +533,28 @@ class _ShopScreenState extends State<ShopScreen> {
     return _sectionTile(context, 'Owner Info', children);
   }
 
-  /// Back on step 1, Next on step 2. Both rows keep the primary action full
-  /// width so the button does not jump side as the user moves through the flow.
+  /// One primary action per step: `Next` on step 1, `Create Shop` on step 2.
+  /// There is no Back button in this row — the app bar's back button is the way
+  /// back, and a second one beside the primary made the pair read as two
+  /// competing choices on the same line. The primary stays capped and centred
+  /// so it does not stretch across a desktop window.
   Widget _buildWizardActions() {
-    final back = _outlineButton(
-      icon: Icons.arrow_back,
-      label: context.l10n.t('Back'),
-      onPressed: _goToPreviousStep,
-    );
-
     if (!_isLastStep) {
       return _buildFullWidthActions(
-        Row(
-          children: [
-            Expanded(child: back),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 2,
-              child: GradientButton(
-                label: context.l10n.t('Next'),
-                icon: Icons.arrow_forward,
-                onPressed: _goToNextStep,
-              ),
-            ),
-          ],
+        GradientButton(
+          label: context.l10n.t('Next'),
+          icon: Icons.arrow_forward,
+          onPressed: _goToNextStep,
         ),
       );
     }
 
     return _buildFullWidthActions(
-      Row(
-        children: [
-          Expanded(child: back),
-          const SizedBox(width: 12),
-          Expanded(
-            flex: 2,
-            child: GradientButton(
-              label: context.l10n.t('Create Shop'),
-              icon: Icons.save_outlined,
-              loading: _viewModel.isLoading,
-              onPressed: _onCreateShop,
-            ),
-          ),
-        ],
+      GradientButton(
+        label: context.l10n.t('Create Shop'),
+        icon: Icons.save_outlined,
+        loading: _viewModel.isLoading,
+        onPressed: _onCreateShop,
       ),
     );
   }
@@ -597,37 +571,6 @@ class _ShopScreenState extends State<ShopScreen> {
           maxWidth: _ShopLayout.actionsMaxWidth,
         ),
         child: child,
-      ),
-    );
-  }
-
-  /// The secondary action. Outlined rather than flat so it reads as available
-  /// but secondary next to the gradient primary.
-  Widget _outlineButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onPressed,
-  }) {
-    final p = context.palette;
-    return SizedBox(
-      height: 52,
-      child: OutlinedButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon, size: 18, color: p.textSecondary),
-        label: Text(
-          label,
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: p.textSecondary,
-          ),
-        ),
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(color: p.borderStrong),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
       ),
     );
   }

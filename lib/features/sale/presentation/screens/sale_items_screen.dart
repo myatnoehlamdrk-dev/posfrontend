@@ -132,7 +132,7 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
                   child: Center(
-                    child: CircularProgressIndicator(color: AppColors.teal),
+                    child: CircularProgressIndicator(color: AppColors.brandPurple),
                   ),
                 ),
               if (!_viewModel.hasMore && _viewModel.filteredOrders.isNotEmpty)
@@ -320,7 +320,7 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.teal,
+                            color: AppColors.brandPurple,
                           ),
                         ),
                       ),
