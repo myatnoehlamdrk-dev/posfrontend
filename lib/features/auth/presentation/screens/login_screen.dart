@@ -494,7 +494,7 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Text(
                 context.l10n.t('Forgot Password?'),
                 style: TextStyle(
-                  color: p.primary,
+                  color: p.accentText,
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                 ),

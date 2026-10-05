@@ -5,7 +5,7 @@
   flutter_secure_storage's Android values are encrypted with a key held in the
   Keystore, and that key does not leave the device. A restored backup carries
   the ciphertext but not the key, so the first read throws
-  `InvalidKeyException` -- and because `getToken` runs inside the Dio
+  `InvalidKeyException` — and because `getToken` runs inside the Dio
   interceptor, that turns into a failed request on every screen, with the user
   stuck unable to reach the login screen to sign in again.
 

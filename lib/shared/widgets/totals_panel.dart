@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/theme/app_dimens.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:posfrontend/core/extensions/number_extensions.dart';
@@ -76,7 +78,7 @@ class TotalsPanel extends StatelessWidget {
     this.divider = TotalsDividerStyle.solid,
     this.mono = false,
     this.format = formatPrice,
-    this.padding = const EdgeInsets.all(16),
+    this.padding = const EdgeInsets.all(AppSpacing.s16),
   });
 
   bool get _isEditing => discountEditor != null;
@@ -92,11 +94,11 @@ class TotalsPanel extends StatelessWidget {
         children: [
           if (itemCount != null) ...[
             _row(context, 'Total Items', '${itemCount!}'),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
           ],
           if (showSubtotal) ...[
             _row(context, 'Subtotal', format(subtotal)),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
           ],
           if (_isEditing)
             _rowWith(
@@ -112,12 +114,15 @@ class TotalsPanel extends StatelessWidget {
               valueColor: p.dangerFg,
             ),
           if (_isEditing) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             _row(context, 'Discount Amount', format(discountAmount)),
           ],
           _divider(context),
           _hero(context),
-          if (footer != null) ...[const SizedBox(height: 12), footer!],
+          if (footer != null) ...[
+            const SizedBox(height: AppSpacing.s12),
+            footer!,
+          ],
         ],
       ),
     );
@@ -128,10 +133,13 @@ class TotalsPanel extends StatelessWidget {
     final p = context.palette;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s16,
+        vertical: AppSpacing.s16,
+      ),
       decoration: BoxDecoration(
         color: p.selectionTint,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -140,16 +148,16 @@ class TotalsPanel extends StatelessWidget {
           Text(
             context.l10n.t('TOTAL PAYABLE'),
             style: _type(
-              11,
+              AppTypography.labelSmallSize,
               FontWeight.w700,
               p.textSecondary,
             ).copyWith(letterSpacing: 1.2),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.s8),
           _amount(
             format(totalPayable),
-            color: p.primary,
-            size: 28,
+            color: p.accentText,
+            size: AppTypography.displaySmallSize,
             weight: FontWeight.w800,
           ),
         ],
@@ -167,7 +175,7 @@ class TotalsPanel extends StatelessWidget {
         return Divider(height: 33, thickness: 1, color: color);
       case TotalsDividerStyle.dashed:
         return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.s16),
           child: _DashedDivider(color: color),
         );
     }
@@ -197,10 +205,14 @@ class TotalsPanel extends StatelessWidget {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: _type(14, FontWeight.w400, context.palette.textSecondary),
+            style: _type(
+              AppTypography.bodySmallSize,
+              FontWeight.w400,
+              context.palette.textSecondary,
+            ),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpacing.s12),
         Flexible(child: value),
       ],
     );

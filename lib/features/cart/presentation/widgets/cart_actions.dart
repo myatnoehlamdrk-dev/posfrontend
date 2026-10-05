@@ -628,7 +628,7 @@ class AddToCartChoiceDialog extends StatelessWidget {
                 color: p.selectionTint,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, color: p.primary, size: 20),
+              child: Icon(icon, color: p.accentText, size: 20),
             ),
             const SizedBox(width: 12),
             Expanded(

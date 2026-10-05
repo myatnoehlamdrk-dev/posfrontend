@@ -3,13 +3,19 @@ import 'package:posfrontend/shared/widgets/skeleton.dart';
 
 /// Loading placeholder for the category showcase grid on the products page.
 ///
-/// Mirrors `CategoryShowcaseCard`: a title bar with a trailing arrow chip, then
-/// a two-across wrap of product tiles, each a square thumbnail over a short name
+/// Mirrors `CategoryShowcaseCard`: a title bar with a trailing chevron, then a
+/// two-across wrap of product tiles, each a square thumbnail over a short name
 /// line. Fills come from the shared skeleton components, so the placeholder is
 /// already correct in both themes and does not drift from the card it stands in
 /// for.
+///
+/// [showBorder] is threaded through for the same reason as on the grid: the card
+/// it stands in for is borderless on a phone, and a bordered placeholder under a
+/// borderless card is a visible jump when the data lands.
 class CategorySkeleton extends StatelessWidget {
-  const CategorySkeleton({super.key});
+  final bool showBorder;
+
+  const CategorySkeleton({super.key, this.showBorder = true});
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +34,7 @@ class CategorySkeleton extends StatelessWidget {
             crossAxisCount = 1;
           }
 
-          final spacing = 16.0;
+          final spacing = showBorder ? 16.0 : 12.0;
           final cardW = (w - (spacing * (crossAxisCount - 1))) / crossAxisCount;
 
           return Wrap(
@@ -36,7 +42,10 @@ class CategorySkeleton extends StatelessWidget {
             runSpacing: spacing,
             children: List.generate(
               4,
-              (_) => SizedBox(width: cardW, child: const _SkeletonCard()),
+              (_) => SizedBox(
+                width: cardW,
+                child: _SkeletonCard(showBorder: showBorder),
+              ),
             ),
           );
         },
@@ -46,23 +55,30 @@ class CategorySkeleton extends StatelessWidget {
 }
 
 class _SkeletonCard extends StatelessWidget {
-  const _SkeletonCard();
+  const _SkeletonCard({required this.showBorder});
+
+  final bool showBorder;
 
   @override
   Widget build(BuildContext context) {
-    return const SkeletonCard(
+    return SkeletonCard(
+      radius: 16,
+      borderColor: showBorder ? null : Colors.transparent,
+      padding: EdgeInsets.all(showBorder ? 16 : 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Expanded(child: SkeletonBox(height: 18, width: 120)),
-              SizedBox(width: 8),
-              SkeletonBox(height: 28, width: 28, radius: 8),
+              const Expanded(child: SkeletonBox(height: 20, width: 130)),
+              const SizedBox(width: 8),
+              const SkeletonBox(height: 14, width: 14, radius: 3),
             ],
           ),
-          SizedBox(height: 16),
-          _SkeletonTileGrid(),
+          const SizedBox(height: 10),
+          const SkeletonBox(height: 13, width: 180),
+          const SizedBox(height: 14),
+          const _SkeletonTileGrid(),
         ],
       ),
     );

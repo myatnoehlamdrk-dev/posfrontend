@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/theme/app_dimens.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 
@@ -116,7 +118,7 @@ class PremiumImageUpload extends StatelessWidget {
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.all(10),
+          padding: const EdgeInsets.all(AppSpacing.s12),
           child: Material(
             color: Colors.transparent,
             child: InkWell(
@@ -217,11 +219,11 @@ class _EmptyState extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               color: p.textPrimary,
-              fontSize: 15,
+              fontSize: AppTypography.bodyMediumSize,
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.s16),
           Container(
             width: 68,
             height: 68,
@@ -234,7 +236,7 @@ class _EmptyState extends StatelessWidget {
                 end: Alignment.centerRight,
                 colors: AppColors.brandRamp,
               ),
-              borderRadius: BorderRadius.circular(22),
+              borderRadius: BorderRadius.circular(AppRadius.xl),
               boxShadow: [
                 BoxShadow(
                   color: p.primary.withValues(alpha: 0.35),
@@ -260,10 +262,13 @@ class _ChangeChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.palette;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s16,
+        vertical: AppSpacing.s8,
+      ),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.18),
@@ -276,12 +281,12 @@ class _ChangeChip extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.edit_outlined, size: 14, color: p.primary),
-          const SizedBox(width: 7),
+          const SizedBox(width: AppSpacing.s8),
           Text(
             label,
             style: TextStyle(
               color: p.primary,
-              fontSize: 12,
+              fontSize: AppTypography.labelSmallSize,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -340,7 +345,7 @@ class PremiumAvatarUpload extends StatelessWidget {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(AppSpacing.s16),
         child: GestureDetector(
           onTap: isBusy ? null : onTap,
           child: Stack(
@@ -378,10 +383,14 @@ class PremiumAvatarUpload extends StatelessWidget {
                         )
                       else
                         Center(
+                          // `accentText`: this placeholder glyph sits on
+                          // `surfaceAlt`, where `primary` is only 2.25:1 in dark
+                          // and fails the 3:1 that SC 1.4.11 sets for a non-text
+                          // graphic.
                           child: Icon(
                             icon,
                             size: radius * 0.8,
-                            color: p.primary,
+                            color: p.accentText,
                           ),
                         ),
                       if (hasImage)
@@ -404,7 +413,7 @@ class PremiumAvatarUpload extends StatelessWidget {
                 right: 2,
                 bottom: 2,
                 child: Container(
-                  padding: const EdgeInsets.all(7),
+                  padding: const EdgeInsets.all(AppSpacing.s8),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       begin: Alignment.centerLeft,

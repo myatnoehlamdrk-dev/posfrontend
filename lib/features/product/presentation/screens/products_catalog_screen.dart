@@ -1,7 +1,12 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
+import 'package:posfrontend/features/category/domain/entities/category.dart';
+import 'package:posfrontend/features/package/domain/entities/package.dart';
+import 'package:posfrontend/features/package/presentation/screens/package_details_screen.dart';
+import 'package:posfrontend/features/package/presentation/widgets/explore_packages_section.dart';
 import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart';
 import 'package:posfrontend/features/product/presentation/screens/product_detail_screen.dart';
 import 'package:posfrontend/features/product/presentation/screens/category_products_screen.dart';
@@ -9,14 +14,17 @@ import 'package:posfrontend/features/product/presentation/viewmodels/products_ca
 import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
+import 'package:posfrontend/shared/widgets/app_shell.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/shared/widgets/error_snackbar.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
+import 'package:posfrontend/features/product/presentation/widgets/catalog_footer.dart';
 import 'package:posfrontend/features/product/presentation/widgets/category_showcase_data.dart';
 import 'package:posfrontend/features/product/presentation/widgets/category_showcase_grid.dart';
 import 'package:posfrontend/features/product/presentation/widgets/category_skeleton.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class ProductsCatalogScreen extends StatefulWidget {
@@ -36,6 +44,31 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
   bool _hotPaused = false;
   bool _isSearchOpen = false;
   bool _disposed = false;
+
+  /// Whether the back-to-top control is showing.
+  ///
+  /// Driven by [onScroll] rather than by a `NotificationListener` so the button
+  /// appears while the list is still gliding, instead of only once the scroll has
+  /// settled and the notification arrives.
+  bool _showBackToTop = false;
+
+  /// How far the page must be scrolled before the back-to-top control appears.
+  ///
+  /// A screenful's worth. Before that the footer itself is on screen and already
+  /// offers the same action, so a floating button would be a second control for
+  /// something the user can already reach.
+  static const double backToTopThreshold = 400;
+
+  /// Drives the carousel's automatic advance. See [_startAutoScroll].
+  Timer? _autoScrollTimer;
+
+  /// How long a tile sits on screen before the carousel moves on.
+  ///
+  /// Long enough to actually look at a banner — reading a product name and a
+  /// price takes a beat or two — and short enough that a shop owner waiting at
+  /// the till does not think the screen has frozen.
+  static const Duration _autoScrollInterval = Duration(seconds: 4);
+
   AppPalette get _p => context.palette;
   Color get _accentColor => _p.primary;
   Color get _mutedColor => _p.textSecondary;
@@ -52,33 +85,57 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
   void initState() {
     super.initState();
     _viewModel = ProductsCatalogViewModel();
+    _scrollCtrl.addListener(_onScroll);
     _hotPageController = PageController(initialPage: 5000);
     _viewModel.load();
     _startAutoScroll();
   }
 
+  void _onScroll() {
+    if (!_scrollCtrl.hasClients) return;
+    final show = _scrollCtrl.offset > backToTopThreshold;
+    if (show != _showBackToTop && mounted) {
+      setState(() => _showBackToTop = show);
+    }
+  }
+
+  void _scrollToTop() {
+    if (!_scrollCtrl.hasClients) return;
+    _scrollCtrl.animateTo(
+      0,
+      duration: const Duration(milliseconds: 320),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  /// Advances the carousel one tile on a fixed cadence.
+  ///
+  /// A single [Timer.periodic] rather than the self-rescheduling
+  /// `Future.delayed` chain this replaces. The chain allocated a new timer and
+  /// a new closure on every single advance, and it kept rescheduling while
+  /// paused — so a finger resting on the carousel still queued work at 3Hz for
+  /// as long as it was held there. One periodic timer that simply does nothing
+  /// when paused costs one closure and stops entirely in [dispose].
   void _startAutoScroll() {
-    Future.delayed(const Duration(seconds: 3), () {
-      if (_disposed) return;
-      if (!mounted || _hotPaused) {
-        _startAutoScroll();
-        return;
-      }
+    _autoScrollTimer?.cancel();
+    _autoScrollTimer = Timer.periodic(_autoScrollInterval, (_) {
+      if (_disposed || !mounted || _hotPaused) return;
+
       final hotProducts = _viewModel.hotProducts;
-      if (hotProducts.length > 1 && _hotPageController.hasClients) {
-        _hotIndex = (_hotIndex + 1) % hotProducts.length;
-        _hotPageController.nextPage(
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeInOut,
-        );
-      }
-      _startAutoScroll();
+      if (hotProducts.length <= 1 || !_hotPageController.hasClients) return;
+
+      _hotIndex = (_hotIndex + 1) % hotProducts.length;
+      _hotPageController.nextPage(
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+      );
     });
   }
 
   @override
   void dispose() {
     _disposed = true;
+    _autoScrollTimer?.cancel();
     _scrollCtrl.dispose();
     _viewModel.dispose();
     _search.dispose();
@@ -89,6 +146,31 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
   void _openProduct(CatalogProductView p) {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => ProductDetailScreen(productId: p.id)),
+    );
+  }
+
+  /// Opens a package's detail screen.
+  ///
+  /// That screen needs a `Category` as well as the package — it labels the
+  /// package's header — so the category is looked up from the ones already
+  /// loaded here. The fallback is deliberately the package's own name rather than
+  /// an empty category: a package whose category is not in the current page (the
+  /// grid is a `productLimit` preview, not the whole shop) still opens with
+  /// something readable in the header instead of a blank one.
+  void _openPackage(PackageEntity package) {
+    final match = _viewModel.categories
+        .where((c) => c.id == package.categoryId)
+        .firstOrNull;
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PackageDetailsScreen(
+          package: package,
+          category:
+              match?.toCategory() ??
+              Category(id: package.categoryId, name: package.name),
+        ),
+      ),
     );
   }
 
@@ -137,133 +219,132 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
               navigateToDashboard(context);
             }
           },
-          child: LayoutBuilder(
-            builder: (ctx, constraints) {
-              final isWide = constraints.maxWidth >= 768;
-
-              if (isWide) {
-                return Scaffold(
-                  backgroundColor: context.palette.scaffoldBg,
-                  floatingActionButton: FloatingActionButton(
-                    onPressed: () =>
-                        setState(() => _isSearchOpen = !_isSearchOpen),
-                    backgroundColor: brandPurple,
-                    child: Icon(
-                      _isSearchOpen ? Icons.close : Icons.search,
-                      color: Colors.white,
-                    ),
-                  ),
-                  body: SafeArea(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(
-                          width: 240,
-                          child: AppDrawer(active: DrawerDestination.product),
-                        ),
-                        Expanded(child: _content()),
-                      ],
-                    ),
-                  ),
-                );
-              }
-              return Scaffold(
-                key: _scaffoldKey,
-                backgroundColor: context.palette.scaffoldBg,
-                floatingActionButton: FloatingActionButton(
-                  onPressed: () =>
-                      setState(() => _isSearchOpen = !_isSearchOpen),
-                  backgroundColor: brandPurple,
-                  child: Icon(
-                    _isSearchOpen ? Icons.close : Icons.search,
-                    color: Colors.white,
-                  ),
-                ),
-                drawer: const AppDrawer(active: DrawerDestination.product),
-                body: SafeArea(child: _content()),
-              );
-            },
+          child: AppShell(
+            active: DrawerDestination.product,
+            scaffoldKey: _scaffoldKey,
+            backgroundColor: context.palette.scaffoldBg,
+            wrap: (_, shell) => shell,
+            floatingActionButton: _floatingActions(),
+            body: _content,
           ),
         );
       },
     );
   }
 
-  Widget _content() {
+  /// The two floating controls, stacked.
+  ///
+  /// A [Scaffold] has room for one floating action button, so the search
+  /// button — which has always been there — is joined by the back-to-top control
+  /// in a column above it. Search stays at the bottom because it is the control
+  /// used from anywhere on the page, while back-to-top only matters once the page
+  /// is scrolled.
+  Widget _floatingActions() {
+    final search = FloatingActionButton(
+      onPressed: () => setState(() => _isSearchOpen = !_isSearchOpen),
+      backgroundColor: brandPurple,
+      child: Icon(_isSearchOpen ? Icons.close : Icons.search, color: Colors.white),
+    );
+
+    if (!_showBackToTop) return search;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        FloatingActionButton.small(
+          heroTag: 'catalogBackToTop',
+          onPressed: _scrollToTop,
+          backgroundColor: _p.surface,
+          tooltip: context.l10n.t('Back to top'),
+          child: Icon(Icons.keyboard_arrow_up_rounded, color: _accentColor),
+        ),
+        const SizedBox(height: 12),
+        search,
+      ],
+    );
+  }
+
+  Widget _content(BuildContext context, bool isWide) {
     final categories = _viewModel.categories;
 
     return ListenableBuilder(
       listenable: _search,
       builder: (context, _) {
-        return Stack(
-          children: [
-            Column(
-              children: [
-                AppScreenTopBar(
-                  title: context.l10n.t('Products'),
-                  showMenuButton: true,
-                  onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
-                ),
-                Expanded(
-                  child: RefreshableBody(
-                    scrollController: _scrollCtrl,
-                    onRefresh: () => _viewModel.refresh(),
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-                      child: _buildBody(categories),
+        return SafeArea(
+          child: Stack(
+            children: [
+              Column(
+                children: [
+                  AppScreenTopBar(
+                    title: context.l10n.t('Products'),
+                    // No hamburger on a wide window: the sidebar is already on
+                    // screen. This also fixes the button having been dead here —
+                    // the old wide branch built its Scaffold without the key this
+                    // callback needs, so `openDrawer()` was a no-op on desktop.
+                    showMenuButton: !isWide,
+                    onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+                  ),
+                  Expanded(
+                    child: RefreshableBody(
+                      scrollController: _scrollCtrl,
+                      onRefresh: () => _viewModel.refresh(),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                        child: _buildBody(categories, isWide),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              if (_isSearchOpen)
+                Positioned(
+                  top: 72,
+                  left: 24,
+                  right: 24,
+                  child: Material(
+                    elevation: 4,
+                    borderRadius: BorderRadius.circular(10),
+                    child: Row(
+                      children: [
+                        Expanded(child: _searchField()),
+                        const SizedBox(width: 8),
+                        _iconButton(
+                          Icons.close,
+                          onTap: () {
+                            setState(() {
+                              _isSearchOpen = false;
+                              _search.clear();
+                              _viewModel.setSearchQuery('');
+                            });
+                          },
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ],
-            ),
-            if (_isSearchOpen)
-              Positioned(
-                top: 72,
-                left: 24,
-                right: 24,
-                child: Material(
-                  elevation: 4,
-                  borderRadius: BorderRadius.circular(10),
-                  child: Row(
-                    children: [
-                      Expanded(child: _searchField()),
-                      const SizedBox(width: 8),
-                      _iconButton(
-                        Icons.close,
-                        onTap: () {
-                          setState(() {
-                            _isSearchOpen = false;
-                            _search.clear();
-                            _viewModel.setSearchQuery('');
-                          });
-                        },
-                      ),
-                    ],
+              if (_viewModel.isSearching && _viewModel.searchLoading)
+                Positioned.fill(
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: _accentColor,
+                      strokeWidth: 2.5,
+                    ),
                   ),
                 ),
-              ),
-            if (_viewModel.isSearching && _viewModel.searchLoading)
-              Positioned.fill(
-                child: Center(
-                  child: CircularProgressIndicator(
-                    color: _accentColor,
-                    strokeWidth: 2.5,
-                  ),
-                ),
-              ),
-          ],
+            ],
+          ),
         );
       },
     );
   }
 
-  Widget _buildBody(List<CategoryShowcaseData> categories) {
+  Widget _buildBody(List<CategoryShowcaseData> categories, bool isWide) {
     if (_viewModel.isSearching) {
       return _buildSearchResults();
     }
 
     if (_viewModel.isLoading && categories.isEmpty) {
-      return const CategorySkeleton();
+      return CategorySkeleton(showBorder: isWide);
     }
 
     if (_viewModel.hasError && categories.isEmpty) {
@@ -326,6 +407,10 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
         ],
         CategoryShowcaseGrid(
           categories: categories,
+          // The window is wide, so the cards sit side by side and the outline is
+          // what separates them. On a phone they are one per row and the border
+          // would only draw a column of boxes.
+          showCardBorder: isWide,
           onProductTap: _openProduct,
           onProductLongPress: _showDeleteDialog,
           onCategoryTap: (cat) => Navigator.of(context).push(
@@ -337,6 +422,18 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
             ),
           ),
         ),
+        // The gap belongs to the section rather than sitting outside it: with no
+        // packages to show the section renders as nothing at all, and a spacer
+        // left behind would be a band of dead space above the footer.
+        if (_viewModel.packages.isNotEmpty) ...[
+          const SizedBox(height: 28),
+          ExplorePackagesSection(
+            packages: _viewModel.packages,
+            previewCount: ProductsCatalogViewModel.packagePreviewCount,
+            onPackageTap: _openPackage,
+          ),
+        ],
+        const CatalogFooter(),
       ],
     );
   }
@@ -679,10 +776,14 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                           const SizedBox(height: 6),
                           PriceText(
                             p.price,
-                            style: const TextStyle(
-                              fontSize: 16,
+                            // `accentText`, not the `#7952DB` literal this used
+                            // to carry: at 16px bold this is body text, so it
+                            // needs 4.5:1, and the brand purple only reaches
+                            // 2.54:1 on a dark surface.
+                            style: TextStyle(
+                              fontSize: AppTypography.bodyLargeSize,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF7952DB),
+                              color: _p.accentText,
                             ),
                           ),
                           const Spacer(),
@@ -845,9 +946,13 @@ class _GradientBlendedImageState extends State<_GradientBlendedImage> {
 
   @override
   Widget build(BuildContext context) {
-    if (_failed) return widget.errorFallback;
     final image = _image;
-    if (image == null) return const SizedBox.shrink();
+    // While the photo is in flight the banner shows the same gradient-and-glyph
+    // fallback it shows when the photo fails. Returning an empty box here instead
+    // is what made the carousel look like it was loading: a blank half-tile that
+    // popped into a framed photo a moment later, every time it advanced.
+    if (_failed || image == null) return widget.errorFallback;
+
     return CustomPaint(
       size: Size(widget.width, double.infinity),
       painter: _GradientColorImagePainter(image),

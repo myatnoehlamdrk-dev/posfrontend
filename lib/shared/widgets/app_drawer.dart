@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/theme/app_dimens.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/core/auth/token_storage.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/features/auth/presentation/screens/login_screen.dart';
@@ -26,57 +28,47 @@ import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
 /// silently broken navigation and the active-item highlight. Identity now lives
 /// here, and [label] is only the English source text used to look up a
 /// translation.
+///
+/// These eight destinations used to carry an `iconColor` each — purple, teal,
+/// green, orange, blue, pink, indigo, slate. Four were duplicates of names
+/// already in `AppColors` and four existed nowhere else, and because they were
+/// `const` inside an enum none of them could vary by brightness, so every one
+/// was wrong in dark mode.
+///
+/// The hues also carried no meaning: there is no system in which "cart" is
+/// orange and "inventory" is blue. Colour that encodes nothing still costs
+/// attention, and it fights the brand purple on every drawer open. Position and
+/// the icon shape already identify the destination; the accent now marks the one
+/// thing that genuinely differs, which is where you are.
 enum DrawerDestination {
-  dashboard(
-    label: 'Dashboard',
-    icon: Icons.dashboard_outlined,
-    iconColor: Color(0xFF6D28D9),
-  ),
-  product(
-    label: 'Product',
-    icon: Icons.category_outlined,
-    iconColor: Color(0xFF0D9488),
-  ),
+  dashboard(label: 'Dashboard', icon: Icons.dashboard_outlined),
+  product(label: 'Product', icon: Icons.category_outlined),
   addProduct(
     label: 'Add Product',
     icon: Icons.add_circle_outline,
-    iconColor: Color(0xFF16A34A),
     isTabRoot: true,
   ),
   addToCart(
     label: 'Add to Cart',
     icon: Icons.shopping_cart_outlined,
-    iconColor: Color(0xFFF97316),
     isTabRoot: true,
   ),
-  inventory(
-    label: 'Inventory',
-    icon: Icons.inventory_2_outlined,
-    iconColor: Color(0xFF2563EB),
-  ),
+  inventory(label: 'Inventory', icon: Icons.inventory_2_outlined),
   saleItem(
     label: 'Sale Item',
     icon: Icons.receipt_long_outlined,
-    iconColor: Color(0xFFDB2777),
     isTabRoot: true,
   ),
   purchaseItem(
     label: 'Purchase Item',
     icon: Icons.local_shipping_outlined,
-    iconColor: Color(0xFF4F46E5),
     isTabRoot: true,
   ),
-  setting(
-    label: 'Setting',
-    icon: Icons.settings_outlined,
-    iconColor: Color(0xFF64748B),
-    isTabRoot: true,
-  );
+  setting(label: 'Setting', icon: Icons.settings_outlined, isTabRoot: true);
 
   const DrawerDestination({
     required this.label,
     required this.icon,
-    required this.iconColor,
     this.isTabRoot = false,
   });
 
@@ -85,7 +77,6 @@ enum DrawerDestination {
   final String label;
 
   final IconData icon;
-  final Color iconColor;
 
   /// True when the destination is pushed rather than swapped in. The three
   /// root tabs replace the stack so Back does not walk a growing history;
@@ -163,14 +154,14 @@ class AppDrawer extends StatelessWidget {
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w700,
-                                  fontSize: 18,
+                                  fontSize: AppTypography.titleSmallSize,
                                 ),
                               )
                             : null,
                       );
                     },
                   ),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: AppSpacing.s16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,18 +173,18 @@ class AppDrawer extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 18,
+                            fontSize: AppTypography.titleSmallSize,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: AppSpacing.s4),
                         Text(
                           email,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             color: Colors.white70,
-                            fontSize: 13,
+                            fontSize: AppTypography.labelMediumSize,
                           ),
                         ),
                       ],
@@ -218,7 +209,7 @@ class AppDrawer extends StatelessWidget {
             ),
             Divider(height: 1, color: p.border),
             const _LogoutTile(),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.s16),
           ],
         ),
       ),
@@ -235,18 +226,16 @@ class AppDrawer extends StatelessWidget {
   Widget _navItem(BuildContext context, DrawerDestination destination) {
     final p = context.palette;
     final active = destination == this.active;
-    final iconColor = destination.iconColor;
-    // The per-item accents are tuned for a white drawer. In dark the icon is
-    // lifted toward white so the hue stays recognisable but readable.
-    final idleIcon = context.isDark
-        ? Color.lerp(iconColor, Colors.white, 0.4)!
-        : iconColor;
+    // Idle icons are one neutral for all eight destinations; the brand accent is
+    // spent on the active row only. See [DrawerDestination] for why the eight
+    // per-item hues went.
+    final idleIcon = p.textSecondary;
     return Container(
-      margin: const EdgeInsets.only(bottom: 4),
+      margin: const EdgeInsets.only(bottom: AppSpacing.s4),
       decoration: active
           ? BoxDecoration(
               color: p.selectionTint,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             )
           : null,
       child: ListTile(
@@ -254,34 +243,55 @@ class AppDrawer extends StatelessWidget {
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            color: active ? iconColor : iconColor.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(10),
+            color: active ? p.primary : p.chipBg,
+            borderRadius: BorderRadius.circular(AppRadius.md),
           ),
           child: Icon(
             destination.icon,
             color: active ? Colors.white : idleIcon,
-            size: 20,
+            size: AppIconSize.md,
           ),
         ),
         title: Text(
           destination.localized(context.l10n),
           style: TextStyle(
-            color: active ? p.primary : p.textPrimary,
+            // `accentText`, not `primary`: this is text on the page, not a fill,
+            // and on a dark surface the fill value only reaches 2.54:1.
+            color: active ? p.accentText : p.textPrimary,
             fontWeight: active ? FontWeight.w600 : FontWeight.w500,
-            fontSize: 15,
+            fontSize: AppTypography.bodyMediumSize,
           ),
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
         onTap: () => _onTap(context, destination),
       ),
     );
   }
 
   void _onTap(BuildContext context, DrawerDestination destination) {
+    // Close the drawer before navigating, but only when there is one. On a wide
+    // window the sidebar is permanent — there is no `DrawerController` and
+    // `isDrawerOpen` is false — so this must be a no-op there; popping the
+    // navigator instead would have taken the user off the page they tapped.
+    //
+    // `closeDrawer()` rather than `Navigator.pop()`: it is the API that actually
+    // owns this, it runs the open/close animation, and it cannot pop a page route
+    // if this ever runs while the drawer is not the top route.
+// Close the drawer before navigating, and only when there is one. On a wide
+    // window the sidebar is permanent — no `DrawerController`, so `isDrawerOpen`
+    // is false — and this must be a no-op there.
+    //
+    // `closeDrawer()` rather than `Navigator.pop()`: it is the API that owns this,
+    // it runs the open/close animation, and it cannot pop a page route even if
+    // this ever runs while the drawer is not the top route. The old
+    // `Navigator.pop()` was already guarded by `isDrawerOpen`, so it was not the
+    // source of the sidebar disappearing — it is just the wrong tool.
     final scaffold = Scaffold.maybeOf(context);
-    if (scaffold != null && scaffold.isDrawerOpen) {
-      Navigator.of(context).pop();
-    }
+    final drawerOpen = scaffold?.isDrawerOpen ?? false;
+    if (drawerOpen) scaffold!.closeDrawer();
+
     if (destination == active) return;
 
     final screen = destination.screen;
@@ -329,7 +339,10 @@ class _LogoutTileState extends State<_LogoutTile> {
   Widget build(BuildContext context) {
     final p = context.palette;
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s12,
+        vertical: AppSpacing.s4,
+      ),
       child: ListTile(
         leading: _isLoading
             ? const SizedBox(
@@ -343,10 +356,12 @@ class _LogoutTileState extends State<_LogoutTile> {
           style: TextStyle(
             color: red,
             fontWeight: FontWeight.w600,
-            fontSize: 15,
+            fontSize: AppTypography.bodyMediumSize,
           ),
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
         onTap: _isLoading
             ? null
             : () {
@@ -355,7 +370,7 @@ class _LogoutTileState extends State<_LogoutTile> {
                   builder: (ctx) {
                     return AlertDialog(
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                       ),
                       title: Text(
                         context.l10n.t('Logout'),
@@ -385,7 +400,7 @@ class _LogoutTileState extends State<_LogoutTile> {
                             backgroundColor: red,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
                             ),
                           ),
                           child: _isLoading

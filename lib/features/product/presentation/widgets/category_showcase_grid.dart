@@ -5,6 +5,14 @@ import 'package:posfrontend/features/product/presentation/widgets/category_showc
 
 class CategoryShowcaseGrid extends StatelessWidget {
   final List<CategoryShowcaseData> categories;
+
+  /// Draw the hairline outline on each card. Passed in rather than derived from
+  /// this widget's own width, because "is the window wide" is the screen's
+  /// question to answer — it already has to make it to decide between a side
+  /// drawer and a bottom nav, and the width *inside* the drawer is not the same
+  /// number.
+  final bool showCardBorder;
+
   final ValueChanged<CatalogProductView>? onProductTap;
   final ValueChanged<CatalogProductView>? onProductLongPress;
   final ValueChanged<CategoryShowcaseData>? onCategoryTap;
@@ -12,6 +20,7 @@ class CategoryShowcaseGrid extends StatelessWidget {
   const CategoryShowcaseGrid({
     super.key,
     required this.categories,
+    this.showCardBorder = true,
     this.onProductTap,
     this.onProductLongPress,
     this.onCategoryTap,
@@ -33,7 +42,10 @@ class CategoryShowcaseGrid extends StatelessWidget {
           crossAxisCount = 1;
         }
 
-        final spacing = 16.0;
+        // Wider gutters when the cards are bordered, to account for the outline
+        // on both sides of a run. Borderless cards at one column already read as
+        // separate, and extra gutter there would just make the page loose.
+        final spacing = showCardBorder ? 16.0 : 12.0;
         final cardW = (w - (spacing * (crossAxisCount - 1))) / crossAxisCount;
 
         return Wrap(
@@ -44,6 +56,7 @@ class CategoryShowcaseGrid extends StatelessWidget {
               width: cardW,
               child: CategoryShowcaseCard(
                 category: cat,
+                showBorder: showCardBorder,
                 onProductTap: onProductTap,
                 onProductLongPress: onProductLongPress,
                 onSeeAll: onCategoryTap != null

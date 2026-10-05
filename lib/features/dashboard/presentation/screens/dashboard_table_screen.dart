@@ -245,7 +245,7 @@ class _DashboardTableScreenState extends State<DashboardTableScreen> {
 
     return RefreshIndicator(
       onRefresh: _viewModel.refresh,
-      color: p.primary,
+      color: p.accentText,
       backgroundColor: p.surface,
       child: ListView(
         controller: _vertical,
@@ -262,7 +262,7 @@ class _DashboardTableScreenState extends State<DashboardTableScreen> {
                   height: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: p.primary,
+                    color: p.accentText,
                   ),
                 ),
               ),
@@ -633,10 +633,10 @@ class _MonthSheetState extends State<_MonthSheet> {
               // Same as the months: picking what is already active just closes.
               Navigator.pop(context, isAllTime ? null : _allTimeMonth);
             },
-            icon: Icon(Icons.clear_all, size: 16, color: p.primary),
+            icon: Icon(Icons.clear_all, size: 16, color: p.accentText),
             label: Text(
               context.l10n.t('All time'),
-              style: TextStyle(color: p.primary, fontWeight: FontWeight.w600),
+              style: TextStyle(color: p.accentText, fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -770,7 +770,7 @@ class _Message extends StatelessWidget {
               const SizedBox(height: 16),
               TextButton(
                 onPressed: onAction,
-                child: Text(actionLabel!, style: TextStyle(color: p.primary)),
+                child: Text(actionLabel!, style: TextStyle(color: p.accentText)),
               ),
             ],
           ],

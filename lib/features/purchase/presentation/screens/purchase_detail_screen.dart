@@ -235,7 +235,7 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: isCompleted ? AppColors.green : AppColors.orange,
+                    color: isCompleted ? p.successFg : p.warningFg,
                   ),
                 ),
               ),

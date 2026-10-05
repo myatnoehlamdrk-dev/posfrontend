@@ -297,7 +297,7 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
                 color: p.textPrimary,
               ),
             ),
-            if (req) Text(' *', style: TextStyle(color: kRed, fontSize: 14)),
+            if (req) Text(' *', style: TextStyle(color: p.dangerFg, fontSize: 14)),
           ],
         ),
         const SizedBox(height: 8),

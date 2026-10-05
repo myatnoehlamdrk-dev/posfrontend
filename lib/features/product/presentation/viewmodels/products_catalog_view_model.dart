@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/core/network/media_url.dart';
+import 'package:posfrontend/features/package/data/models/package_api_model.dart';
+import 'package:posfrontend/features/package/domain/entities/package.dart';
 import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart';
 import 'package:posfrontend/features/product/presentation/widgets/category_showcase_data.dart';
 
@@ -151,6 +153,10 @@ class ProductsCatalogViewModel extends BaseViewModel {
         final cat = json as Map<String, dynamic>;
         final categoryId = cat['id']?.toString() ?? '';
         final categoryName = cat['name']?.toString() ?? '';
+        // The endpoint sends `description` alongside the name, but older
+        // categories predate the column and come back null — hence the
+        // `?? ''`. An empty description is a normal state, not an error.
+        final categoryDescription = cat['description']?.toString() ?? '';
         final products = (cat['products'] as List? ?? []).map((p) {
           final product = p as Map<String, dynamic>;
           return CatalogProductView(
@@ -175,6 +181,7 @@ class ProductsCatalogViewModel extends BaseViewModel {
         return CategoryShowcaseData(
           id: categoryId,
           name: categoryName,
+          description: categoryDescription,
           products: products,
           productCount: _countFrom(cat, products.length),
         );
@@ -188,6 +195,45 @@ class ProductsCatalogViewModel extends BaseViewModel {
     }
 
     await _loadHotProducts();
+    await _loadPackages();
+  }
+
+  /// How many packages the "Explore Packages" band shows before it is expanded.
+  ///
+  /// Six is two rows of three on a phone, which is the most a shop owner will
+  /// look at before deciding to tap through. The section is a way in, not the
+  /// place packages are managed, so it shows a fixed number rather than offering
+  /// to reveal the rest.
+  static const int packagePreviewCount = 6;
+
+  List<PackageEntity> _packages = [];
+
+  /// Every package the shop owns that came back in the fetch, newest first.
+  List<PackageEntity> get packages => _packages;
+
+  Future<void> _loadPackages() async {
+    try {
+      // No `categoryId`: the endpoint falls back to every package in the shop,
+      // which is what an "Explore" section wants. The page size is fixed at 20
+      // server-side and cannot be narrowed by a query parameter, so the limit
+      // is applied on the way into [packages] rather than at the network.
+      final response = await _dio.get('/packages', cancelToken: cancelToken);
+
+      final data = response.data;
+      final List<dynamic> items = data is Map
+          ? (data['data'] ?? [])
+          : (data as List? ?? []);
+
+      _packages = items
+          .whereType<Map<String, dynamic>>()
+          .map((json) => PackageApiModel.fromJson(json).toEntity())
+          .toList();
+      notifyListeners();
+    } catch (e) {
+      // Non-fatal, and deliberately not routed through setError: the catalog is
+      // perfectly usable without the packages band, so a failure here must not
+      // put an error message on a page that has no error to report.
+    }
   }
 
   /// The category's real product total, if the endpoint reports one.
@@ -221,20 +267,11 @@ class ProductsCatalogViewModel extends BaseViewModel {
     }
     return best;
   }
-      }
-    }
-    }
-    return best;
-    return best;
-  }
-  }
+
 
 
   Future<void> _loadHotProducts() async {
-  Future<void> _loadHotProducts() async {
     try {
-    try {
-      final response = await _dio.get(
       final response = await _dio.get(
         '/products/latest',
         queryParameters: {'limit': 4},

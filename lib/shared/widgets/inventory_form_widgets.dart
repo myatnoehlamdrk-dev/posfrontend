@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/theme/app_dimens.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 
-const Color kTitle = Color(0xFF111827);
-const Color kGray = Color(0xFF6B7280);
-const Color kBorder = Color(0xFFE5E7EB);
+/// `kTitle`, `kGray` and `kBorder` used to live here as `static const`
+/// colours, and `sale_preview_screen` plus `package_details_screen` imported
+/// them — which meant the invoice preview painted `#111827` headings and `#6B7280`
+/// captions unconditionally. In dark mode that is 1.35:1 and 3.10:1: the
+/// preview was unreadable. Both screens now read `palette.textPrimary` /
+/// `textSecondary` / `border`, so the values follow the theme.
 const Color kBg = Color(0xFFFFFFFF);
-const Color kRed = Color(0xFFEF4444);
 
 /// The one purple the inventory forms are built in, shared with the welcome
 /// screen's `Get started` button, the product prices and the sale buttons.
@@ -38,20 +42,26 @@ InputDecoration fieldDecorationFor(
   final p = context.palette;
   return InputDecoration(
     hintText: hint,
-    hintStyle: TextStyle(color: p.textSecondary, fontSize: 14),
+    hintStyle: TextStyle(
+      color: p.textSecondary,
+      fontSize: AppTypography.bodySmallSize,
+    ),
     filled: true,
     fillColor: p.surface,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    contentPadding: const EdgeInsets.symmetric(
+      horizontal: AppSpacing.s16,
+      vertical: AppSpacing.s12,
+    ),
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       borderSide: BorderSide(color: p.border),
     ),
     enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       borderSide: BorderSide(color: p.border),
     ),
     disabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       borderSide: BorderSide(color: p.border),
     ),
   );
@@ -90,7 +100,7 @@ class InventoryHeader extends StatelessWidget {
             title,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 24,
+              fontSize: AppTypography.titleLargeSize,
               fontWeight: FontWeight.bold,
               color: p.textPrimary,
             ),
@@ -111,15 +121,15 @@ class InventoryHeader extends StatelessWidget {
               child: Container(
                 width: 8,
                 height: 8,
-                decoration: const BoxDecoration(
-                  color: kRed,
+                decoration: BoxDecoration(
+                  color: p.dangerFg,
                   shape: BoxShape.circle,
                 ),
               ),
             ),
           ],
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpacing.s8),
         CircleAvatar(
           radius: 20,
           backgroundColor: kPurple,
@@ -128,7 +138,7 @@ class InventoryHeader extends StatelessWidget {
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w700,
-              fontSize: 14,
+              fontSize: AppTypography.bodySmallSize,
             ),
           ),
         ),
@@ -199,14 +209,20 @@ class Breadcrumb extends StatelessWidget {
     for (var i = 0; i < items.length; i++) {
       if (i > 0) {
         children.add(
-          Text('  >  ', style: TextStyle(fontSize: 13, color: p.textSecondary)),
+          Text(
+            '  >  ',
+            style: TextStyle(
+              fontSize: AppTypography.labelMediumSize,
+              color: p.textSecondary,
+            ),
+          ),
         );
       }
       children.add(
         Text(
           items[i].label,
           style: TextStyle(
-            fontSize: 13,
+            fontSize: AppTypography.labelMediumSize,
             color: items[i].active ? p.textSecondary : kPurple,
           ),
         ),
@@ -234,10 +250,10 @@ class FormCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.palette;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.s16),
       decoration: BoxDecoration(
         color: p.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: p.border),
       ),
       child: Column(
@@ -248,23 +264,32 @@ class FormCard extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: AppTypography.bodyMediumSize,
                   fontWeight: FontWeight.w600,
                   color: p.textPrimary,
                 ),
               ),
               if (required)
-                Text(' *', style: TextStyle(color: kRed, fontSize: 15)),
+                Text(
+                  ' *',
+                  style: TextStyle(
+                    color: p.dangerFg,
+                    fontSize: AppTypography.bodyMediumSize,
+                  ),
+                ),
             ],
           ),
           if (helper != null) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.s4),
             Text(
               helper!,
-              style: TextStyle(fontSize: 13, color: p.textSecondary),
+              style: TextStyle(
+                fontSize: AppTypography.labelMediumSize,
+                color: p.textSecondary,
+              ),
             ),
           ],
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.s12),
           child,
         ],
       ),
@@ -289,21 +314,27 @@ class DisabledField extends StatelessWidget {
     final p = context.palette;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s16,
+        vertical: AppSpacing.s12,
+      ),
       decoration: BoxDecoration(
         color: p.surfaceAlt,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: p.border),
       ),
       child: Row(
         children: [
           Icon(icon, size: 18, color: p.textSecondary),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSpacing.s12),
           Expanded(
             child: Text(
               value,
               textAlign: alignRight ? TextAlign.right : TextAlign.left,
-              style: TextStyle(fontSize: 14, color: p.textSecondary),
+              style: TextStyle(
+                fontSize: AppTypography.bodySmallSize,
+                color: p.textSecondary,
+              ),
             ),
           ),
         ],
@@ -343,7 +374,7 @@ class CounterTextField extends StatelessWidget {
           onChanged: onChanged,
           decoration: fieldDecorationFor(context, hint),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.s4),
         Align(
           alignment: Alignment.centerRight,
           child: ListenableBuilder(
@@ -353,7 +384,10 @@ class CounterTextField extends StatelessWidget {
                   .t('{v1} / {v2}')
                   .replaceAll('{v1}', (controller.text.length).toString())
                   .replaceAll('{v2}', (max).toString()),
-              style: TextStyle(fontSize: 12, color: p.textSecondary),
+              style: TextStyle(
+                fontSize: AppTypography.labelSmallSize,
+                color: p.textSecondary,
+              ),
             ),
           ),
         ),
@@ -381,10 +415,10 @@ class DropdownField extends StatelessWidget {
     final p = context.palette;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
       decoration: BoxDecoration(
         color: p.surface,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: p.border),
       ),
       child: DropdownButtonHideUnderline(
@@ -392,7 +426,10 @@ class DropdownField extends StatelessWidget {
           value: value,
           hint: Text(
             hint,
-            style: TextStyle(color: p.textSecondary, fontSize: 14),
+            style: TextStyle(
+              color: p.textSecondary,
+              fontSize: AppTypography.bodySmallSize,
+            ),
           ),
           isExpanded: true,
           items: items
@@ -432,7 +469,7 @@ class FormActions extends StatelessWidget {
               style: OutlinedButton.styleFrom(
                 side: BorderSide(color: p.border),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
               ),
               child: Text(
@@ -440,13 +477,13 @@ class FormActions extends StatelessWidget {
                 style: TextStyle(
                   color: p.textPrimary,
                   fontWeight: FontWeight.w600,
-                  fontSize: 15,
+                  fontSize: AppTypography.bodyMediumSize,
                 ),
               ),
             ),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpacing.s12),
         Expanded(
           child: Container(
             height: 48,
@@ -456,7 +493,7 @@ class FormActions extends StatelessWidget {
               // control still painted in the old violet-to-violet pair while the
               // rest of the app moved to the brand purple.
               gradient: kPurpleGradient,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
               boxShadow: [
                 BoxShadow(
                   color: p.cardShadow,
@@ -468,7 +505,7 @@ class FormActions extends StatelessWidget {
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 onTap: loading ? null : onSave,
                 child: Center(
                   child: loading
@@ -485,7 +522,7 @@ class FormActions extends StatelessWidget {
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,
-                            fontSize: 15,
+                            fontSize: AppTypography.bodyMediumSize,
                           ),
                         ),
                 ),
@@ -509,16 +546,16 @@ class InfoBox extends StatelessWidget {
     final p = context.palette;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.s16),
       decoration: BoxDecoration(
         color: p.selectionTint,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Icon(Icons.info_outline, color: kPurple),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.s12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -526,15 +563,18 @@ class InfoBox extends StatelessWidget {
                 Text(
                   title,
                   style: TextStyle(
-                    fontSize: 15,
+                    fontSize: AppTypography.bodyMediumSize,
                     fontWeight: FontWeight.w700,
                     color: p.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.s4),
                 Text(
                   body,
-                  style: TextStyle(fontSize: 13, color: p.textSecondary),
+                  style: TextStyle(
+                    fontSize: AppTypography.labelMediumSize,
+                    color: p.textSecondary,
+                  ),
                 ),
               ],
             ),

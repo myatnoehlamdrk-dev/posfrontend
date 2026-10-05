@@ -222,7 +222,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   color: p.chipBg,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(icon, size: 20, color: p.primary),
+                child: Icon(icon, size: 20, color: p.accentText),
               ),
               const SizedBox(width: 12),
               Expanded(

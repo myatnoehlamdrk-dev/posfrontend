@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/features/customer/domain/entities/customer.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class CustomersTab extends StatefulWidget {
@@ -16,7 +17,6 @@ class _CustomersTabState extends State<CustomersTab> {
   final _searchController = TextEditingController();
   String _searchQuery = '';
 
-  static const Color purple = Color(0xFF6D28D9);
 
   List<CustomerSummaryItemEntity> get _filtered {
     if (_searchQuery.isEmpty) return widget.analytics.customerSummary;
@@ -63,7 +63,7 @@ class _CustomersTabState extends State<CustomersTab> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: purple),
+                borderSide: const BorderSide(color: AppColors.brandPurpleDark),
               ),
               filled: true,
               fillColor: p.surfaceAlt,
@@ -106,7 +106,7 @@ class _CustomersTabState extends State<CustomersTab> {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: purple.withValues(alpha: 0.1),
+          color: AppColors.brandPurpleDark.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Center(
@@ -115,7 +115,7 @@ class _CustomersTabState extends State<CustomersTab> {
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
-              color: purple,
+              color: AppColors.brandPurpleDark,
             ),
           ),
         ),

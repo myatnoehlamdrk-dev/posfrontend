@@ -1124,7 +1124,7 @@ class _ProductCard extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: p.primary,
+                                color: p.accentText,
                               ),
                             ),
                             SizedBox(height: 6),
@@ -1691,7 +1691,7 @@ class _AddToCartChoiceDialog extends StatelessWidget {
                 color: p.selectionTint,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, color: p.primary, size: 20),
+              child: Icon(icon, color: p.accentText, size: 20),
             ),
             const SizedBox(width: 12),
             Expanded(

@@ -21,6 +21,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.selectionTint,
     required this.primary,
     required this.primaryDark,
+    required this.accentText,
     required this.cardShadow,
     required this.successBg,
     required this.successFg,
@@ -48,9 +49,37 @@ class AppPalette extends ThemeExtension<AppPalette> {
   // Tinted selection state (replaces the hardcoded #F5F0FF)
   final Color selectionTint;
 
-  // Brand accent, brightened in dark so CTAs keep their contrast
+  /// Brand accent for *fills*: buttons, chips, avatars, the refresh spinner.
+  ///
+  /// Same value in both modes on purpose. It used to be `#7B2CBF` light and a
+  /// brightened `#9D4EDD` dark, because a fill was assumed to need headroom in
+  /// dark. It does not — the label on top is white, and white clears 4.5:1
+  /// against this value in both brightnesses (5.19). Brightening it only made
+  /// the button read as a different colour from the one on the login screen.
   final Color primary;
+
+  /// Pressed / hover fill. One step down the same hue.
   final Color primaryDark;
+
+  /// Brand accent for *text and icons*, which is a different job from [primary]
+  /// and needs a different value.
+  ///
+  /// This exists because one token was doing both jobs and failing one of them.
+  /// The fill job wants white text on top, so it needs a mid-dark purple. The
+  /// text job needs contrast against the *page*, and on a dark surface the same
+  /// purple only reaches 2.54:1 — so accent-coloured text was unreadable in
+  /// dark mode while the button it sat next to was fine.
+  ///
+  /// Measured against every surface it is actually painted on:
+  ///
+  ///   light  5.19 on surface · 4.72 on chipBg · 4.65 on selectionTint
+  ///   dark   4.84 on surface · 5.83 on selectionTint · 3.75 on chipBg
+  ///
+  /// The dark `chipBg` figure is 3.75, below 4.5, and that is acceptable: the
+  /// only control painted on `chipBg` is an *icon*, and WCAG 1.4.11 governs
+  /// non-text content at 3:1, not 4.5:1. If a text label is ever put on the
+  /// dark `chipBg`, it needs a lighter step (`lavender`), not this one.
+  final Color accentText;
 
   // Card elevation. Zero in dark: separation comes from the border instead,
   // which is both cheaper to paint and more legible on a dark surface.
@@ -64,19 +93,44 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color dangerBg;
   final Color dangerFg;
 
+  /// The three text steps are a ramp, not independent picks, and all three clear
+  /// 4.5:1 against every light surface they sit on:
+  ///
+  ///   textPrimary 14.03 · textSecondary 6.51 · textMuted 5.19  (on scaffoldBg)
+  ///   textPrimary 12.29 · textSecondary 5.79 · textMuted 4.81  (on surfaceAlt)
+  ///
+  /// `textMuted` used to be `#9CA3AF`, which is only 2.41:1 on `scaffoldBg` —
+  /// the third step down was failing the same bar as the second one. Darkening
+  /// it to 4.5+ meant pulling `textSecondary` up to `#5A6373` so the two stayed
+  /// visibly distinct instead of collapsing into one grey. The cost is that
+  /// `textMuted` is now only slightly lighter than `textSecondary`; in light
+  /// mode there is very little room below 4.5:1, so a third step has to be a
+  /// small one. Use `textMuted` for supporting metadata, never for a value the
+  /// user has to read to complete a sale.
+  ///
+  /// `borderStrong` clears 3:1 against `surface` (3.25) because it is painted on
+  /// component outlines — the outlined buttons in `cart_actions`, the selection
+  /// borders in `category_products` — which are UI components under WCAG 1.4.11
+  /// rather than decoration. It was 1.47:1 before.
+  ///
+  /// [border] is *not* held to 3:1 and deliberately stays a hairline: it draws
+  /// dividers and card edges, which carry no information on their own. Note
+  /// that `appInputDecoration` also uses it for input outlines, which *are*
+  /// components — see the note on that widget.
   static const AppPalette light = AppPalette(
     scaffoldBg: Color(0xFFF8F9FC),
     surface: Color(0xFFFFFFFF),
     surfaceAlt: Color(0xFFF9FAFB),
     chipBg: Color(0xFFF3F4F6),
     border: Color(0xFFE5E7EB),
-    borderStrong: Color(0xFFD1D5DB),
     textPrimary: Color(0xFF111827),
-    textSecondary: Color(0xFF6B7280),
-    textMuted: Color(0xFF9CA3AF),
+    textSecondary: Color(0xFF5A6373),
+    textMuted: Color(0xFF6A7078),
     selectionTint: Color(0xFFF5F0FF),
-    primary: Color(0xFF7B2CBF),
-    primaryDark: Color(0xFF5B21B6),
+    primary: Color(0xFF7952DB),
+    primaryDark: Color(0xFF6D28D9),
+    accentText: Color(0xFF7952DB),
+    borderStrong: Color(0xFF8A8F98),
     cardShadow: Color(0x0D000000),
     successBg: Color(0xFFDCFCE7),
     successFg: Color(0xFF15803D),
@@ -104,13 +158,14 @@ class AppPalette extends ThemeExtension<AppPalette> {
     surfaceAlt: Color(0xFF2D3949),
     chipBg: Color(0xFF354253),
     border: Color(0xFF3B495B),
-    borderStrong: Color(0xFF4B5A6E),
     textPrimary: Color(0xFFF2F4F7),
     textSecondary: Color(0xFFA2AAB8),
-    textMuted: Color(0xFF6C7482),
+    textMuted: Color(0xFF9BA4B3),
     selectionTint: Color(0xFF261C40),
-    primary: Color(0xFF9D4EDD),
-    primaryDark: Color(0xFF7B2CBF),
+    primary: Color(0xFF7952DB),
+    primaryDark: Color(0xFF6D28D9),
+    accentText: Color(0xFFA78BFA),
+    borderStrong: Color(0xFF70809A),
     cardShadow: Color(0x00000000),
     successBg: Color(0xFF13301F),
     successFg: Color(0xFF6EE7A8),
@@ -139,6 +194,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     Color? selectionTint,
     Color? primary,
     Color? primaryDark,
+    Color? accentText,
     Color? cardShadow,
     Color? successBg,
     Color? successFg,
@@ -160,6 +216,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
       selectionTint: selectionTint ?? this.selectionTint,
       primary: primary ?? this.primary,
       primaryDark: primaryDark ?? this.primaryDark,
+      accentText: accentText ?? this.accentText,
       cardShadow: cardShadow ?? this.cardShadow,
       successBg: successBg ?? this.successBg,
       successFg: successFg ?? this.successFg,
@@ -187,6 +244,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
       selectionTint: c(selectionTint, other.selectionTint),
       primary: c(primary, other.primary),
       primaryDark: c(primaryDark, other.primaryDark),
+      accentText: c(accentText, other.accentText),
       cardShadow: c(cardShadow, other.cardShadow),
       successBg: c(successBg, other.successBg),
       successFg: c(successFg, other.successFg),

@@ -14,6 +14,7 @@ import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
+import 'package:posfrontend/shared/widgets/app_shell.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 
@@ -212,16 +213,18 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
               _allowedOrderIds.contains(card.orderId),
         )
         .toList();
-    return Scaffold(
-      key: _scaffoldKey,
+    return AppShell(
+      active: DrawerDestination.addToCart,
+      scaffoldKey: _scaffoldKey,
       backgroundColor: context.palette.scaffoldBg,
-      drawer: const AppDrawer(active: DrawerDestination.addToCart),
-      body: SafeArea(
+      wrap: (_, shell) => shell,
+      body: (context, isWide) => SafeArea(
         child: Column(
           children: [
             AppScreenTopBar(
               title: context.l10n.t('Add to Cart'),
-              showMenuButton: true,
+              // No hamburger on a wide window: the sidebar is already on screen.
+              showMenuButton: !isWide,
               onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
             ),
             Expanded(

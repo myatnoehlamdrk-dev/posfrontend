@@ -6,6 +6,7 @@ import 'package:posfrontend/features/product/presentation/screens/stock_add_scre
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
+import 'package:posfrontend/shared/widgets/app_shell.dart';
 
 class AddProductOptionsScreen extends StatefulWidget {
   const AddProductOptionsScreen({super.key});
@@ -21,16 +22,18 @@ class _AddProductOptionsScreenState extends State<AddProductOptionsScreen> {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    return Scaffold(
-      key: _scaffoldKey,
+    return AppShell(
+      active: DrawerDestination.addProduct,
+      scaffoldKey: _scaffoldKey,
       backgroundColor: p.scaffoldBg,
-      drawer: const AppDrawer(active: DrawerDestination.addProduct),
-      body: SafeArea(
+      wrap: (_, shell) => shell,
+      body: (context, isWide) => SafeArea(
         child: Column(
           children: [
             AppScreenTopBar(
               title: context.l10n.t('Add Product'),
-              showMenuButton: true,
+              // No hamburger on a wide window: the sidebar is already on screen.
+              showMenuButton: !isWide,
               onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
             ),
             Expanded(

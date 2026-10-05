@@ -818,7 +818,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       const Icon(Icons.bolt, size: 18, color: Colors.white),
                       const SizedBox(width: 8),
                       Text(
-                        context.l10n.t('Direct Buy'),
+                        context.l10n.t('Direct Sale'),
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 15,

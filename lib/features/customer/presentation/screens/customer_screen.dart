@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/features/customer/presentation/viewmodels/customer_view_model.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'overview_tab.dart';
@@ -19,7 +20,6 @@ class _CustomerScreenState extends State<CustomerScreen>
   late final CustomerViewModel _viewModel;
   late final TabController _tabController;
 
-  static const Color purple = Color(0xFF6D28D9);
 
   @override
   void initState() {
@@ -61,7 +61,7 @@ class _CustomerScreenState extends State<CustomerScreen>
         builder: (context, _) {
           if (_viewModel.isLoading && _viewModel.analytics == null) {
             return const Center(
-              child: CircularProgressIndicator(color: purple),
+              child: CircularProgressIndicator(color: AppColors.brandPurpleDark),
             );
           }
           if (_viewModel.hasError && _viewModel.analytics == null) {
@@ -101,7 +101,7 @@ class _CustomerScreenState extends State<CustomerScreen>
                   labelColor: Colors.white,
                   unselectedLabelColor: p.textSecondary,
                   indicator: BoxDecoration(
-                    color: purple,
+                    color: AppColors.brandPurpleDark,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   indicatorSize: TabBarIndicatorSize.tab,

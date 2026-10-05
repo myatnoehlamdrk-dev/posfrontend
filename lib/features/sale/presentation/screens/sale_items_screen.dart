@@ -8,6 +8,7 @@ import 'package:posfrontend/features/sale/presentation/widgets/sale_items_skelet
 import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
+import 'package:posfrontend/shared/widgets/app_shell.dart';
 import 'package:posfrontend/shared/widgets/filter_tabs.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
@@ -41,13 +42,18 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    return Scaffold(
+    return AppShell(
+      active: DrawerDestination.saleItem,
       backgroundColor: p.scaffoldBg,
-      drawer: AppDrawer(active: DrawerDestination.saleItem),
-      body: SafeArea(
+      wrap: (_, shell) => shell,
+      body: (context, isWide) => SafeArea(
         child: Column(
           children: [
-            AppScreenTopBar(title: context.l10n.t('Sales Items')),
+            AppScreenTopBar(
+              title: context.l10n.t('Sales Items'),
+              // No hamburger on a wide window: the sidebar is already on screen.
+              showMenuButton: !isWide,
+            ),
             Expanded(
               child: ListenableBuilder(
                 listenable: _viewModel,

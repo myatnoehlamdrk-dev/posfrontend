@@ -624,7 +624,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: kBorder),
+          border: Border.all(color: context.palette.border),
           boxShadow: const [
             BoxShadow(
               color: Color(0x0D000000),
@@ -668,16 +668,16 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                 children: [
                   Text(
                     pr.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: kTitle,
+                      color: context.palette.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     pr.brand,
-                    style: const TextStyle(fontSize: 13, color: kGray),
+                    style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
                   ),
                 ],
               ),
@@ -716,7 +716,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                             color: Colors.red,
                           ),
                         )
-                      : const Icon(Icons.more_vert, color: kGray, size: 20),
+                      : Icon(Icons.more_vert, color: context.palette.textSecondary, size: 20),
                   tooltip: 'Actions',
                   onSelected: _removingProductId
                       ? null

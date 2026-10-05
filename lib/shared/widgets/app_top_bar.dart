@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/theme/app_dimens.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:posfrontend/features/profile/presentation/screens/profile_screen.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
@@ -56,7 +58,7 @@ class AppTopBar extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 22,
+              fontSize: AppTypography.titleMediumSize,
               fontWeight: FontWeight.bold,
               color: p.textPrimary,
             ),
@@ -85,7 +87,7 @@ class AppTopBar extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpacing.s8),
         GestureDetector(
           onTap: () {
             Navigator.of(

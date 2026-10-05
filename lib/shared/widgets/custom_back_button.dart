@@ -1,15 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_dimens.dart';
 
+/// The chevron outline, in the brand ramp.
+///
+/// These six values used to be a private blue-to-violet sweep
+/// (`#2879F5 #668CF2 #C35BE8` and three lighter tints) — a second gradient ramp
+/// in the codebase, disjoint from `brandRamp`, on the one control that sits in
+/// the top-left of essentially every screen. The hamburger and the back arrow
+/// were rendering a different gradient from every button beside them.
+///
+/// Both lists are now steps of the single brand hue. The outline runs light to
+/// dark and the fill stays two steps lighter so the chevron still reads as an
+/// outline with an inner solid rather than one flat mark.
 const List<Color> _kOutlineColors = [
-  Color(0xFF2879F5),
-  Color(0xFF668CF2),
-  Color(0xFFC35BE8),
+  AppColors.violet400,
+  AppColors.brandPurple,
+  AppColors.brandPurpleDarker,
 ];
 
 const List<Color> _kFillColors = [
-  Color(0xFF649EF7),
-  Color(0xFF91ACF5),
-  Color(0xFFD489EE),
+  AppColors.lavender,
+  AppColors.violet300,
+  AppColors.violet400,
 ];
 
 class CustomBackButton extends StatelessWidget {
@@ -24,8 +37,8 @@ class CustomBackButton extends StatelessWidget {
   const CustomBackButton({
     super.key,
     this.onTap,
-    this.iconSize = 32,
-    this.tapSize = 48,
+    this.iconSize = AppIconSize.xl,
+    this.tapSize = AppTapTarget.comfortable,
     this.strokeWidth,
     this.outlineColors = _kOutlineColors,
     this.fillColors = _kFillColors,
@@ -70,7 +83,7 @@ class GradientIcon extends StatelessWidget {
   const GradientIcon({
     super.key,
     required this.icon,
-    this.size = 24,
+    this.size = AppIconSize.lg,
     this.colors = _kOutlineColors,
   });
 

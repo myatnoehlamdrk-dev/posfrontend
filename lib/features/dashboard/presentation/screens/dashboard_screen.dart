@@ -10,9 +10,11 @@ import 'package:posfrontend/features/dashboard/presentation/screens/dashboard_ta
 import 'package:posfrontend/features/dashboard/presentation/viewmodels/dashboard_view_model.dart';
 import 'package:posfrontend/features/dashboard/presentation/widgets/dashboard_skeleton.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
+import 'package:posfrontend/shared/widgets/app_shell.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
 import 'package:posfrontend/shared/widgets/shop_scope.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
@@ -29,7 +31,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   late final DashboardViewModel _viewModel;
   final CancelToken _cancelToken = CancelToken();
 
-  static const Color purpleAction = Color(0xFF7952DB);
 
   @override
   void initState() {
@@ -66,16 +67,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    return Scaffold(
-      key: _scaffoldKey,
+    return AppShell(
+      active: DrawerDestination.dashboard,
+      scaffoldKey: _scaffoldKey,
       backgroundColor: p.scaffoldBg,
-      drawer: const AppDrawer(active: DrawerDestination.dashboard),
-      body: SafeArea(
+      wrap: (_, shell) => shell,
+      body: (context, isWide) => SafeArea(
         child: Column(
           children: [
             AppScreenTopBar(
               title: context.l10n.t('Dashboard'),
-              showMenuButton: true,
+              // No hamburger on a wide window: the sidebar is already on screen.
+              showMenuButton: !isWide,
               onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
             ),
             Expanded(
@@ -122,7 +125,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       icon: const Icon(Icons.refresh, size: 18),
                                       label: Text(context.l10n.t('Retry')),
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: purpleAction,
+                                        backgroundColor: AppColors.brandPurple,
                                         foregroundColor: Colors.white,
                                       ),
                                     ),
@@ -245,14 +248,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: purpleAction,
+                            color: p.accentText,
                           ),
                         ),
                         const SizedBox(width: 2),
-                        const Icon(
+                        Icon(
                           Icons.chevron_right,
                           size: 13,
-                          color: purpleAction,
+                          color: p.accentText,
                         ),
                       ],
                     ),
@@ -674,7 +677,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final p = context.palette;
     final mostCard = _ProductListCard(
       title: context.l10n.t('Most Bought'),
-      titleColor: const Color(0xFF16A34A),
+      titleColor: p.successFg,
       items: most,
       onViewAll: () => Navigator.of(context).push(
         DashboardTableScreen.route(
@@ -685,7 +688,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
     final leastCard = _ProductListCard(
       title: context.l10n.t('Least Bought'),
-      titleColor: const Color(0xFFEF4444),
+      titleColor: p.dangerFg,
       items: least,
       onViewAll: () => Navigator.of(context).push(
         DashboardTableScreen.route(
@@ -880,14 +883,14 @@ class _ProductListCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: _DashboardScreenState.purpleAction,
+                      color: pal.accentText,
                     ),
                   ),
                   const SizedBox(width: 2),
-                  const Icon(
+                  Icon(
                     Icons.chevron_right,
                     size: 14,
-                    color: _DashboardScreenState.purpleAction,
+                    color: pal.accentText,
                   ),
                 ],
               ),
@@ -924,7 +927,6 @@ class _HorizontalCategoryChartPainter extends CustomPainter {
 
   _HorizontalCategoryChartPainter(this.items, this.palette);
 
-  static const Color _barColor = Color(0xFF7952DB);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -982,7 +984,7 @@ class _HorizontalCategoryChartPainter extends CustomPainter {
     final n = sorted.length;
     final rowH = plot.height / n;
     final barH = (rowH * 0.6).clamp(6.0, 22.0);
-    final barPaint = Paint()..color = _barColor;
+    final barPaint = Paint()..color = AppColors.brandPurple;
 
     for (var i = 0; i < n; i++) {
       final e = sorted[i];
@@ -1122,7 +1124,6 @@ class _HorizontalBarChartPainter extends CustomPainter {
     'Dec',
   ];
 
-  static const Color _barColor = Color(0xFF7952DB);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1167,7 +1168,7 @@ class _HorizontalBarChartPainter extends CustomPainter {
     final n = sorted.length;
     final rowH = plot.height / n;
     final barH = (rowH * 0.62).clamp(6.0, 18.0);
-    final barPaint = Paint()..color = _barColor;
+    final barPaint = Paint()..color = AppColors.brandPurple;
 
     for (var i = 0; i < n; i++) {
       final entry = sorted[i];

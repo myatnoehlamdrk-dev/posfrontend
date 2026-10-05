@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/theme/app_dimens.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 
 /// The grey blocks that make up a loading placeholder.
@@ -48,23 +49,33 @@ class SkeletonCard extends StatelessWidget {
   final EdgeInsetsGeometry padding;
   final double radius;
 
+  /// Overrides the hairline colour. Pass [Colors.transparent] to drop the
+  /// outline entirely, for a placeholder standing in for a card that is itself
+  /// borderless — a bordered placeholder would be a visible jump when the real
+  /// card replaced it.
+  final Color? borderColor;
+
   const SkeletonCard({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(16),
+    this.padding = const EdgeInsets.all(AppSpacing.s16),
     this.radius = 16,
+    this.borderColor,
   });
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final outline = borderColor ?? p.border;
     return Container(
       width: double.infinity,
       padding: padding,
       decoration: BoxDecoration(
         color: p.surface,
         borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: p.border),
+        // Omitted rather than painted transparent so the placeholder costs no
+        // paint when the card it stands in for has no outline.
+        border: outline.a == 0 ? null : Border.all(color: outline),
       ),
       child: child,
     );

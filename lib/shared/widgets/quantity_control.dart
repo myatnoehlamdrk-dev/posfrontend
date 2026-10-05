@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/theme/app_dimens.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 
@@ -24,7 +26,7 @@ class QuantityControl extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: p.border),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -38,7 +40,7 @@ class QuantityControl extends StatelessWidget {
                     .t('{v1}')
                     .replaceAll('{v1}', (quantity).toString()),
                 style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: AppTypography.labelMediumSize,
                   fontWeight: FontWeight.w600,
                 ),
               ),
