@@ -1,10 +1,14 @@
+import 'package:flutter/foundation.dart';
+
 import 'package:posfrontend/core/auth/terminal_identity.dart';
 import 'package:posfrontend/core/auth/token_storage.dart';
 import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/core/base/form_validation_mixin.dart';
+import 'package:posfrontend/core/di/injection.dart';
 import 'package:posfrontend/features/auth/domain/entities/login_result.dart';
 import 'package:posfrontend/features/auth/domain/entities/user.dart';
 import 'package:posfrontend/features/auth/domain/usecases/login.dart';
+import 'package:posfrontend/shared/services/fcm_service.dart';
 
 class LoginViewModel extends BaseViewModel with FormValidationMixin {
   final LoginUseCase _loginUseCase;
@@ -69,12 +73,26 @@ class LoginViewModel extends BaseViewModel with FormValidationMixin {
       _user = result.user;
       _accessToken = result.accessToken;
       await TokenStorage.saveToken(result.accessToken);
+
+      // Register FCM token after successful authentication
+      await _registerFcmToken();
+
       return result;
     } catch (e) {
       setError(e.toString());
       return null;
     } finally {
       setLoading(false);
+    }
+  }
+
+  Future<void> _registerFcmToken() async {
+    try {
+      final fcmService = getIt<FcmService>();
+      await fcmService.registerTokenAfterLogin();
+    } catch (e) {
+      // FCM registration failure should not block login
+      debugPrint('FCM token registration failed: $e');
     }
   }
 }

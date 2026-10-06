@@ -5,6 +5,7 @@ import 'package:posfrontend/core/auth/auth_redirect.dart';
 import 'package:posfrontend/core/di/injection.dart';
 import 'package:posfrontend/features/onboarding/presentation/screens/splash_screen.dart';
 import 'package:posfrontend/shared/l10n/locale_notifier.dart';
+import 'package:posfrontend/shared/services/fcm_service.dart';
 import 'package:posfrontend/shared/theme/app_theme.dart';
 import 'package:posfrontend/shared/theme/theme_mode_notifier.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
@@ -13,6 +14,12 @@ import 'package:posfrontend/shared/widgets/shop_scope.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await init();
+  // Initialize Firebase Cloud Messaging (setup only, token registration after login)
+  try {
+    await getIt<FcmService>().setup();
+  } catch (e) {
+    // FCM initialization failure should not block app startup
+  }
   // Resolve the theme and the language before the first frame so a dark-mode
   // user never sees a white flash, and a Burmese or Thai user never sees a
   // frame of English. The server copies are authoritative but arrive too late
