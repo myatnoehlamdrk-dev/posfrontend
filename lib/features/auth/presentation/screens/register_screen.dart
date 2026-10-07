@@ -77,8 +77,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _viewModel = RegisterViewModel(
       registerUseCase: getIt<RegisterUseCase>(),
       shopRepository: getIt(),
-      shopApiRepository: getIt(),
-      imgbbRepository: getIt(),
     );
     _viewModel.loadShop();
 

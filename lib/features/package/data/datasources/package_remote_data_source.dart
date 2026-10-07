@@ -35,6 +35,26 @@ class PackageRemoteDataSource {
     }
   }
 
+  Future<PackageApiModel> getPackageById(
+    String id, {
+    CancelToken? cancelToken,
+  }) async {
+    try {
+      final resp = await _dio.get('/packages/$id', cancelToken: cancelToken);
+      final data = resp.data;
+      Map<String, dynamic> json;
+      if (data is Map<String, dynamic>) {
+        final inner = data['data'];
+        json = inner is Map<String, dynamic> ? inner : data;
+      } else {
+        json = data as Map<String, dynamic>;
+      }
+      return PackageApiModel.fromJson(json);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   Future<PackageApiModel> createPackage({
     required String categoryId,
     required String name,

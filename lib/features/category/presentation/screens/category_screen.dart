@@ -668,38 +668,46 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
   Widget _pagination(int shown) {
     final p = context.palette;
+    final vm = _viewModel;
     return Row(
       children: [
         Expanded(
           child: Text(
             context.l10n
                 .t('First {v2} of {v1} categories')
-                .replaceAll('{v1}', (_viewModel.totalCount).toString())
-                .replaceAll('{v2}', (shown).toString()),
+                .replaceAll('{v1}', vm.totalCount.toString())
+                .replaceAll('{v2}', shown.toString()),
             style: TextStyle(fontSize: 13, color: p.textSecondary),
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        const SizedBox(width: 12),
-        IconButton(
-          icon: Icon(Icons.chevron_left, color: p.textSecondary),
-          onPressed: null,
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: AppColors.brandPurpleDark,
-            borderRadius: BorderRadius.circular(8),
+        // One page has nothing to move between, so the controls are hidden
+        // rather than shown dead: a greyed-out arrow reads as broken.
+        if (vm.lastPage > 1) ...[
+          const SizedBox(width: 12),
+          IconButton(
+            icon: Icon(Icons.chevron_left, color: p.textSecondary),
+            onPressed: vm.canGoPrev ? () => vm.prevPage() : null,
           ),
-          child: Text(
-            '1',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.brandPurpleDark,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              '${vm.currentPage}',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
-        ),
-        IconButton(
-          icon: Icon(Icons.chevron_right, color: p.textSecondary),
-          onPressed: null,
-        ),
+          IconButton(
+            icon: Icon(Icons.chevron_right, color: p.textSecondary),
+            onPressed: vm.canGoNext ? () => vm.nextPage() : null,
+          ),
+        ],
       ],
     );
   }

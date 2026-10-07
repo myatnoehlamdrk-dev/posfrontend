@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+import 'package:posfrontend/core/models/paginated_response.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/features/category/data/datasources/category_remote_data_source.dart';
 import 'package:posfrontend/features/category/domain/entities/category.dart';
@@ -20,6 +22,49 @@ class CategoryRepositoryImpl implements CategoryRepository {
         inventoryId: inventoryId,
       );
       return models.map((m) => m.toEntity()).toList();
+    } on ApiException {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<PaginatedResponse<Category>> getCategoriesPage({
+    String? type,
+    String? inventoryId,
+    int page = 1,
+    int perPage = 20,
+    CancelToken? cancelToken,
+  }) async {
+    try {
+      final result = await _dataSource.getCategoriesPage(
+        type: type,
+        inventoryId: inventoryId,
+        page: page,
+        perPage: perPage,
+        cancelToken: cancelToken,
+      );
+      return PaginatedResponse(
+        data: result.data.map((m) => m.toEntity()).toList(),
+        lastPage: result.lastPage,
+        currentPage: result.currentPage,
+        total: result.total,
+      );
+    } on ApiException {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Category> getCategoryById(
+    String id, {
+    CancelToken? cancelToken,
+  }) async {
+    try {
+      final model = await _dataSource.getCategoryById(
+        id,
+        cancelToken: cancelToken,
+      );
+      return model.toEntity();
     } on ApiException {
       rethrow;
     }

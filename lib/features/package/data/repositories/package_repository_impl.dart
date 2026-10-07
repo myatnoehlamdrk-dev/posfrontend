@@ -19,6 +19,15 @@ class PackageRepositoryImpl implements PackageRepository {
   }
 
   @override
+  Future<PackageEntity> getPackageById(
+    String id, {
+    CancelToken? cancelToken,
+  }) async {
+    final model = await _dataSource.getPackageById(id, cancelToken: cancelToken);
+    return model.toEntity();
+  }
+
+  @override
   Future<PackageEntity> createPackage({
     required String categoryId,
     required String name,

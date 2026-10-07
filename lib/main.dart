@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:posfrontend/core/auth/auth_redirect.dart';
 import 'package:posfrontend/core/di/injection.dart';
+import 'package:posfrontend/features/notifications/data/notification_store.dart';
 import 'package:posfrontend/features/onboarding/presentation/screens/splash_screen.dart';
 import 'package:posfrontend/shared/l10n/locale_notifier.dart';
 import 'package:posfrontend/shared/services/fcm_service.dart';
@@ -26,6 +27,9 @@ Future<void> main() async {
   // for this; the local mirrors are the launch-time source of truth.
   await ThemeModeNotifier.load();
   await LocaleNotifier.load();
+  // Load the saved notification history so the bell badge is correct on the
+  // very first frame, before any message listener can fire.
+  await NotificationStore.instance.init();
   runApp(const MyApp());
 }
 

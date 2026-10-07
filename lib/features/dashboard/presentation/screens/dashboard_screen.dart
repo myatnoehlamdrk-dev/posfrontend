@@ -38,6 +38,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _viewModel = DashboardViewModel(repository: DashboardRepositoryImpl());
     _viewModel.load();
     _loadProfileImage();
+    _checkDailyStockReport();
+  }
+
+  /// One launch-wide attempt to catch up the daily stock summary. The 02:30
+  /// UTC schedule is the preferred send time; when that slot was missed the
+  /// server dispatches the report now instead. Fire-and-forget — a failed call
+  /// costs nothing because the schedule (or the next launch) still owns the day.
+  static bool _dailyReportChecked = false;
+
+  Future<void> _checkDailyStockReport() async {
+    if (_dailyReportChecked) return;
+    _dailyReportChecked = true;
+    try {
+      await ApiClient.create().post('/notifications/daily-report/check');
+    } catch (_) {
+      // Non-critical: never block or surface this to the user.
+    }
   }
 
   Future<void> _loadProfileImage() async {

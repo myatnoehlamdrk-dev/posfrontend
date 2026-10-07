@@ -5,6 +5,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:posfrontend/core/network/api_client.dart';
+import 'package:posfrontend/features/notifications/data/notification_store.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -16,7 +17,12 @@ class FcmService {
 
   static final FcmService instance = FcmService._internal();
 
-  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  // FirebaseMessaging.instance reads Firebase.app() under the hood, so it
+  // must not run as a field initializer: the singleton is constructed before
+  // setup() calls Firebase.initializeApp(), and the premature access threw,
+  // leaving the service permanently uninitialized with no registered token.
+  // Assigned in _setup() after initialization instead.
+  FirebaseMessaging? _messaging;
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
 
@@ -40,12 +46,51 @@ class FcmService {
 
   Future<void> _setup() async {
     await Firebase.initializeApp();
+    _messaging = FirebaseMessaging.instance;
 
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
     await _requestPermissions();
     await _setupLocalNotifications();
     await _listenForegroundMessages();
+    await _listenNotificationTaps();
+  }
+
+  /// Persists the message the user opened from the tray.
+  ///
+  /// Android does not run app code while a notification message sits in the
+  /// background, so these tap callbacks (and the foreground listener) are the
+  /// only moments the Dart side ever sees a push. Without them the in-app
+  /// notification page would be empty for anything tapped later.
+  Future<void> _listenNotificationTaps() async {
+    final messaging = _messaging;
+    if (messaging == null) return;
+    FirebaseMessaging.onMessageOpenedApp.listen(_saveToStore);
+    try {
+      final initial = await messaging.getInitialMessage();
+      if (initial != null) await _saveToStore(initial);
+    } catch (e) {
+      debugPrint('FCM initial message failed: $e');
+    }
+  }
+
+  Future<void> _saveToStore(RemoteMessage message) async {
+    final notification = message.notification;
+    final data = Map<String, dynamic>.from(message.data);
+    final title =
+        notification?.title ?? (data['title'] ?? '').toString();
+    final body = notification?.body ?? (data['body'] ?? '').toString();
+
+    // The daily stock report stays ONE entry per day — its per-product
+    // breakdown lives in data.products and is shown by the detail screen
+    // when the entry is tapped, not as a pile of separate notifications.
+    await NotificationStore.instance.add(
+      messageId: message.messageId,
+      title: title,
+      body: body,
+      type: (data['type'] ?? '').toString(),
+      data: data,
+    );
   }
 
   /// Registers FCM token with backend after successful login.
@@ -55,8 +100,10 @@ class FcmService {
   }
 
   Future<void> _requestPermissions() async {
+    final messaging = _messaging;
+    if (messaging == null) return;
     try {
-      await _messaging.requestPermission(
+      await messaging.requestPermission(
         alert: true,
         badge: true,
         sound: true,
@@ -105,6 +152,7 @@ class FcmService {
   Future<void> _listenForegroundMessages() async {
     _foregroundSubscription?.cancel();
     _foregroundSubscription = FirebaseMessaging.onMessage.listen((message) {
+      _saveToStore(message);
       _showLocalNotification(message);
     });
   }
@@ -143,8 +191,13 @@ class FcmService {
   }
 
   Future<void> _retrieveToken() async {
+    final messaging = _messaging;
+    if (messaging == null) {
+      debugPrint('FCM skipped: setup() has not completed yet');
+      return;
+    }
     try {
-      _token = await _messaging.getToken();
+      _token = await messaging.getToken();
       debugPrint('FCM Token: $_token');
       await _registerToken(_token);
     } catch (e) {
@@ -153,8 +206,10 @@ class FcmService {
   }
 
   void _listenTokenRefresh() {
+    final messaging = _messaging;
+    if (messaging == null) return;
     _tokenSubscription?.cancel();
-    _tokenSubscription = _messaging.onTokenRefresh.listen((newToken) {
+    _tokenSubscription = messaging.onTokenRefresh.listen((newToken) {
       _token = newToken;
       debugPrint('FCM Token refreshed: $_token');
       _registerToken(newToken);

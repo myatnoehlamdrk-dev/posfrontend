@@ -55,6 +55,11 @@ const Map<String, String> japaneseStrings = {
   'No category data': 'カテゴリデータがありません',
   'In Stock': '在庫あり',
   'Low Stock': '在庫少',
+  'Out of Stock': '在庫切れ',
+  '{v1} left (threshold {v2})': '残り {v1}（しきい値 {v2}）',
+  '{v1} out of stock, {v2} low stock': '{v1} 件が在庫切れ、{v2} 件が在庫少',
+  'No product details in this message.': 'この通知に商品の詳細は含まれていません。',
+  'Packages Out of Stock': 'パッケージ在庫切れ',
   'Total Products': '商品総数',
   'Total Sales': '総売上',
   'Least Bought': '最少購入',
@@ -373,4 +378,21 @@ const Map<String, String> japaneseStrings = {
   'Supply Chain': 'サプライチェーン',
   '{v1} product': '{v1} 件',
   '{v1} products': '{v1} 件',
+
+  // Notifications
+  'Notifications': '通知',
+  'Mark all read': 'すべて既読にする',
+  'Clear all': 'すべてクリア',
+  'No notifications yet': '通知はまだありません',
+  'Stock alerts will appear here.': '在庫アラートがここに表示されます',
+  'System': 'システム',
+  'Alert': 'アラート',
+  'News': 'ニュース',
+  'Clear all notifications?': 'すべての通知を削除しますか？',
+  'This removes the saved notification history.':
+      '保存済みの通知履歴がすべて削除されます。',
+  'Just now': 'たった今',
+  '{v1} min ago': '{v1}分前',
+  '{v1} hr ago': '{v1}時間前',
+  'Yesterday': '昨日',
 };

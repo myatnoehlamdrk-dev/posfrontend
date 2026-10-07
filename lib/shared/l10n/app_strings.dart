@@ -136,4 +136,10 @@ class AppStrings {
   String get lowStock => t('Low Stock');
   String get midCapStock => t('Mid-Cap Stock');
   String get highStock => t('High Stock');
+
+  // -- Notifications -------------------------------------------------------
+  String get notifications => t('Notifications');
+  String get markAllRead => t('Mark all read');
+  String get clearAll => t('Clear all');
+  String get noNotificationsYet => t('No notifications yet');
 }

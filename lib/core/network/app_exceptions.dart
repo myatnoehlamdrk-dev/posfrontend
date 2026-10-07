@@ -1,5 +1,3 @@
-import 'dart:io' show HttpDate, HttpException;
-
 import 'package:dio/dio.dart';
 
 /// Base exception for all API/network errors.
@@ -205,24 +203,54 @@ int? parseRetryAfterSeconds(String? raw) {
 /// that reports a reset window as a date got treated as having sent nothing at
 /// all.
 ///
-/// `dart:io`'s [HttpDate] covers IMF-fixdate. Its RFC 850 handling misreads the
-/// two-digit year, but that format was obsoleted in 1997 and nothing emits it;
-/// accepting a wrong year there would be worse than rejecting it outright.
-///
-/// Imported directly rather than through a conditional import: this app targets
-/// Android and desktop terminals, never web.
+/// Written in plain Dart instead of `dart:io`'s `HttpDate`, which it used to
+/// delegate to: on the web build `HttpDate.parse` throws `UnsupportedError`,
+/// a type the old catches did not cover, so a 429 carrying an HTTP-date broke
+/// the request path precisely when `throttle:auth` was being hit repeatedly.
+/// `HttpDate` also misreads the obsoleted RFC 850 two-digit year; nothing
+/// emits that format, so rejecting it outright is the right trade.
 DateTime? _parseHttpDate(String value) {
+  final match = _imfFixdate.firstMatch(value.trim());
+  if (match == null) return null;
+
+  final month = _httpMonths[match.group(2)];
+  if (month == null) return null;
+
   try {
-    return HttpDate.parse(value);
-  } on HttpException {
-    // What `HttpDate.parse` throws on an unrecognised date.
-    return null;
-  } on FormatException {
-    return null;
+    return DateTime.utc(
+      int.parse(match.group(3)!),
+      month,
+      int.parse(match.group(1)!),
+      int.parse(match.group(4)!),
+      int.parse(match.group(5)!),
+      int.parse(match.group(6)!),
+    );
   } on ArgumentError {
+    // A syntactically valid date that is out of range for its field (a
+    // 31st of February, an hour of 99). No information beats a wrong one.
     return null;
   }
 }
+
+/// IMF-fixdate: `Wed, 21 Oct 2015 07:28:00 GMT`.
+final RegExp _imfFixdate = RegExp(
+  r'^[A-Z][a-z]{2}, (\d{2}) ([A-Z][a-z]{2}) (\d{4}) (\d{2}):(\d{2}):(\d{2}) GMT$',
+);
+
+const Map<String, int> _httpMonths = {
+  'Jan': 1,
+  'Feb': 2,
+  'Mar': 3,
+  'Apr': 4,
+  'May': 5,
+  'Jun': 6,
+  'Jul': 7,
+  'Aug': 8,
+  'Sep': 9,
+  'Oct': 10,
+  'Nov': 11,
+  'Dec': 12,
+};
 
 /// Helper to extract field-level validation errors from a DioException.
 /// Centralized — no more duplication across repositories.

@@ -5,6 +5,7 @@ import 'package:posfrontend/features/dashboard/presentation/screens/dashboard_sc
 import 'package:posfrontend/features/profile/presentation/screens/profile_screen.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/custom_back_button.dart';
+import 'package:posfrontend/shared/widgets/notification_bell.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
 
 void navigateToDashboard(BuildContext context) {
@@ -64,29 +65,7 @@ class AppTopBar extends StatelessWidget {
             ),
           ),
         ),
-        Stack(
-          children: [
-            IconButton(
-              icon: Icon(
-                Icons.notifications_none_outlined,
-                color: p.textPrimary,
-              ),
-              onPressed: () {},
-            ),
-            Positioned(
-              top: 12,
-              right: 12,
-              child: Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFEF4444),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-          ],
-        ),
+        const NotificationBell(),
         const SizedBox(width: AppSpacing.s8),
         GestureDetector(
           onTap: () {

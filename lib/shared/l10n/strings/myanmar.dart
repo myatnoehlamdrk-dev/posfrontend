@@ -69,6 +69,11 @@ const Map<String, String> myStrings = {
   'No category data': 'ကဏ္ဍဒေတာမရှိပါ',
   'In Stock': 'တန်ဖိုးရှိ',
   'Low Stock': 'တန်ဖိုးနည်း',
+  'Out of Stock': 'စတော့ကုန်နေသည်',
+  '{v1} left (threshold {v2})': '{v1} ကျန်သည် (သတ်မှတ်ချက် {v2})',
+  '{v1} out of stock, {v2} low stock': '{v1} ခု စတော့ကုန်နေသည်၊ {v2} ခု တန်ဖိုးနည်း',
+  'No product details in this message.': 'ဤအသိပေးချက်တွင် ကုန်ပစ္စည်း အသေးစိတ် မပါဝင်ပါ။',
+  'Packages Out of Stock': 'ပက်ကေ့ဂျ်များ စတော့ကုန်နေသည်',
   'Total Products': 'ကုန်ပစ္စည်းစုစုပေါင်း',
   'Total Sales': 'ရောင်းရမှတ်စုစုပေါင်း',
   'Least Bought': 'အငယ်ဆုံးဝယ်ယူခဲ့သည်',
@@ -397,4 +402,21 @@ const Map<String, String> myStrings = {
   'Supply Chain': 'ပေးသွင်းခြင်းလင့်ခြင်း',
   '{v1} product': '{v1} ပစ္စည်း',
   '{v1} products': '{v1} ပစ္စည်းများ',
+
+  // Notifications
+  'Notifications': 'အသိပေးချက်များ',
+  'Mark all read': 'အားလုံးကို ဖတ်ပြီးပြီဟု မှတ်ရန်',
+  'Clear all': 'အားလုံးဖျက်ရန်',
+  'No notifications yet': 'အသိပေးချက်များ မရှိသေးပါ',
+  'Stock alerts will appear here.': 'စတော့အသိပေးချက်များ ဤနေရာတွင် ပေါ်လာပါမည်။',
+  'System': 'စနစ်',
+  'Alert': 'သတိပေးချက်',
+  'News': 'သတင်း',
+  'Clear all notifications?': 'အသိပေးချက်အားလုံး ဖျက်မည်လား?',
+  'This removes the saved notification history.':
+      'ဒါက သိမ်းထားတဲ့ အသိပေးချက်မှတ်တမ်းကို ဖျက်ပစ်မယ်။',
+  'Just now': 'အခုလေးတင်',
+  '{v1} min ago': '{v1} မိနစ် အကြာက',
+  '{v1} hr ago': '{v1} နာရီ အကြာက',
+  'Yesterday': 'မနေ့က',
 };

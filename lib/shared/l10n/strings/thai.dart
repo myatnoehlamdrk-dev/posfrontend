@@ -55,6 +55,11 @@ const Map<String, String> thaiStrings = {
   'No category data': 'ไม่มีข้อมูลหมวดหมู่',
   'In Stock': 'มีสินค้า',
   'Low Stock': 'สินค้าใกล้หมด',
+  'Out of Stock': 'สินค้าหมด',
+  '{v1} left (threshold {v2})': 'เหลือ {v1} (เกณฑ์ {v2})',
+  '{v1} out of stock, {v2} low stock': '{v1} สินค้าหมด, {v2} สินค้าใกล้หมด',
+  'No product details in this message.': 'ข้อความนี้ไม่มีรายละเอียดสินค้า',
+  'Packages Out of Stock': 'แพ็กเกจหมด',
   'Total Products': 'สินค้าทั้งหมด',
   'Total Sales': 'ยอดขายทั้งหมด',
   'Least Bought': 'ซื้อน้อยสุด',
@@ -380,4 +385,21 @@ const Map<String, String> thaiStrings = {
   'Supply Chain': 'ซัพพลายเชน',
   '{v1} product': '{v1} รายการ',
   '{v1} products': '{v1} รายการ',
+
+  // Notifications
+  'Notifications': 'การแจ้งเตือน',
+  'Mark all read': 'ทำเครื่องหมายว่าอ่านทั้งหมด',
+  'Clear all': 'ล้างทั้งหมด',
+  'No notifications yet': 'ยังไม่มีการแจ้งเตือน',
+  'Stock alerts will appear here.': 'การแจ้งเตือนสต็อกจะแสดงที่นี่',
+  'System': 'ระบบ',
+  'Alert': 'การแจ้งเตือน',
+  'News': 'ข่าว',
+  'Clear all notifications?': 'ล้างการแจ้งเตือนทั้งหมด?',
+  'This removes the saved notification history.':
+      'การดำเนินการนี้จะลบประวัติการแจ้งเตือนที่บันทึกไว้',
+  'Just now': 'เมื่อครู่นี้',
+  '{v1} min ago': '{v1} นาทีที่แล้ว',
+  '{v1} hr ago': '{v1} ชั่วโมงที่แล้ว',
+  'Yesterday': 'เมื่อวานนี้',
 };

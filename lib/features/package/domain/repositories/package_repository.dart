@@ -6,6 +6,10 @@ abstract class PackageRepository {
     String categoryId, {
     CancelToken? cancelToken,
   });
+  Future<PackageEntity> getPackageById(
+    String id, {
+    CancelToken? cancelToken,
+  });
   Future<PackageEntity> createPackage({
     required String categoryId,
     required String name,

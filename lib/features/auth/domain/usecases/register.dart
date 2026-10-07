@@ -1,6 +1,7 @@
 import 'package:posfrontend/core/base/use_case.dart';
 import 'package:posfrontend/features/auth/domain/entities/user.dart';
 import 'package:posfrontend/features/auth/domain/repositories/auth_repository.dart';
+import 'package:posfrontend/features/shop/domain/entities/shop.dart';
 
 class RegisterUseCase extends UseCase<UserEntity, RegisterParams> {
   final AuthRepository _repository;
@@ -22,6 +23,7 @@ class RegisterUseCase extends UseCase<UserEntity, RegisterParams> {
       dob: params.dob,
       gender: params.gender,
       shopId: params.shopId,
+      shop: params.shop,
     );
   }
 }
@@ -40,6 +42,11 @@ class RegisterParams {
   final String? gender;
   final String? shopId;
 
+  /// The shop to create in the same request as the account, sent only when it
+  /// does not exist on the server yet. Choosing a shop that already exists is
+  /// [shopId] instead.
+  final ShopEntity? shop;
+
   const RegisterParams({
     required this.fullName,
     required this.email,
@@ -53,5 +60,6 @@ class RegisterParams {
     this.dob,
     this.gender,
     this.shopId,
+    this.shop,
   });
 }

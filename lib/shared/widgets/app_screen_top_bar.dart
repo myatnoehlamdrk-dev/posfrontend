@@ -6,6 +6,7 @@ import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/custom_back_button.dart';
+import 'package:posfrontend/shared/widgets/notification_bell.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
 
 class AppScreenTopBar extends StatelessWidget {
@@ -14,6 +15,10 @@ class AppScreenTopBar extends StatelessWidget {
   final VoidCallback? onMenuTap;
   final bool showBackButton;
   final VoidCallback? onBackTap;
+
+  /// False on the notifications page itself, so the bell cannot push a
+  /// second copy of the screen it is already showing.
+  final bool showNotificationsButton;
 
   /// Overrides the bar's fill. Defaults to the palette surface, which is right
   /// for a page on the scaffold. A page that paints its own background wants
@@ -29,6 +34,7 @@ class AppScreenTopBar extends StatelessWidget {
     this.showBackButton = false,
     this.onBackTap,
     this.backgroundColor,
+    this.showNotificationsButton = true,
   });
 
   @override
@@ -79,15 +85,11 @@ class AppScreenTopBar extends StatelessWidget {
               ),
             ),
           ),
-          // The notification bell used to sit here as an IconButton with
-          // `onPressed: () {}` — it accepted the tap and did nothing — wearing a
-          // red "3 unread" dot that no code ever incremented. It advertised a
-          // feature the build does not have, and an unread badge that can never
-          // clear is worse than no badge: it trains staff to ignore it.
-          //
-          // Removed rather than disabled so the affordance does not come back by
-          // accident. When notifications ship, this is where the live button
-          // belongs, with the dot driven by a real unread count.
+          // The bell that used to sit here wore a red "3 unread" dot no code
+          // ever incremented, and was removed rather than left dead. The live
+          // button is back: unread count comes from NotificationStore, which
+          // the FCM listener feeds.
+          if (showNotificationsButton) const NotificationBell(),
           const SizedBox(width: AppSpacing.s4),
           GestureDetector(
             onTap: () {
