@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/core/auth/session_store.dart';
 import 'package:posfrontend/core/auth/token_storage.dart';
 import 'package:posfrontend/features/auth/presentation/screens/login_screen.dart';
 
@@ -27,6 +28,10 @@ Future<void> redirectToLogin() async {
   _redirecting = true;
 
   await TokenStorage.clearToken();
+  // The cached profile goes with the token. Leaving it behind would let the
+  // next launch restore a session the server had just rejected — and with a
+  // user id that no longer belongs to this token.
+  await SessionStore.clear();
 
   final navigator = navigatorKey.currentState;
   if (navigator == null) {

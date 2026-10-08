@@ -2,6 +2,7 @@
 // there was never a collision to dodge, and hiding it only hid Flutter's.
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:posfrontend/core/auth/session_store.dart';
 import 'package:posfrontend/core/auth/token_storage.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/shared/l10n/app_strings.dart';
@@ -987,6 +988,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             // Logout API failure is non-critical; proceed with local cleanup
                           }
                           await TokenStorage.clearToken();
+                          await SessionStore.clear();
                           if (mounted) {
                             Navigator.of(context).pushAndRemoveUntil(
                               MaterialPageRoute(

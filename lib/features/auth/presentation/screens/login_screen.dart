@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/core/di/injection.dart';
+import 'package:posfrontend/core/auth/session_store.dart';
 import 'package:posfrontend/features/auth/domain/usecases/login.dart';
 import 'package:posfrontend/features/auth/presentation/viewmodels/login_view_model.dart';
 import 'package:posfrontend/features/auth/presentation/screens/forgot_password_screen.dart';
@@ -110,24 +111,38 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _submit() async {
     final result = await _viewModel.login();
-    if (result != null && mounted) {
-      final loginResponse = LoginResponse(
-        id: result.user.id,
-        fullName: result.user.fullName,
-        email: result.user.email,
-        accessToken: result.accessToken,
-        tokenType: 'Bearer',
-        shopId: result.user.shopId,
-        role: result.user.role,
-      );
-      AuthScope.updateUserOf(context, loginResponse);
-      ShopScope.loadShop(context, shopId: result.user.shopId);
-      showSuccessSnackBar(context, 'Login successful');
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const DashboardScreen()),
-      );
-    }
+    if (result == null || !mounted) return;
+
+    final loginResponse = LoginResponse(
+      id: result.user.id,
+      fullName: result.user.fullName,
+      email: result.user.email,
+      accessToken: result.accessToken,
+      tokenType: 'Bearer',
+      shopId: result.user.shopId,
+      role: result.user.role,
+    );
+
+    // Cache the five profile fields and start the idle clock, so the next
+    // cold start can reach the dashboard without a round trip — and so the
+    // session expires if the app is left alone for five days.
+    await SessionStore.save({
+      'id': result.user.id,
+      'fullName': result.user.fullName,
+      'email': result.user.email,
+      'shopId': result.user.shopId,
+      'role': result.user.role,
+    }, result.accessToken);
+
+    if (!mounted) return;
+
+    AuthScope.updateUserOf(context, loginResponse);
+    ShopScope.loadShop(context, shopId: result.user.shopId);
+    showSuccessSnackBar(context, 'Login successful');
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const DashboardScreen()),
+    );
   }
 
   @override

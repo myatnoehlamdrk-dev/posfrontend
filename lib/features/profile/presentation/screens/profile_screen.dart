@@ -56,8 +56,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _ownerEmailController = TextEditingController();
   final _ownerPhoneController = TextEditingController();
 
+  /// The accordion sections that are currently expanded. Empty on purpose: the
+  /// screen opens showing only the four headers, and each one expands on tap.
+  final _openSections = <String>{};
+
   // Brightness-dependent tokens, so the same screen serves light and dark.
   AppPalette get _p => context.palette;
+
   /// The one purple the app's actions are painted in — the welcome screen's
   /// `Get started` button, the product prices, Add to Cart and the sale buttons.
   /// Held as a pair so the save button's gradient is that purple ramp rather
@@ -639,100 +644,124 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 children: [
                                   _buildProfileHeader(),
                                   const SizedBox(height: 24),
-                                  _sectionTitle('Personal Information'),
-                                  const SizedBox(height: 12),
-                                  _buildTextField(
-                                    controller: _nameController,
-                                    label: context.l10n.t('Full Name'),
+                                  _sectionCard(
                                     icon: Icons.person_outline,
-                                    errorText: errors['name'],
-                                    onChanged: _viewModel.setName,
+                                    title: 'Personal Information',
+                                    open: _isOpen('personal'),
+                                    onToggle: () => _toggleSection('personal'),
+                                    children: [
+                                      _buildTextField(
+                                        controller: _nameController,
+                                        label: context.l10n.t('Full Name'),
+                                        icon: Icons.person_outline,
+                                        errorText: errors['name'],
+                                        onChanged: _viewModel.setName,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      _buildTextField(
+                                        controller: _emailController,
+                                        label: context.l10n.t('Email'),
+                                        icon: Icons.email_outlined,
+                                        keyboardType:
+                                            TextInputType.emailAddress,
+                                        errorText: errors['email'],
+                                        onChanged: _viewModel.setEmail,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      _buildTextField(
+                                        controller: _phoneController,
+                                        label: context.l10n.t('Phone'),
+                                        icon: Icons.phone_outlined,
+                                        keyboardType: TextInputType.phone,
+                                        onChanged: _viewModel.setPhone,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      _buildTextField(
+                                        controller: _socialController,
+                                        label: context.l10n.t('Social Media'),
+                                        icon: Icons.link,
+                                        onChanged: _viewModel.setSocial,
+                                      ),
+                                    ],
                                   ),
                                   const SizedBox(height: 16),
-                                  _buildTextField(
-                                    controller: _emailController,
-                                    label: context.l10n.t('Email'),
-                                    icon: Icons.email_outlined,
-                                    keyboardType: TextInputType.emailAddress,
-                                    errorText: errors['email'],
-                                    onChanged: _viewModel.setEmail,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  _buildTextField(
-                                    controller: _phoneController,
-                                    label: context.l10n.t('Phone'),
-                                    icon: Icons.phone_outlined,
-                                    keyboardType: TextInputType.phone,
-                                    onChanged: _viewModel.setPhone,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  _buildTextField(
-                                    controller: _socialController,
-                                    label: context.l10n.t('Social Media'),
-                                    icon: Icons.link,
-                                    onChanged: _viewModel.setSocial,
-                                  ),
-                                  const SizedBox(height: 24),
-                                  _sectionTitle('Account Details'),
-                                  const SizedBox(height: 12),
-                                  _buildTextField(
-                                    controller: _typeController,
-                                    label: context.l10n.t('Type'),
-                                    icon: Icons.category_outlined,
-                                    onChanged: _viewModel.setType,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  _buildTextField(
-                                    controller: _roleController,
-                                    label: context.l10n.t('Role'),
+                                  _sectionCard(
                                     icon: Icons.admin_panel_settings_outlined,
-                                    onChanged: _viewModel.setRole,
+                                    title: 'Account Details',
+                                    open: _isOpen('account'),
+                                    onToggle: () => _toggleSection('account'),
+                                    children: [
+                                      _buildTextField(
+                                        controller: _typeController,
+                                        label: context.l10n.t('Type'),
+                                        icon: Icons.category_outlined,
+                                        onChanged: _viewModel.setType,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      _buildTextField(
+                                        controller: _roleController,
+                                        label: context.l10n.t('Role'),
+                                        icon:
+                                            Icons.admin_panel_settings_outlined,
+                                        onChanged: _viewModel.setRole,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      _buildTextField(
+                                        controller: _nrcNoController,
+                                        label: context.l10n.t('NRC No'),
+                                        icon: Icons.badge_outlined,
+                                        onChanged: _viewModel.setNrcNo,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      _buildTextField(
+                                        controller: _billingWayController,
+                                        label: context.l10n.t(
+                                          'Billing Way for Service',
+                                        ),
+                                        icon: Icons.receipt_long_outlined,
+                                        onChanged: _viewModel.setBillingWay,
+                                      ),
+                                    ],
                                   ),
                                   const SizedBox(height: 16),
-                                  _buildTextField(
-                                    controller: _nrcNoController,
-                                    label: context.l10n.t('NRC No'),
+                                  _sectionCard(
                                     icon: Icons.badge_outlined,
-                                    onChanged: _viewModel.setNrcNo,
+                                    title: 'Personal Details',
+                                    open: _isOpen('details'),
+                                    onToggle: () => _toggleSection('details'),
+                                    children: [
+                                      _buildTextField(
+                                        controller: _dobController,
+                                        label: context.l10n.t('Date of Birth'),
+                                        icon: Icons.cake_outlined,
+                                        readOnly: true,
+                                        onTap: _pickDob,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      _buildTextField(
+                                        controller: _genderController,
+                                        label: context.l10n.t('Gender'),
+                                        icon: Icons.wc_outlined,
+                                        onChanged: _viewModel.setGender,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      _buildTextField(
+                                        controller: _addressController,
+                                        label: context.l10n.t('Address'),
+                                        icon: Icons.location_on_outlined,
+                                        maxLines: 2,
+                                        onChanged: _viewModel.setAddress,
+                                      ),
+                                    ],
                                   ),
                                   const SizedBox(height: 16),
-                                  _buildTextField(
-                                    controller: _billingWayController,
-                                    label: context.l10n.t(
-                                      'Billing Way for Service',
-                                    ),
-                                    icon: Icons.receipt_long_outlined,
-                                    onChanged: _viewModel.setBillingWay,
+                                  _sectionCard(
+                                    icon: Icons.store_outlined,
+                                    title: 'About Shop',
+                                    open: _isOpen('shop'),
+                                    onToggle: () => _toggleSection('shop'),
+                                    children: _buildShopFields(),
                                   ),
-                                  const SizedBox(height: 24),
-                                  _sectionTitle('Personal Details'),
-                                  const SizedBox(height: 12),
-                                  _buildTextField(
-                                    controller: _dobController,
-                                    label: context.l10n.t('Date of Birth'),
-                                    icon: Icons.cake_outlined,
-                                    readOnly: true,
-                                    onTap: _pickDob,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  _buildTextField(
-                                    controller: _genderController,
-                                    label: context.l10n.t('Gender'),
-                                    icon: Icons.wc_outlined,
-                                    onChanged: _viewModel.setGender,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  _buildTextField(
-                                    controller: _addressController,
-                                    label: context.l10n.t('Address'),
-                                    icon: Icons.location_on_outlined,
-                                    maxLines: 2,
-                                    onChanged: _viewModel.setAddress,
-                                  ),
-                                  const SizedBox(height: 24),
-                                  _sectionTitle('About Shop'),
-                                  const SizedBox(height: 12),
-                                  ..._buildShopFields(),
                                   const SizedBox(height: 24),
                                   _gradientButton(
                                     label: context.l10n.t('Change Password'),
@@ -844,13 +873,94 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _sectionTitle(String title) {
-    return Text(
-      title,
-      style: TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: primary,
+  void _toggleSection(String id) => setState(() {
+    if (!_openSections.remove(id)) _openSections.add(id);
+  });
+
+  bool _isOpen(String id) => _openSections.contains(id);
+
+  /// A collapsible card that heads one group of fields. The whole header row
+  /// is the tap target, so the icon, the title and the chevron all toggle the
+  /// section together.
+  Widget _sectionCard({
+    required IconData icon,
+    required String title,
+    required bool open,
+    required VoidCallback onToggle,
+    required List<Widget> children,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: _p.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: _p.cardShadow,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          InkWell(
+            onTap: onToggle,
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(icon, color: primary, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      context.l10n.t(title),
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: labelColor,
+                      ),
+                    ),
+                  ),
+                  AnimatedRotation(
+                    turns: open ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeInOut,
+                    child: Icon(
+                      Icons.keyboard_arrow_down,
+                      size: 24,
+                      color: hintColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeInOut,
+            alignment: Alignment.topCenter,
+            child: Padding(
+              padding: open
+                  ? const EdgeInsets.fromLTRB(16, 0, 16, 16)
+                  : EdgeInsets.zero,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: open ? children : const <Widget>[],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

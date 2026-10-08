@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/theme/app_dimens.dart';
 import 'package:posfrontend/shared/theme/app_typography.dart';
+import 'package:posfrontend/core/auth/session_store.dart';
 import 'package:posfrontend/core/auth/token_storage.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/features/auth/presentation/screens/login_screen.dart';
@@ -326,6 +327,7 @@ class _LogoutTileState extends State<_LogoutTile> {
       // Logout API failure is non-critical; proceed with local cleanup
     }
     await TokenStorage.clearToken();
+    await SessionStore.clear();
     if (mounted) {
       AuthScope.updateUserOf(context, null);
       Navigator.of(context).pushAndRemoveUntil(

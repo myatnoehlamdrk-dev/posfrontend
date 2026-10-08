@@ -47,6 +47,38 @@ class ApiClient {
 
   static Dio create() => _create();
 
+  /// A client with no interceptors, for the one request whose 401 the caller
+  /// must handle itself.
+  ///
+  /// [AuthInterceptor] reacts to a 401 by calling `redirectToLogin()`, which
+  /// clears the token *and* pushes [LoginScreen]. That is right for ordinary
+  /// calls mid-session, and wrong for the launch-time `GET /auth/me` probe:
+  /// SplashScreen has not decided yet whether to go to the dashboard or to
+  /// sign-in, and a redirect firing underneath it would race its own
+  /// navigation and skip the get-started screen.
+  ///
+  /// The caller reads the status code and picks the route. It has to set the
+  /// `Authorization` header itself, since there is no `AuthInterceptor` here
+  /// to inject it.
+  ///
+  /// Timeouts are short and there is no [RetryInterceptor]: the probe sits
+  /// behind a 2-second splash hold, and a retry loop would push a slow
+  /// launch well past it. A failure is answered from the local session cache
+  /// instead of by waiting longer.
+  static Dio bare() {
+    return Dio(
+      BaseOptions(
+        baseUrl: apiRoot,
+        connectTimeout: const Duration(seconds: 5),
+        receiveTimeout: const Duration(seconds: 5),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      ),
+    );
+  }
+
   static Dio _create() {
     final dio = Dio(
       BaseOptions(

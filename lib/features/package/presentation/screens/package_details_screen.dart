@@ -11,6 +11,7 @@ import 'package:posfrontend/features/product/data/repositories/product_repositor
 import 'package:posfrontend/features/package/presentation/screens/assign_product_to_package_screen.dart';
 import 'package:posfrontend/features/product/presentation/screens/product_detail_screen.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
+import 'package:posfrontend/features/package/presentation/widgets/package_details_skeleton.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
@@ -148,7 +149,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                     style: TextStyle(color: Colors.white),
                   ),
                 ),
-                body: SafeArea(child: _content()),
+                body: SafeArea(child: body),
               );
             }
             return Scaffold(
@@ -170,34 +171,13 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
     );
   }
 
+  /// The top bar and the scroll area stay on screen for every load state — the
+  /// breadcrumb, the summary and the stock cards must not vanish on a
+  /// pull-to-refresh. Only what sits inside the scroll area changes, which is
+  /// how the category detail screen handles the same transition.
   Widget _content() {
-    final p = widget.package;
-    final c = widget.category;
-    final pal = context.palette;
-
-    if (_viewModel.isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: Color(0xFF6D28D9)),
-      );
-    }
-    if (_viewModel.hasError) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              _viewModel.errorMessage!,
-              style: const TextStyle(color: Colors.red),
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: _viewModel.load,
-              child: Text(context.l10n.t('Retry')),
-            ),
-          ],
-        ),
-      );
-    }
+    final loading = _viewModel.isLoading;
+    final hasProducts = _viewModel.products.isNotEmpty;
 
     return ListenableBuilder(
       listenable: _search,
@@ -213,47 +193,13 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
             Expanded(
               child: RefreshableBody(
                 onRefresh: _viewModel.load,
+                fill: true,
                 child: Padding(
                   padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Breadcrumb([
-                        BreadcrumbItem(context.l10n.t('Dashboard'), false),
-                        BreadcrumbItem(context.l10n.t('Inventory'), false),
-                        BreadcrumbItem(widget.category.name, false),
-                        BreadcrumbItem(widget.package.name, false),
-                        const BreadcrumbItem('Package Detail', true),
-                      ]),
-                      const SizedBox(height: 24),
-                      _summaryCard(p, c),
-                      const SizedBox(height: 16),
-                      _stockSection(p),
-                      const SizedBox(height: 24),
-                      _productsHeader(),
-                      const SizedBox(height: 12),
-                      if (products.isEmpty)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 24),
-                          child: Center(
-                            child: Text(
-                              context.l10n.t('No products found.'),
-                              style: TextStyle(color: pal.textSecondary),
-                            ),
-                          ),
-                        )
-                      else
-                        Column(
-                          children: products
-                              .map(
-                                (pr) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 12),
-                                  child: _productRow(pr),
-                                ),
-                              )
-                              .toList(),
-                        ),
-                    ],
+                  child: _body(
+                    loading: loading,
+                    hasProducts: hasProducts,
+                    products: products,
                   ),
                 ),
               ),
@@ -261,6 +207,111 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
           ],
         );
       },
+    );
+  }
+
+  Widget _body({
+    required bool loading,
+    required bool hasProducts,
+    required List<CatalogProductView> products,
+  }) {
+    if (loading && !hasProducts) return const PackageDetailsSkeleton();
+    if (_viewModel.hasError && !hasProducts) return _errorState();
+    if (!hasProducts) return _emptyState();
+    return _details(products);
+  }
+
+  /// Mirrors the category detail screen's failure state: an icon, the message
+  /// from the view model, and a retry that re-runs the load.
+  Widget _errorState() {
+    final p = context.palette;
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.error_outline, size: 48, color: p.textMuted),
+          const SizedBox(height: 16),
+          Text(
+            _viewModel.errorMessage ?? '',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: p.dangerFg, fontSize: 15),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: _viewModel.load,
+            icon: const Icon(Icons.refresh, size: 18),
+            label: Text(context.l10n.t('Retry')),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: kPurple,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _emptyState() {
+    final p = context.palette;
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.inventory_2_outlined, size: 64, color: p.textMuted),
+          const SizedBox(height: 16),
+          Text(
+            context.l10n.t('No products found.'),
+            style: TextStyle(fontSize: 16, color: p.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _details(List<CatalogProductView> products) {
+    final p = widget.package;
+    final c = widget.category;
+    final pal = context.palette;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Breadcrumb([
+          BreadcrumbItem(context.l10n.t('Dashboard'), false),
+          BreadcrumbItem(context.l10n.t('Inventory'), false),
+          BreadcrumbItem(widget.category.name, false),
+          BreadcrumbItem(widget.package.name, false),
+          const BreadcrumbItem('Package Detail', true),
+        ]),
+        const SizedBox(height: 24),
+        _summaryCard(p, c),
+        const SizedBox(height: 16),
+        _stockSection(p),
+        const SizedBox(height: 24),
+        _productsHeader(),
+        const SizedBox(height: 12),
+        if (products.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            child: Center(
+              child: Text(
+                context.l10n.t('No products found.'),
+                style: TextStyle(color: pal.textSecondary),
+              ),
+            ),
+          )
+        else
+          Column(
+            children: products
+                .map(
+                  (pr) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _productRow(pr),
+                  ),
+                )
+                .toList(),
+          ),
+      ],
     );
   }
 
@@ -677,7 +728,10 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                   const SizedBox(height: 4),
                   Text(
                     pr.brand,
-                    style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: context.palette.textSecondary,
+                    ),
                   ),
                 ],
               ),
@@ -716,7 +770,11 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                             color: Colors.red,
                           ),
                         )
-                      : Icon(Icons.more_vert, color: context.palette.textSecondary, size: 20),
+                      : Icon(
+                          Icons.more_vert,
+                          color: context.palette.textSecondary,
+                          size: 20,
+                        ),
                   tooltip: 'Actions',
                   onSelected: _removingProductId
                       ? null
