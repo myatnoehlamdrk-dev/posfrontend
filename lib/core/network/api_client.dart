@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:posfrontend/core/network/api_interceptor.dart';
+import 'package:posfrontend/core/network/offline_cache_interceptor.dart';
 import 'package:posfrontend/core/network/retry_interceptor.dart';
 export 'package:posfrontend/core/network/app_exceptions.dart';
 
@@ -91,6 +92,12 @@ class ApiClient {
         },
       ),
     );
+    // First in the chain, which in dio 5 is also first to see responses
+    // and errors. First for requests: a cache hit resolves before the auth
+    // token read and the logger run. First for errors: a cache fallback
+    // resolves before RetryInterceptor can spend its backoff budget
+    // re-sending a request that has already been answered locally.
+    dio.interceptors.add(OfflineCacheInterceptor());
     dio.interceptors.add(LogInterceptor(requestBody: true, responseBody: true));
     dio.interceptors.add(AuthInterceptor());
     // After auth, so a retried request still carries the token: the first

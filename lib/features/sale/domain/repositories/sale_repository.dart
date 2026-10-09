@@ -24,6 +24,23 @@ abstract class SaleRepository {
     String? notes,
     CancelToken? cancelToken,
   });
+
+  /// Queues the compound "create draft, then convert to sale" pair for a
+  /// cart that was built offline and has no server draft. Returns false
+  /// when nothing was stored — the caller must surface an error rather
+  /// than report a sale nothing recorded.
+  Future<bool> enqueueLocalCardSale({
+    required String userName,
+    required String voucherNo,
+    String? customerName,
+    String? customerPhone,
+    String? customerLocation,
+    String? payMethod,
+    required List<SaleItemEntity> items,
+    required double grandTotal,
+    int? discount,
+    String? notes,
+  });
 }
 
 abstract class OrderRepository {
@@ -39,6 +56,7 @@ abstract class OrderRepository {
     int? discount,
     String? notes,
     String status = 'draft',
+    bool allowLocalFallback = true,
   });
 
   Future<void> updateOrderStatus({

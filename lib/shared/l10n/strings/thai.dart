@@ -402,4 +402,13 @@ const Map<String, String> thaiStrings = {
   '{v1} min ago': '{v1} นาทีที่แล้ว',
   '{v1} hr ago': '{v1} ชั่วโมงที่แล้ว',
   'Yesterday': 'เมื่อวานนี้',
+
+  // Offline sync
+  'Offline — showing saved data': 'ออฟไลน์ — แสดงข้อมูลที่บันทึกไว้',
+  'Syncing…': 'กำลังซิงก์…',
+  'Refresh failed': 'รีเฟรชไม่สำเร็จ',
+  'Waiting to sync': 'กำลังรอการซิงก์',
+  '{v1} queued': '{v1} รายการรอซิงก์',
+  '{v1} failed': '{v1} รายการล้มเหลว',
+  'Saved on this device': 'บันทึกไว้ในอุปกรณ์นี้',
 };

@@ -419,4 +419,14 @@ const Map<String, String> myStrings = {
   '{v1} min ago': '{v1} မိနစ် အကြာက',
   '{v1} hr ago': '{v1} နာရီ အကြာက',
   'Yesterday': 'မနေ့က',
+
+  // Offline sync
+  'Offline — showing saved data':
+      'အော့ဖ်လိုင်း — သိမ်းဆည်းထားသော ဒေတာကို ပြန်လည်ပြသနေသည်',
+  'Syncing…': 'မွမ်းမံနေသည်…',
+  'Refresh failed': 'အသစ်ပြန်တင်၍ မရပါ',
+  'Waiting to sync': 'ပေးပို့ရန် စောင့်ဆိုင်းနေသည်',
+  '{v1} queued': '{v1} စောင့်ဆိုင်းနေသည်',
+  '{v1} failed': '{v1} မအောင်မြင်ပါ',
+  'Saved on this device': 'ဤစက်တွင် သိမ်းဆည်းထားသည်',
 };

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:flutter/material.dart';
@@ -41,17 +43,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _checkDailyStockReport();
   }
 
-  /// One launch-wide attempt to catch up the daily stock summary. The 02:30
-  /// UTC schedule is the preferred send time; when that slot was missed the
-  /// server dispatches the report now instead. Fire-and-forget — a failed call
-  /// costs nothing because the schedule (or the next launch) still owns the day.
-  static bool _dailyReportChecked = false;
+  /// App-open catch-up for the daily stock summary: the schedule slot is the
+  /// preferred send time; when it was missed the server dispatches the report
+  /// once today's schedule time has passed. Keeps re-checking (10 min) until
+  /// the server confirms today's claim — `before_schedule` and `dispatched`
+  /// are not final, only `already_sent` is. Fire-and-forget: a failed call
+  /// costs nothing because the next open still owns the day.
+  static DateTime? _lastReportCheck;
+  Timer? _reportRetryTimer;
 
   Future<void> _checkDailyStockReport() async {
-    if (_dailyReportChecked) return;
-    _dailyReportChecked = true;
+    final now = DateTime.now();
+    if (_lastReportCheck != null &&
+        now.difference(_lastReportCheck!) < const Duration(minutes: 2)) {
+      return;
+    }
+    _lastReportCheck = now;
+
     try {
-      await ApiClient.create().post('/notifications/daily-report/check');
+      final resp = await ApiClient.create()
+          .post('/notifications/daily-report/check');
+      final data = resp.data;
+      final reason =
+          (data is Map<String, dynamic>) ? data['reason'] : null;
+
+      if (reason == 'already_sent') {
+        _reportRetryTimer?.cancel();
+        return;
+      }
+
+      // Not done yet — before today's schedule slot, or the report was just
+      // dispatched. Keep checking while this session stays open so a missed
+      // schedule slot is caught up the same day, not only on next launch.
+      if (mounted) {
+        _reportRetryTimer?.cancel();
+        _reportRetryTimer = Timer(
+          const Duration(minutes: 10),
+          _checkDailyStockReport,
+        );
+      }
     } catch (_) {
       // Non-critical: never block or surface this to the user.
     }
@@ -76,6 +106,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   void dispose() {
+    _reportRetryTimer?.cancel();
     if (!_cancelToken.isCancelled) _cancelToken.cancel();
     _viewModel.dispose();
     super.dispose();

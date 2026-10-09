@@ -395,4 +395,13 @@ const Map<String, String> japaneseStrings = {
   '{v1} min ago': '{v1}分前',
   '{v1} hr ago': '{v1}時間前',
   'Yesterday': '昨日',
+
+  // Offline sync
+  'Offline — showing saved data': 'オフライン — 保存済みデータを表示中',
+  'Syncing…': '同期中…',
+  'Refresh failed': '更新に失敗しました',
+  'Waiting to sync': '同期待ちです',
+  '{v1} queued': '{v1}件が同期待ち',
+  '{v1} failed': '{v1}件が失敗',
+  'Saved on this device': 'この端末に保存されました',
 };

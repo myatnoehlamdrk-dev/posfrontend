@@ -1,30 +1,57 @@
 import 'package:dio/dio.dart';
+import 'package:posfrontend/core/auth/session_store.dart';
+import 'package:posfrontend/core/local/local_store.dart';
 import 'package:posfrontend/core/models/paginated_response.dart';
-import 'package:posfrontend/core/network/api_client.dart';
+import 'package:posfrontend/features/category/data/datasources/category_local_data_source.dart';
 import 'package:posfrontend/features/category/data/datasources/category_remote_data_source.dart';
+import 'package:posfrontend/features/category/data/models/category_api_model.dart';
 import 'package:posfrontend/features/category/domain/entities/category.dart';
 import 'package:posfrontend/features/category/domain/repositories/category_repository.dart';
 
 class CategoryRepositoryImpl implements CategoryRepository {
-  final CategoryRemoteDataSource _dataSource;
+  final CategoryRemoteDataSource _remoteDataSource;
+  final CategoryLocalDataSource _localDataSource;
+  final Future<String?> Function() _currentShopId;
 
-  CategoryRepositoryImpl({CategoryRemoteDataSource? dataSource})
-    : _dataSource = dataSource ?? CategoryRemoteDataSource();
+  CategoryRepositoryImpl({
+    CategoryRemoteDataSource? remoteDataSource,
+    CategoryLocalDataSource? localDataSource,
+    Future<String?> Function()? currentShopId,
+  })  : _remoteDataSource = remoteDataSource ?? CategoryRemoteDataSource(),
+        _localDataSource = localDataSource ?? CategoryLocalDataSource(),
+        _currentShopId = currentShopId ?? SessionStore.currentShopId;
 
   @override
   Future<List<Category>> getCategories({
     String? type,
     String? inventoryId,
   }) async {
-    try {
-      final models = await _dataSource.getCategories(
-        type: type,
-        inventoryId: inventoryId,
-      );
-      return models.map((m) => m.toEntity()).toList();
-    } on ApiException {
-      rethrow;
+    final shopId = await _currentShopId();
+    if (shopId != null && shopId.isNotEmpty) {
+      try {
+        final cachedCategories = await _localDataSource.getCachedCategories(
+          shopId: shopId,
+          type: type,
+          inventoryId: inventoryId,
+        );
+        if (cachedCategories.isNotEmpty) {
+          return cachedCategories.map((m) => m.toEntity()).toList();
+        }
+      } catch (_) {
+        // Ignore cache errors and fall back to network
+      }
     }
+
+    final models = await _remoteDataSource.getCategories(
+      type: type,
+      inventoryId: inventoryId,
+    );
+
+    if (shopId != null && shopId.isNotEmpty) {
+      await _localDataSource.cacheCategories(shopId: shopId, categories: models);
+    }
+
+    return models.map((m) => m.toEntity()).toList();
   }
 
   @override
@@ -35,23 +62,47 @@ class CategoryRepositoryImpl implements CategoryRepository {
     int perPage = 20,
     CancelToken? cancelToken,
   }) async {
-    try {
-      final result = await _dataSource.getCategoriesPage(
-        type: type,
-        inventoryId: inventoryId,
-        page: page,
-        perPage: perPage,
-        cancelToken: cancelToken,
-      );
-      return PaginatedResponse(
-        data: result.data.map((m) => m.toEntity()).toList(),
-        lastPage: result.lastPage,
-        currentPage: result.currentPage,
-        total: result.total,
-      );
-    } on ApiException {
-      rethrow;
+    final shopId = await _currentShopId();
+    if (shopId != null && shopId.isNotEmpty) {
+      try {
+        final cachedCategories = await _localDataSource.getCachedCategories(
+          shopId: shopId,
+          type: type,
+          inventoryId: inventoryId,
+          page: page,
+          perPage: perPage,
+        );
+        if (cachedCategories.isNotEmpty) {
+          return PaginatedResponse(
+            data: cachedCategories.map((m) => m.toEntity()).toList(),
+            lastPage: 1,
+            currentPage: page,
+            total: cachedCategories.length,
+          );
+        }
+      } catch (_) {
+        // Ignore cache errors and fall back to network
+      }
     }
+
+    final result = await _remoteDataSource.getCategoriesPage(
+      type: type,
+      inventoryId: inventoryId,
+      page: page,
+      perPage: perPage,
+      cancelToken: cancelToken,
+    );
+
+    if (shopId != null && shopId.isNotEmpty) {
+      await _localDataSource.cacheCategories(shopId: shopId, categories: result.data);
+    }
+
+    return PaginatedResponse(
+      data: result.data.map((m) => m.toEntity()).toList(),
+      lastPage: result.lastPage,
+      currentPage: result.currentPage,
+      total: result.total,
+    );
   }
 
   @override
@@ -59,15 +110,28 @@ class CategoryRepositoryImpl implements CategoryRepository {
     String id, {
     CancelToken? cancelToken,
   }) async {
-    try {
-      final model = await _dataSource.getCategoryById(
-        id,
-        cancelToken: cancelToken,
-      );
-      return model.toEntity();
-    } on ApiException {
-      rethrow;
+    final shopId = await _currentShopId();
+    if (shopId != null && shopId.isNotEmpty) {
+      try {
+        final cachedCategories = await _localDataSource.getCachedCategories(
+          shopId: shopId,
+        );
+        final cachedCategory = cachedCategories
+            .where((c) => c.id == id)
+            .firstOrNull;
+        if (cachedCategory != null) {
+          return cachedCategory.toEntity();
+        }
+      } catch (_) {
+        // Ignore cache errors and fall back to network
+      }
     }
+
+    final model = await _remoteDataSource.getCategoryById(
+      id,
+      cancelToken: cancelToken,
+    );
+    return model.toEntity();
   }
 
   @override
@@ -77,17 +141,13 @@ class CategoryRepositoryImpl implements CategoryRepository {
     String? description,
     int? packageLimit,
   }) async {
-    try {
-      final model = await _dataSource.createCategory(
-        type: type,
-        name: name,
-        description: description,
-        packageLimit: packageLimit,
-      );
-      return model.toEntity();
-    } on ApiException {
-      rethrow;
-    }
+    final model = await _remoteDataSource.createCategory(
+      type: type,
+      name: name,
+      description: description,
+      packageLimit: packageLimit,
+    );
+    return model.toEntity();
   }
 
   @override
@@ -97,21 +157,17 @@ class CategoryRepositoryImpl implements CategoryRepository {
     String? description,
     int? packageLimit,
   }) async {
-    try {
-      final model = await _dataSource.updateCategory(
-        id: id,
-        name: name,
-        description: description,
-        packageLimit: packageLimit,
-      );
-      return model.toEntity();
-    } on ApiException {
-      rethrow;
-    }
+    final model = await _remoteDataSource.updateCategory(
+      id: id,
+      name: name,
+      description: description,
+      packageLimit: packageLimit,
+    );
+    return model.toEntity();
   }
 
   @override
   Future<void> deleteCategory(String id) {
-    return _dataSource.deleteCategory(id);
+    return _remoteDataSource.deleteCategory(id);
   }
 }

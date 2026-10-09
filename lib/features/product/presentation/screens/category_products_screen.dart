@@ -493,37 +493,41 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
     );
     if (card == null || !mounted) return;
 
-    try {
-      await OrderRepositoryImpl().addOrderItems(
-        orderId: card.orderId,
-        items: items
-            .map(
-              (e) => SaleItemEntity(
-                productId: e.productId,
-                productName: e.productName,
-                imageUrl: e.imageUrl,
-                unitPrice: e.unitPrice,
-                quantity: e.quantity,
-                size: e.size,
-                color: e.color,
-                category: e.category,
-              ),
-            )
-            .toList(),
-      );
-    } on AppException catch (e) {
-      if (!mounted) return;
-      showErrorMessage(context, e.message);
-      return;
-    } catch (e) {
-      if (!mounted) return;
-      showErrorMessage(
-        context,
-        context.l10n
-            .t('Failed to add to existing card: {v1}')
-            .replaceAll('{v1}', (e).toString()),
-      );
-      return;
+    // A local card has no server draft to append to — the items accumulate
+    // here and the draft is created in one piece when the sale completes.
+    if (!card.orderId.startsWith('local:')) {
+      try {
+        await OrderRepositoryImpl().addOrderItems(
+          orderId: card.orderId,
+          items: items
+              .map(
+                (e) => SaleItemEntity(
+                  productId: e.productId,
+                  productName: e.productName,
+                  imageUrl: e.imageUrl,
+                  unitPrice: e.unitPrice,
+                  quantity: e.quantity,
+                  size: e.size,
+                  color: e.color,
+                  category: e.category,
+                ),
+              )
+              .toList(),
+        );
+      } on AppException catch (e) {
+        if (!mounted) return;
+        showErrorMessage(context, e.message);
+        return;
+      } catch (e) {
+        if (!mounted) return;
+        showErrorMessage(
+          context,
+          context.l10n
+              .t('Failed to add to existing card: {v1}')
+              .replaceAll('{v1}', (e).toString()),
+        );
+        return;
+      }
     }
 
     final updatedCard = await CartStore.instance.appendToCard(card.id, items);
@@ -595,6 +599,16 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
       _variantPicks.clear();
     });
     if (card == null) return;
+    // A local id means the draft exists only on this device: no stock is
+    // reserved server-side yet.
+    if (createOrderId.startsWith('local:')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.l10n.t('Saved on this device')),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
     Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (_) => CartCardScreen(card: card)));

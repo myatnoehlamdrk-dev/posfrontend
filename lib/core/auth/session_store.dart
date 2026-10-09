@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:posfrontend/core/local/local_store.dart';
 import 'package:posfrontend/features/auth/data/models/login_response.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -46,16 +47,48 @@ class SessionStore {
     final profile = <String, dynamic>{
       'id': me['id']?.toString() ?? '',
       'fullName': (me['fullName'] ?? me['name'])?.toString() ?? '',
-      'email': me['email']?.toString() ?? '',
+      'email': (me['email'] ?? '').toString(),
       'shopId': (me['shopId'] ?? me['shop_id'] ?? '').toString(),
-      'role': me['role']?.toString() ?? '',
+      'role': (me['role'] ?? '').toString(),
     };
 
     final prefs = await SharedPreferences.getInstance();
+    final previousShopId = _readProfile(prefs)?['shopId']?.toString();
+
+    // A different shop means a different account, and the offline cache is
+    // session-scoped: catalog rows, prices and stock written by shop A must
+    // never be readable by shop B on the same device. Wiping *before* the
+    // new profile lands keeps the invariant "the cache belongs to the
+    // profile that is stored".
+    if (previousShopId != null &&
+        previousShopId.isNotEmpty &&
+        previousShopId != profile['shopId']) {
+      await LocalStore.instance.wipeAll();
+    }
+
     await prefs.setString(_profileKey, jsonEncode(profile));
     await markUsed();
 
     return _toLoginResponse(profile, token);
+  }
+
+  /// The shop the current session belongs to, or null when no profile is
+  /// cached (signed out, or a launch that has not resolved yet).
+  ///
+  /// The offline cache is keyed by this: every read and write goes through
+  /// it so one shop's cached responses can never satisfy another's.
+  static Future<String?> currentShopId() async {
+    final prefs = await SharedPreferences.getInstance();
+    final shopId = _readProfile(prefs)?['shopId']?.toString();
+    if (shopId == null || shopId.isEmpty) return null;
+    return shopId;
+  }
+
+  static Map<String, dynamic>? _readProfile(SharedPreferences prefs) {
+    final raw = prefs.getString(_profileKey);
+    if (raw == null || raw.isEmpty) return null;
+    final decoded = jsonDecode(raw);
+    return decoded is Map<String, dynamic> ? decoded : null;
   }
 
   /// Rebuild the session from the cached profile when `/auth/me` could not be
@@ -106,10 +139,18 @@ class SessionStore {
   /// Called wherever the bearer token is cleared: a stale profile left behind
   /// after a logout would be restored on the next launch even though the token
   /// it belonged to was gone.
+  ///
+  /// Also wipes the offline cache. Every logout path in the app funnels
+  /// through here (settings, drawer, splash re-auth, the 401 redirect), so
+  /// this is the single place that has to enforce "cached responses belong
+  /// to a signed-in session". A logged-out device — especially one whose
+  /// next user is a different shop — must not be able to browse the
+  /// previous account's catalog offline.
   static Future<void> clear() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_profileKey);
     await prefs.remove(_lastUsedKey);
+    await LocalStore.instance.wipeAll();
   }
 
   static LoginResponse _toLoginResponse(
