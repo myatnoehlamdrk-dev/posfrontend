@@ -1,8 +1,16 @@
+import 'package:posfrontend/features/category/domain/entities/category.dart';
 import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart';
 
 class CategoryShowcaseData {
   final String id;
   final String name;
+
+  /// The category's own description, as sent by
+  /// `/categories/with-products`. Free text and frequently blank — older
+  /// categories predate the field — so every consumer has to cope with an empty
+  /// string rather than assume there is something to show.
+  final String description;
+
   final List<CatalogProductView> products;
 
 /// How many products the category holds in total.
@@ -15,6 +23,7 @@ class CategoryShowcaseData {
   const CategoryShowcaseData({
     required this.id,
     required this.name,
+    this.description = '',
     required this.products,
     int? productCount,
   }) : productCount = productCount ?? 0;
@@ -31,4 +40,24 @@ class CategoryShowcaseData {
 
   /// Whether [displayCount] is the real total rather than the preview size.
   bool get hasExactCount => productCount > products.length;
+
+  /// Whether there is a description worth putting on screen.
+  ///
+  /// Checked here rather than at each call site so "blank" means the same thing
+  /// everywhere: a description that is only whitespace collapses its line.
+  bool get hasDescription => description.trim().isNotEmpty;
+
+  /// The category as the domain entity the package screens take.
+  ///
+  /// The catalog holds [CategoryShowcaseData] rather than a `Category`, so
+  /// opening a package detail needs a real one. The icon and colour are derived
+  /// from the name using the same hash the product tiles use, which keeps a
+  /// package's category badge the same colour as its category's product tiles.
+  Category toCategory() => Category(
+    id: id,
+    name: name,
+    description: description,
+    icon: CatalogProductView.iconFor(name),
+    iconColor: CatalogProductView.colorFor(name),
+  );
 }

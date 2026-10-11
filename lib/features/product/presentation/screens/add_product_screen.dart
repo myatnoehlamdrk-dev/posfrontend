@@ -817,7 +817,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
             color: p.textPrimary,
           ),
         ),
-        if (req) Text(' *', style: TextStyle(color: kRed, fontSize: 14)),
+        if (req) Text(' *', style: TextStyle(color: p.dangerFg, fontSize: 14)),
       ],
     );
   }

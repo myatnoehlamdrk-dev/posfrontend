@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/theme/app_dimens.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/features/profile/presentation/screens/profile_screen.dart';
-import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/custom_back_button.dart';
+import 'package:posfrontend/shared/widgets/notification_bell.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
 
 class AppScreenTopBar extends StatelessWidget {
@@ -13,6 +15,10 @@ class AppScreenTopBar extends StatelessWidget {
   final VoidCallback? onMenuTap;
   final bool showBackButton;
   final VoidCallback? onBackTap;
+
+  /// False on the notifications page itself, so the bell cannot push a
+  /// second copy of the screen it is already showing.
+  final bool showNotificationsButton;
 
   /// Overrides the bar's fill. Defaults to the palette surface, which is right
   /// for a page on the scaffold. A page that paints its own background wants
@@ -28,6 +34,7 @@ class AppScreenTopBar extends StatelessWidget {
     this.showBackButton = false,
     this.onBackTap,
     this.backgroundColor,
+    this.showNotificationsButton = true,
   });
 
   @override
@@ -35,7 +42,10 @@ class AppScreenTopBar extends StatelessWidget {
     final user = AuthScope.userOf(context);
     final p = context.palette;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s8,
+        vertical: AppSpacing.s12,
+      ),
       decoration: BoxDecoration(
         color: backgroundColor ?? p.surface,
         border: Border(bottom: BorderSide(color: p.border, width: 1)),
@@ -69,33 +79,18 @@ class AppScreenTopBar extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: p.textPrimary,
-                  fontSize: 17,
+                  fontSize: AppTypography.titleSmallSize,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ),
           ),
-          Stack(
-            children: [
-              IconButton(
-                onPressed: () {},
-                icon: Icon(Icons.notifications_outlined, color: p.textPrimary),
-              ),
-              Positioned(
-                right: 8,
-                top: 8,
-                child: Container(
-                  width: 10,
-                  height: 10,
-                  decoration: const BoxDecoration(
-                    color: AppColors.red,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(width: 4),
+          // The bell that used to sit here wore a red "3 unread" dot no code
+          // ever incremented, and was removed rather than left dead. The live
+          // button is back: unread count comes from NotificationStore, which
+          // the FCM listener feeds.
+          if (showNotificationsButton) const NotificationBell(),
+          const SizedBox(width: AppSpacing.s4),
           GestureDetector(
             onTap: () {
               Navigator.of(
@@ -107,7 +102,11 @@ class AppScreenTopBar extends StatelessWidget {
               builder: (context, imageUrl, _) {
                 return CircleAvatar(
                   radius: 18,
-                  backgroundColor: AppColors.teal,
+                  // Was `AppColors.teal`, which gives white initials only
+                  // 2.49:1 — below the 4.5:1 that text needs. The brand purple
+                  // gives white 5.19:1, and it is the same fill as the primary
+                  // button, so the avatar no longer introduces a second accent.
+                  backgroundColor: p.primary,
                   backgroundImage: imageUrl.isNotEmpty
                       ? NetworkImage(imageUrl)
                       : null,
@@ -124,7 +123,7 @@ class AppScreenTopBar extends StatelessWidget {
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
-                            fontSize: 15,
+                            fontSize: AppTypography.bodyMediumSize,
                           ),
                         )
                       : null,
@@ -132,7 +131,7 @@ class AppScreenTopBar extends StatelessWidget {
               },
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.s8),
         ],
       ),
     );

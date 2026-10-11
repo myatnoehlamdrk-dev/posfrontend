@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/core/models/paginated_response.dart';
 import 'package:posfrontend/core/network/api_client.dart';
+import 'package:posfrontend/core/network/app_exceptions.dart';
 import 'package:posfrontend/features/customer/domain/repositories/customer_repository.dart';
 import 'package:posfrontend/features/product/data/models/product_api_model.dart';
 import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart';
@@ -280,7 +281,68 @@ class SaleViewModel extends BaseViewModel {
 
     try {
       final voucherNo = 'INV-$_voucherRandom';
-      final orderId = existingOrderId ?? 'ORD-$_orderRandom';
+      var orderId = existingOrderId ?? 'ORD-$_orderRandom';
+      final isLocalCard =
+          existingOrderId != null && existingOrderId.startsWith('local:');
+
+      if (isLocalCard) {
+        // The card was built offline, so no server draft exists to
+        // convert. Prefer materializing the draft now (the till may be
+        // back online); fall back to the compound outbox pair when the
+        // network is still out.
+        try {
+          orderId = await _orderRepository.createOrder(
+            userName: staffName,
+            voucherNo: 'INV-$_voucherRandom',
+            orderId: 'ORD-$_orderRandom',
+            customerName: _customerName,
+            customerPhone: _customerPhone.isNotEmpty ? _customerPhone : null,
+            payMethod: _paymentMethod,
+            items: List<SaleItemEntity>.from(_items),
+            grandTotal: totalPayable,
+            discount: _discountPercent.toInt(),
+            notes: _notes.isNotEmpty ? _notes : null,
+            status: 'draft',
+            // A local id from the fallback would defeat the point: the
+            // sale needs a real draft to convert.
+            allowLocalFallback: false,
+          );
+        } on NetworkException {
+          orderId = '';
+        } on UnknownException {
+          // Raw socket failures (connection refused, DNS) also land here
+          // and are equally "the request never left".
+          orderId = '';
+        }
+        if (orderId.isEmpty) {
+          final queued = await _saleRepository.enqueueLocalCardSale(
+            userName: staffName,
+            voucherNo: voucherNo,
+            customerName: _customerName,
+            customerPhone: _customerPhone.isNotEmpty ? _customerPhone : null,
+            customerLocation: _customerLocation.isNotEmpty
+                ? _customerLocation
+                : null,
+            payMethod: _paymentMethod,
+            items: List<SaleItemEntity>.from(_items),
+            grandTotal: totalPayable,
+            discount: _discountPercent.toInt(),
+            notes: _notes.isNotEmpty ? _notes : null,
+          );
+          if (!queued) {
+            // Nothing stored the sale — say so rather than report a
+            // success no table recorded.
+            throw const NetworkException(
+              message: 'Could not save the sale on this device.',
+            );
+          }
+          _isSubmitting = false;
+          notifyListeners();
+          return true;
+        }
+        // Materialized: fall through to the normal createSale below with
+        // the real server id.
+      }
 
       await _saleRepository.createSale(
         userName: staffName,
@@ -299,7 +361,10 @@ class SaleViewModel extends BaseViewModel {
         cancelToken: cancelToken,
       );
 
-      if (existingOrderId != null) {
+      // A local card has no server order to clean up — its draft either
+      // never existed or was converted (and server-side deleted) by the
+      // sale itself.
+      if (existingOrderId != null && !isLocalCard) {
         try {
           await _orderRepository.deleteOrder(existingOrderId);
         } catch (_) {
@@ -310,7 +375,10 @@ class SaleViewModel extends BaseViewModel {
       _isSubmitting = false;
       notifyListeners();
       return true;
-    } on ApiException catch (e) {
+    } on AppException catch (e) {
+      // AppException, not ApiException: NetworkException, TimeoutException
+      // and friends carry the real reason, and reducing them to "an
+      // unexpected error" hides a recoverable outage from the cashier.
       setError(e.message);
       _isSubmitting = false;
       notifyListeners();

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/theme/app_dimens.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
@@ -36,7 +38,7 @@ class LegalDocumentScreen extends StatelessWidget {
             ),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+                padding: const EdgeInsets.fromLTRB(AppSpacing.s20, AppSpacing.s20, AppSpacing.s20, AppSpacing.s40),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -46,11 +48,11 @@ class LegalDocumentScreen extends StatelessWidget {
                           .replaceAll('{v1}', (lastUpdated).toString()),
                       style: TextStyle(
                         color: p.textSecondary,
-                        fontSize: 13,
+                        fontSize: AppTypography.labelMediumSize,
                         fontStyle: FontStyle.italic,
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: AppSpacing.s20),
                     for (final (sectionTitle, paragraphs) in sections)
                       _Section(title: sectionTitle, paragraphs: paragraphs),
                   ],
@@ -74,7 +76,7 @@ class _Section extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.palette;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: AppSpacing.s16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -82,20 +84,20 @@ class _Section extends StatelessWidget {
             title,
             style: TextStyle(
               color: p.textPrimary,
-              fontSize: 16,
+              fontSize: AppTypography.bodyLargeSize,
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           for (final paragraph in paragraphs)
             Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.only(bottom: AppSpacing.s12),
               child: Text(
                 paragraph,
                 textAlign: TextAlign.justify,
                 style: TextStyle(
                   color: p.textSecondary,
-                  fontSize: 14,
+                  fontSize: AppTypography.bodySmallSize,
                   height: 1.6,
                 ),
               ),

@@ -8,5 +8,5 @@
 class PasswordPolicy {
   PasswordPolicy._();
 
-  static const int minLength = 8;
+  static const int minLength = 6;
 }

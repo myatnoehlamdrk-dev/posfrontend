@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/theme/app_dimens.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
@@ -57,7 +59,7 @@ class WizardStepIndicator extends StatelessWidget {
                 Expanded(
                   child: Container(
                     height: 2,
-                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                    margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
                     decoration: BoxDecoration(
                       // The completed half of the rule carries the ramp too, so
                       // the marker and the path out of it are one graphic rather
@@ -70,7 +72,7 @@ class WizardStepIndicator extends StatelessWidget {
                             )
                           : null,
                       color: i < currentIndex ? null : p.border,
-                      borderRadius: BorderRadius.circular(1),
+                      borderRadius: BorderRadius.circular(AppRadius.xs),
                     ),
                   ),
                 ),
@@ -145,21 +147,21 @@ class _StepPill extends StatelessWidget {
               : Text(
                   '${index + 1}',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: AppTypography.bodySmallSize,
                     fontWeight: FontWeight.w600,
                     color: reached ? Colors.white : p.textMuted,
                   ),
                 ),
         ),
         if (showLabel) ...[
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.s8),
           Flexible(
             child: Text(
               context.l10n.t(label),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: AppTypography.bodySmallSize,
                 fontWeight: active ? FontWeight.w600 : FontWeight.w500,
                 color: labelColor,
               ),

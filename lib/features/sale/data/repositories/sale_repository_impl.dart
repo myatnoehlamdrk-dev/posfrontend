@@ -38,6 +38,33 @@ class SaleRepositoryImpl implements SaleRepository {
       notes: notes,
     );
   }
+
+  @override
+  Future<bool> enqueueLocalCardSale({
+    required String userName,
+    required String voucherNo,
+    String? customerName,
+    String? customerPhone,
+    String? customerLocation,
+    String? payMethod,
+    required List<SaleItemEntity> items,
+    required double grandTotal,
+    int? discount,
+    String? notes,
+  }) {
+    return _remoteDataSource.enqueueLocalCardSale(
+      userName: userName,
+      voucherNo: voucherNo,
+      customerName: customerName,
+      customerPhone: customerPhone,
+      customerLocation: customerLocation,
+      payMethod: payMethod,
+      items: items,
+      grandTotal: grandTotal,
+      discount: discount,
+      notes: notes,
+    );
+  }
 }
 
 class OrderRepositoryImpl implements OrderRepository {
@@ -59,6 +86,7 @@ class OrderRepositoryImpl implements OrderRepository {
     int? discount,
     String? notes,
     String status = 'draft',
+    bool allowLocalFallback = true,
   }) {
     return _remoteDataSource.createOrder(
       userName: userName,
@@ -72,6 +100,7 @@ class OrderRepositoryImpl implements OrderRepository {
       discount: discount,
       notes: notes,
       status: status,
+      allowLocalFallback: allowLocalFallback,
     );
   }
 

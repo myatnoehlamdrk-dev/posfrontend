@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/features/customer/domain/entities/customer.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class OverviewTab extends StatelessWidget {
@@ -8,7 +9,6 @@ class OverviewTab extends StatelessWidget {
 
   const OverviewTab({super.key, required this.analytics});
 
-  static const Color purple = Color(0xFF6D28D9);
   static const Color teal = Color(0xFF4FD1D9);
   static const Color green = Color(0xFF10B981);
   static const Color orange = Color(0xFFF59E0B);
@@ -29,7 +29,7 @@ class OverviewTab extends StatelessWidget {
                 'Total Customers',
                 '${ov.totalCustomers}',
                 Icons.people,
-                purple,
+                AppColors.brandPurpleDark,
               ),
               const SizedBox(width: 12),
               _statCard(
@@ -166,7 +166,7 @@ class OverviewTab extends StatelessWidget {
                 'Returning',
                 nvr.returningCount,
                 nvr.returningPct,
-                purple,
+                AppColors.brandPurpleDark,
               ),
             ],
           ),
@@ -176,7 +176,7 @@ class OverviewTab extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
               child: LinearProgressIndicator(
                 value: nvr.newPct / 100,
-                backgroundColor: purple.withValues(alpha: 0.2),
+                backgroundColor: AppColors.brandPurpleDark.withValues(alpha: 0.2),
                 valueColor: const AlwaysStoppedAnimation(teal),
                 minHeight: 10,
               ),
@@ -268,7 +268,7 @@ class OverviewTab extends StatelessWidget {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: rank == 0 ? const Color(0xFFF59E0B) : purple,
+              color: rank == 0 ? const Color(0xFFF59E0B) : AppColors.brandPurpleDark,
             ),
           ),
         ],

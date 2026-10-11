@@ -1,5 +1,6 @@
 import 'package:posfrontend/features/auth/domain/entities/login_result.dart';
 import 'package:posfrontend/features/auth/domain/entities/user.dart';
+import 'package:posfrontend/features/shop/domain/entities/shop.dart';
 
 abstract class AuthRepository {
   Future<LoginResult> login({
@@ -21,6 +22,7 @@ abstract class AuthRepository {
     String? dob,
     String? gender,
     String? shopId,
+    ShopEntity? shop,
   });
 
   Future<void> sendOtp({required String email});

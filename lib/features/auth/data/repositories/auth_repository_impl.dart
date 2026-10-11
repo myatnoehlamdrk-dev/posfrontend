@@ -4,6 +4,7 @@ import 'package:posfrontend/features/auth/data/models/register_request_model.dar
 import 'package:posfrontend/features/auth/domain/entities/login_result.dart';
 import 'package:posfrontend/features/auth/domain/entities/user.dart';
 import 'package:posfrontend/features/auth/domain/repositories/auth_repository.dart';
+import 'package:posfrontend/features/shop/domain/entities/shop.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _remoteDataSource;
@@ -44,6 +45,7 @@ class AuthRepositoryImpl implements AuthRepository {
     String? dob,
     String? gender,
     String? shopId,
+    ShopEntity? shop,
   }) async {
     final response = await _remoteDataSource.register(
       RegisterRequestModel(
@@ -59,10 +61,26 @@ class AuthRepositoryImpl implements AuthRepository {
         dob: dob,
         gender: gender,
         shopId: shopId,
+        shop: shop == null ? null : _shopPayload(shop),
       ),
     );
     return response.toEntity();
   }
+
+  /// The registration shape for a shop that does not exist server-side yet.
+  ///
+  /// Deliberately without `id`: the server assigns it, and echoing the local
+  /// one (always absent here) would invite the backend to trust a client-made
+  /// identifier. [logoData] rides along as raw base64 because the authenticated
+  /// upload endpoint cannot be called before this account exists.
+  Map<String, dynamic> _shopPayload(ShopEntity shop) => {
+    'name': shop.name,
+    'type': shop.type,
+    'physicalAddress': shop.physicalAddress,
+    'logoUrl': shop.logoUrl,
+    'logoData': shop.logoData,
+    'ownerInformation': shop.ownerInformation.toJson(),
+  };
 
   @override
   Future<void> sendOtp({required String email}) {

@@ -2,18 +2,22 @@
 // there was never a collision to dodge, and hiding it only hid Flutter's.
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:posfrontend/core/auth/session_store.dart';
 import 'package:posfrontend/core/auth/token_storage.dart';
 import 'package:posfrontend/core/network/api_client.dart';
+import 'package:posfrontend/shared/l10n/app_strings.dart';
 import 'package:posfrontend/shared/l10n/app_language.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/shared/l10n/locale_notifier.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/theme/theme_mode_notifier.dart';
+import 'package:posfrontend/shared/widgets/app_message.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
+import 'package:posfrontend/shared/widgets/app_shell.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
-import 'package:posfrontend/shared/widgets/responsive_scaffold.dart';
 import 'package:posfrontend/features/auth/presentation/screens/login_screen.dart';
 import 'package:posfrontend/features/settings/domain/entities/feedback.dart';
 import 'package:posfrontend/features/settings/domain/entities/settings.dart';
@@ -78,58 +82,92 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return ResponsiveScaffold(
-      scaffoldKey: _scaffoldKey,
-      title: context.l10n.t('Setting'),
+    return AppShell(
       active: DrawerDestination.setting,
+      scaffoldKey: _scaffoldKey,
       // Page fill sits one step back from the cards, so the cards stay readable
       // in dark where there is no drop shadow to separate them.
       backgroundColor: context.palette.scaffoldBg,
-      body: ListenableBuilder(
-        listenable: _viewModel,
-        builder: (context, _) {
-          return RefreshableBody(
-            onRefresh: () => _viewModel.loadSettings(),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (_viewModel.isLoading && !_viewModel.isInitialized)
-                    const SettingsSkeleton()
-                  else ...[
-                    _buildProfileCard(),
-                    const SizedBox(height: 28),
-                    _sectionHeader('APPEARANCE'),
-                    const SizedBox(height: 10),
-                    _buildAppearanceCard(),
-                    const SizedBox(height: 28),
-                    _sectionHeader('REGIONAL'),
-                    const SizedBox(height: 10),
-                    _buildRegionalCard(),
-                    const SizedBox(height: 28),
-                    _sectionHeader('SHOP'),
-                    const SizedBox(height: 10),
-                    _buildShopImageCard(),
-                    const SizedBox(height: 12),
-                    _buildBusinessCard(),
-                    const SizedBox(height: 28),
-                    _sectionHeader('SUPPORT'),
-                    const SizedBox(height: 10),
-                    _buildSupportCard(),
-                    const SizedBox(height: 28),
-                    _sectionHeader('ABOUT'),
-                    const SizedBox(height: 10),
-                    _buildAboutCard(),
-                    const SizedBox(height: 32),
-                    _buildSignOutButton(),
-                    const SizedBox(height: 32),
-                  ],
-                ],
+      wrap: (_, shell) => shell,
+      body: (context, isWide) => SafeArea(
+        child: Column(
+          children: [
+            AppScreenTopBar(
+              title: context.l10n.t('Setting'),
+              // No hamburger on a wide window: the sidebar is already on screen.
+              showMenuButton: !isWide,
+              onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+            ),
+            Expanded(
+              child: ListenableBuilder(
+                listenable: _viewModel,
+                builder: (context, _) {
+                  return RefreshableBody(
+                    onRefresh: () => _viewModel.loadSettings(),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (_viewModel.isLoading && !_viewModel.isInitialized)
+                            const SettingsSkeleton()
+                          else ...[
+                            // Five failure paths in this ViewModel —
+                            // loadSettings, toggleTheme, setSystemTheme,
+                            // setLanguage and the image upload — call setError()
+                            // and then do nothing else with it. The only reader
+                            // of errorMessage was the feedback dialog, so a
+                            // settings save that silently failed still looked
+                            // like it had worked. Reported inline and left up
+                            // until the next successful load, because the
+                            // local change has already been applied and only
+                            // the sync failed — the user needs to know the
+                            // device and the server now disagree.
+                            if (_viewModel.hasError) ...[
+                              AppMessageBanner(
+                                message: _viewModel.errorMessage!,
+                                kind: AppMessageKind.error,
+                                actionLabel: AppStrings.of(context).retry,
+                                onAction: () => _viewModel.loadSettings(),
+                              ),
+                              const SizedBox(height: 16),
+                            ],
+                            _buildProfileCard(),
+                            const SizedBox(height: 28),
+                            _sectionHeader('APPEARANCE'),
+                            const SizedBox(height: 10),
+                            _buildAppearanceCard(),
+                            const SizedBox(height: 28),
+                            _sectionHeader('REGIONAL'),
+                            const SizedBox(height: 10),
+                            _buildRegionalCard(),
+                            const SizedBox(height: 28),
+                            _sectionHeader('SHOP'),
+                            const SizedBox(height: 10),
+                            _buildShopImageCard(),
+                            const SizedBox(height: 12),
+                            _buildBusinessCard(),
+                            const SizedBox(height: 28),
+                            _sectionHeader('SUPPORT'),
+                            const SizedBox(height: 10),
+                            _buildSupportCard(),
+                            const SizedBox(height: 28),
+                            _sectionHeader('ABOUT'),
+                            const SizedBox(height: 10),
+                            _buildAboutCard(),
+                            const SizedBox(height: 32),
+                            _buildSignOutButton(),
+                            const SizedBox(height: 32),
+                          ],
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
-          );
-        },
+          ],
+        ),
       ),
     );
   }
@@ -950,6 +988,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             // Logout API failure is non-critical; proceed with local cleanup
                           }
                           await TokenStorage.clearToken();
+                          await SessionStore.clear();
                           if (mounted) {
                             Navigator.of(context).pushAndRemoveUntil(
                               MaterialPageRoute(

@@ -7,6 +7,7 @@ import 'package:posfrontend/features/category/presentation/screens/add_category_
 import 'package:posfrontend/features/category/presentation/viewmodels/category_view_model.dart';
 import 'package:posfrontend/features/inventory/domain/repositories/inventory_repository.dart';
 import 'package:posfrontend/features/package/presentation/screens/package_screen.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/error_snackbar.dart';
@@ -24,7 +25,6 @@ class CategoryScreen extends StatefulWidget {
 class _CategoryScreenState extends State<CategoryScreen> {
   late final CategoryViewModel _viewModel;
 
-  static const Color purple = Color(0xFF6D28D9);
 
   String get _inventoryLabel {
     switch (widget.inventoryType) {
@@ -196,7 +196,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                           const Padding(
                             padding: EdgeInsets.symmetric(vertical: 40),
                             child: Center(
-                              child: CircularProgressIndicator(color: purple),
+                              child: CircularProgressIndicator(color: AppColors.brandPurpleDark),
                             ),
                           )
                         else if (_viewModel.hasError)
@@ -240,7 +240,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
           onTap: () {},
           child: Text(
             context.l10n.t('Dashboard'),
-            style: TextStyle(fontSize: 13, color: purple),
+            style: TextStyle(fontSize: 13, color: AppColors.brandPurpleDark),
           ),
         ),
         Text('  >  ', style: style),
@@ -248,7 +248,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
           onTap: () => Navigator.of(context).pop(),
           child: Text(
             context.l10n.t('Inventory'),
-            style: TextStyle(fontSize: 13, color: purple),
+            style: TextStyle(fontSize: 13, color: AppColors.brandPurpleDark),
           ),
         ),
         Text('  >  ', style: style),
@@ -258,7 +258,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
             _inventoryLabel,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 13, color: purple),
+            style: const TextStyle(fontSize: 13, color: AppColors.brandPurpleDark),
           ),
         ),
         Text('  >  ', style: style),
@@ -449,7 +449,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                 ),
                 const SizedBox(width: 8),
                 IconButton(
-                  icon: const Icon(Icons.edit, size: 18, color: purple),
+                  icon: const Icon(Icons.edit, size: 18, color: AppColors.brandPurpleDark),
                   tooltip: 'Edit category',
                   onPressed: () => _openEditCategory(c),
                   padding: EdgeInsets.zero,
@@ -641,7 +641,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
         style: const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
-          color: purple,
+          color: AppColors.brandPurpleDark,
         ),
       ),
     );
@@ -660,7 +660,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
-          color: active ? const Color(0xFF16A34A) : const Color(0xFFEF4444),
+          color: active ? p.successFg : p.dangerFg,
         ),
       ),
     );
@@ -668,38 +668,46 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
   Widget _pagination(int shown) {
     final p = context.palette;
+    final vm = _viewModel;
     return Row(
       children: [
         Expanded(
           child: Text(
             context.l10n
                 .t('First {v2} of {v1} categories')
-                .replaceAll('{v1}', (_viewModel.totalCount).toString())
-                .replaceAll('{v2}', (shown).toString()),
+                .replaceAll('{v1}', vm.totalCount.toString())
+                .replaceAll('{v2}', shown.toString()),
             style: TextStyle(fontSize: 13, color: p.textSecondary),
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        const SizedBox(width: 12),
-        IconButton(
-          icon: Icon(Icons.chevron_left, color: p.textSecondary),
-          onPressed: null,
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: purple,
-            borderRadius: BorderRadius.circular(8),
+        // One page has nothing to move between, so the controls are hidden
+        // rather than shown dead: a greyed-out arrow reads as broken.
+        if (vm.lastPage > 1) ...[
+          const SizedBox(width: 12),
+          IconButton(
+            icon: Icon(Icons.chevron_left, color: p.textSecondary),
+            onPressed: vm.canGoPrev ? () => vm.prevPage() : null,
           ),
-          child: Text(
-            '1',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.brandPurpleDark,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              '${vm.currentPage}',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
-        ),
-        IconButton(
-          icon: Icon(Icons.chevron_right, color: p.textSecondary),
-          onPressed: null,
-        ),
+          IconButton(
+            icon: Icon(Icons.chevron_right, color: p.textSecondary),
+            onPressed: vm.canGoNext ? () => vm.nextPage() : null,
+          ),
+        ],
       ],
     );
   }

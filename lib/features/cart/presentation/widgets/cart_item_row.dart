@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/core/extensions/number_extensions.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/features/cart/domain/entities/cart_item_entity.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
@@ -78,10 +79,7 @@ class CartItemRow extends StatelessWidget {
               Text(
                 context.l10n
                     .t('{v1} x {v2}')
-                    .replaceAll(
-                      '{v1}',
-                      (item.unitPrice.toStringAsFixed(2)).toString(),
-                    )
+                    .replaceAll('{v1}', item.unitPrice.withCommas())
                     .replaceAll('{v2}', (item.quantity).toString()),
                 style: TextStyle(fontSize: 11, color: p.textSecondary),
               ),

@@ -9,6 +9,7 @@ import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
+import 'package:posfrontend/shared/widgets/app_shell.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 
@@ -63,27 +64,12 @@ class _InventoryScreenState extends State<InventoryScreen> {
       // would otherwise cut a hard horizontal seam across the gradient.
       child: DecoratedBox(
         decoration: BoxDecoration(gradient: colors.pageGradient),
-        child: LayoutBuilder(
-          builder: (ctx, constraints) {
-            final isWide = constraints.maxWidth >= 768;
-            return Scaffold(
-              key: _scaffoldKey,
-              backgroundColor: Colors.transparent,
-              drawer: isWide
-                  ? null
-                  : AppDrawer(active: DrawerDestination.inventory),
-              body: Row(
-                children: [
-                  if (isWide)
-                    SizedBox(
-                      width: 240,
-                      child: AppDrawer(active: DrawerDestination.inventory),
-                    ),
-                  Expanded(child: _buildContent(isWide: isWide)),
-                ],
-              ),
-            );
-          },
+        child: AppShell(
+          active: DrawerDestination.inventory,
+          scaffoldKey: _scaffoldKey,
+          backgroundColor: Colors.transparent,
+          wrap: (_, shell) => shell,
+          body: (context, isWide) => _buildContent(isWide: isWide),
         ),
       ),
     );

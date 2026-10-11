@@ -3,6 +3,8 @@ import 'package:posfrontend/shared/l10n/app_strings.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/theme/app_palette.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:posfrontend/core/extensions/number_extensions.dart';
 import 'package:posfrontend/core/extensions/datetime_extensions.dart';
@@ -72,6 +74,7 @@ class SalePreviewScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
       appBar: AppBar(
@@ -83,7 +86,7 @@ class SalePreviewScreen extends StatelessWidget {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: kTitle,
+            color: p.textPrimary,
           ),
         ),
         actions: [
@@ -102,7 +105,7 @@ class SalePreviewScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: kBorder),
+                border: Border.all(color: p.border),
                 boxShadow: const [
                   BoxShadow(
                     color: Color(0x0D000000),
@@ -114,17 +117,17 @@ class SalePreviewScreen extends StatelessWidget {
               child: Column(
                 children: [
                   _header(),
-                  _divider(),
-                  _invoiceInfo(),
-                  _divider(),
-                  _customerSection(),
-                  _divider(),
-                  _itemsHeader(),
-                  _itemsList(),
-                  _divider(),
-                  _summarySection(),
+                  _divider(p),
+                  _invoiceInfo(p),
+                  _divider(p),
+                  _customerSection(p),
+                  _divider(p),
+                  _itemsHeader(p),
+                  _itemsList(p),
+                  _divider(p),
+                  _summarySection(p),
                   if (notes?.isNotEmpty == true) _notesSection(),
-                  _footer(),
+                  _footer(p),
                 ],
               ),
             ),
@@ -223,14 +226,14 @@ class SalePreviewScreen extends StatelessWidget {
     );
   }
 
-  Widget _divider() {
-    return const Padding(
+  Widget _divider(AppPalette p) {
+    return Padding(
       padding: EdgeInsets.symmetric(horizontal: 20),
-      child: Divider(height: 1, color: kBorder),
+      child: Divider(height: 1, color: p.border),
     );
   }
 
-  Widget _invoiceInfo() {
+  Widget _invoiceInfo(AppPalette p) {
     final dateStr = dateTime.toShortDate();
     final timeStr = dateTime.toFormattedDateTime().split(' ').skip(1).join(' ');
 
@@ -238,38 +241,38 @@ class SalePreviewScreen extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
-          _infoRow('Voucher ID', voucherNo),
+          _infoRow(p, 'Voucher ID', voucherNo),
           const SizedBox(height: 8),
-          _infoRow('Order ID', orderId),
+          _infoRow(p, 'Order ID', orderId),
           const SizedBox(height: 8),
-          _infoRow('Date', dateStr),
+          _infoRow(p, 'Date', dateStr),
           const SizedBox(height: 8),
-          _infoRow('Time', timeStr),
+          _infoRow(p, 'Time', timeStr),
           const SizedBox(height: 8),
-          _infoRow('Staff', staffName),
+          _infoRow(p, 'Staff', staffName),
         ],
       ),
     );
   }
 
-  Widget _infoRow(String label, String value) {
+  Widget _infoRow(AppPalette p, String label, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: _monoStyle(fontSize: 13, color: kGray)),
+        Text(label, style: _monoStyle(fontSize: 13, color: p.textSecondary)),
         Text(
           value,
           style: _monoStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: kTitle,
+            color: p.textPrimary,
           ),
         ),
       ],
     );
   }
 
-  Widget _customerSection() {
+  Widget _customerSection(AppPalette p) {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -292,7 +295,7 @@ class SalePreviewScreen extends StatelessWidget {
                   children: [
                     Text(
                       AppStrings.current.t('Customer'),
-                      style: TextStyle(fontSize: 11, color: kGray),
+                      style: TextStyle(fontSize: 11, color: p.textSecondary),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -300,21 +303,21 @@ class SalePreviewScreen extends StatelessWidget {
                       style: _monoStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: kTitle,
+                        color: p.textPrimary,
                       ),
                     ),
                     if (customerPhone?.isNotEmpty == true) ...[
                       const SizedBox(height: 2),
                       Text(
                         customerPhone!,
-                        style: _monoStyle(fontSize: 12, color: kGray),
+                        style: _monoStyle(fontSize: 12, color: p.textSecondary),
                       ),
                     ],
                     if (customerLocation?.isNotEmpty == true) ...[
                       const SizedBox(height: 2),
                       Text(
                         customerLocation!,
-                        style: _monoStyle(fontSize: 12, color: kGray),
+                        style: _monoStyle(fontSize: 12, color: p.textSecondary),
                       ),
                     ],
                   ],
@@ -327,7 +330,7 @@ class SalePreviewScreen extends StatelessWidget {
     );
   }
 
-  Widget _itemsHeader() {
+  Widget _itemsHeader(AppPalette p) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
       child: Row(
@@ -339,7 +342,7 @@ class SalePreviewScreen extends StatelessWidget {
               style: _monoStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: kGray,
+                color: p.textSecondary,
               ),
             ),
           ),
@@ -351,7 +354,7 @@ class SalePreviewScreen extends StatelessWidget {
               style: _monoStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: kGray,
+                color: p.textSecondary,
               ),
             ),
           ),
@@ -363,7 +366,7 @@ class SalePreviewScreen extends StatelessWidget {
               style: _monoStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: kGray,
+                color: p.textSecondary,
               ),
             ),
           ),
@@ -375,7 +378,7 @@ class SalePreviewScreen extends StatelessWidget {
               style: _monoStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: kGray,
+                color: p.textSecondary,
               ),
             ),
           ),
@@ -384,7 +387,7 @@ class SalePreviewScreen extends StatelessWidget {
     );
   }
 
-  Widget _itemsList() {
+  Widget _itemsList(AppPalette p) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -398,9 +401,9 @@ class SalePreviewScreen extends StatelessWidget {
           return Container(
             padding: const EdgeInsets.symmetric(vertical: 10),
             decoration: i < items.length - 1
-                ? const BoxDecoration(
+                ? BoxDecoration(
                     border: Border(
-                      bottom: BorderSide(color: kBorder, width: 0.5),
+                      bottom: BorderSide(color: p.border, width: 0.5),
                     ),
                   )
                 : null,
@@ -419,14 +422,14 @@ class SalePreviewScreen extends StatelessWidget {
                         style: _monoStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: kTitle,
+                          color: p.textPrimary,
                         ),
                       ),
                       if (variant.isNotEmpty) ...[
                         const SizedBox(height: 2),
                         Text(
                           variant,
-                          style: _monoStyle(fontSize: 11, color: kGray),
+                          style: _monoStyle(fontSize: 11, color: p.textSecondary),
                         ),
                       ],
                     ],
@@ -439,7 +442,7 @@ class SalePreviewScreen extends StatelessWidget {
                         .t('{v1}')
                         .replaceAll('{v1}', (item.quantity).toString()),
                     textAlign: TextAlign.center,
-                    style: _monoStyle(fontSize: 13, color: kTitle),
+                    style: _monoStyle(fontSize: 13, color: p.textPrimary),
                   ),
                 ),
                 Expanded(
@@ -447,7 +450,7 @@ class SalePreviewScreen extends StatelessWidget {
                   child: Text(
                     _fmtPrice(item.unitPrice),
                     textAlign: TextAlign.right,
-                    style: _monoStyle(fontSize: 12, color: kTitle),
+                    style: _monoStyle(fontSize: 12, color: p.textPrimary),
                   ),
                 ),
                 Expanded(
@@ -458,7 +461,7 @@ class SalePreviewScreen extends StatelessWidget {
                     style: _monoStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: kTitle,
+                      color: p.textPrimary,
                     ),
                   ),
                 ),
@@ -470,7 +473,7 @@ class SalePreviewScreen extends StatelessWidget {
     );
   }
 
-  Widget _summarySection() {
+  Widget _summarySection(AppPalette p) {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: TotalsPanel(
@@ -482,12 +485,12 @@ class SalePreviewScreen extends StatelessWidget {
         discountPercent: discountPct,
         discountAmount: discountAmt,
         totalPayable: totalPayable,
-        footer: _paymentMethodChip(),
+        footer: _paymentMethodChip(p),
       ),
     );
   }
 
-  Widget _paymentMethodChip() {
+  Widget _paymentMethodChip(AppPalette p) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -500,7 +503,7 @@ class SalePreviewScreen extends StatelessWidget {
         children: [
           Text(
             AppStrings.current.t('Payment Method'),
-            style: TextStyle(fontSize: 13, color: kGray),
+            style: TextStyle(fontSize: 13, color: p.textSecondary),
           ),
           Text(
             paymentMethod,
@@ -547,7 +550,7 @@ class SalePreviewScreen extends StatelessWidget {
     );
   }
 
-  Widget _footer() {
+  Widget _footer(AppPalette p) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -567,7 +570,7 @@ class SalePreviewScreen extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: kTitle,
+              color: p.textPrimary,
             ),
           ),
           const SizedBox(height: 4),
@@ -575,7 +578,7 @@ class SalePreviewScreen extends StatelessWidget {
             AppStrings.current
                 .t('Total Items: {v1}')
                 .replaceAll('{v1}', (items.length).toString()),
-            style: const TextStyle(fontSize: 12, color: kGray),
+            style: TextStyle(fontSize: 12, color: p.textSecondary),
           ),
         ],
       ),

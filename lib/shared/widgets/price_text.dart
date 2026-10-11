@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/core/extensions/number_extensions.dart';
 
 String formatPrice(double value) => value.asCurrency('MMK');
@@ -42,7 +43,7 @@ class PriceText extends StatelessWidget {
         content: Text(
           full,
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          style: const TextStyle(fontSize: AppTypography.titleMediumSize, fontWeight: FontWeight.bold),
         ),
       ),
     );

@@ -7,6 +7,7 @@ import 'package:posfrontend/features/package/data/repositories/package_repositor
 import 'package:posfrontend/features/package/presentation/screens/add_package_screen.dart';
 import 'package:posfrontend/features/package/presentation/screens/package_details_screen.dart';
 import 'package:posfrontend/features/package/presentation/viewmodels/package_view_model.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/error_snackbar.dart';
@@ -24,7 +25,6 @@ class PackageScreen extends StatefulWidget {
 class _PackageScreenState extends State<PackageScreen> {
   late final PackageViewModel _viewModel;
 
-  static const Color purple = Color(0xFF6D28D9);
 
   String get _badgeCode {
     final name = widget.category.name;
@@ -192,7 +192,7 @@ class _PackageScreenState extends State<PackageScreen> {
                           const Padding(
                             padding: EdgeInsets.symmetric(vertical: 40),
                             child: Center(
-                              child: CircularProgressIndicator(color: purple),
+                              child: CircularProgressIndicator(color: AppColors.brandPurpleDark),
                             ),
                           )
                         else if (_viewModel.hasError)
@@ -249,7 +249,7 @@ class _PackageScreenState extends State<PackageScreen> {
           onTap: () {},
           child: Text(
             context.l10n.t('Dashboard'),
-            style: TextStyle(fontSize: 13, color: purple),
+            style: TextStyle(fontSize: 13, color: AppColors.brandPurpleDark),
           ),
         ),
         Text('  >  ', style: style),
@@ -257,7 +257,7 @@ class _PackageScreenState extends State<PackageScreen> {
           onTap: () {},
           child: Text(
             context.l10n.t('Inventory'),
-            style: TextStyle(fontSize: 13, color: purple),
+            style: TextStyle(fontSize: 13, color: AppColors.brandPurpleDark),
           ),
         ),
         Text('  >  ', style: style),
@@ -267,7 +267,7 @@ class _PackageScreenState extends State<PackageScreen> {
             context.l10n.t('Self Inventory'),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 13, color: purple),
+            style: const TextStyle(fontSize: 13, color: AppColors.brandPurpleDark),
           ),
         ),
         Text('  >  ', style: style),
@@ -511,7 +511,7 @@ class _PackageScreenState extends State<PackageScreen> {
             ),
             const SizedBox(width: 4),
             IconButton(
-              icon: const Icon(Icons.edit, size: 18, color: purple),
+              icon: const Icon(Icons.edit, size: 18, color: AppColors.brandPurpleDark),
               tooltip: 'Edit package',
               onPressed: () => _openEditPackage(p),
               padding: EdgeInsets.zero,
@@ -549,7 +549,7 @@ class _PackageScreenState extends State<PackageScreen> {
           style: const TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: purple,
+            color: AppColors.brandPurpleDark,
           ),
         ),
       ),

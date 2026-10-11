@@ -8,7 +8,8 @@ import 'package:posfrontend/features/purchase/presentation/viewmodels/purchase_i
 import 'package:posfrontend/features/purchase/domain/entities/purchase.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
-import 'package:posfrontend/shared/widgets/responsive_scaffold.dart';
+import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
+import 'package:posfrontend/shared/widgets/app_shell.dart';
 import 'package:posfrontend/shared/widgets/filter_tabs.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
@@ -43,19 +44,32 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    return ResponsiveScaffold(
-      title: context.l10n.t('Purchase Items'),
+    return AppShell(
       active: DrawerDestination.purchaseItem,
       backgroundColor: p.scaffoldBg,
+      wrap: (_, shell) => shell,
       floatingActionButton: FloatingActionButton(
         onPressed: _showNewPurchaseSheet,
         backgroundColor: AppColors.brandPurple,
         shape: const CircleBorder(),
         child: const Icon(Icons.add, color: Colors.white, size: 28),
       ),
-      body: ListenableBuilder(
-        listenable: _viewModel,
-        builder: (context, _) => _buildBody(context),
+      body: (context, isWide) => SafeArea(
+        child: Column(
+          children: [
+            AppScreenTopBar(
+              title: context.l10n.t('Purchase Items'),
+              // No hamburger on a wide window: the sidebar is already on screen.
+              showMenuButton: !isWide,
+            ),
+            Expanded(
+              child: ListenableBuilder(
+                listenable: _viewModel,
+                builder: (context, _) => _buildBody(context),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -135,9 +149,7 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
                   child: Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.brandPurple,
-                    ),
+                    child: CircularProgressIndicator(color: AppColors.brandPurple),
                   ),
                 ),
               if (!_viewModel.hasMore && _viewModel.purchaseItems.isNotEmpty)
@@ -248,7 +260,7 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: isCompleted ? AppColors.green : AppColors.orange,
+                      color: isCompleted ? p.successFg : p.warningFg,
                     ),
                   ),
                 ),
@@ -334,7 +346,7 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.green,
+                          color: p.successFg,
                         ),
                       ),
                     ),

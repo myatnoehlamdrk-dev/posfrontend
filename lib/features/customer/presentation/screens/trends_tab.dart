@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:posfrontend/features/customer/domain/entities/customer.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class TrendsTab extends StatelessWidget {
@@ -9,7 +10,6 @@ class TrendsTab extends StatelessWidget {
 
   const TrendsTab({super.key, required this.analytics});
 
-  static const Color purple = Color(0xFF6D28D9);
   static const Color teal = Color(0xFF4FD1D9);
 
   @override
@@ -154,7 +154,7 @@ class TrendsTab extends StatelessWidget {
               barRods: [
                 BarChartRodData(
                   toY: trends[i].totalSpending.toDouble(),
-                  color: purple,
+                  color: AppColors.brandPurpleDark,
                   width: 20,
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(4),
@@ -255,12 +255,12 @@ class TrendsTab extends StatelessWidget {
                     FlSpot(i.toDouble(), trends[i].uniqueCustomers.toDouble()),
               ),
               isCurved: true,
-              color: purple,
+              color: AppColors.brandPurpleDark,
               barWidth: 2,
               dotData: FlDotData(
                 show: true,
                 getDotPainter: (spot, a, b, c) =>
-                    FlDotCirclePainter(radius: 3, color: purple),
+                    FlDotCirclePainter(radius: 3, color: AppColors.brandPurpleDark),
               ),
             ),
           ],
@@ -310,7 +310,7 @@ class TrendsTab extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: purple,
+                        color: AppColors.brandPurpleDark,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -327,8 +327,8 @@ class TrendsTab extends StatelessWidget {
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
                     value: fraction,
-                    backgroundColor: purple.withValues(alpha: 0.1),
-                    valueColor: AlwaysStoppedAnimation(purple),
+                    backgroundColor: AppColors.brandPurpleDark.withValues(alpha: 0.1),
+                    valueColor: AlwaysStoppedAnimation(AppColors.brandPurpleDark),
                     minHeight: 8,
                   ),
                 ),

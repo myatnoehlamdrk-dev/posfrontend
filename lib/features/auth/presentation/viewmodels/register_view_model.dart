@@ -1,4 +1,4 @@
-import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:posfrontend/core/auth/password_policy.dart';
 import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/core/base/form_validation_mixin.dart';
@@ -6,23 +6,16 @@ import 'package:posfrontend/features/auth/domain/entities/user.dart';
 import 'package:posfrontend/features/auth/domain/usecases/register.dart';
 import 'package:posfrontend/features/shop/domain/entities/shop.dart';
 import 'package:posfrontend/features/shop/domain/repositories/shop_repository.dart';
-import 'package:posfrontend/shared/repositories/imgbb_repository.dart';
 
 class RegisterViewModel extends BaseViewModel with FormValidationMixin {
   final RegisterUseCase _registerUseCase;
   final ShopLocalRepository _shopRepository;
-  final ShopApiRepository _shopApiRepository;
-  final ImgbbRepository _imgbbRepository;
 
   RegisterViewModel({
     required RegisterUseCase registerUseCase,
     required ShopLocalRepository shopRepository,
-    required ShopApiRepository shopApiRepository,
-    required ImgbbRepository imgbbRepository,
   }) : _registerUseCase = registerUseCase,
-       _shopRepository = shopRepository,
-       _shopApiRepository = shopApiRepository,
-       _imgbbRepository = imgbbRepository;
+       _shopRepository = shopRepository;
 
   Shop? _shop;
   Shop? get shop => _shop;
@@ -186,25 +179,18 @@ class RegisterViewModel extends BaseViewModel with FormValidationMixin {
         return false;
       }
 
-      String shopId;
-      if (localShop.id?.isNotEmpty == true) {
-        shopId = localShop.id!;
-      } else {
-        var shop = localShop;
-        if (shop.logoData?.isNotEmpty == true) {
-          final bytes = base64Decode(shop.logoData!);
-          final result = await _imgbbRepository.uploadImage(
-            bytes,
-            fileName: 'shop_logo.jpg',
-          );
-          shop = shop.copyWith(logoUrl: result.url);
-          await _shopRepository.saveShop(shop);
-        }
-        final createdShop = await _shopApiRepository.createShop(shop);
-        await _shopRepository.saveShop(createdShop);
-        _shop = createdShop;
-        notifyListeners();
-        shopId = createdShop.id!;
+      // A shop that already exists server-side travels as an id. One that was
+      // only ever written to local storage has no id, so it rides along with
+      // the account instead: the previous order -- create the shop, then
+      // register -- called endpoints that sit behind auth:sanctum, which a
+      // registrant cannot satisfy, so the flow 401'd before the account was
+      // ever created.
+      final existingShopId = localShop.id?.isNotEmpty == true
+          ? localShop.id
+          : null;
+      if (existingShopId == null && localShop.name.trim().isEmpty) {
+        setError('Shop name is required');
+        return false;
       }
 
       final user = await _registerUseCase(
@@ -220,10 +206,29 @@ class RegisterViewModel extends BaseViewModel with FormValidationMixin {
           billingWay: _billingWay.trim(),
           dob: _dob.isEmpty ? null : _dob,
           gender: _gender,
-          shopId: shopId,
+          shopId: existingShopId,
+          shop: existingShopId == null ? localShop : null,
         ),
       );
       _user = user;
+
+      if (existingShopId == null && user.shopId.isNotEmpty) {
+        // Persist the id the server assigned so every later screen (products,
+        // sales, settings) reads the same shop instead of trying to create it
+        // again. Non-fatal on purpose: the account already exists at this
+        // point, so failing the registration here would send the user back to
+        // a form whose email is now taken. The id is recovered from the
+        // profile after sign-in.
+        try {
+          final savedShop = localShop.copyWith(id: user.shopId);
+          await _shopRepository.saveShop(savedShop);
+          _shop = savedShop;
+          notifyListeners();
+        } catch (e) {
+          debugPrint('Registration: saving the new shop id failed: $e');
+        }
+      }
+
       return true;
     } catch (e) {
       setError('Registration failed: $e');

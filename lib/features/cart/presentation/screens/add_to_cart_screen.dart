@@ -13,7 +13,8 @@ import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
-import 'package:posfrontend/shared/widgets/responsive_scaffold.dart';
+import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
+import 'package:posfrontend/shared/widgets/app_shell.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 
@@ -212,25 +213,39 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
               _allowedOrderIds.contains(card.orderId),
         )
         .toList();
-    return ResponsiveScaffold(
-      scaffoldKey: _scaffoldKey,
-      title: context.l10n.t('Add to Cart'),
+    return AppShell(
       active: DrawerDestination.addToCart,
+      scaffoldKey: _scaffoldKey,
       backgroundColor: context.palette.scaffoldBg,
-      body: cards.isEmpty
-          ? RefreshableBody(
-              onRefresh: _reload,
-              // The empty state is a `Center`, and without a viewport
-              // floor the scroll view would collapse it to the top.
-              fill: true,
-              child: _loadingMore ? _loadingState() : _emptyState(),
-            )
-          : RefreshIndicator(
-              onRefresh: _reload,
-              color: const Color(0xFF2D1B69),
-              backgroundColor: context.palette.surface,
-              child: _cardsList(cards),
+      wrap: (_, shell) => shell,
+      body: (context, isWide) => SafeArea(
+        child: Column(
+          children: [
+            AppScreenTopBar(
+              title: context.l10n.t('Add to Cart'),
+              // No hamburger on a wide window: the sidebar is already on screen.
+              showMenuButton: !isWide,
+              onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
             ),
+            Expanded(
+              child: cards.isEmpty
+                  ? RefreshableBody(
+                      onRefresh: _reload,
+                      // The empty state is a `Center`, and without a viewport
+                      // floor the scroll view would collapse it to the top.
+                      fill: true,
+                      child: _loadingMore ? _loadingState() : _emptyState(),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: _reload,
+                      color: const Color(0xFF2D1B69),
+                      backgroundColor: context.palette.surface,
+                      child: _cardsList(cards),
+                    ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

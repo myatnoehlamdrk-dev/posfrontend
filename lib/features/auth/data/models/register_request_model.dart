@@ -12,6 +12,9 @@ class RegisterRequestModel {
   final String? gender;
   final String? shopId;
 
+  /// A shop to create alongside the account, pre-serialised by the repository.
+  final Map<String, dynamic>? shop;
+
   const RegisterRequestModel({
     required this.fullName,
     required this.email,
@@ -25,6 +28,7 @@ class RegisterRequestModel {
     this.dob,
     this.gender,
     this.shopId,
+    this.shop,
   });
 
   Map<String, dynamic> toJson() => {
@@ -40,5 +44,6 @@ class RegisterRequestModel {
     'dob': dob,
     'gender': gender,
     'shopId': shopId,
+    'shop': shop,
   };
 }

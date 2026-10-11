@@ -93,6 +93,7 @@ import 'package:posfrontend/features/purchase/domain/repositories/purchase_repos
 // Shared
 import 'package:posfrontend/shared/repositories/imgbb_repository.dart';
 import 'package:posfrontend/shared/repositories/imgbb_repository_impl.dart';
+import 'package:posfrontend/shared/services/fcm_service.dart';
 
 final getIt = GetIt.instance;
 
@@ -101,6 +102,7 @@ Future<void> init() async {
   getIt.registerLazySingleton<Dio>(() => ApiClient.instance);
 
   // Shared
+  getIt.registerLazySingleton<FcmService>(() => FcmService.instance);
   getIt.registerLazySingleton<ImgbbRepository>(() => ImgbbRepositoryImpl());
 
   // Auth

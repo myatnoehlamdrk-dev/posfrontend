@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/theme/app_dimens.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class SearchInputBar extends StatelessWidget {
@@ -19,7 +21,7 @@ class SearchInputBar extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: p.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: p.border),
       ),
       child: TextField(
@@ -27,7 +29,7 @@ class SearchInputBar extends StatelessWidget {
         onChanged: onChanged,
         decoration: InputDecoration(
           hintText: hintText,
-          hintStyle: TextStyle(color: p.textMuted, fontSize: 14),
+          hintStyle: TextStyle(color: p.textMuted, fontSize: AppTypography.bodySmallSize),
           prefixIcon: Icon(Icons.search, color: p.textMuted, size: 22),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(

@@ -187,9 +187,9 @@ class _ProductCardScreenState extends State<ProductCardScreen> {
       return Center(
         child: Column(
           children: [
-            Icon(Icons.error_outline, color: AppColors.red, size: 48),
+            Icon(Icons.error_outline, color: palette.dangerFg, size: 48),
             const SizedBox(height: 12),
-            Text(_error!, style: TextStyle(color: AppColors.red)),
+            Text(_error!, style: TextStyle(color: palette.dangerFg)),
             const SizedBox(height: 12),
             ElevatedButton.icon(
               onPressed: _loadProducts,

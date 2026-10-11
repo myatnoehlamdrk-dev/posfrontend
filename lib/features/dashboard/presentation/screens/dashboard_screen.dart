@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:flutter/material.dart';
@@ -10,12 +12,14 @@ import 'package:posfrontend/features/dashboard/presentation/screens/dashboard_ta
 import 'package:posfrontend/features/dashboard/presentation/viewmodels/dashboard_view_model.dart';
 import 'package:posfrontend/features/dashboard/presentation/widgets/dashboard_skeleton.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
+import 'package:posfrontend/shared/widgets/app_shell.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
 import 'package:posfrontend/shared/widgets/shop_scope.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
-import 'package:posfrontend/shared/widgets/responsive_scaffold.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -29,7 +33,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   late final DashboardViewModel _viewModel;
   final CancelToken _cancelToken = CancelToken();
 
-  static const Color purpleAction = Color(0xFF7952DB);
 
   @override
   void initState() {
@@ -37,12 +40,60 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _viewModel = DashboardViewModel(repository: DashboardRepositoryImpl());
     _viewModel.load();
     _loadProfileImage();
+    _checkDailyStockReport();
+  }
+
+  /// App-open catch-up for the daily stock summary: the schedule slot is the
+  /// preferred send time; when it was missed the server dispatches the report
+  /// once today's schedule time has passed. Keeps re-checking (10 min) until
+  /// the server confirms today's claim — `before_schedule` and `dispatched`
+  /// are not final, only `already_sent` is. Fire-and-forget: a failed call
+  /// costs nothing because the next open still owns the day.
+  static DateTime? _lastReportCheck;
+  Timer? _reportRetryTimer;
+
+  Future<void> _checkDailyStockReport() async {
+    final now = DateTime.now();
+    if (_lastReportCheck != null &&
+        now.difference(_lastReportCheck!) < const Duration(minutes: 2)) {
+      return;
+    }
+    _lastReportCheck = now;
+
+    try {
+      final resp = await ApiClient.create()
+          .post('/notifications/daily-report/check');
+      final data = resp.data;
+      final reason =
+          (data is Map<String, dynamic>) ? data['reason'] : null;
+
+      if (reason == 'already_sent') {
+        _reportRetryTimer?.cancel();
+        return;
+      }
+
+      // Not done yet — before today's schedule slot, or the report was just
+      // dispatched. Keep checking while this session stays open so a missed
+      // schedule slot is caught up the same day, not only on next launch.
+      if (mounted) {
+        _reportRetryTimer?.cancel();
+        _reportRetryTimer = Timer(
+          const Duration(minutes: 10),
+          _checkDailyStockReport,
+        );
+      }
+    } catch (_) {
+      // Non-critical: never block or surface this to the user.
+    }
   }
 
   Future<void> _loadProfileImage() async {
     try {
       final dio = ApiClient.create();
-      final resp = await dio.get('/auth/profile', cancelToken: _cancelToken);
+      final resp = await dio.get(
+        '/auth/profile',
+        cancelToken: _cancelToken,
+      );
       final data = resp.data;
       final image = (data is Map<String, dynamic>) ? (data['image'] ?? '') : '';
       if (image is String && image.isNotEmpty && mounted) {
@@ -55,6 +106,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   void dispose() {
+    _reportRetryTimer?.cancel();
     if (!_cancelToken.isCancelled) _cancelToken.cancel();
     _viewModel.dispose();
     super.dispose();
@@ -63,97 +115,115 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    return ResponsiveScaffold(
-      scaffoldKey: _scaffoldKey,
-      title: context.l10n.t('Dashboard'),
+    return AppShell(
       active: DrawerDestination.dashboard,
+      scaffoldKey: _scaffoldKey,
       backgroundColor: p.scaffoldBg,
-      body: ListenableBuilder(
-        listenable: _viewModel,
-        builder: (context, _) {
-          return RefreshableBody(
-            onRefresh: () => _viewModel.load(),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (_viewModel.isLoading && _viewModel.data == null)
-                    const DashboardSkeleton()
-                  else if (_viewModel.hasError)
-                    SizedBox(
-                      height: 300,
-                      child: Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.error_outline,
-                              color: Color(0xFFEF4444),
-                              size: 48,
+      wrap: (_, shell) => shell,
+      body: (context, isWide) => SafeArea(
+        child: Column(
+          children: [
+            AppScreenTopBar(
+              title: context.l10n.t('Dashboard'),
+              // No hamburger on a wide window: the sidebar is already on screen.
+              showMenuButton: !isWide,
+              onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+            ),
+            Expanded(
+              child: ListenableBuilder(
+                listenable: _viewModel,
+                builder: (context, _) {
+                  return RefreshableBody(
+                    onRefresh: () => _viewModel.load(),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 24,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (_viewModel.isLoading && _viewModel.data == null)
+                            const DashboardSkeleton()
+                          else if (_viewModel.hasError)
+                            SizedBox(
+                              height: 300,
+                              child: Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.error_outline,
+                                      color: Color(0xFFEF4444),
+                                      size: 48,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      _viewModel.errorMessage ??
+                                          'Something went wrong',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: p.textSecondary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    ElevatedButton.icon(
+                                      onPressed: () => _viewModel.load(),
+                                      icon: const Icon(Icons.refresh, size: 18),
+                                      label: Text(context.l10n.t('Retry')),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.brandPurple,
+                                        foregroundColor: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          else if (_viewModel.data == null)
+                            const DashboardSkeleton()
+                          else ...[
+                            _buildMetricSection(
+                              context.l10n.t('Summary'),
+                              _viewModel.data!.metrics,
+                            ),
+                            const SizedBox(height: 24),
+                            _buildCategoryDistributionSection(
+                              _viewModel.data!.categoryDistribution,
+                            ),
+                            const SizedBox(height: 24),
+                            _buildCategoryQuantitySection(
+                              _viewModel.data!.categoryQuantity,
+                            ),
+                            const SizedBox(height: 24),
+                            _buildMonthlySalesSection(),
+                            const SizedBox(height: 24),
+                            Text(
+                              context.l10n.t('Product Trend'),
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: p.textPrimary,
+                              ),
                             ),
                             const SizedBox(height: 12),
-                            Text(
-                              _viewModel.errorMessage ?? 'Something went wrong',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: p.textSecondary,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton.icon(
-                              onPressed: () => _viewModel.load(),
-                              icon: const Icon(Icons.refresh, size: 18),
-                              label: Text(context.l10n.t('Retry')),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: purpleAction,
-                                foregroundColor: Colors.white,
-                              ),
+                            _buildProductTrendSection(
+                              _viewModel.data!.mostBought,
+                              _viewModel.data!.leastBought,
+                              _viewModel.data!.noBought,
                             ),
                           ],
-                        ),
-                      ),
-                    )
-                  else if (_viewModel.data == null)
-                    const DashboardSkeleton()
-                  else ...[
-                    _buildMetricSection(
-                      context.l10n.t('Summary'),
-                      _viewModel.data!.metrics,
-                    ),
-                    const SizedBox(height: 24),
-                    _buildCategoryDistributionSection(
-                      _viewModel.data!.categoryDistribution,
-                    ),
-                    const SizedBox(height: 24),
-                    _buildCategoryQuantitySection(
-                      _viewModel.data!.categoryQuantity,
-                    ),
-                    const SizedBox(height: 24),
-                    _buildMonthlySalesSection(),
-                    const SizedBox(height: 24),
-                    Text(
-                      context.l10n.t('Product Trend'),
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: p.textPrimary,
+                          const SizedBox(height: 24),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    _buildProductTrendSection(
-                      _viewModel.data!.mostBought,
-                      _viewModel.data!.leastBought,
-                      _viewModel.data!.noBought,
-                    ),
-                  ],
-                  const SizedBox(height: 24),
-                ],
+                  );
+                },
               ),
             ),
-          );
-        },
+          ],
+        ),
       ),
     );
   }
@@ -226,14 +296,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: purpleAction,
+                            color: p.accentText,
                           ),
                         ),
                         const SizedBox(width: 2),
-                        const Icon(
+                        Icon(
                           Icons.chevron_right,
                           size: 13,
-                          color: purpleAction,
+                          color: p.accentText,
                         ),
                       ],
                     ),
@@ -655,7 +725,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final p = context.palette;
     final mostCard = _ProductListCard(
       title: context.l10n.t('Most Bought'),
-      titleColor: const Color(0xFF16A34A),
+      titleColor: p.successFg,
       items: most,
       onViewAll: () => Navigator.of(context).push(
         DashboardTableScreen.route(
@@ -666,7 +736,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
     final leastCard = _ProductListCard(
       title: context.l10n.t('Least Bought'),
-      titleColor: const Color(0xFFEF4444),
+      titleColor: p.dangerFg,
       items: least,
       onViewAll: () => Navigator.of(context).push(
         DashboardTableScreen.route(
@@ -861,14 +931,14 @@ class _ProductListCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: _DashboardScreenState.purpleAction,
+                      color: pal.accentText,
                     ),
                   ),
                   const SizedBox(width: 2),
-                  const Icon(
+                  Icon(
                     Icons.chevron_right,
                     size: 14,
-                    color: _DashboardScreenState.purpleAction,
+                    color: pal.accentText,
                   ),
                 ],
               ),
@@ -905,7 +975,6 @@ class _HorizontalCategoryChartPainter extends CustomPainter {
 
   _HorizontalCategoryChartPainter(this.items, this.palette);
 
-  static const Color _barColor = Color(0xFF7952DB);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -963,7 +1032,7 @@ class _HorizontalCategoryChartPainter extends CustomPainter {
     final n = sorted.length;
     final rowH = plot.height / n;
     final barH = (rowH * 0.6).clamp(6.0, 22.0);
-    final barPaint = Paint()..color = _barColor;
+    final barPaint = Paint()..color = AppColors.brandPurple;
 
     for (var i = 0; i < n; i++) {
       final e = sorted[i];
@@ -1103,7 +1172,6 @@ class _HorizontalBarChartPainter extends CustomPainter {
     'Dec',
   ];
 
-  static const Color _barColor = Color(0xFF7952DB);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1148,7 +1216,7 @@ class _HorizontalBarChartPainter extends CustomPainter {
     final n = sorted.length;
     final rowH = plot.height / n;
     final barH = (rowH * 0.62).clamp(6.0, 18.0);
-    final barPaint = Paint()..color = _barColor;
+    final barPaint = Paint()..color = AppColors.brandPurple;
 
     for (var i = 0; i < n; i++) {
       final entry = sorted[i];

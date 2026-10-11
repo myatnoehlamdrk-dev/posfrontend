@@ -30,7 +30,7 @@ class RefreshableBody extends StatelessWidget {
     final p = context.palette;
     return RefreshIndicator(
       onRefresh: onRefresh,
-      color: p.primary,
+      color: p.accentText,
       backgroundColor: p.surface,
       child: LayoutBuilder(
         builder: (context, constraints) {

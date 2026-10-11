@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/theme/app_dimens.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/core/network/app_exceptions.dart';
 import 'package:posfrontend/shared/l10n/api_message_l10n.dart';
 import 'package:posfrontend/shared/l10n/app_strings.dart';
@@ -35,15 +37,15 @@ class AppMessageBanner extends StatelessWidget {
         ? Icons.check_circle_rounded
         : Icons.error_outline_rounded;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
         children: [
           Icon(icon, color: foreground, size: 20),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.s12),
           Expanded(
             child: Text(
               // Translated here rather than at each call site. Most messages
@@ -54,13 +56,13 @@ class AppMessageBanner extends StatelessWidget {
               message.localizedMessage(AppStrings.of(context)),
               style: TextStyle(
                 color: foreground,
-                fontSize: 14,
+                fontSize: AppTypography.bodySmallSize,
                 fontWeight: FontWeight.w500,
               ),
             ),
           ),
           if (actionLabel != null && onAction != null) ...[
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.s8),
             TextButton(
               onPressed: onAction,
               style: TextButton.styleFrom(foregroundColor: foreground),
@@ -100,7 +102,7 @@ void _showMessage(BuildContext context, AppMessageBanner banner) {
         elevation: 0,
         behavior: SnackBarBehavior.floating,
         padding: EdgeInsets.zero,
-        margin: const EdgeInsets.all(16),
+        margin: const EdgeInsets.all(AppSpacing.s16),
         duration: const Duration(seconds: 3),
       ),
     );

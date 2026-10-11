@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/theme/app_dimens.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:posfrontend/features/profile/presentation/screens/profile_screen.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/custom_back_button.dart';
+import 'package:posfrontend/shared/widgets/notification_bell.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
 
 void navigateToDashboard(BuildContext context) {
@@ -56,36 +59,14 @@ class AppTopBar extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 22,
+              fontSize: AppTypography.titleMediumSize,
               fontWeight: FontWeight.bold,
               color: p.textPrimary,
             ),
           ),
         ),
-        Stack(
-          children: [
-            IconButton(
-              icon: Icon(
-                Icons.notifications_none_outlined,
-                color: p.textPrimary,
-              ),
-              onPressed: () {},
-            ),
-            Positioned(
-              top: 12,
-              right: 12,
-              child: Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFEF4444),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(width: 8),
+        const NotificationBell(),
+        const SizedBox(width: AppSpacing.s8),
         GestureDetector(
           onTap: () {
             Navigator.of(

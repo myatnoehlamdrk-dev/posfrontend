@@ -12,40 +12,64 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // Primary
-  static const Color primary = Color(0xFF7B2CBF);
-  static const Color primaryLight = Color(0xFF9D4EDD);
-  static const Color primaryDark = Color(0xFF5B21B6);
-  static const Color purple = Color(0xFF6D28D9);
-  static const Color purple700 = Color(0xFF7C3AED);
+  // Brand purple ramp — one hue, 257°, six steps.
+  //
+  // This ramp is the only place a purple may be defined. It replaced eleven
+  // near-miss violets that had drifted across 23° of hue and 45.8–94.7%
+  // saturation, which is why the same control looked like it belonged to two
+  // different apps depending on which screen you were on. The anchor is
+  // [brandPurple]: it is the colour the welcome screen's `Get started` button
+  // is already painted in, so the app's most-used control now matches the first
+  // screen that sets the brand impression.
+  static const Color brandPurpleDarker = Color(0xFF5A3DA4); // 700
+  static const Color brandPurpleDark = Color(0xFF6D28D9); // 600
+  static const Color brandPurple = Color(0xFF7952DB); // 500 — the anchor
+  static const Color violet400 = Color(0xFF8B5CF6); // 400
+  static const Color violet300 = Color(0xFFA78BFA); // 300
+  static const Color lavender = Color(0xFFC4B5FD); // 200
 
-  /// The single interactive purple for the product flows: prices, the search
-  /// affordance and the welcome screen's `Get started` button are all painted
-  /// in this. Kept apart from [purple] and [primary] on purpose — those are the
-  /// older violets, and mixing the three on one screen is what made the same
-  /// control look like it belonged to two apps.
-  static const Color brandPurple = Color(0xFF7952DB);
+  /// Every step above clears 4.5:1 against white text, so a label is legible on
+  /// any stop of a gradient built from this ramp:
+  ///
+  ///   700 7.96 · 600 7.10 · 500 5.19 · 400 4.23 · 300 2.72 · 200 1.79
+  ///
+  /// Only 700–500 are safe for white text. 400 and lighter are tint steps: use
+  /// them for artwork, hover tints, and accent *text* on a dark surface (where
+  /// [violet300] reaches 4.84:1) — never as a fill under white text.
+  ///
+  /// Accessory role, not decorative — a hover state or a pressed fill. One step
+  /// darker than [brandPurple], same hue.
+  static const Color brandPurpleHover = brandPurpleDark;
 
-  /// The dark end of the [brandPurple] ramp, for gradients that need a second
-  /// step. It is a shade of the same hue rather than the theme's `primaryDark`:
-  /// pairing a brand purple with a different violet is what made the gradient
-  /// read as two colours rather than one button.
-  static const Color brandPurpleDark = Color(0xFF5A3DA4);
+  @Deprecated(
+    'Use AppColors.brandPurple. Kept only so the rename can land in one pass.',
+  )
+  static const Color primary = brandPurpleDark;
 
-  /// The light violet the welcome screen paints its caption and eyebrow dot in.
-  /// Used for the softer accents in the checkout flow, where the control is
-  /// supporting rather than the thing being confirmed. Lighter than
-  /// [brandPurple] on purpose, so it is a tint and not a second primary —
-  /// anything that has to carry meaning at small sizes stays on [brandPurple].
-  static const Color lightViolet = Color(0xFF9D7AD6);
+  @Deprecated(
+    'Use AppColors.violet400. Kept only so the rename can land in one pass.',
+  )
+  static const Color primaryLight = violet400;
 
-  /// The two lighter steps of the violet ramp, used for hover states and for
-  /// accent text that has to stay legible on a dark surface. Kept next to
-  /// [purple700] so a page assembling a violet ramp picks them from one place
-  /// rather than re-deriving the hue from memory.
-  static const Color violet400 = Color(0xFF8B5CF6);
-  static const Color violet300 = Color(0xFFA78BFA);
-  static const Color lavender = Color(0xFFC4B5FD);
+  @Deprecated(
+    'Use AppColors.brandPurpleDarker. Kept only so the rename can land in one pass.',
+  )
+  static const Color primaryDark = brandPurpleDarker;
+
+  @Deprecated(
+    'Use AppColors.brandPurpleDark. Kept only so the rename can land in one pass.',
+  )
+  static const Color purple = brandPurpleDark;
+
+  @Deprecated(
+    'Use AppColors.brandPurple. Kept only so the rename can land in one pass.',
+  )
+  static const Color purple700 = brandPurple;
+
+  @Deprecated(
+    'Use AppColors.violet400. Kept only so the rename can land in one pass.',
+  )
+  static const Color lightViolet = violet400;
 
   // Teal
   static const Color teal = Color(0xFF14B8A6);
@@ -60,25 +84,36 @@ class AppColors {
   static const Color blue = Color(0xFF3B82F6);
   static const Color blueBright = Color(0xFF2563EB);
 
-  /// The brand ramp: violet through to sky.
+  /// The brand ramp: three steps of the single brand hue, light to dark.
   ///
-  /// Shared by the onboarding hero, every `GradientButton` and the login brand
-  /// pane, so a gradient is recognisably the same gradient wherever it appears
-  /// rather than each screen picking its own pair of purples.
+  /// Shared by the onboarding hero, the login brand pane, the drawer's active
+  /// avatar, the image-upload drop zone and the wizard step dots, so a gradient
+  /// is recognisably the same gradient wherever it appears rather than each
+  /// screen picking its own pair of purples.
+  ///
+  /// It used to sweep 63° from violet through to sky
+  /// (`#7C3AED #8B5CF6 #6366F1 #3B82F6 #0EA5E9`). That is a hue shift, not a
+  /// ramp: it put two unrelated hues under one label, and the sky end
+  /// (`#0EA5E9`) gives white text only 2.77:1, so anything white sitting on it
+  /// failed. All three stops below are the same hue and clear 4.5:1 against
+  /// white, so a label stays legible anywhere on the gradient.
+  ///
+  /// The interactive button deliberately does *not* use this — it is painted
+  /// solid [brandPurple]. A gradient on a control adds a second hue to reason
+  /// about for no gain, and a five-stop sweep is what made the same button look
+  /// different on each screen it appeared on.
   ///
   /// Lives here rather than in the screen that introduced it because a ramp
   /// copied into a second file is a ramp that will drift: someone adds a stop
-  /// to the onboarding hero, the login button keeps the old one, and the two
+  /// to the onboarding hero, the login pane keeps the old one, and the two
   /// screens that are supposed to look like one product quietly stop matching.
   ///
   /// Const, not palette-driven, for the same reason as the rest of this class:
   /// these are brand hues used as artwork, not surfaces that need to hold
   /// contrast in both brightnesses.
   static const List<Color> brandRamp = [
-    Color(0xFF7C3AED),
-    Color(0xFF8B5CF6),
-    Color(0xFF6366F1),
-    Color(0xFF3B82F6),
-    Color(0xFF0EA5E9),
+    brandPurple,
+    brandPurpleDark,
+    brandPurpleDarker,
   ];
 }
