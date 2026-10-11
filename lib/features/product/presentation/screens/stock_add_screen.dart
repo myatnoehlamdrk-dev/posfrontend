@@ -2,6 +2,8 @@ import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/responsive_scaffold.dart';
 import 'package:posfrontend/core/network/app_exceptions.dart';
 import 'package:posfrontend/features/product/data/models/product_create_models.dart';
 import 'package:posfrontend/features/product/data/repositories/product_create_repository_impl.dart';
@@ -10,7 +12,6 @@ import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
-
 
 class StockAddScreen extends StatefulWidget {
   const StockAddScreen({super.key});
@@ -156,91 +157,92 @@ class _StockAddScreenState extends State<StockAddScreen> {
 
     return ProductCreateRequest(
       name: product.name,
-      variants: updated
-          .map(
-            (v) {
-              // Read through the JSON helpers rather than casting. A variant
-              // that arrives without `quantity`, or with it as a string, used
-              // to throw "type 'Null' is not a subtype of type 'num'" out of
-              // this map and take the whole form down with it.
-              final quantity = (v['quantity'] as num?)?.toInt() ?? 0;
-              final rawPrice = v['price'];
-              final price = switch (rawPrice) {
-                final num n => n.toDouble(),
-                final String s => double.tryParse(s) ?? 0,
-                _ => 0.0,
-              };
-              return ProductCreateVariant(
-                size: (v['size'] ?? '').toString(),
-                color: (v['color'] ?? '').toString(),
-                quantity: quantity,
-                price: price,
-              );
-            },
-          )
-          .toList(),
+      variants: updated.map((v) {
+        // Read through the JSON helpers rather than casting. A variant
+        // that arrives without `quantity`, or with it as a string, used
+        // to throw "type 'Null' is not a subtype of type 'num'" out of
+        // this map and take the whole form down with it.
+        final quantity = (v['quantity'] as num?)?.toInt() ?? 0;
+        final rawPrice = v['price'];
+        final price = switch (rawPrice) {
+          final num n => n.toDouble(),
+          final String s => double.tryParse(s) ?? 0,
+          _ => 0.0,
+        };
+        return ProductCreateVariant(
+          size: (v['size'] ?? '').toString(),
+          color: (v['color'] ?? '').toString(),
+          quantity: quantity,
+          price: price,
+        );
+      }).toList(),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    return Scaffold(
-      backgroundColor: p.scaffoldBg,
-      body: SafeArea(
-        child: Column(
-          children: [
-            AppScreenTopBar(
-              title: context.l10n.t('Stock Add'),
-              showMenuButton: false,
-              showBackButton: true,
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    FormCard(
-                      label: context.l10n.t('Search Product'),
-                      helper: context.l10n.t('Search a product to add stock.'),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _searchField(),
-                          if (_searching)
-                            const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 16),
-                              child: Center(
-                                child: CircularProgressIndicator(
-                                  color: AppColors.brandPurple,
-                                  strokeWidth: 2.5,
-                                ),
-                              ),
-                            )
-                          else if (_results.isNotEmpty)
-                            ..._results.map((p) => _resultTile(p)),
-                        ],
-                      ),
-                    ),
-                    if (_selected != null) ...[
-                      const SizedBox(height: 16),
+    return WideDrawerDock(
+      active: DrawerDestination.addProduct,
+      child: Scaffold(
+        backgroundColor: p.scaffoldBg,
+        body: SafeArea(
+          child: Column(
+            children: [
+              AppScreenTopBar(
+                title: context.l10n.t('Stock Add'),
+                showMenuButton: false,
+                showBackButton: true,
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       FormCard(
-                        label: context.l10n.t('Add Stock'),
+                        label: context.l10n.t('Search Product'),
                         helper: context.l10n.t(
-                          'Enter the amount of stock to add.',
+                          'Search a product to add stock.',
                         ),
-                        child: _stockForm(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _searchField(),
+                            if (_searching)
+                              const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 16),
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    color: AppColors.brandPurple,
+                                    strokeWidth: 2.5,
+                                  ),
+                                ),
+                              )
+                            else if (_results.isNotEmpty)
+                              ..._results.map((p) => _resultTile(p)),
+                          ],
+                        ),
                       ),
+                      if (_selected != null) ...[
+                        const SizedBox(height: 16),
+                        FormCard(
+                          label: context.l10n.t('Add Stock'),
+                          helper: context.l10n.t(
+                            'Enter the amount of stock to add.',
+                          ),
+                          child: _stockForm(),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
+        bottomNavigationBar: _selected != null ? _submitButton() : null,
       ),
-      bottomNavigationBar: _selected != null ? _submitButton() : null,
     );
   }
 
@@ -463,10 +465,7 @@ class _StockAddScreenState extends State<StockAddScreen> {
           gradient: _saving
               ? null
               : LinearGradient(
-                  colors: [
-                    AppColors.brandPurple,
-                    AppColors.brandPurpleDark,
-                  ],
+                  colors: [AppColors.brandPurple, AppColors.brandPurpleDark],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),

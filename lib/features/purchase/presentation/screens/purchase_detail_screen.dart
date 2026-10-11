@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/responsive_scaffold.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/core/extensions/datetime_extensions.dart';
 import 'package:posfrontend/core/extensions/number_extensions.dart';
@@ -31,130 +33,137 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
     final p = context.palette;
     final isCompleted = _order.status == PurchaseStatus.completed;
 
-    return Scaffold(
-      backgroundColor: p.scaffoldBg,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildTopBar(context),
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: () async {},
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildOrderHeader(context, isCompleted),
-                      const SizedBox(height: 12),
-                      _buildInfoCard(context, 'Purchaser Information', [
-                        if (_order.createdBy.isNotEmpty)
-                          _infoRow(context, 'Purchaser Name', _order.createdBy),
-                        if (_order.createdAt.isNotEmpty)
-                          _infoRow(
-                            context,
-                            'Created At',
-                            _formatDate(_order.createdAt),
-                          ),
-                        if (_order.updatedBy.isNotEmpty)
-                          _infoRow(context, 'Updated By', _order.updatedBy),
-                        if (_order.updatedAt.isNotEmpty)
-                          _infoRow(
-                            context,
-                            'Updated At',
-                            _formatDate(_order.updatedAt),
-                          ),
-                      ]),
-                      const SizedBox(height: 12),
-                      _buildInfoCard(context, 'Supplier Information', [
-                        _infoRow(
-                          context,
-                          'Supplier Name',
-                          _order.supplierName.isNotEmpty
-                              ? _order.supplierName
-                              : '-',
-                        ),
-                        _infoRow(
-                          context,
-                          'Supplier ID',
-                          _order.supplierId.isNotEmpty
-                              ? _order.supplierId
-                              : '-',
-                        ),
-                      ]),
-                      const SizedBox(height: 12),
-                      _buildInfoCard(context, 'Product Details', [
-                        _infoRow(
-                          context,
-                          'Product Name',
-                          _order.productName.isNotEmpty
-                              ? _order.productName
-                              : '-',
-                        ),
-                        _infoRow(context, 'Quantity', 'x${_order.quantity}'),
-                        _infoRow(
-                          context,
-                          'Unit Price',
-                          'MMK ${_order.unitPrice.withCommas()}',
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              context.l10n.t('Total Amount'),
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: p.textSecondary,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Flexible(
-                              child: PriceText(
-                                _order.totalAmount.toDouble(),
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: p.textPrimary,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ]),
-                      if (_order.notes.isNotEmpty) ...[
+    return WideDrawerDock(
+      active: DrawerDestination.purchaseItem,
+      child: Scaffold(
+        backgroundColor: p.scaffoldBg,
+        body: SafeArea(
+          child: Column(
+            children: [
+              _buildTopBar(context),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () async {},
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildOrderHeader(context, isCompleted),
                         const SizedBox(height: 12),
-                        _buildInfoCard(context, 'Notes', [
-                          Text(
-                            _order.notes,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: p.textPrimary,
+                        _buildInfoCard(context, 'Purchaser Information', [
+                          if (_order.createdBy.isNotEmpty)
+                            _infoRow(
+                              context,
+                              'Purchaser Name',
+                              _order.createdBy,
                             ),
+                          if (_order.createdAt.isNotEmpty)
+                            _infoRow(
+                              context,
+                              'Created At',
+                              _formatDate(_order.createdAt),
+                            ),
+                          if (_order.updatedBy.isNotEmpty)
+                            _infoRow(context, 'Updated By', _order.updatedBy),
+                          if (_order.updatedAt.isNotEmpty)
+                            _infoRow(
+                              context,
+                              'Updated At',
+                              _formatDate(_order.updatedAt),
+                            ),
+                        ]),
+                        const SizedBox(height: 12),
+                        _buildInfoCard(context, 'Supplier Information', [
+                          _infoRow(
+                            context,
+                            'Supplier Name',
+                            _order.supplierName.isNotEmpty
+                                ? _order.supplierName
+                                : '-',
+                          ),
+                          _infoRow(
+                            context,
+                            'Supplier ID',
+                            _order.supplierId.isNotEmpty
+                                ? _order.supplierId
+                                : '-',
                           ),
                         ]),
+                        const SizedBox(height: 12),
+                        _buildInfoCard(context, 'Product Details', [
+                          _infoRow(
+                            context,
+                            'Product Name',
+                            _order.productName.isNotEmpty
+                                ? _order.productName
+                                : '-',
+                          ),
+                          _infoRow(context, 'Quantity', 'x${_order.quantity}'),
+                          _infoRow(
+                            context,
+                            'Unit Price',
+                            'MMK ${_order.unitPrice.withCommas()}',
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                context.l10n.t('Total Amount'),
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: p.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Flexible(
+                                child: PriceText(
+                                  _order.totalAmount.toDouble(),
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: p.textPrimary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ]),
+                        if (_order.notes.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          _buildInfoCard(context, 'Notes', [
+                            Text(
+                              _order.notes,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: p.textPrimary,
+                              ),
+                            ),
+                          ]),
+                        ],
+                        const SizedBox(height: 12),
+                        _buildInfoCard(context, 'Order Status & History', [
+                          _infoRow(
+                            context,
+                            'Order Date',
+                            _formatDate(_order.date),
+                          ),
+                          _infoRow(
+                            context,
+                            'Order Status',
+                            isCompleted ? 'Completed' : 'Pending',
+                          ),
+                          _infoRow(context, 'Order ID', '#${_order.orderId}'),
+                        ]),
+                        const SizedBox(height: 24),
                       ],
-                      const SizedBox(height: 12),
-                      _buildInfoCard(context, 'Order Status & History', [
-                        _infoRow(
-                          context,
-                          'Order Date',
-                          _formatDate(_order.date),
-                        ),
-                        _infoRow(
-                          context,
-                          'Order Status',
-                          isCompleted ? 'Completed' : 'Pending',
-                        ),
-                        _infoRow(context, 'Order ID', '#${_order.orderId}'),
-                      ]),
-                      const SizedBox(height: 24),
-                    ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

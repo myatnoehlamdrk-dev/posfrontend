@@ -8,7 +8,7 @@ import 'package:posfrontend/features/purchase/presentation/viewmodels/purchase_i
 import 'package:posfrontend/features/purchase/domain/entities/purchase.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
-import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
+import 'package:posfrontend/shared/widgets/responsive_scaffold.dart';
 import 'package:posfrontend/shared/widgets/filter_tabs.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
@@ -43,27 +43,19 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    return Scaffold(
+    return ResponsiveScaffold(
+      title: context.l10n.t('Purchase Items'),
+      active: DrawerDestination.purchaseItem,
       backgroundColor: p.scaffoldBg,
-      drawer: const AppDrawer(active: DrawerDestination.purchaseItem),
       floatingActionButton: FloatingActionButton(
         onPressed: _showNewPurchaseSheet,
         backgroundColor: AppColors.brandPurple,
         shape: const CircleBorder(),
         child: const Icon(Icons.add, color: Colors.white, size: 28),
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            AppScreenTopBar(title: context.l10n.t('Purchase Items')),
-            Expanded(
-              child: ListenableBuilder(
-                listenable: _viewModel,
-                builder: (context, _) => _buildBody(context),
-              ),
-            ),
-          ],
-        ),
+      body: ListenableBuilder(
+        listenable: _viewModel,
+        builder: (context, _) => _buildBody(context),
       ),
     );
   }
@@ -143,7 +135,9 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
                   child: Center(
-                    child: CircularProgressIndicator(color: AppColors.brandPurple),
+                    child: CircularProgressIndicator(
+                      color: AppColors.brandPurple,
+                    ),
                   ),
                 ),
               if (!_viewModel.hasMore && _viewModel.purchaseItems.isNotEmpty)

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/responsive_scaffold.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:posfrontend/core/network/media_url.dart';
@@ -58,6 +60,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // Brightness-dependent tokens, so the same screen serves light and dark.
   AppPalette get _p => context.palette;
+
   /// The one purple the app's actions are painted in — the welcome screen's
   /// `Get started` button, the product prices, Add to Cart and the sale buttons.
   /// Held as a pair so the save button's gradient is that purple ramp rather
@@ -619,156 +622,159 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final saving = _viewModel.isSaving;
         final errors = _viewModel.fieldErrors;
 
-        return Scaffold(
-          backgroundColor: _p.scaffoldBg,
-          body: SafeArea(
-            child: loading && _viewModel.profile == null
-                ? Center(child: CircularProgressIndicator(color: primary))
-                : Column(
-                    children: [
-                      _buildTopBar(),
-                      Expanded(
-                        child: RefreshableBody(
-                          onRefresh: _refresh,
-                          child: Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: Form(
-                              key: _formKey,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildProfileHeader(),
-                                  const SizedBox(height: 24),
-                                  _sectionTitle('Personal Information'),
-                                  const SizedBox(height: 12),
-                                  _buildTextField(
-                                    controller: _nameController,
-                                    label: context.l10n.t('Full Name'),
-                                    icon: Icons.person_outline,
-                                    errorText: errors['name'],
-                                    onChanged: _viewModel.setName,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  _buildTextField(
-                                    controller: _emailController,
-                                    label: context.l10n.t('Email'),
-                                    icon: Icons.email_outlined,
-                                    keyboardType: TextInputType.emailAddress,
-                                    errorText: errors['email'],
-                                    onChanged: _viewModel.setEmail,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  _buildTextField(
-                                    controller: _phoneController,
-                                    label: context.l10n.t('Phone'),
-                                    icon: Icons.phone_outlined,
-                                    keyboardType: TextInputType.phone,
-                                    onChanged: _viewModel.setPhone,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  _buildTextField(
-                                    controller: _socialController,
-                                    label: context.l10n.t('Social Media'),
-                                    icon: Icons.link,
-                                    onChanged: _viewModel.setSocial,
-                                  ),
-                                  const SizedBox(height: 24),
-                                  _sectionTitle('Account Details'),
-                                  const SizedBox(height: 12),
-                                  _buildTextField(
-                                    controller: _typeController,
-                                    label: context.l10n.t('Type'),
-                                    icon: Icons.category_outlined,
-                                    onChanged: _viewModel.setType,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  _buildTextField(
-                                    controller: _roleController,
-                                    label: context.l10n.t('Role'),
-                                    icon: Icons.admin_panel_settings_outlined,
-                                    onChanged: _viewModel.setRole,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  _buildTextField(
-                                    controller: _nrcNoController,
-                                    label: context.l10n.t('NRC No'),
-                                    icon: Icons.badge_outlined,
-                                    onChanged: _viewModel.setNrcNo,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  _buildTextField(
-                                    controller: _billingWayController,
-                                    label: context.l10n.t(
-                                      'Billing Way for Service',
+        return WideDrawerDock(
+          active: DrawerDestination.setting,
+          child: Scaffold(
+            backgroundColor: _p.scaffoldBg,
+            body: SafeArea(
+              child: loading && _viewModel.profile == null
+                  ? Center(child: CircularProgressIndicator(color: primary))
+                  : Column(
+                      children: [
+                        _buildTopBar(),
+                        Expanded(
+                          child: RefreshableBody(
+                            onRefresh: _refresh,
+                            child: Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: Form(
+                                key: _formKey,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildProfileHeader(),
+                                    const SizedBox(height: 24),
+                                    _sectionTitle('Personal Information'),
+                                    const SizedBox(height: 12),
+                                    _buildTextField(
+                                      controller: _nameController,
+                                      label: context.l10n.t('Full Name'),
+                                      icon: Icons.person_outline,
+                                      errorText: errors['name'],
+                                      onChanged: _viewModel.setName,
                                     ),
-                                    icon: Icons.receipt_long_outlined,
-                                    onChanged: _viewModel.setBillingWay,
-                                  ),
-                                  const SizedBox(height: 24),
-                                  _sectionTitle('Personal Details'),
-                                  const SizedBox(height: 12),
-                                  _buildTextField(
-                                    controller: _dobController,
-                                    label: context.l10n.t('Date of Birth'),
-                                    icon: Icons.cake_outlined,
-                                    readOnly: true,
-                                    onTap: _pickDob,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  _buildTextField(
-                                    controller: _genderController,
-                                    label: context.l10n.t('Gender'),
-                                    icon: Icons.wc_outlined,
-                                    onChanged: _viewModel.setGender,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  _buildTextField(
-                                    controller: _addressController,
-                                    label: context.l10n.t('Address'),
-                                    icon: Icons.location_on_outlined,
-                                    maxLines: 2,
-                                    onChanged: _viewModel.setAddress,
-                                  ),
-                                  const SizedBox(height: 24),
-                                  _sectionTitle('About Shop'),
-                                  const SizedBox(height: 12),
-                                  ..._buildShopFields(),
-                                  const SizedBox(height: 24),
-                                  _gradientButton(
-                                    label: context.l10n.t('Change Password'),
-                                    icon: Icons.vpn_key_outlined,
-                                    loading: false,
-                                    onTap: _showChangePasswordDialog,
-                                  ),
-                                  const SizedBox(height: 32),
-                                  if (_viewModel.hasError)
-                                    Padding(
-                                      padding: const EdgeInsets.only(
-                                        bottom: 12,
+                                    const SizedBox(height: 16),
+                                    _buildTextField(
+                                      controller: _emailController,
+                                      label: context.l10n.t('Email'),
+                                      icon: Icons.email_outlined,
+                                      keyboardType: TextInputType.emailAddress,
+                                      errorText: errors['email'],
+                                      onChanged: _viewModel.setEmail,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    _buildTextField(
+                                      controller: _phoneController,
+                                      label: context.l10n.t('Phone'),
+                                      icon: Icons.phone_outlined,
+                                      keyboardType: TextInputType.phone,
+                                      onChanged: _viewModel.setPhone,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    _buildTextField(
+                                      controller: _socialController,
+                                      label: context.l10n.t('Social Media'),
+                                      icon: Icons.link,
+                                      onChanged: _viewModel.setSocial,
+                                    ),
+                                    const SizedBox(height: 24),
+                                    _sectionTitle('Account Details'),
+                                    const SizedBox(height: 12),
+                                    _buildTextField(
+                                      controller: _typeController,
+                                      label: context.l10n.t('Type'),
+                                      icon: Icons.category_outlined,
+                                      onChanged: _viewModel.setType,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    _buildTextField(
+                                      controller: _roleController,
+                                      label: context.l10n.t('Role'),
+                                      icon: Icons.admin_panel_settings_outlined,
+                                      onChanged: _viewModel.setRole,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    _buildTextField(
+                                      controller: _nrcNoController,
+                                      label: context.l10n.t('NRC No'),
+                                      icon: Icons.badge_outlined,
+                                      onChanged: _viewModel.setNrcNo,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    _buildTextField(
+                                      controller: _billingWayController,
+                                      label: context.l10n.t(
+                                        'Billing Way for Service',
                                       ),
-                                      child: Text(
-                                        _viewModel.errorMessage!,
-                                        style: TextStyle(
-                                          color: _p.dangerFg,
-                                          fontSize: 13,
+                                      icon: Icons.receipt_long_outlined,
+                                      onChanged: _viewModel.setBillingWay,
+                                    ),
+                                    const SizedBox(height: 24),
+                                    _sectionTitle('Personal Details'),
+                                    const SizedBox(height: 12),
+                                    _buildTextField(
+                                      controller: _dobController,
+                                      label: context.l10n.t('Date of Birth'),
+                                      icon: Icons.cake_outlined,
+                                      readOnly: true,
+                                      onTap: _pickDob,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    _buildTextField(
+                                      controller: _genderController,
+                                      label: context.l10n.t('Gender'),
+                                      icon: Icons.wc_outlined,
+                                      onChanged: _viewModel.setGender,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    _buildTextField(
+                                      controller: _addressController,
+                                      label: context.l10n.t('Address'),
+                                      icon: Icons.location_on_outlined,
+                                      maxLines: 2,
+                                      onChanged: _viewModel.setAddress,
+                                    ),
+                                    const SizedBox(height: 24),
+                                    _sectionTitle('About Shop'),
+                                    const SizedBox(height: 12),
+                                    ..._buildShopFields(),
+                                    const SizedBox(height: 24),
+                                    _gradientButton(
+                                      label: context.l10n.t('Change Password'),
+                                      icon: Icons.vpn_key_outlined,
+                                      loading: false,
+                                      onTap: _showChangePasswordDialog,
+                                    ),
+                                    const SizedBox(height: 32),
+                                    if (_viewModel.hasError)
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          bottom: 12,
+                                        ),
+                                        child: Text(
+                                          _viewModel.errorMessage!,
+                                          style: TextStyle(
+                                            color: _p.dangerFg,
+                                            fontSize: 13,
+                                          ),
                                         ),
                                       ),
+                                    _gradientButton(
+                                      label: context.l10n.t('Save Profile'),
+                                      icon: Icons.save_outlined,
+                                      loading: saving,
+                                      onTap: _save,
                                     ),
-                                  _gradientButton(
-                                    label: context.l10n.t('Save Profile'),
-                                    icon: Icons.save_outlined,
-                                    loading: saving,
-                                    onTap: _save,
-                                  ),
-                                  const SizedBox(height: 24),
-                                ],
+                                    const SizedBox(height: 24),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+            ),
           ),
         );
       },

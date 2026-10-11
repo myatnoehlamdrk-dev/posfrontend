@@ -5,7 +5,7 @@ import 'package:posfrontend/features/product/presentation/screens/quick_add_prod
 import 'package:posfrontend/features/product/presentation/screens/stock_add_screen.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
-import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
+import 'package:posfrontend/shared/widgets/responsive_scaffold.dart';
 
 class AddProductOptionsScreen extends StatefulWidget {
   const AddProductOptionsScreen({super.key});
@@ -21,64 +21,52 @@ class _AddProductOptionsScreenState extends State<AddProductOptionsScreen> {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    return Scaffold(
-      key: _scaffoldKey,
+    return ResponsiveScaffold(
+      scaffoldKey: _scaffoldKey,
+      title: context.l10n.t('Add Product'),
+      active: DrawerDestination.addProduct,
       backgroundColor: p.scaffoldBg,
-      drawer: const AppDrawer(active: DrawerDestination.addProduct),
-      body: SafeArea(
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AppScreenTopBar(
-              title: context.l10n.t('Add Product'),
-              showMenuButton: true,
-              onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+            Text(
+              context.l10n.t('Choose how you want to add a product'),
+              style: TextStyle(color: p.textSecondary, fontSize: 14),
             ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      context.l10n.t('Choose how you want to add a product'),
-                      style: TextStyle(color: p.textSecondary, fontSize: 14),
-                    ),
-                    const SizedBox(height: 32),
-                    _OptionCard(
-                      icon: Icons.flash_on_rounded,
-                      iconBgColor: const Color(0xFFFFF7ED),
-                      iconColor: const Color(0xFFEA580C),
-                      title: context.l10n.t('Quick Add'),
-                      subtitle: context.l10n.t(
-                        'Add a product with minimal details — name, price, and stock only.',
-                      ),
-                      onTap: () => _navigateTo(context, 'quick'),
-                    ),
-                    const SizedBox(height: 16),
-                    _OptionCard(
-                      icon: Icons.inventory_2_outlined,
-                      iconBgColor: const Color(0xFFF0FDF4),
-                      iconColor: const Color(0xFF16A34A),
-                      title: context.l10n.t('Stock Add'),
-                      subtitle: context.l10n.t(
-                        'Add stock to an existing product or create with detailed inventory tracking.',
-                      ),
-                      onTap: () => _navigateTo(context, 'stock'),
-                    ),
-                    const SizedBox(height: 16),
-                    _OptionCard(
-                      icon: Icons.edit_note_rounded,
-                      iconBgColor: p.selectionTint,
-                      iconColor: const Color(0xFF7C3AED),
-                      title: context.l10n.t('Normal Add'),
-                      subtitle: context.l10n.t(
-                        'Full product creation with all details — image, variants, categories, and supply chain.',
-                      ),
-                      onTap: () => _navigateTo(context, 'normal'),
-                    ),
-                  ],
-                ),
+            const SizedBox(height: 32),
+            _OptionCard(
+              icon: Icons.flash_on_rounded,
+              iconBgColor: const Color(0xFFFFF7ED),
+              iconColor: const Color(0xFFEA580C),
+              title: context.l10n.t('Quick Add'),
+              subtitle: context.l10n.t(
+                'Add a product with minimal details — name, price, and stock only.',
               ),
+              onTap: () => _navigateTo(context, 'quick'),
+            ),
+            const SizedBox(height: 16),
+            _OptionCard(
+              icon: Icons.inventory_2_outlined,
+              iconBgColor: const Color(0xFFF0FDF4),
+              iconColor: const Color(0xFF16A34A),
+              title: context.l10n.t('Stock Add'),
+              subtitle: context.l10n.t(
+                'Add stock to an existing product or create with detailed inventory tracking.',
+              ),
+              onTap: () => _navigateTo(context, 'stock'),
+            ),
+            const SizedBox(height: 16),
+            _OptionCard(
+              icon: Icons.edit_note_rounded,
+              iconBgColor: p.selectionTint,
+              iconColor: const Color(0xFF7C3AED),
+              title: context.l10n.t('Normal Add'),
+              subtitle: context.l10n.t(
+                'Full product creation with all details — image, variants, categories, and supply chain.',
+              ),
+              onTap: () => _navigateTo(context, 'normal'),
             ),
           ],
         ),

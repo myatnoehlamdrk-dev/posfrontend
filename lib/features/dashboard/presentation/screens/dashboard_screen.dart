@@ -12,10 +12,10 @@ import 'package:posfrontend/features/dashboard/presentation/widgets/dashboard_sk
 import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
-import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
 import 'package:posfrontend/shared/widgets/shop_scope.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
+import 'package:posfrontend/shared/widgets/responsive_scaffold.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -42,10 +42,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _loadProfileImage() async {
     try {
       final dio = ApiClient.create();
-      final resp = await dio.get(
-        '/auth/profile',
-        cancelToken: _cancelToken,
-      );
+      final resp = await dio.get('/auth/profile', cancelToken: _cancelToken);
       final data = resp.data;
       final image = (data is Map<String, dynamic>) ? (data['image'] ?? '') : '';
       if (image is String && image.isNotEmpty && mounted) {
@@ -66,113 +63,97 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    return Scaffold(
-      key: _scaffoldKey,
+    return ResponsiveScaffold(
+      scaffoldKey: _scaffoldKey,
+      title: context.l10n.t('Dashboard'),
+      active: DrawerDestination.dashboard,
       backgroundColor: p.scaffoldBg,
-      drawer: const AppDrawer(active: DrawerDestination.dashboard),
-      body: SafeArea(
-        child: Column(
-          children: [
-            AppScreenTopBar(
-              title: context.l10n.t('Dashboard'),
-              showMenuButton: true,
-              onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
-            ),
-            Expanded(
-              child: ListenableBuilder(
-                listenable: _viewModel,
-                builder: (context, _) {
-                  return RefreshableBody(
-                    onRefresh: () => _viewModel.load(),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 24,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (_viewModel.isLoading && _viewModel.data == null)
-                            const DashboardSkeleton()
-                          else if (_viewModel.hasError)
-                            SizedBox(
-                              height: 300,
-                              child: Center(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(
-                                      Icons.error_outline,
-                                      color: Color(0xFFEF4444),
-                                      size: 48,
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Text(
-                                      _viewModel.errorMessage ??
-                                          'Something went wrong',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: p.textSecondary,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    ElevatedButton.icon(
-                                      onPressed: () => _viewModel.load(),
-                                      icon: const Icon(Icons.refresh, size: 18),
-                                      label: Text(context.l10n.t('Retry')),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: purpleAction,
-                                        foregroundColor: Colors.white,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            )
-                          else if (_viewModel.data == null)
-                            const DashboardSkeleton()
-                          else ...[
-                            _buildMetricSection(
-                              context.l10n.t('Summary'),
-                              _viewModel.data!.metrics,
-                            ),
-                            const SizedBox(height: 24),
-                            _buildCategoryDistributionSection(
-                              _viewModel.data!.categoryDistribution,
-                            ),
-                            const SizedBox(height: 24),
-                            _buildCategoryQuantitySection(
-                              _viewModel.data!.categoryQuantity,
-                            ),
-                            const SizedBox(height: 24),
-                            _buildMonthlySalesSection(),
-                            const SizedBox(height: 24),
-                            Text(
-                              context.l10n.t('Product Trend'),
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: p.textPrimary,
-                              ),
+      body: ListenableBuilder(
+        listenable: _viewModel,
+        builder: (context, _) {
+          return RefreshableBody(
+            onRefresh: () => _viewModel.load(),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_viewModel.isLoading && _viewModel.data == null)
+                    const DashboardSkeleton()
+                  else if (_viewModel.hasError)
+                    SizedBox(
+                      height: 300,
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.error_outline,
+                              color: Color(0xFFEF4444),
+                              size: 48,
                             ),
                             const SizedBox(height: 12),
-                            _buildProductTrendSection(
-                              _viewModel.data!.mostBought,
-                              _viewModel.data!.leastBought,
-                              _viewModel.data!.noBought,
+                            Text(
+                              _viewModel.errorMessage ?? 'Something went wrong',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: p.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton.icon(
+                              onPressed: () => _viewModel.load(),
+                              icon: const Icon(Icons.refresh, size: 18),
+                              label: Text(context.l10n.t('Retry')),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: purpleAction,
+                                foregroundColor: Colors.white,
+                              ),
                             ),
                           ],
-                          const SizedBox(height: 24),
-                        ],
+                        ),
+                      ),
+                    )
+                  else if (_viewModel.data == null)
+                    const DashboardSkeleton()
+                  else ...[
+                    _buildMetricSection(
+                      context.l10n.t('Summary'),
+                      _viewModel.data!.metrics,
+                    ),
+                    const SizedBox(height: 24),
+                    _buildCategoryDistributionSection(
+                      _viewModel.data!.categoryDistribution,
+                    ),
+                    const SizedBox(height: 24),
+                    _buildCategoryQuantitySection(
+                      _viewModel.data!.categoryQuantity,
+                    ),
+                    const SizedBox(height: 24),
+                    _buildMonthlySalesSection(),
+                    const SizedBox(height: 24),
+                    Text(
+                      context.l10n.t('Product Trend'),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: p.textPrimary,
                       ),
                     ),
-                  );
-                },
+                    const SizedBox(height: 12),
+                    _buildProductTrendSection(
+                      _viewModel.data!.mostBought,
+                      _viewModel.data!.leastBought,
+                      _viewModel.data!.noBought,
+                    ),
+                  ],
+                  const SizedBox(height: 24),
+                ],
               ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

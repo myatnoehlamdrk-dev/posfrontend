@@ -221,20 +221,9 @@ class ProductsCatalogViewModel extends BaseViewModel {
     }
     return best;
   }
-      }
-    }
-    }
-    return best;
-    return best;
-  }
-  }
-
 
   Future<void> _loadHotProducts() async {
-  Future<void> _loadHotProducts() async {
     try {
-    try {
-      final response = await _dio.get(
       final response = await _dio.get(
         '/products/latest',
         queryParameters: {'limit': 4},

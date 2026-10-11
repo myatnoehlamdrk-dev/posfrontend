@@ -11,9 +11,9 @@ import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/theme/theme_mode_notifier.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
-import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
+import 'package:posfrontend/shared/widgets/responsive_scaffold.dart';
 import 'package:posfrontend/features/auth/presentation/screens/login_screen.dart';
 import 'package:posfrontend/features/settings/domain/entities/feedback.dart';
 import 'package:posfrontend/features/settings/domain/entities/settings.dart';
@@ -78,70 +78,58 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: _scaffoldKey,
+    return ResponsiveScaffold(
+      scaffoldKey: _scaffoldKey,
+      title: context.l10n.t('Setting'),
+      active: DrawerDestination.setting,
       // Page fill sits one step back from the cards, so the cards stay readable
       // in dark where there is no drop shadow to separate them.
       backgroundColor: context.palette.scaffoldBg,
-      drawer: const AppDrawer(active: DrawerDestination.setting),
-      body: SafeArea(
-        child: Column(
-          children: [
-            AppScreenTopBar(
-              title: context.l10n.t('Setting'),
-              showMenuButton: true,
-              onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
-            ),
-            Expanded(
-              child: ListenableBuilder(
-                listenable: _viewModel,
-                builder: (context, _) {
-                  return RefreshableBody(
-                    onRefresh: () => _viewModel.loadSettings(),
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (_viewModel.isLoading && !_viewModel.isInitialized)
-                            const SettingsSkeleton()
-                          else ...[
-                            _buildProfileCard(),
-                            const SizedBox(height: 28),
-                            _sectionHeader('APPEARANCE'),
-                            const SizedBox(height: 10),
-                            _buildAppearanceCard(),
-                            const SizedBox(height: 28),
-                            _sectionHeader('REGIONAL'),
-                            const SizedBox(height: 10),
-                            _buildRegionalCard(),
-                            const SizedBox(height: 28),
-                            _sectionHeader('SHOP'),
-                            const SizedBox(height: 10),
-                            _buildShopImageCard(),
-                            const SizedBox(height: 12),
-                            _buildBusinessCard(),
-                            const SizedBox(height: 28),
-                            _sectionHeader('SUPPORT'),
-                            const SizedBox(height: 10),
-                            _buildSupportCard(),
-                            const SizedBox(height: 28),
-                            _sectionHeader('ABOUT'),
-                            const SizedBox(height: 10),
-                            _buildAboutCard(),
-                            const SizedBox(height: 32),
-                            _buildSignOutButton(),
-                            const SizedBox(height: 32),
-                          ],
-                        ],
-                      ),
-                    ),
-                  );
-                },
+      body: ListenableBuilder(
+        listenable: _viewModel,
+        builder: (context, _) {
+          return RefreshableBody(
+            onRefresh: () => _viewModel.loadSettings(),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_viewModel.isLoading && !_viewModel.isInitialized)
+                    const SettingsSkeleton()
+                  else ...[
+                    _buildProfileCard(),
+                    const SizedBox(height: 28),
+                    _sectionHeader('APPEARANCE'),
+                    const SizedBox(height: 10),
+                    _buildAppearanceCard(),
+                    const SizedBox(height: 28),
+                    _sectionHeader('REGIONAL'),
+                    const SizedBox(height: 10),
+                    _buildRegionalCard(),
+                    const SizedBox(height: 28),
+                    _sectionHeader('SHOP'),
+                    const SizedBox(height: 10),
+                    _buildShopImageCard(),
+                    const SizedBox(height: 12),
+                    _buildBusinessCard(),
+                    const SizedBox(height: 28),
+                    _sectionHeader('SUPPORT'),
+                    const SizedBox(height: 10),
+                    _buildSupportCard(),
+                    const SizedBox(height: 28),
+                    _sectionHeader('ABOUT'),
+                    const SizedBox(height: 10),
+                    _buildAboutCard(),
+                    const SizedBox(height: 32),
+                    _buildSignOutButton(),
+                    const SizedBox(height: 32),
+                  ],
+                ],
               ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/responsive_scaffold.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:posfrontend/core/network/app_exceptions.dart';
 import 'package:posfrontend/features/product/data/models/product_create_models.dart';
@@ -177,69 +179,72 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    return Scaffold(
-      backgroundColor: p.scaffoldBg,
-      body: SafeArea(
-        child: Column(
-          children: [
-            AppScreenTopBar(
-              title: context.l10n.t('Quick Add Product'),
-              showMenuButton: false,
-              showBackButton: true,
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    FormCard(
-                      label: context.l10n.t('Product Image'),
-                      helper: context.l10n.t(
-                        'Take a photo or upload an image.',
+    return WideDrawerDock(
+      active: DrawerDestination.addProduct,
+      child: Scaffold(
+        backgroundColor: p.scaffoldBg,
+        body: SafeArea(
+          child: Column(
+            children: [
+              AppScreenTopBar(
+                title: context.l10n.t('Quick Add Product'),
+                showMenuButton: false,
+                showBackButton: true,
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      FormCard(
+                        label: context.l10n.t('Product Image'),
+                        helper: context.l10n.t(
+                          'Take a photo or upload an image.',
+                        ),
+                        child: _imageSection(),
                       ),
-                      child: _imageSection(),
-                    ),
-                    const SizedBox(height: 16),
-                    FormCard(
-                      label: context.l10n.t('Basic Info'),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _field(
-                            'Product Name',
-                            _name,
-                            'e.g. Wireless Headphones Pro',
-                            req: true,
-                          ),
-                          const SizedBox(height: 16),
-                          _field(
-                            'Stock',
-                            _stock,
-                            'e.g. 50',
-                            req: true,
-                            number: true,
-                          ),
-                          const SizedBox(height: 16),
-                          _field(
-                            'Price',
-                            _price,
-                            'e.g. 25000',
-                            req: true,
-                            number: true,
-                          ),
-                        ],
+                      const SizedBox(height: 16),
+                      FormCard(
+                        label: context.l10n.t('Basic Info'),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _field(
+                              'Product Name',
+                              _name,
+                              'e.g. Wireless Headphones Pro',
+                              req: true,
+                            ),
+                            const SizedBox(height: 16),
+                            _field(
+                              'Stock',
+                              _stock,
+                              'e.g. 50',
+                              req: true,
+                              number: true,
+                            ),
+                            const SizedBox(height: 16),
+                            _field(
+                              'Price',
+                              _price,
+                              'e.g. 25000',
+                              req: true,
+                              number: true,
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 100),
-                  ],
+                      const SizedBox(height: 100),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
+        bottomNavigationBar: _submitButton(),
       ),
-      bottomNavigationBar: _submitButton(),
     );
   }
 
@@ -355,10 +360,7 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
           gradient: _saving
               ? null
               : LinearGradient(
-                  colors: [
-                    AppColors.brandPurple,
-                    AppColors.brandPurpleDark,
-                  ],
+                  colors: [AppColors.brandPurple, AppColors.brandPurpleDark],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),

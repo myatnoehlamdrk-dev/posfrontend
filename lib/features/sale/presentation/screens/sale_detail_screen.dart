@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/responsive_scaffold.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/core/extensions/datetime_extensions.dart';
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
@@ -37,213 +39,218 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
   Widget build(BuildContext context) {
     final isAlreadySale = _order.status == OrderStatus.alreadySale;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FC),
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildTopBar(context),
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: () async {},
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildOrderHeader(isAlreadySale),
-                      const SizedBox(height: 12),
-                      _buildInfoCard('Customer Information', [
-                        _infoRow(
-                          'Customer Name',
-                          _order.customerName.isNotEmpty
-                              ? _order.customerName
-                              : '-',
-                        ),
-                        _infoRow(
-                          'Phone',
-                          _order.customerPhone.isNotEmpty
-                              ? _order.customerPhone
-                              : '-',
-                        ),
-                        if (_order.customerLocation.isNotEmpty)
-                          _infoRow('Location', _order.customerLocation),
-                      ]),
-                      const SizedBox(height: 12),
-                      if (_order.createdBy.isNotEmpty)
-                        _buildInfoCard('Saler Information', [
-                          _infoRow('Saler Name', _order.createdBy),
-                          if (_order.createdAt.isNotEmpty)
-                            _infoRow(
-                              'Created At',
-                              _formatDate(_order.createdAt),
-                            ),
+    return WideDrawerDock(
+      active: DrawerDestination.saleItem,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8F9FC),
+        body: SafeArea(
+          child: Column(
+            children: [
+              _buildTopBar(context),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () async {},
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildOrderHeader(isAlreadySale),
+                        const SizedBox(height: 12),
+                        _buildInfoCard('Customer Information', [
+                          _infoRow(
+                            'Customer Name',
+                            _order.customerName.isNotEmpty
+                                ? _order.customerName
+                                : '-',
+                          ),
+                          _infoRow(
+                            'Phone',
+                            _order.customerPhone.isNotEmpty
+                                ? _order.customerPhone
+                                : '-',
+                          ),
+                          if (_order.customerLocation.isNotEmpty)
+                            _infoRow('Location', _order.customerLocation),
                         ]),
-                      const SizedBox(height: 12),
-                      if (_order.saleItems.isNotEmpty) ...[
-                        _buildInfoCard(
-                          'Ordered Items (${_order.saleItems.length})',
-                          _order.saleItems.map((item) {
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          item.productName,
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w500,
-                                            color: titleColor,
-                                          ),
-                                        ),
-                                        if (item.size.isNotEmpty ||
-                                            item.color.isNotEmpty)
+                        const SizedBox(height: 12),
+                        if (_order.createdBy.isNotEmpty)
+                          _buildInfoCard('Saler Information', [
+                            _infoRow('Saler Name', _order.createdBy),
+                            if (_order.createdAt.isNotEmpty)
+                              _infoRow(
+                                'Created At',
+                                _formatDate(_order.createdAt),
+                              ),
+                          ]),
+                        const SizedBox(height: 12),
+                        if (_order.saleItems.isNotEmpty) ...[
+                          _buildInfoCard(
+                            'Ordered Items (${_order.saleItems.length})',
+                            _order.saleItems.map((item) {
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
                                           Text(
-                                            [
-                                              if (item.size.isNotEmpty)
-                                                'Size: ${item.size}',
-                                              if (item.color.isNotEmpty)
-                                                'Color: ${item.color}',
-                                            ].join(' | '),
+                                            item.productName,
                                             style: const TextStyle(
-                                              fontSize: 11,
-                                              color: gray,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                              color: titleColor,
                                             ),
                                           ),
-                                      ],
+                                          if (item.size.isNotEmpty ||
+                                              item.color.isNotEmpty)
+                                            Text(
+                                              [
+                                                if (item.size.isNotEmpty)
+                                                  'Size: ${item.size}',
+                                                if (item.color.isNotEmpty)
+                                                  'Color: ${item.color}',
+                                              ].join(' | '),
+                                              style: const TextStyle(
+                                                fontSize: 11,
+                                                color: gray,
+                                              ),
+                                            ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                  Text(
-                                    context.l10n
-                                        .t('x{v1}')
-                                        .replaceAll(
-                                          '{v1}',
-                                          (item.quantity).toString(),
-                                        ),
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: gray,
+                                    Text(
+                                      context.l10n
+                                          .t('x{v1}')
+                                          .replaceAll(
+                                            '{v1}',
+                                            (item.quantity).toString(),
+                                          ),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: gray,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  PriceText(
-                                    item.subtotal.toDouble(),
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                      color: titleColor,
+                                    const SizedBox(width: 8),
+                                    PriceText(
+                                      item.subtotal.toDouble(),
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                        color: titleColor,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ] else ...[
+                          _buildInfoCard('Ordered Items', [
+                            _infoRow('Product', _order.productName),
+                            _infoRow('Description', _order.description),
+                            _infoRow('Quantity', 'x${_order.quantity}'),
+                          ]),
+                        ],
+                        const SizedBox(height: 12),
+                        _buildInfoCard('Payment Information', [
+                          _infoRow(
+                            'Payment Method',
+                            _order.payMethod.isNotEmpty
+                                ? _order.payMethod
+                                : 'Cash',
+                          ),
+                          _infoRow(
+                            'Payment Status',
+                            isAlreadySale ? 'Paid' : 'Pending',
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                context.l10n.t('Total Amount'),
+                                style: TextStyle(fontSize: 13, color: gray),
                               ),
-                            );
-                          }).toList(),
-                        ),
-                      ] else ...[
-                        _buildInfoCard('Ordered Items', [
-                          _infoRow('Product', _order.productName),
-                          _infoRow('Description', _order.description),
-                          _infoRow('Quantity', 'x${_order.quantity}'),
+                              const SizedBox(width: 12),
+                              Flexible(
+                                child: PriceText(
+                                  _order.amount.toDouble(),
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: titleColor,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ]),
-                      ],
-                      const SizedBox(height: 12),
-                      _buildInfoCard('Payment Information', [
-                        _infoRow(
-                          'Payment Method',
-                          _order.payMethod.isNotEmpty
-                              ? _order.payMethod
-                              : 'Cash',
-                        ),
-                        _infoRow(
-                          'Payment Status',
-                          isAlreadySale ? 'Paid' : 'Pending',
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              context.l10n.t('Total Amount'),
-                              style: TextStyle(fontSize: 13, color: gray),
-                            ),
-                            const SizedBox(width: 12),
-                            Flexible(
-                              child: PriceText(
-                                _order.amount.toDouble(),
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: titleColor,
+                        const SizedBox(height: 12),
+                        _buildInfoCard('Order Status & History', [
+                          _infoRow('Order Date', _formatDate(_order.date)),
+                          _infoRow(
+                            'Order Status',
+                            isAlreadySale ? 'Completed' : 'Pending',
+                          ),
+                          _infoRow(
+                            'Voucher Ref',
+                            _order.voucherNo.isNotEmpty
+                                ? '#${_order.voucherNo}'
+                                : '#${_order.orderId}',
+                          ),
+                        ]),
+                        if (_order.createdBy.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          _buildInfoCard('Audit Information', [
+                            if (_order.createdBy.isNotEmpty)
+                              _infoRow('Created By', _order.createdBy),
+                            if (_order.createdAt.isNotEmpty)
+                              _infoRow(
+                                'Created At',
+                                _formatDate(_order.createdAt),
+                              ),
+                            if (_order.updatedAt.isNotEmpty)
+                              _infoRow(
+                                'Updated At',
+                                _formatDate(_order.updatedAt),
+                              ),
+                          ]),
+                        ],
+                        if (!isAlreadySale) ...[
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: _upToSale,
+                              icon: const Icon(
+                                Icons.shopping_cart_outlined,
+                                size: 18,
+                              ),
+                              label: Text(context.l10n.t('Up to Sale')),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF6D28D9),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
                             ),
-                          ],
-                        ),
-                      ]),
-                      const SizedBox(height: 12),
-                      _buildInfoCard('Order Status & History', [
-                        _infoRow('Order Date', _formatDate(_order.date)),
-                        _infoRow(
-                          'Order Status',
-                          isAlreadySale ? 'Completed' : 'Pending',
-                        ),
-                        _infoRow(
-                          'Voucher Ref',
-                          _order.voucherNo.isNotEmpty
-                              ? '#${_order.voucherNo}'
-                              : '#${_order.orderId}',
-                        ),
-                      ]),
-                      if (_order.createdBy.isNotEmpty) ...[
-                        const SizedBox(height: 12),
-                        _buildInfoCard('Audit Information', [
-                          if (_order.createdBy.isNotEmpty)
-                            _infoRow('Created By', _order.createdBy),
-                          if (_order.createdAt.isNotEmpty)
-                            _infoRow(
-                              'Created At',
-                              _formatDate(_order.createdAt),
-                            ),
-                          if (_order.updatedAt.isNotEmpty)
-                            _infoRow(
-                              'Updated At',
-                              _formatDate(_order.updatedAt),
-                            ),
-                        ]),
-                      ],
-                      if (!isAlreadySale) ...[
-                        const SizedBox(height: 12),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: _upToSale,
-                            icon: const Icon(
-                              Icons.shopping_cart_outlined,
-                              size: 18,
-                            ),
-                            label: Text(context.l10n.t('Up to Sale')),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF6D28D9),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
                           ),
-                        ),
+                        ],
+                        const SizedBox(height: 24),
                       ],
-                      const SizedBox(height: 24),
-                    ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

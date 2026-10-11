@@ -13,7 +13,7 @@ import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
-import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
+import 'package:posfrontend/shared/widgets/responsive_scaffold.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 
@@ -212,37 +212,25 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
               _allowedOrderIds.contains(card.orderId),
         )
         .toList();
-    return Scaffold(
-      key: _scaffoldKey,
+    return ResponsiveScaffold(
+      scaffoldKey: _scaffoldKey,
+      title: context.l10n.t('Add to Cart'),
+      active: DrawerDestination.addToCart,
       backgroundColor: context.palette.scaffoldBg,
-      drawer: const AppDrawer(active: DrawerDestination.addToCart),
-      body: SafeArea(
-        child: Column(
-          children: [
-            AppScreenTopBar(
-              title: context.l10n.t('Add to Cart'),
-              showMenuButton: true,
-              onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+      body: cards.isEmpty
+          ? RefreshableBody(
+              onRefresh: _reload,
+              // The empty state is a `Center`, and without a viewport
+              // floor the scroll view would collapse it to the top.
+              fill: true,
+              child: _loadingMore ? _loadingState() : _emptyState(),
+            )
+          : RefreshIndicator(
+              onRefresh: _reload,
+              color: const Color(0xFF2D1B69),
+              backgroundColor: context.palette.surface,
+              child: _cardsList(cards),
             ),
-            Expanded(
-              child: cards.isEmpty
-                  ? RefreshableBody(
-                      onRefresh: _reload,
-                      // The empty state is a `Center`, and without a viewport
-                      // floor the scroll view would collapse it to the top.
-                      fill: true,
-                      child: _loadingMore ? _loadingState() : _emptyState(),
-                    )
-                  : RefreshIndicator(
-                      onRefresh: _reload,
-                      color: const Color(0xFF2D1B69),
-                      backgroundColor: context.palette.surface,
-                      child: _cardsList(cards),
-                    ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 

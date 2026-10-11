@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/responsive_scaffold.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:flutter/services.dart';
 import 'package:posfrontend/features/cart/data/cart_store.dart';
@@ -56,39 +58,42 @@ class _CartCardScreenState extends State<CartCardScreen> {
   Widget build(BuildContext context) {
     final p = context.palette;
 
-    return Scaffold(
-      backgroundColor: p.scaffoldBg,
-      body: SafeArea(
-        child: Column(
-          children: [
-            AppScreenTopBar(
-              title: context.l10n.t('Checkout'),
-              showMenuButton: false,
-              showBackButton: true,
-            ),
-            Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                itemCount: widget.card.items.length,
-                separatorBuilder: (ctx, index) => const SizedBox(height: 10),
-                itemBuilder: (ctx, index) {
-                  return Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: p.surface,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: p.border),
-                    ),
-                    child: CartItemRow(item: widget.card.items[index]),
-                  );
-                },
+    return WideDrawerDock(
+      active: DrawerDestination.addToCart,
+      child: Scaffold(
+        backgroundColor: p.scaffoldBg,
+        body: SafeArea(
+          child: Column(
+            children: [
+              AppScreenTopBar(
+                title: context.l10n.t('Checkout'),
+                showMenuButton: false,
+                showBackButton: true,
               ),
-            ),
-            _bottomBar(),
-          ],
+              Expanded(
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  itemCount: widget.card.items.length,
+                  separatorBuilder: (ctx, index) => const SizedBox(height: 10),
+                  itemBuilder: (ctx, index) {
+                    return Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: p.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: p.border),
+                      ),
+                      child: CartItemRow(item: widget.card.items[index]),
+                    );
+                  },
+                ),
+              ),
+              _bottomBar(),
+            ],
+          ),
         ),
       ),
     );
