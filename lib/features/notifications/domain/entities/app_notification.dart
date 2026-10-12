@@ -53,8 +53,9 @@ class AppNotification {
 
   /// Tab buckets shown on the notifications page, in tab order. The daily
   /// report payload and these buckets stay in sync: everything the backend
-  /// pushes today carries `category: alert` (or no category at all, for
-  /// saves that predate the field).
+  /// pushes today carries `category: alert`, except the feedback thank-you
+  /// (`category: system`), which is an acknowledgement rather than an alert.
+  /// Older saves predate the field entirely.
   static const List<String> categories = ['system', 'alert', 'news'];
 
   /// Which tab this entry belongs to. The backend may set it explicitly via

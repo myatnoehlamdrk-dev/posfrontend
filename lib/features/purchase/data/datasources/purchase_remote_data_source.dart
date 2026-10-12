@@ -5,7 +5,7 @@ import 'package:posfrontend/features/purchase/data/models/purchase_api_model.dar
 class PurchaseRemoteDataSource {
   final Dio _dio;
 
-  PurchaseRemoteDataSource({Dio? dio}) : _dio = dio ?? ApiClient.create();
+  PurchaseRemoteDataSource({Dio? dio}) : _dio = dio ?? ApiClient.instance;
 
   Future<Map<String, dynamic>> getPurchaseItems({
     int page = 1,

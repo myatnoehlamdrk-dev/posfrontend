@@ -5,7 +5,7 @@ import 'package:posfrontend/features/shop/data/models/shop_api_model.dart';
 class ShopApiDataSource {
   final Dio _dio;
 
-  ShopApiDataSource({Dio? dio}) : _dio = dio ?? ApiClient.create();
+  ShopApiDataSource({Dio? dio}) : _dio = dio ?? ApiClient.instance;
 
   Future<ShopApiModel> createShop(
     ShopApiModel shop, {

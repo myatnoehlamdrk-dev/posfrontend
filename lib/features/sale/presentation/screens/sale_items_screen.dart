@@ -9,6 +9,7 @@ import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/app_shell.dart';
+import 'package:posfrontend/shared/widgets/error_retry_view.dart';
 import 'package:posfrontend/shared/widgets/filter_tabs.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
@@ -72,23 +73,9 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
       return const SaleItemsSkeleton();
     }
     if (_viewModel.errorMessage != null && _viewModel.filteredOrders.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, color: Colors.red, size: 48),
-            const SizedBox(height: 12),
-            Text(
-              _viewModel.errorMessage!,
-              style: TextStyle(color: p.textSecondary),
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: () => _viewModel.loadAll(refresh: true),
-              child: Text(context.l10n.t('Retry')),
-            ),
-          ],
-        ),
+      return ErrorRetryView(
+        message: _viewModel.errorMessage,
+        onRetry: () => _viewModel.loadAll(refresh: true),
       );
     }
     return RefreshIndicator(
@@ -353,55 +340,76 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
 
   void _confirmDelete(SaleOrderEntity order) {
     final p = context.palette;
+    // Local to the dialog: the spinner has to live until the delete answers,
+    // and the view model's own `isLoading` drives the list skeleton, not a
+    // per-row operation.
+    bool deleting = false;
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          context.l10n.t('Delete Item'),
-          style: TextStyle(fontWeight: FontWeight.w600, color: p.textPrimary),
-        ),
-        content: Text(
-          context.l10n
-              .t('Are you sure you want to delete "{v1}"?')
-              .replaceAll('{v1}', (order.productName).toString()),
-          style: TextStyle(color: p.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              context.l10n.t('Cancel'),
-              style: TextStyle(color: p.textSecondary),
-            ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(
+            context.l10n.t('Delete Item'),
+            style: TextStyle(fontWeight: FontWeight.w600, color: p.textPrimary),
           ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              bool success;
-              if (order.status == OrderStatus.alreadySale) {
-                success = await _viewModel.deleteSale(order.orderId);
-              } else {
-                success = await _viewModel.deleteOrder(order.orderId);
-              }
-              if (mounted) {
-                if (success) {
-                  showSuccessSnackBar(context, 'Item deleted');
-                } else {
-                  showErrorSnackBar(context, 'Failed to delete');
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.red,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+          content: Text(
+            context.l10n
+                .t('Are you sure you want to delete "{v1}"?')
+                .replaceAll('{v1}', (order.productName).toString()),
+            style: TextStyle(color: p.textSecondary),
+          ),
+          actions: [
+            TextButton(
+              onPressed: deleting ? null : () => Navigator.pop(ctx),
+              child: Text(
+                context.l10n.t('Cancel'),
+                style: TextStyle(color: p.textSecondary),
               ),
             ),
-            child: Text(context.l10n.t('Delete')),
-          ),
-        ],
+            ElevatedButton(
+              onPressed: deleting
+                  ? null
+                  : () async {
+                      setDialogState(() => deleting = true);
+                      bool success;
+                      if (order.status == OrderStatus.alreadySale) {
+                        success = await _viewModel.deleteSale(order.orderId);
+                      } else {
+                        success = await _viewModel.deleteOrder(order.orderId);
+                      }
+                      // Only pop if the dialog is still there: the barrier
+                      // can be tapped away while the request is in flight.
+                      if (ctx.mounted) Navigator.pop(ctx);
+                      if (mounted) {
+                        if (success) {
+                          showSuccessMessage(context, 'Item deleted');
+                        } else {
+                          showErrorMessage(context, 'Failed to delete');
+                        }
+                      }
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.red,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: AppColors.red.withValues(alpha: 0.6),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: deleting
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(context.l10n.t('Delete')),
+            ),
+          ],
+        ),
       ),
     );
   }

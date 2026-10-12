@@ -256,6 +256,9 @@ const Map<String, String> thaiStrings = {
   'Write your feedback...': 'เขียนความคิดเห็นของคุณ...',
   'Submit': 'ส่ง',
   'Feedback submitted!': 'ส่งความคิดเห็นเรียบร้อยแล้ว!',
+  'Comment': 'ความคิดเห็น',
+  'Suggestion': 'ข้อเสนอแนะ',
+  'Bug Report': 'รายงานข้อผิดพลาด',
   'Redirecting to app rating...': 'กำลังเปลี่ยนหน้าให้คะแนนแอป...',
   'Are you sure you want to logout?': 'คุณแน่ใจว่าต้องการออกจากระบบ?',
   'OK': 'ตกลง',
@@ -392,6 +395,13 @@ const Map<String, String> thaiStrings = {
   'Clear all': 'ล้างทั้งหมด',
   'No notifications yet': 'ยังไม่มีการแจ้งเตือน',
   'Stock alerts will appear here.': 'การแจ้งเตือนสต็อกจะแสดงที่นี่',
+  'Thank-you messages will appear here.':
+      'ข้อความขอบคุณจะแสดงที่นี่',
+  'Thank you for your feedback, {v1}!':
+      'ขอบคุณสำหรับความคิดเห็นของคุณ {v1}!',
+  'Thank you for your feedback!': 'ขอบคุณสำหรับความคิดเห็นของคุณ!',
+  'Your message': 'ข้อความของคุณ',
+  'Reference': 'อ้างอิง',
   'System': 'ระบบ',
   'Alert': 'การแจ้งเตือน',
   'News': 'ข่าว',

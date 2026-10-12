@@ -11,9 +11,11 @@ import 'package:posfrontend/features/purchase/data/repositories/purchase_reposit
 import 'package:posfrontend/features/purchase/domain/entities/purchase.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
+import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/shared/widgets/premium_image_upload.dart';
+import 'package:posfrontend/shared/widgets/responsive_scaffold.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
 
@@ -62,24 +64,30 @@ class _AddProductScreenState extends State<AddProductScreen> {
       listenable: _vm,
       builder: (context, _) {
         final p = context.palette;
-        return LayoutBuilder(
-          builder: (ctx, constraints) {
-            final isWide = constraints.maxWidth >= 768;
-            final body = _content();
-            final bottomBar = _addMode == 0 ? _createButton() : null;
-            final scaffold = isWide
-                ? Scaffold(
-                    backgroundColor: p.scaffoldBg,
-                    body: body,
-                    bottomNavigationBar: bottomBar,
-                  )
-                : Scaffold(
-                    backgroundColor: p.scaffoldBg,
-                    body: body,
-                    bottomNavigationBar: bottomBar,
-                  );
-            return scaffold;
-          },
+        // Dock the drawer beside the form on wide windows, the same as
+        // quick add — both are "Add Product" entry points and should offer
+        // the same navigation.
+        return WideDrawerDock(
+          active: DrawerDestination.addProduct,
+          child: LayoutBuilder(
+            builder: (ctx, constraints) {
+              final isWide = constraints.maxWidth >= 768;
+              final body = _content();
+              final bottomBar = _addMode == 0 ? _createButton() : null;
+              final scaffold = isWide
+                  ? Scaffold(
+                      backgroundColor: p.scaffoldBg,
+                      body: body,
+                      bottomNavigationBar: bottomBar,
+                    )
+                  : Scaffold(
+                      backgroundColor: p.scaffoldBg,
+                      body: body,
+                      bottomNavigationBar: bottomBar,
+                    );
+              return scaffold;
+            },
+          ),
         );
       },
     );
@@ -695,7 +703,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                   if (nameController.text.isNotEmpty) {
                                     setSheetState(() => savingSupplier = true);
                                     try {
-                                      final dio = ApiClient.create();
+                                      final dio = ApiClient.instance;
                                       final resp = await dio.post(
                                         '/suppliers',
                                         data: {

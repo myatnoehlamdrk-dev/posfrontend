@@ -6,7 +6,7 @@ import 'package:posfrontend/features/category/data/models/category_api_model.dar
 
 class CategoryRemoteDataSource {
   final Dio _dio;
-  CategoryRemoteDataSource({Dio? dio}) : _dio = dio ?? ApiClient.create();
+  CategoryRemoteDataSource({Dio? dio}) : _dio = dio ?? ApiClient.instance;
 
   /// One page of categories, with the counts the paginator needs.
   ///

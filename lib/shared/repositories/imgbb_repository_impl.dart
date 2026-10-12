@@ -8,7 +8,7 @@ import 'package:posfrontend/shared/repositories/imgbb_repository.dart';
 class ImgbbRepositoryImpl implements ImgbbRepository {
   final Dio _dio;
 
-  ImgbbRepositoryImpl([Dio? dio]) : _dio = dio ?? ApiClient.create();
+  ImgbbRepositoryImpl([Dio? dio]) : _dio = dio ?? ApiClient.instance;
 
   @override
   Future<ImgbbUploadResult> uploadImage(

@@ -12,7 +12,7 @@ import 'package:posfrontend/features/product/presentation/widgets/category_showc
 class ProductsCatalogViewModel extends BaseViewModel {
   final Dio _dio;
 
-  ProductsCatalogViewModel({Dio? dio}) : _dio = dio ?? ApiClient.create();
+  ProductsCatalogViewModel({Dio? dio}) : _dio = dio ?? ApiClient.instance;
 
   List<CategoryShowcaseData> _categories = [];
   List<CategoryShowcaseData> get categories => _categories;

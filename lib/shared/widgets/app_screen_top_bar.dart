@@ -16,6 +16,12 @@ class AppScreenTopBar extends StatelessWidget {
   final bool showBackButton;
   final VoidCallback? onBackTap;
 
+  /// Replaces the whole leading cluster (back button and menu button).
+  ///
+  /// Screens that need a different action in that slot — a Cancel on the new
+  /// sale screen, say — pass it here instead of restructuring the bar.
+  final Widget? leading;
+
   /// False on the notifications page itself, so the bell cannot push a
   /// second copy of the screen it is already showing.
   final bool showNotificationsButton;
@@ -33,6 +39,7 @@ class AppScreenTopBar extends StatelessWidget {
     this.onMenuTap,
     this.showBackButton = false,
     this.onBackTap,
+    this.leading,
     this.backgroundColor,
     this.showNotificationsButton = true,
   });
@@ -52,7 +59,9 @@ class AppScreenTopBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          if (showBackButton)
+          if (leading != null)
+            leading!
+          else if (showBackButton)
             CustomBackButton(
               onTap:
                   onBackTap ??
@@ -64,7 +73,7 @@ class AppScreenTopBar extends StatelessWidget {
                     }
                   },
             ),
-          if (showMenuButton)
+          if (leading == null && showMenuButton)
             Builder(
               builder: (ctx) => IconButton(
                 onPressed: onMenuTap ?? () => Scaffold.of(ctx).openDrawer(),

@@ -5,6 +5,7 @@ import 'package:posfrontend/features/purchase/presentation/viewmodels/purchase_i
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
+import 'package:posfrontend/shared/widgets/error_retry_view.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
 
 /// Second page of the add-product flow: search the purchase items and pick one
@@ -117,7 +118,16 @@ class _PurchaseItemPickerViewState extends State<PurchaseItemPickerView> {
                 ),
               )
             else if (_vm.errorMessage != null && _vm.purchaseItems.isEmpty)
-              _errorState(p)
+              // Expanded (not a bare child): the view sits in a Column under
+              // the search field, and only a bounded height lets the state
+              // centre in the space left over instead of hugging the field.
+              Expanded(
+                child: ErrorRetryView(
+                  message: _vm.errorMessage,
+                  onRetry: () => _vm.loadPurchaseItems(refresh: true),
+                  accentColor: AppColors.teal,
+                ),
+              )
             else if (_filtered.isEmpty)
               _emptyState(p)
             else
@@ -142,28 +152,6 @@ class _PurchaseItemPickerViewState extends State<PurchaseItemPickerView> {
           ],
         );
       },
-    );
-  }
-
-  Widget _errorState(AppPalette p) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.error_outline, color: AppColors.red, size: 40),
-          const SizedBox(height: 10),
-          Text(
-            _vm.errorMessage!,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: p.textSecondary, fontSize: 13),
-          ),
-          const SizedBox(height: 12),
-          OutlinedButton(
-            onPressed: () => _vm.loadPurchaseItems(refresh: true),
-            child: Text(context.l10n.t('Retry')),
-          ),
-        ],
-      ),
     );
   }
 

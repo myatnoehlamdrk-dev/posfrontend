@@ -3,6 +3,7 @@ import 'package:posfrontend/core/extensions/number_extensions.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/features/cart/domain/entities/cart_item_entity.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
+import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
 
 class CartItemRow extends StatelessWidget {
@@ -32,11 +33,13 @@ class CartItemRow extends StatelessWidget {
           ),
           clipBehavior: Clip.antiAlias,
           child: item.imageUrl != null
-              ? Image.network(
-                  item.imageUrl!,
+              ? CachedProductImage(
+                  url: item.imageUrl!,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) =>
-                      Icon(Icons.inventory_2, color: p.textMuted, size: 18),
+                  width: img,
+                  height: img,
+                  memCacheWidth: 160,
+                  errorWidget: Icon(Icons.inventory_2, color: p.textMuted, size: 18),
                 )
               : Icon(Icons.inventory_2, color: p.textMuted, size: 18),
         ),

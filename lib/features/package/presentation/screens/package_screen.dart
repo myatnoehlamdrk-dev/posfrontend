@@ -10,6 +10,7 @@ import 'package:posfrontend/features/package/presentation/viewmodels/package_vie
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
+import 'package:posfrontend/shared/widgets/error_retry_view.dart';
 import 'package:posfrontend/shared/widgets/error_snackbar.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 
@@ -196,15 +197,14 @@ class _PackageScreenState extends State<PackageScreen> {
                             ),
                           )
                         else if (_viewModel.hasError)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 40),
-                            child: Center(
-                              child: Text(
-                                _viewModel.errorMessage ??
-                                    'Failed to load packages.',
-                                style: TextStyle(color: p.textSecondary),
-                              ),
-                            ),
+                          // fill: false — one section of the page (below the
+                          // breadcrumb and heading), not the whole body.
+                          ErrorRetryView(
+                            message: _viewModel.errorMessage ??
+                                'Failed to load packages.',
+                            onRetry: _viewModel.load,
+                            accentColor: AppColors.brandPurpleDark,
+                            fill: false,
                           )
                         else ...[
                           Text(

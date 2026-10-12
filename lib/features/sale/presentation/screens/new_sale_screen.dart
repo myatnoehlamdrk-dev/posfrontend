@@ -21,6 +21,8 @@ import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/totals_panel.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
+import 'package:posfrontend/shared/widgets/app_top_bar.dart' show navigateToDashboard;
+import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 import 'package:printing/printing.dart';
 
@@ -234,6 +236,38 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     );
   }
 
+  /// Replaces the back chevron in the top bar. Leaving a half-entered sale is
+  /// a discard rather than plain navigation, so the control says so instead of
+  /// hiding behind an arrow.
+  Widget _cancelButton() {
+    return TextButton(
+      onPressed: _cancelSale,
+      style: TextButton.styleFrom(
+        foregroundColor: _mutedColor,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        minimumSize: const Size(48, 48),
+        alignment: Alignment.centerLeft,
+      ),
+      child: Text(
+        context.l10n.t('Cancel'),
+        style: TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          color: _titleColor,
+        ),
+      ),
+    );
+  }
+
+  void _cancelSale() {
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      navigator.pop();
+    } else {
+      navigateToDashboard(context);
+    }
+  }
+
   Widget _content(bool isWide) {
     return SafeArea(
       child: Column(
@@ -241,18 +275,67 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           AppScreenTopBar(
             title: context.l10n.t('New Sale'),
             showMenuButton: false,
-            showBackButton: true,
+            leading: _cancelButton(),
           ),
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
+              child: isWide ? _wideBody() : _narrowBody(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Phone arrangement, byte-for-byte the stack the screen always had.
+  Widget _narrowBody() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _infoCard(),
+        const SizedBox(height: 24),
+        _itemsSection(),
+        const SizedBox(height: 24),
+        _summaryCard(),
+        const SizedBox(height: 24),
+        _optionalFields(),
+        const SizedBox(height: 24),
+        _actionButtons(),
+        const SizedBox(height: 16),
+        _footerActions(),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  /// Desktop/tablet arrangement: capped width, split into the working area
+  /// (date, item list) on the left and the checkout column (totals, payment,
+  /// notes, actions, print settings) on the right.
+  Widget _wideBody() {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1200),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 6,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _infoCard(),
                   const SizedBox(height: 24),
                   _itemsSection(),
-                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
+            const SizedBox(width: 24),
+            Expanded(
+              flex: 5,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   _summaryCard(),
                   const SizedBox(height: 24),
                   _optionalFields(),
@@ -264,8 +347,8 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                 ],
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -398,7 +481,13 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: item.imageUrl != null
-                      ? Image.network(item.imageUrl!, fit: BoxFit.cover)
+                      ? CachedProductImage(
+                          url: item.imageUrl!,
+                          fit: BoxFit.cover,
+                          width: 48,
+                          height: 48,
+                          memCacheWidth: 160,
+                        )
                       : const SizedBox.shrink(),
                 ),
               ),

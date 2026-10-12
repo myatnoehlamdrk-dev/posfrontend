@@ -1,6 +1,6 @@
 import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/core/models/paginated_response.dart';
-import 'package:dio/dio.dart';
+import 'package:posfrontend/core/utils/error_handler.dart';
 import 'package:posfrontend/features/purchase/domain/entities/purchase.dart';
 import 'package:posfrontend/features/purchase/domain/repositories/purchase_repository.dart';
 import 'package:posfrontend/features/purchase/data/repositories/purchase_repository_impl.dart';
@@ -45,10 +45,8 @@ class PurchaseItemViewModel extends BaseViewModel {
           : [..._purchaseItems, ...paginated.data];
       _lastPage = paginated.lastPage;
       _currentPage++;
-    } on DioException catch (e) {
-      setError(e.message ?? 'Failed to load purchase items');
     } catch (e) {
-      setError(e.toString());
+      setError(formatApiError(e));
     } finally {
       setLoading(false);
     }
@@ -59,7 +57,7 @@ class PurchaseItemViewModel extends BaseViewModel {
       _suppliers = await _repository.getSuppliers(cancelToken: cancelToken);
       notifyListeners();
     } catch (e) {
-      setError(e.toString());
+      setError(formatApiError(e));
       notifyListeners();
     }
   }
@@ -79,12 +77,8 @@ class PurchaseItemViewModel extends BaseViewModel {
       _suppliers.insert(0, supplier);
       notifyListeners();
       return supplier;
-    } on DioException catch (e) {
-      setError(e.message ?? 'Failed to create supplier');
-      notifyListeners();
-      return null;
     } catch (e) {
-      setError(e.toString());
+      setError(formatApiError(e));
       notifyListeners();
       return null;
     }
@@ -118,12 +112,8 @@ class PurchaseItemViewModel extends BaseViewModel {
       );
       await loadPurchaseItems(refresh: true);
       return true;
-    } on DioException catch (e) {
-      setError(e.message ?? 'Failed to create purchase item');
-      notifyListeners();
-      return false;
     } catch (e) {
-      setError(e.toString());
+      setError(formatApiError(e));
       notifyListeners();
       return false;
     }
@@ -138,12 +128,8 @@ class PurchaseItemViewModel extends BaseViewModel {
       );
       await loadPurchaseItems(refresh: true);
       return true;
-    } on DioException catch (e) {
-      setError(e.message ?? 'Failed to update status');
-      notifyListeners();
-      return false;
     } catch (e) {
-      setError(e.toString());
+      setError(formatApiError(e));
       notifyListeners();
       return false;
     }
@@ -155,12 +141,8 @@ class PurchaseItemViewModel extends BaseViewModel {
       _purchaseItems.removeWhere((item) => item.orderId == id);
       notifyListeners();
       return true;
-    } on DioException catch (e) {
-      setError(e.message ?? 'Failed to delete purchase item');
-      notifyListeners();
-      return false;
     } catch (e) {
-      setError(e.toString());
+      setError(formatApiError(e));
       notifyListeners();
       return false;
     }

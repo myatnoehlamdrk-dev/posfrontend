@@ -982,7 +982,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       : () async {
                           setDialogState(() => _isLoggingOut = true);
                           try {
-                            final dio = ApiClient.create();
+                            final dio = ApiClient.instance;
                             await dio.post('/auth/logout');
                           } catch (_) {
                             // Logout API failure is non-critical; proceed with local cleanup

@@ -3,6 +3,8 @@ import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/core/models/paginated_response.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/core/network/app_exceptions.dart';
+import 'package:posfrontend/core/offline/outbox_queue.dart';
+import 'package:posfrontend/core/utils/error_handler.dart';
 import 'package:posfrontend/features/customer/domain/repositories/customer_repository.dart';
 import 'package:posfrontend/features/product/data/models/product_api_model.dart';
 import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart';
@@ -251,7 +253,7 @@ class SaleViewModel extends BaseViewModel {
     } on ApiException catch (e) {
       setError(e.message);
     } catch (e) {
-      setError(e.toString());
+      setError(formatApiError(e));
     } finally {
       setLoading(false);
       if (_pendingLoadMore) {
@@ -281,15 +283,27 @@ class SaleViewModel extends BaseViewModel {
 
     try {
       final voucherNo = 'INV-$_voucherRandom';
-      var orderId = existingOrderId ?? 'ORD-$_orderRandom';
+      // One key for every request this submission makes — the draft POST,
+      // the sale POST, and any outbox replay of either. A request that
+      // times out after the server committed it replays with the same key
+      // and gets the stored response instead of a second execution.
+      final opKey = OutboxQueue.newClientUuid();
+      var orderId = existingOrderId ?? '';
       final isLocalCard =
           existingOrderId != null && existingOrderId.startsWith('local:');
+      // Server primary keys are numeric — sale_order_api_model maps them
+      // from json['id']. Anything else (null, '', a local card id, a
+      // legacy client-generated 'ORD-…' id) has no server draft pinning
+      // stock, so one must be created before the sale is posted. Without
+      // it the backend finds no order and records the sale with no stock
+      // deduction at all.
+      final isServerPk =
+          orderId.isNotEmpty && RegExp(r'^\d+$').hasMatch(orderId);
 
-      if (isLocalCard) {
-        // The card was built offline, so no server draft exists to
-        // convert. Prefer materializing the draft now (the till may be
-        // back online); fall back to the compound outbox pair when the
-        // network is still out.
+      if (!isServerPk) {
+        // No usable server draft exists to convert. Prefer materializing
+        // one now (the till may be back online); fall back to the
+        // compound outbox pair when the network is still out.
         try {
           orderId = await _orderRepository.createOrder(
             userName: staffName,
@@ -306,6 +320,7 @@ class SaleViewModel extends BaseViewModel {
             // A local id from the fallback would defeat the point: the
             // sale needs a real draft to convert.
             allowLocalFallback: false,
+            idempotencyKey: opKey,
           );
         } on NetworkException {
           orderId = '';
@@ -328,6 +343,7 @@ class SaleViewModel extends BaseViewModel {
             grandTotal: totalPayable,
             discount: _discountPercent.toInt(),
             notes: _notes.isNotEmpty ? _notes : null,
+            idempotencyKey: opKey,
           );
           if (!queued) {
             // Nothing stored the sale — say so rather than report a
@@ -359,6 +375,7 @@ class SaleViewModel extends BaseViewModel {
         discount: _discountPercent.toInt(),
         notes: _notes.isNotEmpty ? _notes : null,
         cancelToken: cancelToken,
+        idempotencyKey: opKey,
       );
 
       // A local card has no server order to clean up — its draft either
@@ -410,8 +427,8 @@ class SaleViewModel extends BaseViewModel {
         discount: _discountPercent.toInt(),
         notes: _notes.isNotEmpty ? _notes : null,
         status: 'draft',
+        idempotencyKey: OutboxQueue.newClientUuid(),
       );
-
       _isSubmitting = false;
       notifyListeners();
       return true;

@@ -16,6 +16,7 @@ import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/app_shell.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
+import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 import 'package:posfrontend/shared/widgets/error_snackbar.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 import 'package:posfrontend/features/product/presentation/widgets/catalog_footer.dart';
@@ -26,6 +27,7 @@ import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
+import 'package:posfrontend/shared/widgets/error_retry_view.dart';
 
 class ProductsCatalogScreen extends StatefulWidget {
   const ProductsCatalogScreen({super.key});
@@ -348,32 +350,10 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
     }
 
     if (_viewModel.hasError && categories.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.error_outline, size: 48, color: _p.textMuted),
-            const SizedBox(height: 16),
-            Text(
-              _viewModel.errorMessage ?? 'Unable to load categories',
-              style: TextStyle(color: _p.dangerFg, fontSize: 15),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () => _viewModel.load(),
-              icon: const Icon(Icons.refresh, size: 18),
-              label: Text(context.l10n.t('Retry')),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _accentColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ),
-          ],
-        ),
+      return ErrorRetryView(
+        message: _viewModel.errorMessage ?? 'Unable to load categories',
+        onRetry: _viewModel.load,
+        accentColor: _accentColor,
       );
     }
 
@@ -464,12 +444,13 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: imageUrl.isNotEmpty
-                  ? Image.network(
-                      imageUrl,
+                  ? CachedProductImage(
+                      url: imageUrl,
                       width: 40,
                       height: 40,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => _searchTileIcon(p),
+                      memCacheWidth: 160,
+                      errorWidget: _searchTileIcon(p),
                     )
                   : _searchTileIcon(p),
             ),
@@ -528,32 +509,10 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
     }
 
     if (_viewModel.hasError && results.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.error_outline, size: 48, color: _p.textMuted),
-            const SizedBox(height: 16),
-            Text(
-              _viewModel.errorMessage ?? 'Unable to search products',
-              style: TextStyle(color: _p.dangerFg, fontSize: 15),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () => _viewModel.searchProducts(),
-              icon: const Icon(Icons.refresh, size: 18),
-              label: Text(context.l10n.t('Retry')),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _accentColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ),
-          ],
-        ),
+      return ErrorRetryView(
+        message: _viewModel.errorMessage ?? 'Unable to search products',
+        onRetry: _viewModel.searchProducts,
+        accentColor: _accentColor,
       );
     }
 

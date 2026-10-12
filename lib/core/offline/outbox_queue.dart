@@ -144,15 +144,22 @@ class OutboxQueue {
   /// Stores one write for later delivery. Returns false when there is no
   /// session to attribute it to — the caller must then let the original
   /// error through rather than report a success nothing recorded.
+  ///
+  /// When [clientUuid] is supplied it becomes the entry's id *and* the
+  /// Idempotency-Key of every replay. Pass the key of the direct attempt
+  /// that just failed: if that attempt actually reached the server, the
+  /// server has already seen this key and will replay its stored response
+  /// instead of executing a second time.
   Future<bool> enqueue({
     required String kind,
     required Map<String, dynamic> payload,
+    String? clientUuid,
   }) async {
     final shopId = await _currentShopId();
     if (shopId == null || shopId.isEmpty) return false;
 
     await _store.outboxEnqueue(
-      clientUuid: newClientUuid(),
+      clientUuid: clientUuid ?? newClientUuid(),
       kind: kind,
       payload: jsonEncode(payload),
       shopId: shopId,

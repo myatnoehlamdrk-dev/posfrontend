@@ -4,7 +4,7 @@ import 'package:posfrontend/features/settings/domain/repositories/settings_repos
 import 'package:posfrontend/features/settings/data/models/settings_api_model.dart';
 
 class SettingsRepositoryImpl implements SettingsRepository {
-  final dio = ApiClient.create();
+  final dio = ApiClient.instance;
 
   @override
   Future<SettingsEntity> getSettings() async {

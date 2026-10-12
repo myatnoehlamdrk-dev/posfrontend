@@ -135,7 +135,7 @@ class AssignProductToPackageViewModel extends BaseViewModel {
     notifyListeners();
 
     try {
-      final dio = ApiClient.create();
+      final dio = ApiClient.instance;
       int successCount = 0;
 
       for (final productId in _selectedIds) {

@@ -8,9 +8,9 @@ String formatApiError(Object e) {
   if (e is AppException) return e.message;
   if (e is DioException) return fromDioException(e).message;
   if (e is SocketException) {
-    return 'No internet connection. Please check your network.';
+    return 'Network connection failed.';
   }
-  if (e is TimeoutException) return 'Request timed out. Please try again.';
+  if (e is TimeoutException) return 'Network connection timed out.';
   if (e is FormatException) return 'Invalid data received from server.';
   return 'An unexpected error occurred.';
 }

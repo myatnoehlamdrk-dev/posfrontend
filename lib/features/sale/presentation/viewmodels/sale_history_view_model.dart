@@ -1,5 +1,6 @@
 import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/core/models/paginated_response.dart';
+import 'package:posfrontend/core/utils/error_handler.dart';
 import 'package:posfrontend/features/sale/data/models/sale_order_api_model.dart';
 import 'package:posfrontend/features/sale/data/repositories/sale_repository_impl.dart';
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
@@ -104,7 +105,7 @@ class SaleHistoryViewModel extends BaseViewModel {
       _lastPage = maxSalesPage > maxOrdersPage ? maxSalesPage : maxOrdersPage;
       _currentPage++;
     } catch (e) {
-      setError(e.toString());
+      setError(formatApiError(e));
     } finally {
       setLoading(false);
       if (_pendingLoadMore) {
@@ -129,7 +130,7 @@ class SaleHistoryViewModel extends BaseViewModel {
       notifyListeners();
       return true;
     } catch (e) {
-      setError(e.toString());
+      setError(formatApiError(e));
       return false;
     }
   }
@@ -141,7 +142,7 @@ class SaleHistoryViewModel extends BaseViewModel {
       notifyListeners();
       return true;
     } catch (e) {
-      setError(e.toString());
+      setError(formatApiError(e));
       return false;
     }
   }
@@ -156,7 +157,7 @@ class SaleHistoryViewModel extends BaseViewModel {
       notifyListeners();
       return updated;
     } catch (e) {
-      setError(e.toString());
+      setError(formatApiError(e));
       return null;
     }
   }

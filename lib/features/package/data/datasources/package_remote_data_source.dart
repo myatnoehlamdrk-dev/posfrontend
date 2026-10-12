@@ -5,7 +5,7 @@ import 'package:posfrontend/features/package/data/models/package_api_model.dart'
 class PackageRemoteDataSource {
   final Dio _dio;
 
-  PackageRemoteDataSource({Dio? dio}) : _dio = dio ?? ApiClient.create();
+  PackageRemoteDataSource({Dio? dio}) : _dio = dio ?? ApiClient.instance;
 
   Future<List<PackageApiModel>> getPackages(
     String categoryId, {

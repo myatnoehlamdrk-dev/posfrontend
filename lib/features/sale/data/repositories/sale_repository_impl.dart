@@ -23,6 +23,7 @@ class SaleRepositoryImpl implements SaleRepository {
     int? discount,
     String? notes,
     CancelToken? cancelToken,
+    String? idempotencyKey,
   }) {
     return _remoteDataSource.createSale(
       userName: userName,
@@ -36,6 +37,7 @@ class SaleRepositoryImpl implements SaleRepository {
       grandTotal: grandTotal,
       discount: discount,
       notes: notes,
+      idempotencyKey: idempotencyKey,
     );
   }
 
@@ -51,6 +53,7 @@ class SaleRepositoryImpl implements SaleRepository {
     required double grandTotal,
     int? discount,
     String? notes,
+    String? idempotencyKey,
   }) {
     return _remoteDataSource.enqueueLocalCardSale(
       userName: userName,
@@ -63,6 +66,7 @@ class SaleRepositoryImpl implements SaleRepository {
       grandTotal: grandTotal,
       discount: discount,
       notes: notes,
+      idempotencyKey: idempotencyKey,
     );
   }
 }
@@ -87,6 +91,7 @@ class OrderRepositoryImpl implements OrderRepository {
     String? notes,
     String status = 'draft',
     bool allowLocalFallback = true,
+    String? idempotencyKey,
   }) {
     return _remoteDataSource.createOrder(
       userName: userName,
@@ -101,6 +106,7 @@ class OrderRepositoryImpl implements OrderRepository {
       notes: notes,
       status: status,
       allowLocalFallback: allowLocalFallback,
+      idempotencyKey: idempotencyKey,
     );
   }
 

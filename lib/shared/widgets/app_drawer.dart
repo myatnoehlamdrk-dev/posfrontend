@@ -321,7 +321,7 @@ class _LogoutTileState extends State<_LogoutTile> {
   Future<void> _handleLogout() async {
     setState(() => _isLoading = true);
     try {
-      final dio = ApiClient.create();
+      final dio = ApiClient.instance;
       await dio.post('/auth/logout');
     } catch (_) {
       // Logout API failure is non-critical; proceed with local cleanup

@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:isolate';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -15,6 +16,16 @@ import 'package:posfrontend/shared/l10n/app_language.dart';
 import 'package:posfrontend/shared/l10n/app_strings.dart';
 import 'package:posfrontend/shared/l10n/locale_notifier.dart';
 import 'package:posfrontend/shared/services/pdf_fonts.dart';
+
+/// Runs [body] off the main thread where the platform allows it.
+///
+/// Browsers have no isolates — `Isolate.run` throws there — so web builds
+/// the PDF on the main thread instead. [kIsWeb] is a compile-time constant,
+/// so each platform tree-shakes to its own branch.
+Future<T> _offMainThread<T>(FutureOr<T> Function() body) async {
+  if (kIsWeb) return body();
+  return Isolate.run(body);
+}
 
 String _fmt(double value) => value.withCommas();
 
@@ -947,14 +958,15 @@ class VoucherPdfService {
       final resolved = resolveMediaUrl(shopImage);
       if (resolved == null || resolved.isEmpty) return null;
       if (resolved.startsWith('http')) {
-        final uri = Uri.parse(resolved);
-        final request = await HttpClient().getUrl(uri);
-        final response = await request.close();
-        final bytes = await response.fold<List<int>>(
-          <int>[],
-          (prev, chunk) => prev..addAll(chunk),
+        // Dio rather than dart:io HttpClient: this has to run on web too,
+        // where HttpClient throws. Same failure contract as before — any
+        // error (including a CORS block in-browser) yields null, no logo.
+        final response = await Dio().get<List<int>>(
+          resolved,
+          options: Options(responseType: ResponseType.bytes),
         );
-        return Uint8List.fromList(bytes);
+        final data = response.data;
+        return data == null ? null : Uint8List.fromList(data);
       } else {
         return base64Decode(shopImage);
       }
@@ -1007,7 +1019,7 @@ class VoucherPdfService {
     final language = LocaleNotifier.instance.language;
     final fontBytes = await PdfFonts.forLanguage(language);
 
-    final pdfBytes = await Isolate.run(
+    final pdfBytes = await _offMainThread(
       () => _buildA4PdfBytes(params, language, fontBytes),
     );
     await Printing.layoutPdf(
@@ -1065,7 +1077,7 @@ class VoucherPdfService {
     final language = LocaleNotifier.instance.language;
     final fontBytes = await PdfFonts.forLanguage(language);
 
-    final pdfBytes = await Isolate.run(
+    final pdfBytes = await _offMainThread(
       () => _buildReceiptPdfBytes(params, language, fontBytes),
     );
     await Printing.layoutPdf(
@@ -1122,7 +1134,7 @@ class VoucherPdfService {
     final language = LocaleNotifier.instance.language;
     final fontBytes = await PdfFonts.forLanguage(language);
 
-    return Isolate.run(() => _buildA4PdfBytes(params, language, fontBytes));
+    return _offMainThread(() => _buildA4PdfBytes(params, language, fontBytes));
   }
 
   static Future<Uint8List> exportReceiptPdf({
@@ -1174,7 +1186,7 @@ class VoucherPdfService {
     final language = LocaleNotifier.instance.language;
     final fontBytes = await PdfFonts.forLanguage(language);
 
-    return Isolate.run(
+    return _offMainThread(
       () => _buildReceiptPdfBytes(params, language, fontBytes),
     );
   }

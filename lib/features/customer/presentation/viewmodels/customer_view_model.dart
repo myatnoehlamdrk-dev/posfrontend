@@ -1,5 +1,5 @@
-import 'package:dio/dio.dart';
 import 'package:posfrontend/core/base/base_view_model.dart';
+import 'package:posfrontend/core/utils/error_handler.dart';
 import 'package:posfrontend/features/customer/domain/entities/customer.dart';
 import 'package:posfrontend/features/customer/domain/repositories/customer_repository.dart';
 import 'package:posfrontend/features/customer/data/repositories/customer_repository_impl.dart';
@@ -22,10 +22,8 @@ class CustomerViewModel extends BaseViewModel {
     try {
       final data = await _repository.getAnalytics();
       _analytics = data;
-    } on DioException catch (e) {
-      setError(e.message ?? 'Failed to load analytics');
     } catch (e) {
-      setError(e.toString());
+      setError(formatApiError(e));
     } finally {
       setLoading(false);
     }
@@ -37,7 +35,7 @@ class CustomerViewModel extends BaseViewModel {
       _searchResults = data;
       notifyListeners();
     } catch (e) {
-      setError(e.toString());
+      setError(formatApiError(e));
     }
   }
 }

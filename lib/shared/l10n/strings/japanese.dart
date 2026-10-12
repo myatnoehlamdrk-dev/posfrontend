@@ -251,6 +251,9 @@ const Map<String, String> japaneseStrings = {
   'Write your feedback...': 'フィードバックを入力...',
   'Submit': '送信',
   'Feedback submitted!': 'フィードバックを送信しました！',
+  'Comment': 'コメント',
+  'Suggestion': '提案',
+  'Bug Report': 'バグ報告',
   'Redirecting to app rating...': 'アプリ評価ページに移動中...',
   'Are you sure you want to logout?': 'ログアウトしますか？',
   'OK': 'OK',
@@ -385,6 +388,13 @@ const Map<String, String> japaneseStrings = {
   'Clear all': 'すべてクリア',
   'No notifications yet': '通知はまだありません',
   'Stock alerts will appear here.': '在庫アラートがここに表示されます',
+  'Thank-you messages will appear here.':
+      '感謝メッセージがここに表示されます',
+  'Thank you for your feedback, {v1}!':
+      '{v1}さん、フィードバックありがとうございます！',
+  'Thank you for your feedback!': 'フィードバックありがとうございます！',
+  'Your message': 'あなたのメッセージ',
+  'Reference': '参照',
   'System': 'システム',
   'Alert': 'アラート',
   'News': 'ニュース',

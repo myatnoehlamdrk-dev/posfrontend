@@ -5,6 +5,7 @@ import 'package:posfrontend/core/auth/token_storage.dart';
 import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/core/base/form_validation_mixin.dart';
 import 'package:posfrontend/core/di/injection.dart';
+import 'package:posfrontend/core/utils/error_handler.dart';
 import 'package:posfrontend/features/auth/domain/entities/login_result.dart';
 import 'package:posfrontend/features/auth/domain/entities/user.dart';
 import 'package:posfrontend/features/auth/domain/usecases/login.dart';
@@ -79,7 +80,7 @@ class LoginViewModel extends BaseViewModel with FormValidationMixin {
 
       return result;
     } catch (e) {
-      setError(e.toString());
+      setError(formatApiError(e));
       return null;
     } finally {
       setLoading(false);

@@ -5,6 +5,7 @@ import 'package:posfrontend/features/notifications/domain/entities/app_notificat
 import 'package:posfrontend/features/package/data/repositories/package_repository_impl.dart';
 import 'package:posfrontend/features/package/presentation/screens/package_details_screen.dart';
 import 'package:posfrontend/features/product/presentation/screens/product_detail_screen.dart';
+import 'package:posfrontend/features/notifications/presentation/screens/feedback_thank_you_detail_screen.dart';
 import 'package:posfrontend/features/notifications/presentation/screens/stock_report_detail_screen.dart';
 import 'package:posfrontend/core/extensions/datetime_extensions.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
@@ -32,8 +33,8 @@ class _NotificationsScreenState extends State<NotificationsScreen>
   late final TabController _tabController;
 
   /// Which tab is showing: `system` | `alert` | `news`. Opens on Alert —
-  /// it is the only category that receives pushes today, so a fresh
-  /// install should not land on an empty System tab.
+  /// most pushes are still alerts (stock, packages, daily report), so a
+  /// fresh install should not land on a System tab with one entry in it.
   String _category = 'alert';
 
   @override
@@ -157,6 +158,14 @@ class _NotificationsScreenState extends State<NotificationsScreen>
             if (_category == 'alert')
               Text(
                 context.l10n.t('Stock alerts will appear here.'),
+                style: TextStyle(
+                  color: p.textMuted,
+                  fontSize: AppTypography.bodySmallSize,
+                ),
+              ),
+            if (_category == 'system')
+              Text(
+                context.l10n.t('Thank-you messages will appear here.'),
                 style: TextStyle(
                   color: p.textMuted,
                   fontSize: AppTypography.bodySmallSize,
@@ -303,6 +312,12 @@ class _NotificationTile extends StatelessWidget {
           background: const Color(0xFFDBEAFE),
           foreground: const Color(0xFF1D4ED8),
         );
+      case 'feedback_thanks':
+        return (
+          icon: Icons.favorite_outline,
+          background: const Color(0xFFEDE9FE),
+          foreground: const Color(0xFF6D28D9),
+        );
       default:
         return (
           icon: Icons.notifications_none_outlined,
@@ -329,6 +344,8 @@ class _NotificationTile extends StatelessWidget {
         return (background: const Color(0xFF35191B), foreground: const Color(0xFFFCA5A5));
       case 'stock_report':
         return (background: const Color(0xFF17233A), foreground: const Color(0xFF93C5FD));
+      case 'feedback_thanks':
+        return (background: const Color(0xFF2A2140), foreground: const Color(0xFFC4B5FD));
       default:
         return (background: const Color(0xFF354253), foreground: const Color(0xFFA2AAB8));
     }
@@ -444,6 +461,19 @@ class _NotificationTile extends StatelessWidget {
         MaterialPageRoute(
           builder: (_) =>
               StockReportDetailScreen(notification: notification),
+        ),
+      );
+      return;
+    }
+
+    // The feedback thank-you is a message in its own right: it carries no
+    // product or package, so it opens a document-style detail page instead
+    // of falling through to the id lookups below (which would do nothing).
+    if (notification.type == 'feedback_thanks') {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) =>
+              FeedbackThankYouDetailScreen(notification: notification),
         ),
       );
       return;

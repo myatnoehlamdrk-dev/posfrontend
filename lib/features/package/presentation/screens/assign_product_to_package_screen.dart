@@ -9,6 +9,7 @@ import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/custom_back_button.dart';
+import 'package:posfrontend/shared/widgets/error_retry_view.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
 class AssignProductToPackageScreen extends StatefulWidget {
@@ -167,21 +168,10 @@ class _AssignProductToPackageScreenState
       return Center(child: CircularProgressIndicator(color: _accentColor));
     }
     if (_viewModel.hasError) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              _viewModel.errorMessage!,
-              style: TextStyle(color: _mutedColor),
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: _viewModel.loadProducts,
-              child: Text(context.l10n.t('Retry')),
-            ),
-          ],
-        ),
+      return ErrorRetryView(
+        message: _viewModel.errorMessage,
+        onRetry: _viewModel.loadProducts,
+        accentColor: _accentColor,
       );
     }
     final items = _viewModel.filtered;

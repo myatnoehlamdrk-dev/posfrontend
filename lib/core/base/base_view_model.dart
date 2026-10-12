@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:posfrontend/core/auth/auth_redirect.dart';
 import 'package:posfrontend/core/network/app_exceptions.dart';
+import 'package:posfrontend/core/utils/error_handler.dart';
 
 abstract class BaseViewModel extends ChangeNotifier {
   bool _isLoading = false;
@@ -77,7 +78,9 @@ abstract class BaseViewModel extends ChangeNotifier {
       );
       return null;
     } catch (e) {
-      setError(errorPrefix != null ? '$errorPrefix: $e' : e.toString());
+      // Last resort for anything the typed catches above missed — still a
+      // friendly message, never the raw exception dump.
+      setError(errorPrefix != null ? '$errorPrefix: ${formatApiError(e)}' : formatApiError(e));
       return null;
     } finally {
       if (showLoading) setLoading(false);

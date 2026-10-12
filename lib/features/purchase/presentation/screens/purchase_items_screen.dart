@@ -10,6 +10,7 @@ import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/app_shell.dart';
+import 'package:posfrontend/shared/widgets/error_retry_view.dart';
 import 'package:posfrontend/shared/widgets/filter_tabs.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
@@ -80,23 +81,9 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
       return const PurchaseItemsSkeleton();
     }
     if (_viewModel.errorMessage != null && _viewModel.purchaseItems.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, color: Colors.red, size: 48),
-            const SizedBox(height: 12),
-            Text(
-              _viewModel.errorMessage!,
-              style: TextStyle(color: p.textSecondary),
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: () => _viewModel.loadPurchaseItems(refresh: true),
-              child: Text(context.l10n.t('Retry')),
-            ),
-          ],
-        ),
+      return ErrorRetryView(
+        message: _viewModel.errorMessage,
+        onRetry: () => _viewModel.loadPurchaseItems(refresh: true),
       );
     }
     return RefreshIndicator(

@@ -11,6 +11,7 @@ import 'package:posfrontend/core/extensions/datetime_extensions.dart';
 import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
 import 'package:posfrontend/shared/widgets/custom_back_button.dart';
+import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/shared/widgets/totals_panel.dart';
 
@@ -159,12 +160,13 @@ class SalePreviewScreen extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: shopImage!.startsWith('http')
-                  ? Image.network(
-                      resolveMediaUrl(shopImage)!,
+                  ? CachedProductImage(
+                      url: resolveMediaUrl(shopImage)!,
                       width: 64,
                       height: 64,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => _shopPlaceholder(),
+                      memCacheWidth: 256,
+                      errorWidget: _shopPlaceholder(),
                     )
                   : _base64Image(shopImage!),
             )

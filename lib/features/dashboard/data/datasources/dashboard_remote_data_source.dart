@@ -4,7 +4,7 @@ import 'package:posfrontend/core/network/api_client.dart';
 class DashboardRemoteDataSource {
   final Dio _dio;
 
-  DashboardRemoteDataSource({Dio? dio}) : _dio = dio ?? ApiClient.create();
+  DashboardRemoteDataSource({Dio? dio}) : _dio = dio ?? ApiClient.instance;
 
   Future<Map<String, dynamic>> getDashboardData({
     int days = 30,

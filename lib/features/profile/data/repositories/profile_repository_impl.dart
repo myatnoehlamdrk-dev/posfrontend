@@ -4,7 +4,7 @@ import 'package:posfrontend/features/profile/domain/repositories/profile_reposit
 import 'package:posfrontend/features/profile/data/models/profile_api_model.dart';
 
 class ProfileRepositoryImpl implements ProfileRepository {
-  final dio = ApiClient.create();
+  final dio = ApiClient.instance;
 
   @override
   Future<ProfileEntity> getProfile() async {

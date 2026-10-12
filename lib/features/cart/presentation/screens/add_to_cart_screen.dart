@@ -12,6 +12,7 @@ import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/app_message.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/app_shell.dart';
@@ -458,42 +459,70 @@ class _CardTile extends StatelessWidget {
 
   Future<void> _showDeleteDialog(BuildContext context) async {
     final dangerFg = context.palette.dangerFg;
-    final confirmed = await showDialog<bool>(
+    // Local to the dialog: the spinner has to stay visible while the delete
+    // runs, so the work happens under the open dialog rather than after a
+    // confirm-pop like the old flow.
+    var deleting = false;
+    await showDialog<void>(
       context: context,
       builder: (ctx) {
-        return AlertDialog(
-          title: Text(context.l10n.t('Delete Cart')),
-          content: Text(
-            context.l10n
-                .t('Are you sure you want to delete this cart "{v1} items"?')
-                .replaceAll('{v1}', (card.totalQuantity).toString()),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(context.l10n.t('Cancel')),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: Text(
-                context.l10n.t('Delete'),
-                style: TextStyle(color: dangerFg),
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return AlertDialog(
+              title: Text(context.l10n.t('Delete Cart')),
+              content: Text(
+                context.l10n
+                    .t('Are you sure you want to delete this cart "{v1} items"?')
+                    .replaceAll('{v1}', (card.totalQuantity).toString()),
               ),
-            ),
-          ],
+              actions: [
+                TextButton(
+                  onPressed: deleting ? null : () => Navigator.pop(ctx),
+                  child: Text(context.l10n.t('Cancel')),
+                ),
+                TextButton(
+                  onPressed: deleting
+                      ? null
+                      : () async {
+                          setDialogState(() => deleting = true);
+                          if (card.orderId.isNotEmpty) {
+                            try {
+                              await OrderRepositoryImpl()
+                                  .deleteOrder(card.orderId);
+                            } catch (_) {
+                              // Backend order deletion failure is
+                              // non-critical; card still removed
+                            }
+                          }
+                          // Only pop if the dialog is still there: the
+                          // barrier can be tapped away mid-request.
+                          if (ctx.mounted) Navigator.pop(ctx);
+                          if (context.mounted) {
+                            await CartStore.instance.removeCard(card.id);
+                            if (context.mounted) {
+                              showSuccessMessage(context, 'Cart deleted');
+                            }
+                          }
+                        },
+                  child: deleting
+                      ? SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: dangerFg,
+                          ),
+                        )
+                      : Text(
+                          context.l10n.t('Delete'),
+                          style: TextStyle(color: dangerFg),
+                        ),
+                ),
+              ],
+            );
+          },
         );
       },
     );
-    if (confirmed != true) return;
-    if (!context.mounted) return;
-    if (card.orderId.isNotEmpty) {
-      try {
-        await OrderRepositoryImpl().deleteOrder(card.orderId);
-      } catch (_) {
-        // Backend order deletion failure is non-critical; card still removed
-      }
-    }
-    if (!context.mounted) return;
-    await CartStore.instance.removeCard(card.id);
   }
 }

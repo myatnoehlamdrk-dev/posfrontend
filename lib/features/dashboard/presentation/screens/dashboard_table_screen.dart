@@ -8,6 +8,7 @@ import 'package:posfrontend/features/dashboard/presentation/widgets/dashboard_ta
 import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
+import 'package:posfrontend/shared/widgets/error_retry_view.dart';
 
 /// A read-only table of dashboard rows.
 ///
@@ -744,38 +745,16 @@ class _Message extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 40, color: p.textMuted),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: p.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              detail,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: p.textMuted),
-            ),
-            if (actionLabel != null) ...[
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: onAction,
-                child: Text(actionLabel!, style: TextStyle(color: p.accentText)),
-              ),
-            ],
-          ],
-        ),
-      ),
+    return ErrorRetryView(
+      icon: icon,
+      title: title,
+      message: detail,
+      onRetry: onAction,
+      retryLabel: actionLabel,
+      accentColor: p.accentText,
+      // Muted, not red: [_Message] also renders plain empty states, which
+      // are not failures.
+      messageColor: p.textMuted,
     );
   }
 }

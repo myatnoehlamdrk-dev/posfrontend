@@ -8,21 +8,25 @@ sealed class AppException implements Exception {
 
   const AppException({required this.message, this.statusCode});
 
+  /// The message alone. View models render errors through `setError(e
+  /// .toString())`, so anything type-prefixed here would surface in the UI
+  /// as e.g. "NetworkException(null): Network connection failed." — the
+  /// technical half the user never asked for.
   @override
-  String toString() => '$runtimeType($statusCode): $message';
+  String toString() => message;
 }
 
 /// No internet connection.
 class NetworkException extends AppException {
   const NetworkException({
-    super.message = 'No internet connection. Please check your network.',
+    super.message = 'Network connection failed.',
   });
 }
 
 /// API request timed out (connect/send/receive).
 class TimeoutException extends AppException {
   const TimeoutException({
-    super.message = 'Request timed out. Please try again.',
+    super.message = 'Network connection timed out.',
   });
 }
 
@@ -128,8 +132,34 @@ AppException fromDioException(DioException e) {
     case DioExceptionType.badResponse:
       return _fromBadResponse(e);
     default:
+      // On the web a dead connection usually arrives as `unknown` carrying a
+      // browser/socket error rather than `connectionError`, so the type
+      // check alone would surface it as "unexpected error". Read the cause.
+      if (_isConnectionFailure(e)) return const NetworkException();
       return const UnknownException();
   }
+}
+
+/// True when the underlying error means the request never reached the
+/// server: a socket failure, a DNS miss, or the browser's generic fetch
+/// error. Matched on text because these types come from `dart:io`,
+/// `dart:html` and `package:http` depending on the platform.
+bool _isConnectionFailure(DioException e) {
+  final cause = e.error;
+  if (cause == null) return false;
+  final text = cause.toString().toLowerCase();
+  return text.contains('socketexception') ||
+      text.contains('failed host lookup') ||
+      text.contains('connection refused') ||
+      text.contains('connection reset') ||
+      text.contains('connection closed') ||
+      text.contains('connection error') ||
+      text.contains('network request failed') ||
+      text.contains('xmlhttprequest error') ||
+      text.contains('clientexception') ||
+      text.contains('httprequestexception') ||
+      text.contains('failed to fetch') ||
+      text.contains('software caused connection abort');
 }
 
 AppException _fromBadResponse(DioException e) {
@@ -168,7 +198,11 @@ AppException _fromBadResponse(DioException e) {
     case 500:
     case 502:
     case 503:
-      return ServerException(message: message, statusCode: statusCode);
+      // Never pass a 5xx body to the UI: a broken backend answers with raw
+      // stack traces and database errors (SQLSTATE dumps, internal host
+      // names, queries). Those mean nothing to an end user and leak the
+      // schema — the built-in generic message is all that goes out.
+      return ServerException(statusCode: statusCode);
     default:
       return ApiException(statusCode: statusCode, message: message);
   }

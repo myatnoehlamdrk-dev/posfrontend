@@ -17,8 +17,10 @@ import 'package:posfrontend/features/sale/data/repositories/sale_repository_impl
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
+import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/pressable_card.dart';
+import 'package:posfrontend/shared/widgets/error_retry_view.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
@@ -139,7 +141,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final dio = ApiClient.create();
+      final dio = ApiClient.instance;
       final response = await dio.get(
         '/products',
         queryParameters: {
@@ -203,7 +205,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
 
   Future<void> _refreshProducts() async {
     try {
-      final dio = ApiClient.create();
+      final dio = ApiClient.instance;
       final response = await dio.get(
         '/products',
         queryParameters: {
@@ -602,12 +604,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
     // A local id means the draft exists only on this device: no stock is
     // reserved server-side yet.
     if (createOrderId.startsWith('local:')) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(context.l10n.t('Saved on this device')),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      showSuccessMessage(context, 'Saved on this device');
     }
     Navigator.of(
       context,
@@ -672,35 +669,18 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
           }
 
           if (_error != null && _products.isEmpty) {
-            return Center(
-              child: Column(
-                children: [
-                  Icon(Icons.error_outline, size: 48, color: _p.textMuted),
-                  const SizedBox(height: 16),
-                  Text(
-                    _error!,
-                    style: TextStyle(color: _p.dangerFg, fontSize: 15),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      setState(() {
-                        _error = null;
-                        _currentPage = 1;
-                        _hasMore = true;
-                        _products = [];
-                      });
-                      _loadProducts();
-                    },
-                    icon: const Icon(Icons.refresh, size: 18),
-                    label: Text(context.l10n.t('Retry')),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _accentColor,
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
+            return ErrorRetryView(
+              message: _error,
+              accentColor: _accentColor,
+              onRetry: () {
+                setState(() {
+                  _error = null;
+                  _currentPage = 1;
+                  _hasMore = true;
+                  _products = [];
+                });
+                _loadProducts();
+              },
             );
           }
 
@@ -1235,10 +1215,10 @@ class _ProductCard extends StatelessWidget {
       child: ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
         child: product.imageUrl != null
-            ? Image.network(
-                product.imageUrl!,
+            ? CachedProductImage(
+                url: product.imageUrl!,
                 fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => _fallback(),
+                errorWidget: _fallback(),
               )
             : _fallback(),
       ),

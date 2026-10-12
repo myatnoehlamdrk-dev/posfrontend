@@ -7,7 +7,7 @@ import 'package:posfrontend/features/product/data/models/category_api_model.dart
 class ProductRemoteDataSource {
   final Dio _dio;
 
-  ProductRemoteDataSource([Dio? dio]) : _dio = dio ?? ApiClient.create();
+  ProductRemoteDataSource([Dio? dio]) : _dio = dio ?? ApiClient.instance;
 
   Future<Map<String, dynamic>> getProducts({
     String? packageId,

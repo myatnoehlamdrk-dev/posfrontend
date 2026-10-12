@@ -479,12 +479,7 @@ Future<void> _createNewCard(
   // reserved server-side yet. Say so — a cashier who thinks the draft is
   // on the server will wait for a sync that is not coming.
   if (createOrderId.startsWith('local:')) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(context.l10n.t('Saved on this device')),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    showSuccessMessage(context, 'Saved on this device');
   }
   Navigator.of(
     context,

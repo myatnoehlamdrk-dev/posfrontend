@@ -271,6 +271,9 @@ const Map<String, String> myStrings = {
   'Write your feedback...': 'သင့်ပြောရန်မှတ်တမ်းရေးပါ...',
   'Submit': 'တင်ပြရန်',
   'Feedback submitted!': 'ပြောရန်မှတ်တမ်းတင်ပြပြီးပါပြီ',
+  'Comment': 'မှတ်ချက်',
+  'Suggestion': 'အကြံပြုချက်',
+  'Bug Report': 'အမှားတင်ပြချက်',
   'Redirecting to app rating...': 'အက်ပအဆင့်သတ်မှတ်မှုသို့ပြောင်းရွေ့နေသည်...',
   'Are you sure you want to logout?': 'ထွက်မည်ဟုသေချာပါသည်၊',
   'OK': 'OK',
@@ -409,6 +412,13 @@ const Map<String, String> myStrings = {
   'Clear all': 'အားလုံးဖျက်ရန်',
   'No notifications yet': 'အသိပေးချက်များ မရှိသေးပါ',
   'Stock alerts will appear here.': 'စတော့အသိပေးချက်များ ဤနေရာတွင် ပေါ်လာပါမည်။',
+  'Thank-you messages will appear here.':
+      'ကျေးဇူးတင်စကားများ ဤနေရာတွင် ပေါ်လာပါမည်။',
+  'Thank you for your feedback, {v1}!':
+      'ပြောရန်မှတ်တမ်းအတွက် ကျေးဇူးတင်ပါတယ်၊ {v1}!',
+  'Thank you for your feedback!': 'ပြောရန်မှတ်တမ်းအတွက် ကျေးဇူးတင်ပါတယ်!',
+  'Your message': 'သင်ရေးသားသော စာသား',
+  'Reference': 'ကိုးကား',
   'System': 'စနစ်',
   'Alert': 'သတိပေးချက်',
   'News': 'သတင်း',

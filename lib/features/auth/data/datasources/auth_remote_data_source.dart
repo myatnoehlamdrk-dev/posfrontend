@@ -8,7 +8,7 @@ import 'package:posfrontend/features/auth/data/models/user_api_model.dart';
 class AuthRemoteDataSource {
   final Dio _dio;
 
-  AuthRemoteDataSource([Dio? dio]) : _dio = dio ?? ApiClient.create();
+  AuthRemoteDataSource([Dio? dio]) : _dio = dio ?? ApiClient.instance;
 
   Future<LoginResponseModel> login(LoginRequestModel request) async {
     try {

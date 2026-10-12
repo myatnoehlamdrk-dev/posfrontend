@@ -4,6 +4,7 @@ import 'package:posfrontend/features/customer/presentation/viewmodels/customer_v
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
+import 'package:posfrontend/shared/widgets/error_retry_view.dart';
 import 'overview_tab.dart';
 import 'customers_tab.dart';
 import 'trends_tab.dart';
@@ -65,23 +66,9 @@ class _CustomerScreenState extends State<CustomerScreen>
             );
           }
           if (_viewModel.hasError && _viewModel.analytics == null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, color: Colors.red, size: 48),
-                  const SizedBox(height: 12),
-                  Text(
-                    _viewModel.errorMessage ?? 'Failed to load',
-                    style: TextStyle(color: p.textSecondary),
-                  ),
-                  const SizedBox(height: 12),
-                  ElevatedButton(
-                    onPressed: () => _viewModel.loadAnalytics(),
-                    child: Text(context.l10n.t('Retry')),
-                  ),
-                ],
-              ),
+            return ErrorRetryView(
+              message: _viewModel.errorMessage ?? 'Failed to load',
+              onRetry: _viewModel.loadAnalytics,
             );
           }
           return Column(

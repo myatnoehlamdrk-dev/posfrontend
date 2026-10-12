@@ -23,6 +23,7 @@ abstract class SaleRepository {
     int? discount,
     String? notes,
     CancelToken? cancelToken,
+    String? idempotencyKey,
   });
 
   /// Queues the compound "create draft, then convert to sale" pair for a
@@ -40,6 +41,7 @@ abstract class SaleRepository {
     required double grandTotal,
     int? discount,
     String? notes,
+    String? idempotencyKey,
   });
 }
 
@@ -57,6 +59,7 @@ abstract class OrderRepository {
     String? notes,
     String status = 'draft',
     bool allowLocalFallback = true,
+    String? idempotencyKey,
   });
 
   Future<void> updateOrderStatus({

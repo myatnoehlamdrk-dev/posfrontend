@@ -8,7 +8,7 @@ import 'package:posfrontend/features/sale/domain/entities/sale.dart';
 class SaleRemoteDataSource {
   final Dio _dio;
 
-  SaleRemoteDataSource([Dio? dio]) : _dio = dio ?? ApiClient.create();
+  SaleRemoteDataSource([Dio? dio]) : _dio = dio ?? ApiClient.instance;
 
   Future<void> createSale({
     required String userName,
@@ -22,6 +22,8 @@ class SaleRemoteDataSource {
     required double grandTotal,
     int? discount,
     String? notes,
+    CancelToken? cancelToken,
+    String? idempotencyKey,
   }) async {
     final itemsData = items
         .map(
@@ -53,7 +55,13 @@ class SaleRemoteDataSource {
     };
 
     try {
-      final resp = await _dio.post('/sales', data: payload);
+      final resp = await _dio.post(
+        '/sales',
+        data: payload,
+        options: idempotencyKey == null
+            ? null
+            : Options(headers: {'Idempotency-Key': idempotencyKey}),
+      );
       if (resp.statusCode != 201) {
         throw ApiException(
           statusCode: resp.statusCode,
@@ -70,6 +78,7 @@ class SaleRemoteDataSource {
         final queued = await OutboxQueue.instance.enqueue(
           kind: 'sale',
           payload: payload,
+          clientUuid: idempotencyKey,
         );
         if (queued) return;
       }
@@ -103,6 +112,7 @@ class SaleRemoteDataSource {
     String? notes,
     String status = 'draft',
     bool allowLocalFallback = true,
+    String? idempotencyKey,
   }) async {
     final itemsData = items
         .map(
@@ -134,7 +144,13 @@ class SaleRemoteDataSource {
     };
 
     try {
-      final resp = await _dio.post('/orders', data: payload);
+      final resp = await _dio.post(
+        '/orders',
+        data: payload,
+        options: idempotencyKey == null
+            ? null
+            : Options(headers: {'Idempotency-Key': idempotencyKey}),
+      );
       if (resp.statusCode != 201) {
         throw ApiException(
           statusCode: resp.statusCode,
@@ -178,6 +194,7 @@ class SaleRemoteDataSource {
     required double grandTotal,
     int? discount,
     String? notes,
+    String? idempotencyKey,
   }) async {
     final itemsData = items
         .map(
@@ -223,6 +240,7 @@ class SaleRemoteDataSource {
     return OutboxQueue.instance.enqueue(
       kind: 'sale-from-draft',
       payload: {'draft': draft, 'sale': sale},
+      clientUuid: idempotencyKey,
     );
   }
 

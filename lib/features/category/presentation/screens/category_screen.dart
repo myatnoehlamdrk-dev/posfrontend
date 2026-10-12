@@ -10,6 +10,7 @@ import 'package:posfrontend/features/package/presentation/screens/package_screen
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
+import 'package:posfrontend/shared/widgets/error_retry_view.dart';
 import 'package:posfrontend/shared/widgets/error_snackbar.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 
@@ -167,7 +168,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
   }
 
   Widget _buildContent({required bool isWide}) {
-    final p = context.palette;
     return SafeArea(
       child: ListenableBuilder(
         listenable: _viewModel,
@@ -200,15 +200,15 @@ class _CategoryScreenState extends State<CategoryScreen> {
                             ),
                           )
                         else if (_viewModel.hasError)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 40),
-                            child: Center(
-                              child: Text(
-                                _viewModel.errorMessage ??
-                                    'Failed to load categories.',
-                                style: TextStyle(color: p.textSecondary),
-                              ),
-                            ),
+                          // fill: false — this is one section of the page,
+                          // below the breadcrumb and heading, so it keeps its
+                          // natural height instead of claiming a screenful.
+                          ErrorRetryView(
+                            message: _viewModel.errorMessage ??
+                                'Failed to load categories.',
+                            onRetry: _viewModel.load,
+                            accentColor: AppColors.brandPurpleDark,
+                            fill: false,
                           )
                         else
                           LayoutBuilder(

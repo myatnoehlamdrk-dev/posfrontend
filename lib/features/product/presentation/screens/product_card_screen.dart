@@ -8,6 +8,8 @@ import 'package:posfrontend/features/product/presentation/screens/product_detail
 import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
+import 'package:posfrontend/shared/widgets/cached_product_image.dart';
+import 'package:posfrontend/shared/widgets/error_retry_view.dart';
 import 'package:posfrontend/shared/widgets/search_input_bar.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
@@ -47,7 +49,7 @@ class _ProductCardScreenState extends State<ProductCardScreen> {
       _error = null;
     });
     try {
-      final dio = ApiClient.create();
+      final dio = ApiClient.instance;
       final resp = await dio.get('/products');
       final data = resp.data;
       final items = _extractList(data);
@@ -184,24 +186,10 @@ class _ProductCardScreenState extends State<ProductCardScreen> {
       );
     }
     if (_error != null) {
-      return Center(
-        child: Column(
-          children: [
-            Icon(Icons.error_outline, color: palette.dangerFg, size: 48),
-            const SizedBox(height: 12),
-            Text(_error!, style: TextStyle(color: palette.dangerFg)),
-            const SizedBox(height: 12),
-            ElevatedButton.icon(
-              onPressed: _loadProducts,
-              icon: const Icon(Icons.refresh, size: 18),
-              label: Text(context.l10n.t('Retry')),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.teal,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ],
-        ),
+      return ErrorRetryView(
+        message: _error,
+        onRetry: _loadProducts,
+        accentColor: AppColors.teal,
       );
     }
     if (products.isEmpty) {
@@ -315,11 +303,11 @@ class _ProductCard extends StatelessWidget {
                       top: Radius.circular(16),
                     ),
                     child: product.imageUrl != null
-                        ? Image.network(
-                            product.imageUrl!,
+                        ? CachedProductImage(
+                            url: product.imageUrl!,
                             fit: BoxFit.cover,
                             width: double.infinity,
-                            errorBuilder: (c, o, s) => _imageFallback(),
+                            errorWidget: _imageFallback(),
                           )
                         : _imageFallback(),
                   ),

@@ -31,13 +31,47 @@ import 'package:posfrontend/core/network/api_client.dart';
 /// otherwise the app must behave exactly as it did before this feature
 /// existed, and a wrong `false` would serve stale data to a perfectly
 /// healthy connection.
+///
+/// ## Why a failed probe is retried
+///
+/// A single probe is a single sample of a moving target: at launch the
+/// backend may still be booting, DNS may not have settled, or the network
+/// interface may have come up a moment before its route did. Publishing that
+/// sample as a permanent answer is what made the app say "Offline" on an
+/// online device — `connectivity_plus` only reports link *changes*, so a link
+/// that never changes would never trigger a re-probe for the rest of the
+/// session. A failed probe therefore arms a retry on [_retryDelays], which
+/// backs off while the server stays unreachable and stops the moment it
+/// answers. Link loss cancels it: there is nothing to reach until the link
+/// returns.
 class ConnectivityService {
-  ConnectivityService({Connectivity? connectivity, Dio? probe})
-    : _connectivity = connectivity ?? Connectivity(),
-      _probe = probe;
+  ConnectivityService({
+    Connectivity? connectivity,
+    Dio? probe,
+    String? baseUrl,
+    List<Duration>? retryDelays,
+  }) : _connectivity = connectivity ?? Connectivity(),
+       _probe = probe,
+       _baseUrlOverride = baseUrl,
+       _retryDelays = (retryDelays == null || retryDelays.isEmpty)
+           ? defaultRetryDelays
+           : List.unmodifiable(retryDelays);
+
+  /// Re-probe cadence after a failed answer: the last entry is the ceiling,
+  /// held for as long as the server stays unreachable rather than given up
+  /// on, because "unreachable right now" is never a permanent property.
+  static const defaultRetryDelays = <Duration>[
+    Duration(seconds: 3),
+    Duration(seconds: 10),
+    Duration(seconds: 30),
+  ];
 
   final Connectivity _connectivity;
   final Dio? _probe;
+
+  /// Compile-time `BASE_URL` unless a test supplies its own origin.
+  final String? _baseUrlOverride;
+  final List<Duration> _retryDelays;
 
   /// Whether the API server is believed reachable. Read by the cache
   /// interceptor (serve-from-cache fast path) and the sync manager.
@@ -46,7 +80,19 @@ class ConnectivityService {
   StreamSubscription<List<ConnectivityResult>>? _subscription;
   bool _started = false;
   bool _probing = false;
+
+  /// Set when a link event arrives while a probe is in flight. The answer
+  /// that lands may predate the event, so it is not to be trusted alone; the
+  /// flag makes the probe run once more instead of dropping the event.
+  bool _probeQueued = false;
+
+  /// The last known state of the link layer. Retries are pointless without
+  /// one, and link loss must cancel them.
+  bool _hasLink = false;
+
   int _probeGeneration = 0;
+  int _retryAttempt = 0;
+  Timer? _retryTimer;
 
   static ConnectivityService? _instance;
 
@@ -60,7 +106,14 @@ class ConnectivityService {
       _instance = service;
 
   /// Begins listening. Safe to call more than once; later calls are no-ops.
+  ///
+  /// A no-op on web: there is no offline mode there (the local store is out
+  /// of scope for the web build, and the browser already owns connectivity),
+  /// so the app must never publish `false` and hang the "Offline" pill over
+  /// an online page. [isOnline] stays at its optimistic `true` for the whole
+  /// session.
   Future<void> start() async {
+    if (kIsWeb) return;
     if (_started) return;
     _started = true;
 
@@ -71,17 +124,25 @@ class ConnectivityService {
   Future<void> stop() async {
     await _subscription?.cancel();
     _subscription = null;
+    _cancelRetry();
     _started = false;
   }
 
   void _onLinkChanged(List<ConnectivityResult> results) {
     final hasLink =
         results.isNotEmpty && !results.contains(ConnectivityResult.none);
+    _hasLink = hasLink;
+    // A new link event is a new situation: the backoff ladder starts over so
+    // a network change is judged on its own evidence, not on how many times
+    // the previous one failed.
+    _retryAttempt = 0;
     if (!hasLink) {
       // No interface at all: nothing to probe, and the answer is immediate.
       // Bumping the generation cancels any probe still in flight so a stale
       // "yes" cannot overwrite this "no".
       _probeGeneration++;
+      _probeQueued = false;
+      _cancelRetry();
       _setOnline(false);
       return;
     }
@@ -89,19 +150,58 @@ class ConnectivityService {
   }
 
   Future<void> _probeServer() async {
-    if (_probing) return;
+    if (_probing) {
+      _probeQueued = true;
+      return;
+    }
     _probing = true;
     final generation = ++_probeGeneration;
     try {
       final reachable = await _reachServer();
-      if (generation == _probeGeneration) _setOnline(reachable);
+      // A stale answer — the link changed underneath us — is discarded
+      // entirely: the event that invalidated it already published its own
+      // state, and arming a retry from a result nobody accepted would
+      // fight it.
+      if (generation == _probeGeneration) {
+        _setOnline(reachable);
+        if (reachable) {
+          _retryAttempt = 0;
+          _cancelRetry();
+        } else {
+          _scheduleRetry();
+        }
+      }
     } finally {
       _probing = false;
+      if (_probeQueued) {
+        _probeQueued = false;
+        // Only if a link is still present: link loss clears the flag, and
+        // its own answer is already the published one.
+        if (_hasLink) unawaited(_probeServer());
+      }
     }
   }
 
+  /// Arms the next probe after a failure, walking [_retryDelays] up to its
+  /// ceiling and then holding it.
+  void _scheduleRetry() {
+    if (!_hasLink || _retryTimer != null) return;
+    final last = _retryDelays.length - 1;
+    final index = _retryAttempt < last ? _retryAttempt : last;
+    _retryAttempt++;
+    _retryTimer = Timer(_retryDelays[index], () {
+      _retryTimer = null;
+      if (_hasLink) _probeServer();
+    });
+  }
+
+  void _cancelRetry() {
+    _retryTimer?.cancel();
+    _retryTimer = null;
+  }
+
   Future<bool> _reachServer() async {
-    final base = ApiClient.baseUrl;
+    final base = _baseUrlOverride ?? ApiClient.baseUrl;
     if (base.isEmpty) {
       // No origin configured to probe (unset BASE_URL during development):
       // fall back to believing the link layer rather than declaring every
@@ -132,6 +232,12 @@ class ConnectivityService {
   void _setOnline(bool value) {
     if (isOnline.value != value) isOnline.value = value;
   }
+
+  /// Test seam: feeds a link-layer result through the same path the
+  /// subscription uses, without a real `connectivity_plus` listener.
+  @visibleForTesting
+  void debugLinkChanged(List<ConnectivityResult> results) =>
+      _onLinkChanged(results);
 
   /// Test seam: forces the published state without a probe.
   @visibleForTesting

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/shared/l10n/status_l10n.dart';
 import 'package:flutter/services.dart';
@@ -15,11 +16,14 @@ import 'package:posfrontend/features/product/presentation/viewmodels/product_det
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
+import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_message.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
+import 'package:posfrontend/shared/widgets/error_retry_view.dart';
 import 'package:posfrontend/shared/widgets/pressable_card.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
+import 'package:posfrontend/shared/widgets/responsive_scaffold.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final String productId;
@@ -65,16 +69,21 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return ListenableBuilder(
       listenable: _viewModel,
       builder: (context, _) {
-        return LayoutBuilder(
-          builder: (ctx, constraints) {
-            final isWide = constraints.maxWidth >= 768;
-            final body = _content(isWide: isWide);
+        // Dock the drawer beside the page on wide windows, the same as the
+        // other drill-down detail screens (sale, purchase, cart card).
+        return WideDrawerDock(
+          active: DrawerDestination.product,
+          child: LayoutBuilder(
+            builder: (ctx, constraints) {
+              final isWide = constraints.maxWidth >= 768;
+              final body = _content(isWide: isWide);
 
-            return Scaffold(
-              backgroundColor: _p.scaffoldBg,
-              body: SafeArea(child: body),
-            );
-          },
+              return Scaffold(
+                backgroundColor: _p.scaffoldBg,
+                body: SafeArea(child: body),
+              );
+            },
+          ),
         );
       },
     );
@@ -99,24 +108,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     ),
                   )
                 : _viewModel.hasError
-                ? SizedBox(
-                    height: 300,
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            _viewModel.errorMessage!,
-                            style: TextStyle(color: _p.dangerFg),
-                          ),
-                          const SizedBox(height: 12),
-                          ElevatedButton(
-                            onPressed: _viewModel.load,
-                            child: Text(context.l10n.t('Retry')),
-                          ),
-                        ],
-                      ),
-                    ),
+                ? ErrorRetryView(
+                    message: _viewModel.errorMessage,
+                    onRetry: _viewModel.load,
+                    accentColor: _accentColor,
                   )
                 : _viewModel.detail == null
                 ? SizedBox(
@@ -125,6 +120,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       child: CircularProgressIndicator(color: _accentColor),
                     ),
                   )
+                : isWide
+                ? _wideContent()
                 : Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Column(
@@ -147,6 +144,49 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
+  /// Desktop/tablet arrangement: the page is capped so cards don't stretch
+  /// across the whole window, and splits into two panes — product imagery and
+  /// the name/price summary on the left, the tabbed detail on the right.
+  Widget _wideContent() {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1100),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 5,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _heroImage(),
+                    const SizedBox(height: 16),
+                    _summaryCard(),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 24),
+              Expanded(
+                flex: 6,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _segmented(),
+                    const SizedBox(height: 16),
+                    _tabContent(),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _heroImage() {
     final d = _viewModel.detail!;
     final color = CatalogProductView.colorFor(d.categoryName);
@@ -162,12 +202,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
           clipBehavior: Clip.antiAlias,
           child: hasImage
-              ? Image.network(
-                  d.imageUrl!,
+              ? CachedProductImage(
+                  url: d.imageUrl!,
                   width: double.infinity,
                   height: 220,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => _heroFallback(color),
+                  memCacheWidth: 800,
+                  errorWidget: _heroFallback(color),
                 )
               : _heroFallback(color),
         ),

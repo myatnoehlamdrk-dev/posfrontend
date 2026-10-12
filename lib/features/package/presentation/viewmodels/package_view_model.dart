@@ -76,7 +76,7 @@ class PackageViewModel extends BaseViewModel {
 
   Future<bool> deletePackage(String packageId) async {
     try {
-      final dio = ApiClient.create();
+      final dio = ApiClient.instance;
       await dio.delete('/packages/$packageId', cancelToken: cancelToken);
       _packages.removeWhere((p) => p.id == packageId);
       notifyListeners();

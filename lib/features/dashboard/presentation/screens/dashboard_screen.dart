@@ -17,6 +17,7 @@ import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/app_shell.dart';
+import 'package:posfrontend/shared/widgets/error_retry_view.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
 import 'package:posfrontend/shared/widgets/shop_scope.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
@@ -61,7 +62,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _lastReportCheck = now;
 
     try {
-      final resp = await ApiClient.create()
+      final resp = await ApiClient.instance
           .post('/notifications/daily-report/check');
       final data = resp.data;
       final reason =
@@ -89,7 +90,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _loadProfileImage() async {
     try {
-      final dio = ApiClient.create();
+      final dio = ApiClient.instance;
       final resp = await dio.get(
         '/auth/profile',
         cancelToken: _cancelToken,
@@ -146,40 +147,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           if (_viewModel.isLoading && _viewModel.data == null)
                             const DashboardSkeleton()
                           else if (_viewModel.hasError)
-                            SizedBox(
-                              height: 300,
-                              child: Center(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(
-                                      Icons.error_outline,
-                                      color: Color(0xFFEF4444),
-                                      size: 48,
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Text(
-                                      _viewModel.errorMessage ??
-                                          'Something went wrong',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: p.textSecondary,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    ElevatedButton.icon(
-                                      onPressed: () => _viewModel.load(),
-                                      icon: const Icon(Icons.refresh, size: 18),
-                                      label: Text(context.l10n.t('Retry')),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: AppColors.brandPurple,
-                                        foregroundColor: Colors.white,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                            ErrorRetryView(
+                              message: _viewModel.errorMessage ??
+                                  'Something went wrong',
+                              onRetry: _viewModel.load,
                             )
                           else if (_viewModel.data == null)
                             const DashboardSkeleton()

@@ -1,4 +1,5 @@
 import 'package:posfrontend/core/base/base_view_model.dart';
+import 'package:posfrontend/core/utils/error_handler.dart';
 import 'package:posfrontend/features/dashboard/domain/entities/dashboard.dart';
 import 'package:posfrontend/features/dashboard/domain/repositories/dashboard_repository.dart';
 
@@ -45,7 +46,7 @@ class DashboardViewModel extends BaseViewModel {
       if (result.years.isNotEmpty) _years = result.years;
       _monthlySales = result.months;
     } catch (e) {
-      _monthlyError = e.toString();
+      _monthlyError = formatApiError(e);
     }
     _isLoadingMonthly = false;
     notifyListeners();

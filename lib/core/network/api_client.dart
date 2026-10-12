@@ -46,6 +46,11 @@ class ApiClient {
     return _instance!;
   }
 
+  /// A fresh client with the same interceptor chain as [instance].
+  ///
+  /// Ordinary call sites should use [instance]: one shared client means one
+  /// interceptor chain and consistent token refresh. [create] exists for
+  /// tests and the rare case that genuinely needs an isolated client.
   static Dio create() => _create();
 
   /// A client with no interceptors, for the one request whose 401 the caller

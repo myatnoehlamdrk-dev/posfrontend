@@ -5,7 +5,7 @@ import 'package:posfrontend/features/inventory/data/models/inventory_api_model.d
 
 class InventoryRemoteDataSource {
   final Dio _dio;
-  InventoryRemoteDataSource({Dio? dio}) : _dio = dio ?? ApiClient.create();
+  InventoryRemoteDataSource({Dio? dio}) : _dio = dio ?? ApiClient.instance;
 
   Future<List<InventoryApiModel>> getInventories({
     String? type,

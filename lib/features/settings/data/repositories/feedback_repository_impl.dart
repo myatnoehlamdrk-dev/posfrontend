@@ -4,7 +4,7 @@ import 'package:posfrontend/features/settings/domain/entities/feedback.dart';
 import 'package:posfrontend/features/settings/domain/repositories/feedback_repository.dart';
 
 class FeedbackRepositoryImpl implements FeedbackRepository {
-  final dio = ApiClient.create();
+  final dio = ApiClient.instance;
 
   @override
   Future<FeedbackEntity> submitFeedback({
