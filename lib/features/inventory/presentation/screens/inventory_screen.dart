@@ -4,7 +4,6 @@ import 'package:posfrontend/features/inventory/domain/entities/inventory.dart';
 import 'package:posfrontend/features/inventory/presentation/viewmodels/inventory_view_model.dart';
 import 'package:posfrontend/features/inventory/data/repositories/inventory_repository_impl.dart';
 import 'package:posfrontend/features/category/presentation/screens/category_screen.dart';
-import 'package:posfrontend/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
@@ -124,17 +123,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
   Widget _breadcrumb(_InventoryColors colors) {
     return Row(
       children: [
-        _BreadcrumbLink(
-          label: context.l10n.t('Dashboard'),
-          color: colors.link,
-          hoverColor: colors.linkHover,
-          onTap: () => Navigator.of(
-            context,
-          ).push(MaterialPageRoute(builder: (_) => DashboardScreen())),
-        ),
-        const SizedBox(width: 8),
-        Text('›', style: TextStyle(fontSize: 14, color: colors.separator)),
-        const SizedBox(width: 8),
+        // The trail starts at Inventory: the Dashboard crumb it used to lead
+        // with was one hop too many, and this screen is the trail's root.
         Text(
           context.l10n.t('Inventory'),
           style: TextStyle(
@@ -251,52 +241,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// A breadcrumb entry that lightens on hover.
-///
-/// [Hoverable] rather than a bare `GestureDetector` so the affordance shows on
-/// desktop; the tap target is unchanged on touch, where hover never fires.
-class _BreadcrumbLink extends StatefulWidget {
-  final String label;
-  final Color color;
-  final Color hoverColor;
-  final VoidCallback onTap;
-
-  const _BreadcrumbLink({
-    required this.label,
-    required this.color,
-    required this.hoverColor,
-    required this.onTap,
-  });
-
-  @override
-  State<_BreadcrumbLink> createState() => _BreadcrumbLinkState();
-}
-
-class _BreadcrumbLinkState extends State<_BreadcrumbLink> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedDefaultTextStyle(
-          duration: const Duration(milliseconds: 140),
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: _hovered ? widget.hoverColor : widget.color,
-          ),
-          child: Text(widget.label),
-        ),
-      ),
     );
   }
 }

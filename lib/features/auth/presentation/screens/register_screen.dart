@@ -5,12 +5,15 @@ import 'package:posfrontend/features/auth/domain/usecases/register.dart';
 import 'package:posfrontend/features/auth/presentation/viewmodels/register_view_model.dart';
 import 'package:posfrontend/features/auth/presentation/screens/verify_account_screen.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_dimens.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_input_decoration.dart';
 import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 import 'package:posfrontend/shared/widgets/gradient_button.dart';
 import 'package:posfrontend/shared/widgets/required_label.dart';
 import 'package:posfrontend/shared/widgets/wizard_step_indicator.dart';
+import 'package:mm_nrc_kit/mm_nrc_kit.dart';
 
 /// Layout thresholds, matching the create-shop screen so the two wizards agree
 /// on what "wide" means and a user moving between them sees the same shape.
@@ -54,7 +57,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _socialController = TextEditingController();
   final _roleController = TextEditingController();
   final _addressController = TextEditingController();
-  final _nrcController = TextEditingController();
   final _billingController = TextEditingController();
   final _dobController = TextEditingController();
 
@@ -97,7 +99,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _addressController.addListener(
       () => _viewModel.setAddress(_addressController.text),
     );
-    _nrcController.addListener(() => _viewModel.setNrc(_nrcController.text));
     _billingController.addListener(
       () => _viewModel.setBillingWay(_billingController.text),
     );
@@ -114,7 +115,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _socialController.dispose();
     _roleController.dispose();
     _addressController.dispose();
-    _nrcController.dispose();
     _billingController.dispose();
     _dobController.dispose();
     super.dispose();
@@ -152,7 +152,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (success && mounted) {
       navigator.pushReplacement(
         MaterialPageRoute(
-          builder: (_) => VerifyAccountScreen(email: _viewModel.email),
+          builder: (_) => VerifyAccountScreen(
+            email: _viewModel.email,
+            // register already mailed the code -- a second send here is what
+            // put two verification emails in the inbox on every sign-up.
+            sendOnOpen: false,
+          ),
         ),
       );
     }
@@ -320,6 +325,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   /// is a number, one is a handle — so pairing them reads as grouping rather
   /// than as saving space.
   Widget _buildUserDetailStep({required bool isWide}) {
+    // The NRC field shows the server's format error, so it needs the same
+    // field-error map the shop step passes in.
+    final errors = _viewModel.fieldErrors;
+    final p = context.palette;
+
     final dob = [
       _optionalLabel('Date of Birth'),
       TextFormField(
@@ -405,15 +415,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
     ];
 
     final nrc = [
-      _optionalLabel('NRC No.'),
-      TextFormField(
-        controller: _nrcController,
-        decoration: appInputDecoration(
-          context,
-          icon: Icons.credit_card_outlined,
-          hint: context.l10n.t('Enter NRC number'),
+      // The standard Myanmar NRC picker (mm_nrc_kit), English labels: pick
+      // the state, township, citizenship letter and 6-digit serial; it
+      // composes the API string (12/MAKANA(N)123456) itself. The tile shows
+      // its own "NRC Number" title, so no label is repeated above it.
+      NRCField(
+        language: NrcLanguage.english,
+        backgroundColor: p.surfaceAlt,
+        borderColor: p.border,
+        borderWidth: 1,
+        borderRadius: AppRadius.md,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s16,
+          vertical: AppSpacing.s12,
         ),
+        leadingTitleColor: p.textMuted,
+        leadingTitleFontSize: AppTypography.bodySmallSize,
+        trailingTitleFontSize: AppTypography.bodySmallSize,
+        pickerItemColor: p.textPrimary,
+        onCompleted: (value) => _viewModel.setNrc(value ?? ''),
+        onChanged: (value) => _viewModel.setNrc(value ?? ''),
       ),
+      if (errors['nrc'] != null) ...[
+        const SizedBox(height: 6),
+        Text(
+          errors['nrc']!,
+          style: TextStyle(fontSize: 12, color: p.dangerFg),
+        ),
+      ],
     ];
 
     final children = isWide
@@ -482,13 +511,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
     ];
 
     final billing = [
-      RequiredLabel('Billing Way'),
+      RequiredLabel('Service Fee Way'),
       TextFormField(
         controller: _billingController,
         decoration: appInputDecoration(
           context,
           icon: Icons.payment_outlined,
-          hint: context.l10n.t('Enter billing way'),
+          hint: context.l10n.t('Enter service feed way'),
           errorText: errors['billingWay'],
         ),
       ),

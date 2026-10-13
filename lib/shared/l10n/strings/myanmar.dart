@@ -38,7 +38,7 @@ const Map<String, String> myStrings = {
   'Enter user address': 'အသုံးပြုသူလိပ်စာဖြည့်ပါ',
   'Enter user role': 'အသုံးပြုသူအခန်းကဏ္ဍဖြည့်ပါ',
   'Enter NRC number': 'NRC နံပါတ်ဖြည့်ပါ',
-  'Enter billing way': 'ငှားရမ်းနည်းလမ်းဖြည့်ပါ',
+  'Enter service feed way': 'ငှားရမ်းနည်းလမ်းဖြည့်ပါ',
   'Select gender': 'လိပ်စာရွေးပါ',
   'Verify Your Email': 'သင့်အီးမေးလ်အတည်ပြုပါ',
   'We sent a 6-digit verification code to':

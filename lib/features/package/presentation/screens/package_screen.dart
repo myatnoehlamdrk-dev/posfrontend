@@ -245,14 +245,8 @@ class _PackageScreenState extends State<PackageScreen> {
     final style = TextStyle(fontSize: 13, color: p.textSecondary);
     return Wrap(
       children: [
-        GestureDetector(
-          onTap: () {},
-          child: Text(
-            context.l10n.t('Dashboard'),
-            style: TextStyle(fontSize: 13, color: AppColors.brandPurpleDark),
-          ),
-        ),
-        Text('  >  ', style: style),
+        // The trail starts at Inventory -- the Dashboard crumb it used to lead
+        // with was one hop too many.
         GestureDetector(
           onTap: () {},
           child: Text(

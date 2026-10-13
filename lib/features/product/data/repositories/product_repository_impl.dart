@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:posfrontend/core/auth/session_store.dart';
+import 'package:posfrontend/core/network/app_exceptions.dart';
 import 'package:posfrontend/core/local/local_store.dart';
 import 'package:posfrontend/features/product/data/datasources/product_local_data_source.dart';
 import 'package:posfrontend/features/product/data/datasources/product_remote_data_source.dart';
@@ -34,10 +35,13 @@ class ProductRepositoryImpl implements ProductRepository {
     String? order,
     int page = 1,
     int perPage = 10,
+    bool preferNetwork = false,
     CancelToken? cancelToken,
   }) async {
     final shopId = await _currentShopId();
-    if (shopId != null && shopId.isNotEmpty) {
+
+    Future<Map<String, dynamic>?> readCache() async {
+      if (shopId == null || shopId.isEmpty) return null;
       try {
         final cachedProducts = await _localDataSource.getCachedProducts(
           shopId: shopId,
@@ -47,44 +51,62 @@ class ProductRepositoryImpl implements ProductRepository {
           page: page,
           perPage: perPage,
         );
-        if (cachedProducts.isNotEmpty) {
-          return {
-            'data': cachedProducts,
-            'meta': {
-              'current_page': page,
-              'last_page': 1,
-              'total': cachedProducts.length,
-            },
-          };
-        }
+        if (cachedProducts.isEmpty) return null;
+        return {
+          'data': cachedProducts,
+          'meta': {
+            'current_page': page,
+            'last_page': 1,
+            'total': cachedProducts.length,
+          },
+        };
       } catch (_) {
         // Ignore cache errors and fall back to network
+        return null;
       }
     }
 
-    final response = await _remoteDataSource.getProducts(
-      packageId: packageId,
-      categoryId: categoryId,
-      search: search,
-      sort: sort,
-      order: order,
-      page: page,
-      perPage: perPage,
-      cancelToken: cancelToken,
-    );
-
-    // Cache the response for offline use
-    if (shopId != null && shopId.isNotEmpty) {
-      final data = response['data'];
-      if (data is List) {
-        final products = data
-            .map((json) => ProductApiModel.fromJson(json as Map<String, dynamic>))
-            .toList();
-        _localDataSource.cacheProducts(shopId: shopId, products: products);
-      }
+    // Screens that read state they are about to edit (package detail, the
+    // assign picker) ask for the server's answer first; everyone else keeps
+    // the offline-first order.
+    if (!preferNetwork) {
+      final cached = await readCache();
+      if (cached != null) return cached;
     }
 
-    return response;
+    try {
+      final response = await _remoteDataSource.getProducts(
+        packageId: packageId,
+        categoryId: categoryId,
+        search: search,
+        sort: sort,
+        order: order,
+        page: page,
+        perPage: perPage,
+        cancelToken: cancelToken,
+      );
+
+      // Cache the response for offline use
+      if (shopId != null && shopId.isNotEmpty) {
+        final data = response['data'];
+        if (data is List) {
+          final products = data
+              .map((json) => ProductApiModel.fromJson(json as Map<String, dynamic>))
+              .toList();
+          _localDataSource.cacheProducts(shopId: shopId, products: products);
+        }
+      }
+
+      return response;
+    } on ApiException {
+      // Going offline must not blank a fresh-data screen: fall back to the
+      // cached rows before surfacing the failure.
+      if (preferNetwork) {
+        final cached = await readCache();
+        if (cached != null) return cached;
+      }
+      rethrow;
+    }
   }
 
   @override
@@ -135,6 +157,34 @@ class ProductRepositoryImpl implements ProductRepository {
   @override
   Future<void> deleteProduct(String productId) {
     return _remoteDataSource.deleteProduct(productId);
+  }
+
+  @override
+  Future<void> setProductPackage(
+    String productId,
+    int? packageId, {
+    CancelToken? cancelToken,
+  }) async {
+    await _remoteDataSource.updateProduct(productId, {
+      'packageId': packageId,
+    });
+
+    // Write-through: the server row moved, so the cached row must move with
+    // it — otherwise the next cache-first read of either screen still answers
+    // with the old membership (added product missing, removed product stuck).
+    final shopId = await _currentShopId();
+    if (shopId != null && shopId.isNotEmpty) {
+      try {
+        await _localDataSource.updateCachedProductPackage(
+          shopId: shopId,
+          productId: productId,
+          packageId: packageId?.toString() ?? '',
+        );
+      } catch (_) {
+        // Cache sync is best effort; the server copy is already correct and
+        // the next network-first read rewrites the row anyway.
+      }
+    }
   }
 }
 

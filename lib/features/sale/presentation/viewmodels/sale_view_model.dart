@@ -401,7 +401,7 @@ class SaleViewModel extends BaseViewModel {
       notifyListeners();
       return false;
     } catch (e) {
-      setError('An unexpected error occurred');
+      setError(formatApiError(e));
       _isSubmitting = false;
       notifyListeners();
       return false;
@@ -438,7 +438,7 @@ class SaleViewModel extends BaseViewModel {
       notifyListeners();
       return false;
     } catch (e) {
-      setError('An unexpected error occurred');
+      setError(formatApiError(e));
       _isSubmitting = false;
       notifyListeners();
       return false;

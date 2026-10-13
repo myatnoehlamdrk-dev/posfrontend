@@ -181,7 +181,6 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Breadcrumb([
-                    BreadcrumbItem(context.l10n.t('Dashboard'), false),
                     BreadcrumbItem(context.l10n.t('Inventory'), false),
                     const BreadcrumbItem('Packages', false),
                     BreadcrumbItem(

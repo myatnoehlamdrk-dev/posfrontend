@@ -114,8 +114,11 @@ class FcmService {
   }
 
   Future<void> _setupLocalNotifications() async {
+    // White-silhouette logo: Android masks notification small icons to a
+    // single alpha layer, so the full-colour launcher icon would render as
+    // a solid rectangle instead of the brand mark.
     const AndroidInitializationSettings androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('@mipmap/ic_launcher_monochrome');
 
     const DarwinInitializationSettings iosSettings =
         DarwinInitializationSettings(
@@ -167,6 +170,7 @@ class FcmService {
       importance: Importance.high,
       priority: Priority.high,
       ticker: 'Stock Alert',
+      icon: '@mipmap/ic_launcher_monochrome',
     );
 
     const iosDetails = DarwinNotificationDetails(

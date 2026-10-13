@@ -1,5 +1,8 @@
-/// The password rule the API enforces on every password-setting endpoint
-/// (register, change password, forgot-password reset).
+/// The password rule the API enforces on the endpoints covered here:
+/// register (`min:6`) and forgot-password reset (`min:6`).
+///
+/// Profile's change-password is stricter at `min:8` and keeps its own check
+/// in `profile_view_model.dart`.
 ///
 /// Lives here rather than on a request model so presentation code can check it
 /// without importing anything from the data layer. The server remains

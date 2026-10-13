@@ -1,5 +1,6 @@
 import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/core/base/form_validation_mixin.dart';
+import 'package:posfrontend/core/utils/error_handler.dart';
 import 'package:posfrontend/features/auth/domain/usecases/verify_account.dart';
 
 class VerifyAccountViewModel extends BaseViewModel with FormValidationMixin {
@@ -47,7 +48,7 @@ class VerifyAccountViewModel extends BaseViewModel with FormValidationMixin {
       await _sendOtpUseCase(SendOtpParams(email: _email.trim()));
       return true;
     } catch (e) {
-      setError('Failed to send OTP: $e');
+      setError(formatApiError(e));
       return false;
     } finally {
       setLoading(false);
@@ -66,7 +67,7 @@ class VerifyAccountViewModel extends BaseViewModel with FormValidationMixin {
       );
       return true;
     } catch (e) {
-      setError('Verification failed: $e');
+      setError(formatApiError(e));
       return false;
     } finally {
       setLoading(false);

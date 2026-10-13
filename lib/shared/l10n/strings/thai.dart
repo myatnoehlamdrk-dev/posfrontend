@@ -25,7 +25,7 @@ const Map<String, String> thaiStrings = {
   'Enter user address': 'กรุณากรอกที่อยู่',
   'Enter user role': 'กรุณากรอกตำแหน่ง',
   'Enter NRC number': 'กรุณากรอกเลข NRC',
-  'Enter billing way': 'กรุณากรอกวิธีการเรียกเก็บเงิน',
+  'Enter service feed way': 'กรุณากรอกวิธีการเรียกเก็บเงิน',
   'Select gender': 'เลือกเพศ',
   'Verify Your Email': 'ยืนยันอีเมลของคุณ',
   'We sent a 6-digit verification code to': 'เราได้ส่งรหัสยืนยัน 6 หลักไปยัง',

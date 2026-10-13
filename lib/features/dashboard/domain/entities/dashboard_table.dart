@@ -90,6 +90,14 @@ class DashboardTableRow extends Equatable {
     return int.tryParse(value?.toString() ?? '') ?? 0;
   }
 
+  /// The raw numeric value as a double, for widgets that format their own
+  /// output — `PriceText` takes a double and renders the full amount itself.
+  double number(String key) {
+    final value = data[key];
+    if (value is num) return value.toDouble();
+    return double.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
   /// Renders the raw value for a column. Kept here rather than in the widget so
   /// that a number never shows up as "25000.0" and a date never shows up as an
   /// ISO string with a T in it.

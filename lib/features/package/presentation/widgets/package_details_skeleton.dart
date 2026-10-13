@@ -37,13 +37,11 @@ class PackageDetailsSkeleton extends StatelessWidget {
     );
   }
 
-  /// Five short blocks for the Dashboard / Inventory / category / package /
-  /// Package Detail trail.
+  /// Four short blocks for the Inventory / category / package / Package
+  /// Detail trail.
   Widget _breadcrumb() {
     return const Row(
       children: [
-        SkeletonBox(height: 12, width: 64),
-        SizedBox(width: 8),
         SkeletonBox(height: 12, width: 56),
         SizedBox(width: 8),
         SkeletonBox(height: 12, width: 72),

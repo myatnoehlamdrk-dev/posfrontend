@@ -147,7 +147,6 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Breadcrumb([
-                    BreadcrumbItem(context.l10n.t('Dashboard'), false),
                     BreadcrumbItem(context.l10n.t('Inventory'), false),
                     const BreadcrumbItem('Categories', false),
                     BreadcrumbItem(

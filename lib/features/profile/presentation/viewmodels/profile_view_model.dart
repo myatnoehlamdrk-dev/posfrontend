@@ -1,6 +1,7 @@
 import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/core/base/form_validation_mixin.dart';
 import 'package:posfrontend/core/network/api_client.dart';
+import 'package:posfrontend/core/utils/error_handler.dart';
 import 'package:posfrontend/features/profile/domain/entities/profile.dart';
 import 'package:posfrontend/features/profile/domain/repositories/profile_repository.dart';
 import 'package:posfrontend/features/shop/domain/entities/shop.dart';
@@ -140,7 +141,7 @@ class ProfileViewModel extends BaseViewModel with FormValidationMixin {
       setError(e.message);
       return false;
     } catch (e) {
-      setError('Failed to save shop: $e');
+      setError(formatApiError(e));
       return false;
     } finally {
       _isSavingShop = false;
@@ -157,7 +158,7 @@ class ProfileViewModel extends BaseViewModel with FormValidationMixin {
     } on ApiException catch (e) {
       setError(e.message);
     } catch (e) {
-      setError('Failed to load profile: $e');
+      setError(formatApiError(e));
     } finally {
       setLoading(false);
     }
@@ -220,7 +221,7 @@ class ProfileViewModel extends BaseViewModel with FormValidationMixin {
       setError(e.message);
       return false;
     } catch (e) {
-      setError('Failed to save profile: $e');
+      setError(formatApiError(e));
       return false;
     } finally {
       _isSaving = false;

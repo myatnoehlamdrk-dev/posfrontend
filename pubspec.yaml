@@ -79,6 +79,7 @@ dependencies:
   path: ^1.9.1
   connectivity_plus: ^7.3.1
   cached_network_image: ^4.0.4
+  mm_nrc_kit: ^1.0.3
 
 dev_dependencies:
   flutter_test:
@@ -178,3 +179,21 @@ flutter_launcher_icons:
   image_path: "Pos_logo.png"
   # Matches ic_launcher_background so a regeneration keeps the current launcher look.
   adaptive_icon_background: "#007AFC"
+
+# Vendored copy of mm_nrc_kit, used in place of the pub.dev release.
+#
+# Upstream lays the NRC picker out at hard-coded pixel widths (a 155px township
+# column, 45px digit boxes) that assume a desktop-width canvas. On a phone those
+# fixed widths exceed the space inside a padded form card, and both the picker
+# row and the digit row overflow past the right edge. The upstream package gives
+# NRCField no width parameter to constrain it with, so the fix has to live in
+# the widget tree itself.
+#
+# Vendored rather than patched in the pub cache: a cache edit vanishes on the
+# next `pub get`/`pub upgrade` and never reaches another machine. The layout
+# changes are isolated to nrc_picker.dart and ui_expansion_tile.dart; the NRC
+# data and validation logic are untouched, so upgrading upstream later is a
+# diff-and-merge rather than a rewrite.
+dependency_overrides:
+  mm_nrc_kit:
+    path: packages/mm_nrc_kit

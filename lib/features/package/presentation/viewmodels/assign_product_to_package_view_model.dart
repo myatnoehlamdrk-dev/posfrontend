@@ -72,8 +72,11 @@ class AssignProductToPackageViewModel extends BaseViewModel {
       // perPage defaults to 10 in the repository, which silently cut the list
       // off at the ten newest products. Ask for a page big enough to cover the
       // whole shop so an old unassigned product can still be assigned here.
+      // preferNetwork: which products are unassigned is exactly what this
+      // screen decides, so the cache must not answer for the server.
       final response = await _productRepository.getProducts(
         perPage: _pageSize,
+        preferNetwork: true,
         cancelToken: cancelToken,
       );
       final rawList = response['data'];
@@ -84,7 +87,6 @@ class AssignProductToPackageViewModel extends BaseViewModel {
         final name = map['name']?.toString() ?? '';
         final brand = map['brand']?.toString() ?? '';
         final sku = map['sku']?.toString() ?? '';
-        final price = (map['stock'] as num?)?.toDouble() ?? 0.0;
         final stock = (map['stock'] as num?)?.toInt() ?? 0;
         final isSet = map['isSet'] == true;
         final category = map['category']?.toString() ?? '';
@@ -93,12 +95,24 @@ class AssignProductToPackageViewModel extends BaseViewModel {
         final createdBy = map['createdBy']?.toString() ?? '';
         final variantsRaw = map['variants'];
         final variantList = variantsRaw is List ? variantsRaw : [];
+        final variants = variantList.map((v) {
+          final vm = v as Map<String, dynamic>;
+          return ProductVariant(
+            size: (vm['size'] as String?)?.trim() ?? '',
+            color: (vm['color'] as String?)?.trim() ?? '',
+            quantity: (vm['quantity'] as num?)?.toInt() ?? 0,
+            price: (vm['price'] as num?)?.toDouble() ?? 0,
+          );
+        }).toList();
         return CatalogProductView(
           id: id,
           name: name,
           brand: brand,
           sku: sku,
-          price: price,
+          // ProductResource carries no top-level price — variants do. (The
+          // old mapping read it from `stock`, which is where a sold-out
+          // product's "price" showed as 0 and a stocked one's as the count.)
+          price: variants.isNotEmpty ? variants.first.price : 0.0,
           stock: stock,
           isSet: isSet,
           category: category,
@@ -106,15 +120,7 @@ class AssignProductToPackageViewModel extends BaseViewModel {
           icon: CatalogProductView.iconFor(name),
           color: CatalogProductView.colorFor(name),
           imageUrl: imageUrl,
-          variants: variantList.map((v) {
-            final vm = v as Map<String, dynamic>;
-            return ProductVariant(
-              size: (vm['size'] as String?)?.trim() ?? '',
-              color: (vm['color'] as String?)?.trim() ?? '',
-              quantity: (vm['quantity'] as num?)?.toInt() ?? 0,
-              price: (vm['price'] as num?)?.toDouble() ?? 0,
-            );
-          }).toList(),
+          variants: variants,
           createdBy: createdBy,
         );
       }).toList();
@@ -135,35 +141,40 @@ class AssignProductToPackageViewModel extends BaseViewModel {
     notifyListeners();
 
     try {
-      final dio = ApiClient.instance;
+      final packageId = int.tryParse(package.id);
+      if (packageId == null) {
+        // Guard: sending `packageId: null` here would silently *remove*
+        // products instead of adding them.
+        setError('Failed to add products: invalid package id');
+        return 0;
+      }
+
       int successCount = 0;
+      Object? firstFailure;
 
       for (final productId in _selectedIds) {
         try {
-          await dio.patch(
-            '/products/$productId',
-            data: {'packageId': int.tryParse(package.id)},
+          await _productRepository.setProductPackage(
+            productId,
+            packageId,
             cancelToken: cancelToken,
           );
           successCount++;
-        } catch (_) {
-          // Continue with other products
+        } catch (e) {
+          // Keep going — one rejected product must not abandon the rest —
+          // but remember the first failure so a fully failed batch no longer
+          // looks like a button that does nothing.
+          firstFailure ??= e;
         }
       }
 
-      _isAssigning = false;
-      notifyListeners();
+      if (successCount == 0 && firstFailure != null) {
+        setError('Failed to add products: $firstFailure');
+      }
       return successCount;
-    } on ApiException catch (e) {
-      setError(e.message);
+    } finally {
       _isAssigning = false;
       notifyListeners();
-      return 0;
-    } catch (e) {
-      setError('Failed to assign products: $e');
-      _isAssigning = false;
-      notifyListeners();
-      return 0;
     }
   }
 }

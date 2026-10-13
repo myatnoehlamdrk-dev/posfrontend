@@ -244,6 +244,23 @@ class ProductLocalDataSource {
     }).toList();
   }
 
+  /// Moves one cached row to a new package bucket (`packageId` empty = none).
+  ///
+  /// The package detail list and the assign picker both read the cache first,
+  /// so a PATCH that changes membership without updating this row leaves both
+  /// screens showing the old answer: the added product never appears, the
+  /// removed one never leaves.
+  Future<void> updateCachedProductPackage({
+    required String shopId,
+    required String productId,
+    required String packageId,
+  }) async {
+    final db = await _db;
+    await (db.update(db.products)
+          ..where((p) => p.id.equals(productId) & p.shopId.equals(shopId)))
+        .write(ProductsCompanion(packageId: Value(packageId)));
+  }
+
   Future<void> clearShopCache(String shopId) async {
     final db = await _db;
     await (db.delete(db.products)..where((p) => p.shopId.equals(shopId))).go();

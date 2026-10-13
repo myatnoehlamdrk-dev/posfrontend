@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:posfrontend/core/auth/password_policy.dart';
 import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/core/base/form_validation_mixin.dart';
+import 'package:posfrontend/core/utils/error_handler.dart';
 import 'package:posfrontend/features/auth/domain/entities/user.dart';
 import 'package:posfrontend/features/auth/domain/usecases/register.dart';
 import 'package:posfrontend/features/shop/domain/entities/shop.dart';
@@ -111,7 +112,7 @@ class RegisterViewModel extends BaseViewModel with FormValidationMixin {
       _shop = await _shopRepository.getShop();
       notifyListeners();
     } catch (e) {
-      setError('Failed to load shop: $e');
+      setError(formatApiError(e));
     } finally {
       setLoading(false);
     }
@@ -146,8 +147,31 @@ class RegisterViewModel extends BaseViewModel with FormValidationMixin {
     return fieldErrors.isEmpty;
   }
 
-  /// Step 2 is all optional, so there is nothing to reject.
-  bool validateDetailStep() => true;
+  /// Step 2 is all optional, so the only thing it can reject is a half-built
+  /// NRC: the picker composes `12/KAHTANA(N)191445` as the user fills the
+  /// four boxes, and letting a fragment like "12/KA" ride to the API would
+  /// turn into an opaque 422 on submit. Blank stays valid -- NRC is optional.
+  bool validateDetailStep() {
+    clearAllFieldErrors();
+
+    if (_nrc.trim().isNotEmpty && !_nrcPattern.hasMatch(_nrc.trim().toUpperCase())) {
+      setFieldError(
+        'nrc',
+        'NRC is incomplete — pick state, township, citizenship and serial',
+      );
+    }
+
+    notifyListeners();
+    return fieldErrors.isEmpty;
+  }
+
+  /// Mirrors App\Rules\MyanmarNrc on the client: state 1-15, township
+  /// letters (the mm_nrc_kit dataset runs to 9), one of the six issued
+  /// citizenship letters, 6-digit serial. The server stays the authority;
+  /// this only saves the round trip.
+  static final RegExp _nrcPattern = RegExp(
+    r'^(?:0?[1-9]|1[0-5])/[A-Z]{1,10}\((?:N|E|P|T|Y|S)\)\d{6}$',
+  );
 
   /// Step 3 gate. The shop itself was created on the previous screen, so the
   /// only thing this step owns is how the user is billed against it.
@@ -155,7 +179,7 @@ class RegisterViewModel extends BaseViewModel with FormValidationMixin {
     clearAllFieldErrors();
 
     if (_billingWay.trim().isEmpty) {
-      setFieldError('billingWay', 'Billing way is required');
+      setFieldError('billingWay', 'Service feed way is required');
     }
 
     notifyListeners();
@@ -202,7 +226,7 @@ class RegisterViewModel extends BaseViewModel with FormValidationMixin {
           social: _social.trim().isEmpty ? null : _social.trim(),
           role: _role.trim().isEmpty ? null : _role.trim(),
           address: _address.trim().isEmpty ? null : _address.trim(),
-          nrc: _nrc.trim().isEmpty ? null : _nrc.trim(),
+          nrc: _nrc.trim().isEmpty ? null : _nrc.trim().toUpperCase(),
           billingWay: _billingWay.trim(),
           dob: _dob.isEmpty ? null : _dob,
           gender: _gender,
@@ -231,7 +255,7 @@ class RegisterViewModel extends BaseViewModel with FormValidationMixin {
 
       return true;
     } catch (e) {
-      setError('Registration failed: $e');
+      setError(formatApiError(e));
       return false;
     } finally {
       setLoading(false);

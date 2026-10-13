@@ -1,5 +1,6 @@
 import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/core/network/api_client.dart';
+import 'package:posfrontend/core/utils/error_handler.dart';
 import 'package:posfrontend/features/category/domain/entities/category.dart';
 import 'package:posfrontend/features/category/domain/repositories/category_repository.dart';
 import 'package:posfrontend/features/inventory/domain/repositories/inventory_repository.dart';
@@ -167,7 +168,7 @@ class CategoryViewModel extends BaseViewModel {
       setError(e.message);
       return false;
     } catch (e) {
-      setError('Failed to delete category: $e');
+      setError(formatApiError(e));
       return false;
     }
   }

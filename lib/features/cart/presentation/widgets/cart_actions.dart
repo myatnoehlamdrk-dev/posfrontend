@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:flutter/services.dart';
 import 'package:posfrontend/core/network/app_exceptions.dart';
+import 'package:posfrontend/core/utils/error_handler.dart';
 import 'package:posfrontend/features/cart/data/cart_store.dart';
 import 'package:posfrontend/features/cart/domain/entities/cart_card_entity.dart';
 import 'package:posfrontend/features/cart/domain/entities/cart_item_entity.dart';
@@ -464,12 +465,7 @@ Future<void> _createNewCard(
     return;
   } catch (e) {
     if (!context.mounted) return;
-    showErrorMessage(
-      context,
-      context.l10n
-          .t('Failed to add to cart: {v1}')
-          .replaceAll('{v1}', (e).toString()),
-    );
+    showErrorMessage(context, formatApiError(e));
     return;
   }
 
@@ -526,12 +522,7 @@ Future<void> _appendToExistingCard(
       return;
     } catch (e) {
       if (!context.mounted) return;
-      showErrorMessage(
-        context,
-        context.l10n
-            .t('Failed to add to existing card: {v1}')
-            .replaceAll('{v1}', (e).toString()),
-      );
+      showErrorMessage(context, formatApiError(e));
       return;
     }
   }

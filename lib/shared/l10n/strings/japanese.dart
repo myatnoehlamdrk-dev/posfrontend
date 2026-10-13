@@ -25,7 +25,7 @@ const Map<String, String> japaneseStrings = {
   'Enter user address': '住所を入力',
   'Enter user role': '役職を入力',
   'Enter NRC number': 'NRC番号を入力',
-  'Enter billing way': '支払方法を入力',
+  'Enter service feed way': '支払方法を入力',
   'Select gender': '性別を選択',
   'Verify Your Email': 'メールを確認してください',
   'We sent a 6-digit verification code to': '6桁の確認コードを送信しました',

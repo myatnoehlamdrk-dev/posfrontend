@@ -120,7 +120,14 @@ pw.Widget _receiptSummaryRow(
 Future<Uint8List?> _toMonochromePng(Uint8List? bytes) async {
   if (bytes == null || bytes.isEmpty) return null;
   try {
-    final codec = await ui.instantiateImageCodec(bytes);
+    // Decoded at a thumbnail's width, not the source's. The receipt prints the
+    // logo at 64pt, so anything past ~300px is wasted -- and the per-pixel loop
+    // below counts every pixel it is given. A full-resolution photo (1-2 MB,
+    // easily 1000x1000) meant a million iterations of Dart-level pixel math
+    // *on the main isolate*, which is what froze the UI and held the print
+    // dialog back for seconds after a sale. Dart:ui image APIs cannot move to
+    // a background isolate, so shrinking the input is the lever that works.
+    final codec = await ui.instantiateImageCodec(bytes, targetWidth: 300);
     final frame = await codec.getNextFrame();
     final image = frame.image;
     final width = image.width;
@@ -952,24 +959,53 @@ Future<Uint8List> _buildReceiptPdfBytes(
 }
 
 class VoucherPdfService {
-  static Future<Uint8List?> _fetchShopImage(String? shopImage) async {
-    if (shopImage == null || shopImage.isEmpty) return null;
+  /// In-flight or completed shop-logo fetches, keyed by the resolved URL.
+  ///
+  /// Stores the [Future], not the bytes, and that distinction is the point.
+  /// The logo is the same on every sale of a session, so downloading it per
+  /// sale was pure waste -- and auto-export and auto-print are launched
+  /// together without awaiting each other, so caching only the *result* would
+  /// let both miss the cache and start two downloads of the same image. A
+  /// shared Future makes the second caller await the first one's request
+  /// instead of repeating it, whether it arrives mid-flight or next sale.
+  static final Map<String, Future<Uint8List?>> _imageCache = {};
+
+  /// Short enough that a stalled image host cannot hold the print dialog
+  /// hostage. Before this the fetch used a bare `Dio()`, whose connect and
+  /// receive timeouts default to null -- meaning wait forever, which is
+  /// exactly what a sale looks like when the network is up but slow.
+  static final Dio _imageDio = Dio(
+    BaseOptions(
+      connectTimeout: const Duration(seconds: 5),
+      receiveTimeout: const Duration(seconds: 5),
+    ),
+  );
+
+  static Future<Uint8List?> _fetchShopImage(String? shopImage) {
+    if (shopImage == null || shopImage.isEmpty) return Future.value(null);
     try {
       final resolved = resolveMediaUrl(shopImage);
-      if (resolved == null || resolved.isEmpty) return null;
-      if (resolved.startsWith('http')) {
-        // Dio rather than dart:io HttpClient: this has to run on web too,
-        // where HttpClient throws. Same failure contract as before — any
-        // error (including a CORS block in-browser) yields null, no logo.
-        final response = await Dio().get<List<int>>(
-          resolved,
-          options: Options(responseType: ResponseType.bytes),
-        );
-        final data = response.data;
-        return data == null ? null : Uint8List.fromList(data);
-      } else {
-        return base64Decode(shopImage);
+      if (resolved == null || resolved.isEmpty) return Future.value(null);
+      if (!resolved.startsWith('http')) {
+        return Future.value(base64Decode(shopImage));
       }
+      return _imageCache.putIfAbsent(resolved, () => _download(resolved));
+    } catch (_) {
+      return Future.value(null);
+    }
+  }
+
+  static Future<Uint8List?> _download(String resolved) async {
+    try {
+      // Dio rather than dart:io HttpClient: this has to run on web too,
+      // where HttpClient throws. Same failure contract as before — any
+      // error (including a CORS block in-browser) yields null, no logo.
+      final response = await _imageDio.get<List<int>>(
+        resolved,
+        options: Options(responseType: ResponseType.bytes),
+      );
+      final data = response.data;
+      return data == null ? null : Uint8List.fromList(data);
     } catch (_) {
       return null;
     }

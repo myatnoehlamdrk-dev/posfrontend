@@ -8,6 +8,7 @@ import 'package:posfrontend/features/package/presentation/viewmodels/package_det
 import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart'
     hide ProductVariant;
 import 'package:posfrontend/features/product/data/repositories/product_repository_impl.dart';
+import 'package:posfrontend/features/package/data/repositories/package_repository_impl.dart';
 import 'package:posfrontend/features/package/presentation/screens/assign_product_to_package_screen.dart';
 import 'package:posfrontend/features/product/presentation/screens/product_detail_screen.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
@@ -40,6 +41,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
     super.initState();
     _viewModel = PackageDetailViewModel(
       productRepository: ProductRepositoryImpl(),
+      packageRepository: PackageRepositoryImpl(),
       package: widget.package,
       category: CategoryInfo(
         name: widget.category.name,
@@ -55,7 +57,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
     final result = await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => AssignProductToPackageScreen(
-          package: widget.package,
+          package: _viewModel.package,
           category: widget.category,
         ),
       ),
@@ -250,7 +252,9 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
   }
 
   Widget _details(List<CatalogProductView> products) {
-    final p = widget.package;
+    // The view model's copy, not the widget's: it is refetched on every load,
+    // so the unit count and stock bar reflect products added or removed here.
+    final p = _viewModel.package;
     final c = widget.category;
     final pal = context.palette;
 
@@ -258,10 +262,9 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Breadcrumb([
-          BreadcrumbItem(context.l10n.t('Dashboard'), false),
           BreadcrumbItem(context.l10n.t('Inventory'), false),
           BreadcrumbItem(widget.category.name, false),
-          BreadcrumbItem(widget.package.name, false),
+          BreadcrumbItem(p.name, false),
           const BreadcrumbItem('Package Detail', true),
         ]),
         const SizedBox(height: 24),
@@ -380,8 +383,13 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                             horizontal: 10,
                             vertical: 4,
                           ),
+                          // Palette tokens, not the literal light-mode pair:
+                          // #DCFCE7/#16A34A is a pale green pill that reads as
+                          // a smear against the dark card. successBg/successFg
+                          // carry both ramps, the way category_screen's status
+                          // badge already does.
                           decoration: BoxDecoration(
-                            color: const Color(0xFFDCFCE7),
+                            color: pal.successBg,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -389,7 +397,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF16A34A),
+                              color: pal.successFg,
                             ),
                           ),
                         ),
@@ -491,14 +499,15 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                 .toList(),
           );
         }
-        return Row(
-          children: [
-            Expanded(child: blocks[0]),
-            const SizedBox(width: 8),
-            Expanded(child: blocks[1]),
-            const SizedBox(width: 8),
-            Expanded(child: blocks[2]),
-          ],
+        // Three per row at wide widths. (The old Row hard-coded blocks[0..2],
+        // which silently dropped the Created By / Updated By blocks.)
+        final width = (constraints.maxWidth - 16) / 3;
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: blocks
+              .map((b) => SizedBox(width: width, child: b))
+              .toList(),
         );
       },
     );
@@ -645,6 +654,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
   }
 
   Widget _productRow(CatalogProductView pr) {
+    final pal = context.palette;
     return GestureDetector(
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute(
@@ -654,14 +664,17 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          // pal.surface, not Colors.white: textPrimary is #F2F4F7 in the dark
+          // palette, so a fixed white card rendered the product name, brand
+          // and stock pill on white-on-white and the row went blank.
+          color: pal.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: context.palette.border),
-          boxShadow: const [
+          border: Border.all(color: pal.border),
+          boxShadow: [
             BoxShadow(
-              color: Color(0x0D000000),
+              color: pal.cardShadow,
               blurRadius: 8,
-              offset: Offset(0, 2),
+              offset: const Offset(0, 2),
             ),
           ],
         ),
@@ -726,7 +739,11 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF3E8FF),
+                    // Same treatment as the package-code pill above: the
+                    // literal #F3E8FF is light-only, selectionTint carries the
+                    // dark ramp (#261C40) so the pill sits on the card instead
+                    // of glowing off it.
+                    color: pal.selectionTint,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(

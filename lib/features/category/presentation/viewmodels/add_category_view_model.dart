@@ -1,6 +1,7 @@
 import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/core/base/form_validation_mixin.dart';
 import 'package:posfrontend/core/network/api_client.dart';
+import 'package:posfrontend/core/utils/error_handler.dart';
 import 'package:posfrontend/features/category/domain/entities/category.dart';
 import 'package:posfrontend/features/category/domain/repositories/category_repository.dart';
 
@@ -87,7 +88,7 @@ class AddCategoryViewModel extends BaseViewModel with FormValidationMixin {
       setError(e.message);
       return false;
     } catch (e) {
-      setError('Failed to save category: $e');
+      setError(formatApiError(e));
       return false;
     } finally {
       _isSaving = false;

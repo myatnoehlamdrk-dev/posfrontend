@@ -9,6 +9,7 @@ import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/error_retry_view.dart';
+import 'package:posfrontend/shared/widgets/price_text.dart';
 
 /// A read-only table of dashboard rows.
 ///
@@ -375,19 +376,33 @@ class _DashboardTableScreenState extends State<DashboardTableScreen> {
           for (final column in widget.spec.columns)
             _cell(
               column,
-              Text(
-                row.display(column),
-                style: TextStyle(
-                  fontSize: 13,
-                  color: p.textPrimary,
-                  fontWeight: column.kind == TableValueKind.text
-                      ? FontWeight.w400
-                      : FontWeight.w600,
-                ),
-                textAlign: _textAlign(column),
-                maxLines: column.wrap ? 3 : 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+              // Money goes through PriceText, like every other money surface in
+              // the app: it renders the full amount and scales down to the cell
+              // instead of ellipsizing. An ellipsis here would cut the very
+              // number the user clicked through to see — `MMK 1,234,5...` on a
+              // sale worth millions.
+              column.kind == TableValueKind.currency
+                  ? PriceText(
+                      row.number(column.fieldKey),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: p.textPrimary,
+                      ),
+                    )
+                  : Text(
+                      row.display(column),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: p.textPrimary,
+                        fontWeight: column.kind == TableValueKind.text
+                            ? FontWeight.w400
+                            : FontWeight.w600,
+                      ),
+                      textAlign: _textAlign(column),
+                      maxLines: column.wrap ? 3 : 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
             ),
         ],
       ),

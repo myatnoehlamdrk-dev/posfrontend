@@ -1,6 +1,7 @@
 import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/core/base/form_validation_mixin.dart';
 import 'package:posfrontend/core/network/api_client.dart';
+import 'package:posfrontend/core/utils/error_handler.dart';
 import 'package:posfrontend/features/shop/domain/entities/shop.dart'
     as old_shop;
 import 'package:posfrontend/features/shop/domain/repositories/shop_repository.dart';
@@ -110,7 +111,7 @@ class ShopViewModel extends BaseViewModel with FormValidationMixin {
       setError(e.message);
     } catch (e) {
       if (requestId != _shopsRequestId) return;
-      setError('Failed to load shops: $e');
+      setError(formatApiError(e));
     } finally {
       if (requestId == _shopsRequestId) {
         _isLoadingShops = false;
@@ -263,7 +264,7 @@ class ShopViewModel extends BaseViewModel with FormValidationMixin {
       notifyListeners();
       return true;
     } catch (e) {
-      setError('Failed to save shop locally: $e');
+      setError(formatApiError(e));
       return false;
     } finally {
       setLoading(false);

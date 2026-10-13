@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/theme/app_dimens.dart';
 import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/core/network/app_exceptions.dart';
+import 'package:posfrontend/core/utils/error_handler.dart';
 import 'package:posfrontend/shared/l10n/api_message_l10n.dart';
 import 'package:posfrontend/shared/l10n/app_strings.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
@@ -86,7 +87,7 @@ void showErrorMessage(BuildContext context, Object error) {
   _showMessage(
     context,
     AppMessageBanner(
-      message: error is AppException ? error.message : error.toString(),
+      message: error is AppException ? error.message : formatApiError(error),
       kind: AppMessageKind.error,
     ),
   );

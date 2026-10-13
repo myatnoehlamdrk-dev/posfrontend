@@ -128,7 +128,7 @@ String _buildDocumentBody() {
   buf.writeln(_heading2('FR 1: Authentication'));
   buf.writeln(_p('Description: User registration, login, email verification, and password management.'));
   buf.writeln(_heading3('Features:'));
-  buf.writeln(_bullet('User Register with fields: email, password, full name, phone, social, role, address, NRC number, billing way, date of birth, gender'));
+  buf.writeln(_bullet('User Register with fields: email, password, full name, phone, social, role, address, NRC number, service feed way, date of birth, gender'));
   buf.writeln(_bullet('Email verification via 6-digit OTP (sent via Resend/email service)'));
   buf.writeln(_bullet('User Login with email/password (token-based auth via Laravel Sanctum)'));
   buf.writeln(_bullet('Password Reset via OTP flow (send OTP → verify OTP → set new password)'));
@@ -166,7 +166,7 @@ String _buildDocumentBody() {
   buf.writeln(_bullet('Inventory CRUD (create, read, update, delete)'));
   buf.writeln(_bullet('Category CRUD with fields: name, amount_of_package, package_limit, description, user_id, inventory_id'));
   buf.writeln(_bullet('Package CRUD with fields: name, amount_of_product, product_limit, description, location, stock_status, category_id'));
-  buf.writeln(_bullet('Breadcrumb navigation (Dashboard > Inventory > Category > Package)'));
+  buf.writeln(_bullet('Breadcrumb navigation (Inventory > Category > Package)'));
   buf.writeln(_bullet('Category navigation from inventory screen'));
   buf.writeln(_p(''));
   buf.writeln(_kvLine('Input:', 'Create/update inventory, category, package'));

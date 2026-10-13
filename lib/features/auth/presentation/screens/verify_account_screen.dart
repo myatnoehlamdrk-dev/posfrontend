@@ -14,7 +14,20 @@ import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 class VerifyAccountScreen extends StatefulWidget {
   final String email;
 
-  const VerifyAccountScreen({super.key, required this.email});
+  /// Whether to request a code as the screen opens.
+  ///
+  /// The register flow already mails a code the moment the account is
+  /// created, so auto-resending here put two "Verify your email address"
+  /// mails in the inbox for every sign-up. The login flow -- an unverified
+  /// account trying to sign in -- has no fresh code in the air, so it keeps
+  /// the auto-send.
+  final bool sendOnOpen;
+
+  const VerifyAccountScreen({
+    super.key,
+    required this.email,
+    this.sendOnOpen = true,
+  });
 
   @override
   State<VerifyAccountScreen> createState() => _VerifyAccountScreenState();
@@ -35,7 +48,9 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
     _viewModel.setEmail(widget.email);
     _otpController.addListener(() => _viewModel.setOtp(_otpController.text));
 
-    _viewModel.sendOtp();
+    if (widget.sendOnOpen) {
+      _viewModel.sendOtp();
+    }
   }
 
   @override

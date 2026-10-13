@@ -9,6 +9,18 @@
         android:allowBackup="false"
         android:fullBackupContent="false"
         android:dataExtractionRules="@xml/data_extraction_rules">
+        <!-- Notification small icon: the white-silhouette logo. Without this
+             the system falls back to the full-colour launcher icon, which
+             Android masks into a solid white rectangle in the status bar. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@mipmap/ic_launcher_monochrome" />
+        <!-- Route FCM notification messages (no explicit android.channel_id)
+             to the same high-importance channel flutter_local_notifications
+             uses, so background pushes behave like foreground ones. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:resource="@string/default_notification_channel_id" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
