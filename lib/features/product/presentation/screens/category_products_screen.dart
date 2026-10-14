@@ -331,7 +331,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
   Future<List<VariantPick>?> _pickVariants(CatalogProductView p) {
     return showDialog<List<VariantPick>>(
       context: context,
-      builder: (_) => _VariantPickDialog(
+      builder: (_) => VariantPickDialog(
         product: p,
         onConfirm: (picks) => Navigator.of(context).pop(picks),
       ),
@@ -1294,17 +1294,27 @@ class _ProductCard extends StatelessWidget {
   }
 }
 
-class _VariantPickDialog extends StatefulWidget {
+/// Variant quantity picker, shared with the quick-sale screen.
+///
+/// Public rather than file-private: the same "which sizes, how many, against
+/// which stock" decision is made when building a cart card here and when adding
+/// a line to a sale from the quick-sale grid, and two copies of the stock
+/// arithmetic is two chances for them to disagree.
+class VariantPickDialog extends StatefulWidget {
   final CatalogProductView product;
   final ValueChanged<List<VariantPick>> onConfirm;
 
-  const _VariantPickDialog({required this.product, required this.onConfirm});
+  const VariantPickDialog({
+    super.key,
+    required this.product,
+    required this.onConfirm,
+  });
 
   @override
-  State<_VariantPickDialog> createState() => _VariantPickDialogState();
+  State<VariantPickDialog> createState() => _VariantPickDialogState();
 }
 
-class _VariantPickDialogState extends State<_VariantPickDialog> {
+class _VariantPickDialogState extends State<VariantPickDialog> {
   AppPalette get _p => context.palette;
   Color get _mutedColor => _p.textSecondary;
   Color get _accentColor => _p.primary;

@@ -43,14 +43,24 @@ class ProductRemoteDataSource {
       );
       final data = response.data;
       if (data is Map<String, dynamic>) return data;
-      if (data is List)
+      // The server answers this endpoint with a bare array and no paginator.
+      // Synthesize one: a short page is by definition the last, while a full
+      // page *might* have a successor — claim one more page and let the next
+      // (possibly empty) response settle it. Hardcoding `last_page: 1` here is
+      // what froze every scroll-loader at page one.
+      if (data is List) {
         return {
           'data': data,
-          'meta': {'current_page': page, 'last_page': 1, 'total': data.length},
+          'meta': {
+            'current_page': page,
+            'last_page': data.length < perPage ? page : page + 1,
+            'total': data.length,
+          },
         };
+      }
       return {
         'data': [],
-        'meta': {'current_page': 1, 'last_page': 1, 'total': 0},
+        'meta': {'current_page': page, 'last_page': page, 'total': 0},
       };
     } on DioException catch (e) {
       throw ApiException.fromDio(e);

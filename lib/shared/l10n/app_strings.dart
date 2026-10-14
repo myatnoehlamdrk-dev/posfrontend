@@ -109,6 +109,7 @@ class AppStrings {
   String get addProduct => t('Add Product');
   String get addToCart => t('Add to Cart');
   String get saleItem => t('Sale Item');
+  String get quickSale => t('Quick Sale');
   String get purchaseItem => t('Purchase Item');
   String get setting => t('Setting');
 

@@ -439,4 +439,29 @@ const Map<String, String> myStrings = {
   '{v1} queued': '{v1} စောင့်ဆိုင်းနေသည်',
   '{v1} failed': '{v1} မအောင်မြင်ပါ',
   'Saved on this device': 'ဤစက်တွင် သိမ်းဆည်းထားသည်',
+
+  // Quick sale
+  'Quick Sale': 'အမြန်ရောင်းချရန်',
+  'Current Sale': 'လက်ရှိ ရောင်းချမှု',
+  'Complete Sale': 'ရောင်းချမှု ပြီးဆုံးရန်',
+  'View Cart': 'ခြင်းတောင်း ကြည့်ရန်',
+  'Customer (optional)': 'ဖောက်သည် (မထည့်လည်းရသည်)',
+  'Discount': 'လျှော့ဈေး',
+  'Saving...': 'သိမ်းဆည်းနေသည်...',
+  'Sale saved successfully!': 'ရောင်းချမှု အောင်မြင်စွာ သိမ်းဆည်းပြီးပါပြီ!',
+  'Remove all items from this sale?':
+      'ဤရောင်းချမှုမှ ပစ္စည်းအားလုံး ဖယ်ရှားမည်လား?',
+  'Tap a product to add it to this sale':
+      'ဤရောင်းချမှုထဲ ထည့်ရန် ကုန်ပစ္စည်းကို နှိပ်ပါ',
+  'Try a different keyword or category':
+      'အခြားစာလုံး သို့မဟုတ် ကဏ္ဍဖြင့် စမ်းကြည့်ပါ',
+  'All': 'အားလုံး',
+  'Clear': 'ရှင်းလင်းရန်',
+  'Close': 'ပိတ်ရန်',
+  'Stock: {v1}': 'စတော့: {v1}',
+  '{v1} items': 'ပစ္စည်း {v1} ခု',
+  '{v1} is out of stock': '{v1} စတော့ကုန်နေသည်',
+  '{v1} has only {v2} in stock': '{v1} တွင် {v2} ခုသာ ကျန်သည်',
+  '{v1} variants': 'အမျိုးအစား {v1}',
+  'No products found for "{v1}"': '"{v1}" အတွက် ကုန်ပစ္စည်း မတွေ့ပါ',
 };

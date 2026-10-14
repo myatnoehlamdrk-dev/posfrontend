@@ -14,10 +14,16 @@ class CategoryProductsSkeleton extends StatelessWidget {
   final int crossAxisCount;
   final int itemCount;
 
+  /// Row gap of the grid this stands in for. Defaults to the category grid's
+  /// 12; a screen with roomier rows passes its own so the placeholder lands
+  /// where the real cards will.
+  final double mainAxisSpacing;
+
   const CategoryProductsSkeleton({
     super.key,
     required this.crossAxisCount,
     this.itemCount = 6,
+    this.mainAxisSpacing = 12,
   });
 
   @override
@@ -29,7 +35,7 @@ class CategoryProductsSkeleton extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: crossAxisCount,
-          mainAxisSpacing: 12,
+          mainAxisSpacing: mainAxisSpacing,
           crossAxisSpacing: 12,
           childAspectRatio: 0.72,
         ),

@@ -8,6 +8,7 @@ import 'package:posfrontend/features/auth/presentation/screens/login_screen.dart
 import 'package:posfrontend/features/product/presentation/screens/products_catalog_screen.dart';
 import 'package:posfrontend/features/product/presentation/screens/add_product_options_screen.dart';
 import 'package:posfrontend/features/sale/presentation/screens/sale_items_screen.dart';
+import 'package:posfrontend/features/sale/presentation/screens/quick_sale_screen.dart';
 import 'package:posfrontend/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:posfrontend/features/inventory/presentation/screens/inventory_screen.dart';
 import 'package:posfrontend/features/purchase/presentation/screens/purchase_items_screen.dart';
@@ -60,6 +61,14 @@ enum DrawerDestination {
     icon: Icons.receipt_long_outlined,
     isTabRoot: true,
   ),
+  /// Sell from the shelf: a category-filtered product grid with the cart
+  /// beside it, where a tap is a line and the sale is made in place. The
+  /// history of those sales is [saleItem]; this is where they are created.
+  quickSale(
+    label: 'Quick Sale',
+    icon: Icons.point_of_sale_outlined,
+    isTabRoot: true,
+  ),
   purchaseItem(
     label: 'Purchase Item',
     icon: Icons.local_shipping_outlined,
@@ -92,6 +101,7 @@ enum DrawerDestination {
     DrawerDestination.product => const ProductsCatalogScreen(),
     DrawerDestination.addProduct => const AddProductOptionsScreen(),
     DrawerDestination.saleItem => const SaleItemScreen(),
+    DrawerDestination.quickSale => const QuickSaleScreen(),
     DrawerDestination.purchaseItem => const PurchaseItemsScreen(),
     DrawerDestination.addToCart => const AddToCartScreen(),
     DrawerDestination.setting => const SettingsScreen(),
@@ -227,9 +237,9 @@ class AppDrawer extends StatelessWidget {
   Widget _navItem(BuildContext context, DrawerDestination destination) {
     final p = context.palette;
     final active = destination == this.active;
-    // Idle icons are one neutral for all eight destinations; the brand accent is
+    // Idle icons are one neutral for all nine destinations; the brand accent is
     // spent on the active row only. See [DrawerDestination] for why the eight
-    // per-item hues went.
+    // per-item hues that preceded [DrawerDestination.quickSale] went.
     final idleIcon = p.textSecondary;
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.s4),
