@@ -1,18 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/theme/app_dimens.dart';
 import 'package:posfrontend/shared/theme/app_typography.dart';
-import 'package:posfrontend/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:posfrontend/features/profile/presentation/screens/profile_screen.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
+import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 import 'package:posfrontend/shared/widgets/notification_bell.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
 
+/// Back to the dashboard, reusing the one already in the stack when there is
+/// one. Popping to it keeps every screen below alive for an instant return;
+/// pushing only when it is genuinely absent is what happens straight after
+/// login, when there is nothing to pop back to.
+///
+/// `force: true` because this is the "leave this page" action: whatever is on
+/// screen — a drill-down, a half-written sale — goes, exactly as the old
+/// clear-the-whole-stack implementation did.
 void navigateToDashboard(BuildContext context) {
-  Navigator.of(context).pushAndRemoveUntil(
-    MaterialPageRoute(builder: (_) => const DashboardScreen()),
-    (route) => false,
-  );
+  navigateToDestination(context, DrawerDestination.dashboard, force: true);
 }
 
 class AppTopBar extends StatelessWidget {

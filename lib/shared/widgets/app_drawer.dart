@@ -45,42 +45,19 @@ import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
 enum DrawerDestination {
   dashboard(label: 'Dashboard', icon: Icons.dashboard_outlined),
   product(label: 'Product', icon: Icons.category_outlined),
-  addProduct(
-    label: 'Add Product',
-    icon: Icons.add_circle_outline,
-    isTabRoot: true,
-  ),
-  addToCart(
-    label: 'Add to Cart',
-    icon: Icons.shopping_cart_outlined,
-    isTabRoot: true,
-  ),
+  addProduct(label: 'Add Product', icon: Icons.add_circle_outline),
+  addToCart(label: 'Add to Cart', icon: Icons.shopping_cart_outlined),
   inventory(label: 'Inventory', icon: Icons.inventory_2_outlined),
-  saleItem(
-    label: 'Sale Item',
-    icon: Icons.receipt_long_outlined,
-    isTabRoot: true,
-  ),
+  saleItem(label: 'Sale Item', icon: Icons.receipt_long_outlined),
+
   /// Sell from the shelf: a category-filtered product grid with the cart
   /// beside it, where a tap is a line and the sale is made in place. The
   /// history of those sales is [saleItem]; this is where they are created.
-  quickSale(
-    label: 'Quick Sale',
-    icon: Icons.point_of_sale_outlined,
-    isTabRoot: true,
-  ),
-  purchaseItem(
-    label: 'Purchase Item',
-    icon: Icons.local_shipping_outlined,
-    isTabRoot: true,
-  ),
-  setting(label: 'Setting', icon: Icons.settings_outlined, isTabRoot: true);
+  quickSale(label: 'Quick Sale', icon: Icons.point_of_sale_outlined),
+  purchaseItem(label: 'Purchase Item', icon: Icons.local_shipping_outlined),
+  setting(label: 'Setting', icon: Icons.settings_outlined);
 
-  const DrawerDestination({
-    required this.label,
-    required this.icon,
-    this.isTabRoot = false,
-  });
+  const DrawerDestination({required this.label, required this.icon});
 
   /// English source text. Looked up in the translation store; never compared
   /// for equality.
@@ -88,10 +65,10 @@ enum DrawerDestination {
 
   final IconData icon;
 
-  /// True when the destination is pushed rather than swapped in. The three
-  /// root tabs replace the stack so Back does not walk a growing history;
-  /// anything else is a drill-down and pushes.
-  final bool isTabRoot;
+  /// The route name this destination's screen is pushed under, so a live copy
+  /// can be found again later. The enum's own name — stable, unique, and not
+  /// the (translated) label the old switch used to compare on.
+  String get routeName => name;
 
   String localized(AppStrings strings) => strings.t(label);
 
@@ -249,34 +226,41 @@ class AppDrawer extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.md),
             )
           : null,
-      child: ListTile(
-        leading: Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: active ? p.primary : p.chipBg,
+      child: Material(
+        // The tint belongs to the Container, so the tile needs its own
+        // (transparent) Material to paint pressed feedback on — otherwise the
+        // tint hides the ink and Flutter flags the tile in debug builds.
+        type: MaterialType.transparency,
+        child: ListTile(
+          leading: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: active ? p.primary : p.chipBg,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Icon(
+              destination.icon,
+              color: active ? Colors.white : idleIcon,
+              size: AppIconSize.md,
+            ),
+          ),
+          title: Text(
+            destination.localized(context.l10n),
+            style: TextStyle(
+              // `accentText`, not `primary`: this is text on the page, not a
+              // fill, and on a dark surface the fill value only reaches
+              // 2.54:1.
+              color: active ? p.accentText : p.textPrimary,
+              fontWeight: active ? FontWeight.w600 : FontWeight.w500,
+              fontSize: AppTypography.bodyMediumSize,
+            ),
+          ),
+          shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.md),
           ),
-          child: Icon(
-            destination.icon,
-            color: active ? Colors.white : idleIcon,
-            size: AppIconSize.md,
-          ),
+          onTap: () => _onTap(context, destination),
         ),
-        title: Text(
-          destination.localized(context.l10n),
-          style: TextStyle(
-            // `accentText`, not `primary`: this is text on the page, not a fill,
-            // and on a dark surface the fill value only reaches 2.54:1.
-            color: active ? p.accentText : p.textPrimary,
-            fontWeight: active ? FontWeight.w600 : FontWeight.w500,
-            fontSize: AppTypography.bodyMediumSize,
-          ),
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
-        ),
-        onTap: () => _onTap(context, destination),
       ),
     );
   }
@@ -290,7 +274,7 @@ class AppDrawer extends StatelessWidget {
     // `closeDrawer()` rather than `Navigator.pop()`: it is the API that actually
     // owns this, it runs the open/close animation, and it cannot pop a page route
     // if this ever runs while the drawer is not the top route.
-// Close the drawer before navigating, and only when there is one. On a wide
+    // Close the drawer before navigating, and only when there is one. On a wide
     // window the sidebar is permanent — no `DrawerController`, so `isDrawerOpen`
     // is false — and this must be a no-op there.
     //
@@ -305,14 +289,141 @@ class AppDrawer extends StatelessWidget {
 
     if (destination == active) return;
 
-    final screen = destination.screen;
-    if (destination.isTabRoot) {
-      Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+    navigateToDestination(context, destination);
+  }
+}
+
+/// Mirrors the root navigator's live route stack, bottom to top, so
+/// navigation can ask "is there already a screen for this drawer item, and is
+/// anything standing in front of it?" before pushing another one.
+///
+/// Flutter exposes no public way to read a navigator's history, and guessing
+/// with [Navigator.popUntil] is dangerous: with a predicate that never
+/// matches it keeps popping until the stack is empty. So the answer is
+/// tracked from the observer callbacks instead — every push, pop, remove and
+/// replace goes through them, which makes this mirror exact rather than a
+/// heuristic. Routes are held by identity, so an unnamed drill-down and a
+/// destination that happens to share a screen class cannot be confused.
+class DestinationRouteTracker extends NavigatorObserver {
+  DestinationRouteTracker();
+
+  /// App-wide instance. Registered once on the root [MaterialApp] navigator —
+  /// the only navigator drawer navigation ever addresses.
+  static final DestinationRouteTracker instance = DestinationRouteTracker();
+
+  /// The list to hand to `MaterialApp.navigatorObservers`.
+  ///
+  /// Stable identity on purpose: a fresh list on every rebuild makes the
+  /// navigator tear down and re-attach its observers each time the theme or
+  /// locale changes, for no reason at all.
+  static final List<NavigatorObserver> observers = <NavigatorObserver>[
+    instance,
+  ];
+
+  /// Live routes, bottom of the stack first.
+  final List<Route<dynamic>> routes = <Route<dynamic>>[];
+
+  /// Index of the *topmost* live route named [name], or -1.
+  ///
+  /// Topmost on purpose: popping stops at the first match coming down from
+  /// the top, so this is the copy that will actually be reached — checking
+  /// the deepest one instead would report "blocked" by the very duplicate a
+  /// previous blocked attempt pushed.
+  int lastIndexOf(String name) =>
+      routes.lastIndexWhere((route) => route.settings.name == name);
+
+  bool _hasNonDestinationAbove(int index) => routes
+      .skip(index + 1)
+      .any((route) => !isDestinationRouteName(route.settings.name));
+
+  /// Whether [name] is one of the drawer's own destinations. Anything else is
+  /// a drill-down — a product detail, a sale being written — and is never
+  /// popped to reach a destination.
+  static bool isDestinationRouteName(String? name) =>
+      name != null && DrawerDestination.values.any((d) => d.routeName == name);
+
+  void _remove(Route<dynamic> route) => routes.remove(route);
+
+  @override
+  void didPush(Route route, Route? previousRoute) => routes.add(route);
+
+  @override
+  void didPop(Route route, Route? previousRoute) => _remove(route);
+
+  @override
+  void didRemove(Route route, Route? previousRoute) => _remove(route);
+
+  @override
+  void didReplace({Route? newRoute, Route? oldRoute}) {
+    final old = oldRoute;
+    final index = old == null ? -1 : routes.indexOf(old);
+    if (index < 0) {
+      if (newRoute != null) routes.add(newRoute);
       return;
     }
-    Navigator.of(
-      context,
-    ).pushReplacement(MaterialPageRoute(builder: (_) => screen));
+    final fresh = newRoute;
+    if (fresh == null) {
+      routes.removeAt(index);
+    } else {
+      routes[index] = fresh;
+    }
+  }
+}
+
+/// Goes to [destination] without rebuilding what is already on screen.
+///
+/// This is the fix for the drawer's reload-on-every-tap: the old code pushed
+/// a fresh route each time, so returning to Quick Sale ran `initState` →
+/// `load()` → skeleton again — even though a live copy of the very same screen
+/// was sitting a few routes below, fully loaded, cart and scroll position
+/// intact. Now a destination already in the stack is *popped back to* (its
+/// State was never disposed, so the frame is instant and nothing is
+/// fetched), and only a first-ever visit builds anything.
+///
+/// Two rules keep that from costing anything else:
+///
+///  * **drill-downs are never popped.** Routes above the target that are not
+///    drawer destinations — a product detail, above all a sale still being
+///    written — are somebody's in-progress work, so the pop stops there and a
+///    fresh instance is pushed instead. Reopening a screen beats losing what
+///    was on it.
+///  * **nothing is popped when the destination is absent.** The old
+///    `pushReplacement` for non-tab destinations destroyed the screen below —
+///    which is exactly why Quick Sale reloaded after a trip to Inventory.
+///
+/// [force] skips the drill-down guard: it is what "back to the dashboard"
+/// means, *leave whatever is on screen*.
+///
+/// [replace] is for the two hand-offs that must not keep the screen they came
+/// from in history — splash and login.
+void navigateToDestination(
+  BuildContext context,
+  DrawerDestination destination, {
+  bool replace = false,
+  bool force = false,
+}) {
+  final navigator = Navigator.of(context);
+  final name = destination.routeName;
+  final tracker = DestinationRouteTracker.instance;
+
+  final index = tracker.lastIndexOf(name);
+  final reachable =
+      index >= 0 && (force || !tracker._hasNonDestinationAbove(index));
+  if (reachable) {
+    // Known to be present and unobstructed, so the predicate matches before
+    // it can reach the root and the pop cannot empty the stack.
+    navigator.popUntil((route) => route.settings.name == name || route.isFirst);
+    return;
+  }
+
+  final route = MaterialPageRoute<void>(
+    settings: RouteSettings(name: name),
+    builder: (_) => destination.screen,
+  );
+  if (replace) {
+    navigator.pushReplacement(route);
+  } else {
+    navigator.push(route);
   }
 }
 
@@ -355,82 +466,92 @@ class _LogoutTileState extends State<_LogoutTile> {
         horizontal: AppSpacing.s12,
         vertical: AppSpacing.s4,
       ),
-      child: ListTile(
-        leading: _isLoading
-            ? const SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(color: red, strokeWidth: 2.5),
-              )
-            : const Icon(Icons.logout, color: red, size: 22),
-        title: Text(
-          context.l10n.t('Logout'),
-          style: TextStyle(
-            color: red,
-            fontWeight: FontWeight.w600,
-            fontSize: AppTypography.bodyMediumSize,
+      child: Material(
+        // As in [_navItem]: the tile needs a Material of its own to paint its
+        // ink on, above the drawer's filled background.
+        type: MaterialType.transparency,
+        child: ListTile(
+          leading: _isLoading
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    color: red,
+                    strokeWidth: 2.5,
+                  ),
+                )
+              : const Icon(Icons.logout, color: red, size: 22),
+          title: Text(
+            context.l10n.t('Logout'),
+            style: TextStyle(
+              color: red,
+              fontWeight: FontWeight.w600,
+              fontSize: AppTypography.bodyMediumSize,
+            ),
           ),
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
-        ),
-        onTap: _isLoading
-            ? null
-            : () {
-                showDialog(
-                  context: context,
-                  builder: (ctx) {
-                    return AlertDialog(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                      ),
-                      title: Text(
-                        context.l10n.t('Logout'),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: p.textPrimary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          onTap: _isLoading
+              ? null
+              : () {
+                  showDialog(
+                    context: context,
+                    builder: (ctx) {
+                      return AlertDialog(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
                         ),
-                      ),
-                      content: Text(
-                        'Are you sure you want to logout?',
-                        style: TextStyle(color: p.textSecondary),
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx),
-                          child: Text(
-                            'Cancel',
-                            style: TextStyle(color: p.textSecondary),
+                        title: Text(
+                          context.l10n.t('Logout'),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: p.textPrimary,
                           ),
                         ),
-                        ElevatedButton(
-                          onPressed: () async {
-                            Navigator.pop(ctx);
-                            await _handleLogout();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: red,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.md),
+                        content: Text(
+                          'Are you sure you want to logout?',
+                          style: TextStyle(color: p.textSecondary),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: Text(
+                              'Cancel',
+                              style: TextStyle(color: p.textSecondary),
                             ),
                           ),
-                          child: _isLoading
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : Text(context.l10n.t('Logout')),
-                        ),
-                      ],
-                    );
-                  },
-                );
-              },
+                          ElevatedButton(
+                            onPressed: () async {
+                              Navigator.pop(ctx);
+                              await _handleLogout();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: red,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.md,
+                                ),
+                              ),
+                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Text(context.l10n.t('Logout')),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+        ),
       ),
     );
   }

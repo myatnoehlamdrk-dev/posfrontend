@@ -11,6 +11,7 @@ import 'package:posfrontend/features/dashboard/presentation/screens/dashboard_sc
 import 'package:posfrontend/features/onboarding/presentation/screens/get_started_screen.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/shared/services/fcm_service.dart';
+import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/shop_scope.dart';
 
@@ -95,7 +96,12 @@ class _SplashScreenState extends State<SplashScreen>
     if (!mounted) return;
 
     await Navigator.of(context).pushReplacement(
-      _route(signedIn ? const DashboardScreen() : const GetStartedScreen()),
+      _route(
+        signedIn ? const DashboardScreen() : const GetStartedScreen(),
+        // Named so the dashboard is recognisable later: the drawer and Back
+        // pop back to *this* route instead of pushing a second dashboard.
+        name: signedIn ? DrawerDestination.dashboard.routeName : null,
+      ),
     );
   }
 
@@ -210,12 +216,14 @@ class _SplashScreenState extends State<SplashScreen>
     await SessionStore.clear();
   }
 
-  PageRouteBuilder<void> _route(Widget screen) => PageRouteBuilder<void>(
-    transitionDuration: const Duration(milliseconds: 420),
-    pageBuilder: (_, _, _) => screen,
-    transitionsBuilder: (_, animation, _, child) =>
-        FadeTransition(opacity: animation, child: child),
-  );
+  PageRouteBuilder<void> _route(Widget screen, {String? name}) =>
+      PageRouteBuilder<void>(
+        settings: RouteSettings(name: name),
+        transitionDuration: const Duration(milliseconds: 420),
+        pageBuilder: (_, _, _) => screen,
+        transitionsBuilder: (_, animation, _, child) =>
+            FadeTransition(opacity: animation, child: child),
+      );
 
   @override
   void dispose() {

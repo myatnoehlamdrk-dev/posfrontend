@@ -7,11 +7,11 @@ import 'package:posfrontend/features/auth/presentation/viewmodels/login_view_mod
 import 'package:posfrontend/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:posfrontend/features/auth/presentation/screens/verify_account_screen.dart';
 import 'package:posfrontend/features/auth/data/models/login_response.dart';
-import 'package:posfrontend/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:posfrontend/features/shop/presentation/screens/shop_screen.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
+import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_input_decoration.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/shop_scope.dart';
@@ -139,10 +139,10 @@ class _LoginScreenState extends State<LoginScreen> {
     AuthScope.updateUserOf(context, loginResponse);
     ShopScope.loadShop(context, shopId: result.user.shopId);
     showSuccessSnackBar(context, 'Login successful');
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const DashboardScreen()),
-    );
+    // Replaces this login route rather than stacking: the tracker then knows
+    // the dashboard by name, so Back and the drawer can return to *this*
+    // instance later instead of building a second one.
+    navigateToDestination(context, DrawerDestination.dashboard, replace: true);
   }
 
   @override

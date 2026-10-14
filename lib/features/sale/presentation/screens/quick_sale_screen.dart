@@ -98,6 +98,12 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
   /// build, so it needs no setState.
   bool _sheetOpen = false;
 
+  /// The feed ([QuickSaleViewModel.feedKey]) the grid last showed. When it
+  /// changes — a chip tap, a settled search — the scroll starts over at the
+  /// top: the new feed is a different list, and keeping the old offset would
+  /// drop the cashier mid-list (or past its end) where the swap is invisible.
+  String _lastFeedKey = '';
+
   @override
   void initState() {
     super.initState();
@@ -115,17 +121,28 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
     _sale.init();
     _changes = Listenable.merge([_catalog, _sale]);
     _scrollCtrl.addListener(_onScroll);
+    _catalog.addListener(_onFeedChanged);
     _catalog.load();
   }
 
   @override
   void dispose() {
     _scrollCtrl.removeListener(_onScroll);
+    _catalog.removeListener(_onFeedChanged);
     _scrollCtrl.dispose();
     _search.dispose();
     _catalog.dispose();
     _sale.dispose();
     super.dispose();
+  }
+
+  void _onFeedChanged() {
+    final key = _catalog.feedKey;
+    if (key == _lastFeedKey) return;
+    _lastFeedKey = key;
+    if (_scrollCtrl.hasClients && _scrollCtrl.position.pixels > 0) {
+      _scrollCtrl.jumpTo(0);
+    }
   }
 
   void _onScroll() {
@@ -380,43 +397,64 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
         // settled on.
         final itemCount = _catalog.products.length + (_catalog.isLoadingMore ? 1 : 0);
 
-        final grid = GridView.builder(
-          controller: _scrollCtrl,
-          // Always scrollable so pull-to-refresh works even on a short page.
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            // Rows breathe farther apart than the category grid's 12: the
-            // cards are taller than they are wide, so a tight row gap reads
-            // as one continuous wall of stock.
-            mainAxisSpacing: 20,
-            crossAxisSpacing: 12,
-            // Same aspect ratio as the category grid, so the shared skeleton
-            // lands where the real cards will.
-            childAspectRatio: 0.72,
-          ),
-          itemCount: itemCount,
-          itemBuilder: (context, index) {
-            if (index == _catalog.products.length) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: CircularProgressIndicator(
-                    color: context.palette.primary,
-                    strokeWidth: 2.5,
+        // One pass over the cart's lines instead of one scan per visible
+        // card: the badge is read on every rebuild of every tile.
+        final qtyByProduct = <String, int>{};
+        for (final item in _sale.items) {
+          qtyByProduct[item.productId] =
+              (qtyByProduct[item.productId] ?? 0) + item.quantity;
+        }
+
+        // The feed's own key: a category or search change starts the new
+        // cards at zero opacity and fades them in — the one motion a switch
+        // gets. Deliberately *not* an `AnimatedSwitcher`: that would keep the
+        // outgoing grid alive, and two live grids would attach to the same
+        // [ScrollController] at once.
+        final grid = TweenAnimationBuilder<double>(
+          key: ValueKey(_catalog.feedKey),
+          tween: Tween(begin: 0, end: 1),
+          duration: const Duration(milliseconds: 160),
+          curve: Curves.easeOut,
+          builder: (context, opacity, child) =>
+              Opacity(opacity: opacity, child: child),
+          child: GridView.builder(
+            controller: _scrollCtrl,
+            // Always scrollable so pull-to-refresh works even on a short page.
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              // Rows breathe farther apart than the category grid's 12: the
+              // cards are taller than they are wide, so a tight row gap reads
+              // as one continuous wall of stock.
+              mainAxisSpacing: 20,
+              crossAxisSpacing: 12,
+              // Same aspect ratio as the category grid, so the shared skeleton
+              // lands where the real cards will.
+              childAspectRatio: 0.72,
+            ),
+            itemCount: itemCount,
+            itemBuilder: (context, index) {
+              if (index == _catalog.products.length) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: CircularProgressIndicator(
+                      color: context.palette.primary,
+                      strokeWidth: 2.5,
+                    ),
                   ),
-                ),
+                );
+              }
+              final product = _catalog.products[index];
+              return _QuickSaleCard(
+                product: product,
+                qtyInCart: qtyByProduct[product.id] ?? 0,
+                onAdd: () => _addToSale(product),
+                onOpen: () => _openProduct(product),
               );
-            }
-            final product = _catalog.products[index];
-            return _QuickSaleCard(
-              product: product,
-              qtyInCart: _qtyInCart(product.id),
-              onAdd: () => _addToSale(product),
-              onOpen: () => _openProduct(product),
-            );
-          },
+            },
+          ),
         );
 
         // A page that failed while the grid already has content: keep the
@@ -544,16 +582,6 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
   }
 
   // ------------------------------------------------------------ cart surface
-
-  /// What the cashier has of this product, across every line of it in the
-  /// sale. The card shows it so "tap to add" reads as a count going up.
-  int _qtyInCart(String productId) {
-    var total = 0;
-    for (final item in _sale.items) {
-      if (item.productId == productId) total += item.quantity;
-    }
-    return total;
-  }
 
   /// Engagement: the surface the cashier wants up — the container on a layout
   /// roomy enough for one, the bar otherwise — is brought up, clearing any

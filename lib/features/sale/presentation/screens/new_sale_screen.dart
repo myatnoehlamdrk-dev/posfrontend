@@ -21,7 +21,8 @@ import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/totals_panel.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
-import 'package:posfrontend/shared/widgets/app_top_bar.dart' show navigateToDashboard;
+import 'package:posfrontend/shared/widgets/app_top_bar.dart'
+    show navigateToDashboard;
 import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 import 'package:printing/printing.dart';
@@ -49,6 +50,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   AppPalette get _p => context.palette;
   Color get _titleColor => _p.textPrimary;
   Color get _mutedColor => _p.textSecondary;
+
   /// The one purple the whole app's actions are painted in, and the same one
   /// the welcome screen's `Get started` button uses. It replaces the theme's
   /// own violet here so selecting a payment method, toggling a switch and
@@ -1345,6 +1347,9 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         ),
         GestureDetector(
           onTap: () {
+            // Deliberately *not* navigateToDestination: that pops back to a
+            // Sale Item screen below this one, which would throw away the
+            // sale being written here. A drill-down gets its own route.
             Navigator.of(
               context,
             ).push(MaterialPageRoute(builder: (_) => SaleItemScreen()));

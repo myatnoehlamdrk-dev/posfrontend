@@ -16,6 +16,7 @@ import 'package:posfrontend/shared/l10n/locale_notifier.dart';
 import 'package:posfrontend/shared/services/fcm_service.dart';
 import 'package:posfrontend/shared/theme/app_theme.dart';
 import 'package:posfrontend/shared/theme/theme_mode_notifier.dart';
+import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/shop_scope.dart';
 import 'package:posfrontend/shared/widgets/sync_status_pill.dart';
@@ -79,6 +80,10 @@ class MyApp extends StatelessWidget {
             return MaterialApp(
               title: 'Inventory',
               navigatorKey: navigatorKey,
+              // Tracks which named destinations are still alive so drawer
+              // navigation can pop back to a screen it already has instead of
+              // rebuilding (and re-fetching) it on every tap.
+              navigatorObservers: DestinationRouteTracker.observers,
               debugShowCheckedModeBanner: false,
               theme: AppTheme.lightTheme,
               darkTheme: AppTheme.darkTheme,
