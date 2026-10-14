@@ -54,7 +54,10 @@ class CategoryViewModel extends BaseViewModel {
       try {
         final inventory = await _inventoryRepository.getInventoryByType(type);
         inventoryId = inventory.id;
-      } on ApiException {
+      } catch (_) {
+        // Resolving the id is a convenience, not the load: the query still
+        // works from `type` alone, so a failure here must not take the screen
+        // down with it. The categories call below reports its own failure.
         inventoryId = null;
       }
 
@@ -75,6 +78,14 @@ class CategoryViewModel extends BaseViewModel {
       if (_page > _lastPage) _page = _lastPage;
     } on ApiException catch (e) {
       setError(e.message);
+    } catch (e) {
+      // Anything the catch above did not recognise — a platform error such as
+      // the web build's missing local database, a parse failure, a Dio error
+      // the data source did not convert — still has to reach the screen.
+      // `hasError` is what swaps the empty grid for the retry view, so an
+      // exception escaping `load()` left a blank list the user could not
+      // refresh their way out of.
+      setError(formatApiError(e));
     } finally {
       setLoading(false);
     }

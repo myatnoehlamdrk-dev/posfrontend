@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:posfrontend/core/auth/session_store.dart';
-import 'package:posfrontend/core/local/local_store.dart';
 import 'package:posfrontend/core/models/paginated_response.dart';
 import 'package:posfrontend/features/category/data/datasources/category_local_data_source.dart';
 import 'package:posfrontend/features/category/data/datasources/category_remote_data_source.dart';
@@ -54,7 +53,7 @@ class CategoryRepositoryImpl implements CategoryRepository {
     }
 
     if (shopId != null && shopId.isNotEmpty) {
-      await _localDataSource.cacheCategories(shopId: shopId, categories: models);
+      await _cacheOrIgnore(models, shopId);
     }
 
     return models.map((m) => m.toEntity()).toList();
@@ -104,10 +103,7 @@ class CategoryRepositoryImpl implements CategoryRepository {
     }
 
     if (shopId != null && shopId.isNotEmpty) {
-      await _localDataSource.cacheCategories(
-        shopId: shopId,
-        categories: result.data,
-      );
+      await _cacheOrIgnore(result.data, shopId);
     }
 
     return PaginatedResponse(
@@ -135,6 +131,30 @@ class CategoryRepositoryImpl implements CategoryRepository {
       final hit = cached.where((c) => c.id == id).firstOrNull;
       if (hit != null) return hit.toEntity();
       rethrow;
+    }
+  }
+
+  /// Writes [categories] to the offline mirror, swallowing any failure.
+  ///
+  /// The mirror is an optimisation, never a precondition for showing what the
+  /// server just sent. The web build has no local database at all —
+  /// `NoopLocalStore.database` throws `UnsupportedError` — and this write sits
+  /// *outside* the try that wraps the fetch, so awaiting it unguarded threw
+  /// away a page the network had already delivered. The category screens then
+  /// rendered an empty list with no error, because the view model never saw an
+  /// exception it recognised.
+  Future<void> _cacheOrIgnore(
+    List<CategoryApiModel> categories,
+    String shopId,
+  ) async {
+    try {
+      await _localDataSource.cacheCategories(
+        shopId: shopId,
+        categories: categories,
+      );
+    } catch (_) {
+      // A cache that cannot be written costs offline support for this screen,
+      // which is a far smaller price than losing the list that is on it.
     }
   }
 
