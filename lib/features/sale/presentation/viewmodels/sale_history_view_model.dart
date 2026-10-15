@@ -34,10 +34,22 @@ class SaleHistoryViewModel extends BaseViewModel {
   List<SaleOrderEntity> _allSales = [];
   List<SaleOrderEntity> _allOrders = [];
   String _selectedTab = 'All';
+  int? _selectedYear;
   int _currentPage = 1;
   int _lastPage = 1;
   bool _pendingLoadMore = false;
   bool get hasMore => _currentPage <= _lastPage;
+
+  int? _yearOf(SaleOrderEntity order) {
+    final raw = order.date.isNotEmpty ? order.date : order.createdAt;
+    if (raw.isEmpty) return null;
+    return DateTime.tryParse(raw)?.year;
+  }
+
+  List<SaleOrderEntity> _applyYear(Iterable<SaleOrderEntity> source) {
+    if (_selectedYear == null) return source.toList();
+    return source.where((o) => _yearOf(o) == _selectedYear).toList();
+  }
 
   List<SaleOrderEntity> get filteredOrders {
     List<SaleOrderEntity> source;
@@ -52,15 +64,32 @@ class SaleHistoryViewModel extends BaseViewModel {
         source = [..._allSales, ..._allOrders];
     }
 
-    return source;
+    return _applyYear(source);
   }
 
   String get selectedTab => _selectedTab;
-  int get totalSalesCount => _allSales.length;
-  int get totalOrdersCount => _allOrders.length;
+  int? get selectedYear => _selectedYear;
+  int get totalSalesCount => _applyYear(_allSales).length;
+  int get totalOrdersCount => _applyYear(_allOrders).length;
+
+  List<int> get availableYears {
+    final years = <int>{};
+    for (final o in [..._allSales, ..._allOrders]) {
+      final y = _yearOf(o);
+      if (y != null) years.add(y);
+    }
+    years.add(DateTime.now().year);
+    final sorted = years.toList()..sort((a, b) => b.compareTo(a));
+    return sorted;
+  }
 
   void setTab(String tab) {
     _selectedTab = tab;
+    notifyListeners();
+  }
+
+  void setYear(int? year) {
+    _selectedYear = year;
     notifyListeners();
   }
 

@@ -96,13 +96,13 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 12),
-              Text(
-                context.l10n.t(
-                  'Products that are already sale and will be sale (Order)',
-                ),
-                style: TextStyle(fontSize: 13, color: p.textSecondary),
+              Row(
+                children: [
+                  const Spacer(),
+                  _buildYearFilter(),
+                ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               FilterTabs(
                 tabs: [
                   ('All', _viewModel.filteredOrders.length),
@@ -155,6 +155,37 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
       default:
         return 0;
     }
+  }
+
+  Widget _buildYearFilter() {
+    final p = context.palette;
+    final years = _viewModel.availableYears;
+    final selected = _viewModel.selectedYear;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: p.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: p.border),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<int>(
+          value: selected != null && years.contains(selected) ? selected : 0,
+          icon: const Icon(Icons.keyboard_arrow_down, size: 18),
+          style: TextStyle(fontSize: 13, color: p.textSecondary),
+          items: [
+            DropdownMenuItem(value: 0, child: Text(context.l10n.t('All'))),
+            ...years.map(
+              (y) => DropdownMenuItem(value: y, child: Text('$y')),
+            ),
+          ],
+          onChanged: (v) {
+            if (v == null) return;
+            _viewModel.setYear(v == 0 ? null : v);
+          },
+        ),
+      ),
+    );
   }
 
   Widget _buildOrderCard(SaleOrderEntity order) {
