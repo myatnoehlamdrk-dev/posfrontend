@@ -92,6 +92,7 @@ class QuickSaleViewModel extends BaseViewModel {
   static const int _maxCachedFeeds = 48;
 
   List<SaleCategoryChip> _categories = [];
+
   /// Precomputed once per categories fetch: this getter is read on every
   /// rebuild of the chip row, and a fresh `List.unmodifiable` per access is a
   /// per-frame allocation for nothing.
@@ -106,6 +107,7 @@ class QuickSaleViewModel extends BaseViewModel {
   bool get hasSelection => _selected != null;
 
   final List<CatalogProductView> _products = [];
+
   /// The live list. Callers only ever read it, and the grid asks for it on
   /// every frame of a scroll — so no per-access copy.
   List<CatalogProductView> get products => _products;
@@ -125,6 +127,19 @@ class QuickSaleViewModel extends BaseViewModel {
   /// What is on screen right now, as one string. Both the cache key and the
   /// screen's feed identity (it resets the scroll when this changes).
   String get feedKey => '${_selected?.id ?? ''}|${_searchQuery.trim()}';
+
+  /// The key of the feed actually *on screen*. [feedKey] moves with every
+  /// keystroke; this one only moves when a restart takes over — the one
+  /// moment the grid may remount and the scroll start over. Keying the grid
+  /// by [feedKey] instead made the list jump to the top on every character
+  /// typed, over the previous feed's still-visible cards.
+  String _settledFeedKey = '';
+  String get settledFeedKey => _settledFeedKey;
+
+  /// True while a typed query is waiting out its debounce: the request has
+  /// not fired yet, so an empty product list in this window is "still
+  /// coming", not "no results".
+  bool get isDebouncing => _debounce?.isActive ?? false;
 
   /// Bumped on every restart of the feed. A response carrying an older
   /// revision belongs to a filter the user has already left and is dropped.
@@ -214,9 +229,14 @@ class QuickSaleViewModel extends BaseViewModel {
   /// loading flag, no skeleton — followed by a revalidation the cashier never
   /// sees as a load.
   Future<void> _restartFeed({bool clearOnMiss = false}) async {
+    _settledFeedKey = feedKey;
     final cached = _cache[feedKey];
     if (cached == null) {
-      await reload(clear: clearOnMiss);
+      // A settled *search* clears the previous feed's cards before fetching:
+      // over a slow link they would stay up — and tappable — for a second or
+      // more, and a cashier adding "what was on screen" books the wrong item.
+      // The skeleton says "your query is loading" instead.
+      await reload(clear: clearOnMiss || isSearching);
       return;
     }
     _showSnapshot(cached);
@@ -242,6 +262,7 @@ class QuickSaleViewModel extends BaseViewModel {
   /// first — used by a category miss, where keeping the previous category's
   /// cards up would make the tap look ignored.
   Future<void> reload({bool clear = false}) async {
+    _settledFeedKey = feedKey;
     final rev = ++_revision;
     _page = 1;
     _hasMore = false;
@@ -329,7 +350,13 @@ class QuickSaleViewModel extends BaseViewModel {
     // away but only bumps [_revision] once the debounce settles, so a
     // response landing in that window still belongs to *this* key and must
     // be cached under it, never under whatever the box says now.
-    final categoryId = _selected?.id;
+    //
+    // Normalized to `''` like [feedKey]: interpolating a null id directly
+    // yields the literal "null", which made the "All" view's cache key
+    // ('null|') a different namespace from its feed key ('|') — the cache
+    // never hit on a restart back to All, and the superseded-key guard
+    // below would reject every response in the default view.
+    final categoryId = _selected?.id ?? '';
     final search = _searchQuery.trim();
     final key = '$categoryId|$search';
     try {
@@ -349,6 +376,26 @@ class QuickSaleViewModel extends BaseViewModel {
       final newItems = paginated.data.map(_toView).toList();
       final nextPage = page + 1;
       final hasMore = nextPage <= paginated.lastPage;
+
+      // The text (or chip) moved on while this response was in flight: it
+      // answers a query the cashier no longer has on screen. Hand it to the
+      // cache for the key it actually answered — backspacing into a typed
+      // prefix then finds it instantly — but never render it as the answer
+      // to the current one.
+      final currentKey = '${_selected?.id ?? ''}|${_searchQuery.trim()}';
+      if (key != currentKey) {
+        if (replace) {
+          _putCache(
+            key,
+            _FeedSnapshot(
+              items: newItems,
+              nextPage: nextPage,
+              hasMore: hasMore,
+            ),
+          );
+        }
+        return;
+      }
 
       if (headOnly) {
         // The visible list keeps its extra cached pages; only the cache's

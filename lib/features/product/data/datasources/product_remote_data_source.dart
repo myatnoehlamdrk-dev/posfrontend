@@ -72,9 +72,15 @@ class ProductRemoteDataSource {
     CancelToken? cancelToken,
   }) async {
     try {
+      // `no_cache`: this is the Update Product screen's load. Editing from a
+      // cached body risks saving stale values back over newer server data,
+      // so the detail view is network-only — offline it fails visibly
+      // instead of silently showing last week's price. The list endpoints
+      // (catalog, category, search) keep their offline cache.
       final response = await _dio.get(
         '/products/$productId',
         cancelToken: cancelToken,
+        options: Options(extra: const {'no_cache': true}),
       );
       final data = response.data;
       final json = data is Map ? (data['data'] ?? data) : data;

@@ -29,7 +29,7 @@ class ShopApiModel {
       type: json['type'] as String?,
       physicalAddress: json['physicalAddress'] as String?,
       ownerInformation: OwnerInformationModel.fromJson(
-        json['ownerInformation'] as Map<String, dynamic>,
+        (json['ownerInformation'] as Map<String, dynamic>?) ?? const {},
       ),
     );
   }

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/theme/app_dimens.dart';
 import 'package:posfrontend/shared/theme/app_typography.dart';
@@ -117,7 +118,7 @@ class AppScreenTopBar extends StatelessWidget {
                   // button, so the avatar no longer introduces a second accent.
                   backgroundColor: p.primary,
                   backgroundImage: imageUrl.isNotEmpty
-                      ? NetworkImage(imageUrl)
+                      ? CachedNetworkImageProvider(imageUrl, maxWidth: 224)
                       : null,
                   onBackgroundImageError: imageUrl.isNotEmpty
                       ? (_, _) {

@@ -191,6 +191,19 @@ class ProductCreateRequest {
   final String imageDeleteUrl;
   final String purchaseItemId;
 
+  /// True when the user is clearing the product's photo. It cannot be
+  /// inferred from an empty [imageUrl]: the backend reads a missing image as
+  /// "keep the current one", so removal has to be an explicit signal.
+  final bool removeImage;
+
+  /// Leaves [stock] and [variants] out of the payload entirely so the
+  /// backend keeps the product's current values (its update reads a missing
+  /// `variants`/`stock` key as "unchanged"). Used when updating a product
+  /// whose rows never carried usable variants — quick-sale products have a
+  /// size-less variant, older rows may have none at all — because sending
+  /// an empty variant list would zero the stock and wipe the variants.
+  final bool preserveStockAndVariants;
+
   const ProductCreateRequest({
     this.isSet = false,
     this.name = '',
@@ -209,6 +222,8 @@ class ProductCreateRequest {
     this.supplierAddress = '',
     this.imageDeleteUrl = '',
     this.purchaseItemId = '',
+    this.removeImage = false,
+    this.preserveStockAndVariants = false,
   });
 
   int get totalStock =>
@@ -220,16 +235,25 @@ class ProductCreateRequest {
     'image': imageUrl.isEmpty ? null : imageUrl,
     'brand': brand.isEmpty ? null : brand,
     'sku': sku.isEmpty ? null : sku,
-    'stock': stock ?? totalStock,
-    if (variants.isNotEmpty) 'size': variants.first.size,
-    if (variants.isNotEmpty) 'color': variants.first.color,
-    'variants': variants.map((v) => v.toJson()).toList(),
+    // All four are omitted together in preserve mode: an empty variants
+    // array would replace the product's rows (and its derived stock) on the
+    // server, and size/color are just head(variants) in the same payload.
+    if (!preserveStockAndVariants) 'stock': stock ?? totalStock,
+    if (!preserveStockAndVariants && variants.isNotEmpty)
+      'size': variants.first.size,
+    if (!preserveStockAndVariants && variants.isNotEmpty)
+      'color': variants.first.color,
+    if (!preserveStockAndVariants)
+      'variants': variants.map((v) => v.toJson()).toList(),
     if (supplierId.isNotEmpty) 'supplierId': int.tryParse(supplierId),
     'supplierName': supplierName.isEmpty ? null : supplierName,
     'supplierContact': supplierContact.isEmpty ? null : supplierContact,
     'supplierSince': supplierSince.isEmpty ? null : supplierSince,
     'supplierAddress': supplierAddress.isEmpty ? null : supplierAddress,
     'imageDeleteUrl': imageDeleteUrl.isEmpty ? null : imageDeleteUrl,
+    // Omitted when false so the payload of an ordinary save stays unchanged;
+    // a true is the only thing the backend reads as "clear the photo".
+    if (removeImage) 'removeImage': true,
     // Omitted rather than sent as null when empty. The backend reads
     // array_key_exists('packageId') to decide whether the package should
     // change, and the stock-add screens build a request with no package, so

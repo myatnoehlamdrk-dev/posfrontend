@@ -45,11 +45,13 @@ String variantTitle(ProductVariant v) {
 class CategoryProductsScreen extends StatefulWidget {
   final String categoryId;
   final String categoryName;
+  final bool uncategorized;
 
   const CategoryProductsScreen({
     super.key,
     required this.categoryId,
     required this.categoryName,
+    this.uncategorized = false,
   });
 
   @override
@@ -145,7 +147,10 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
       final response = await dio.get(
         '/products',
         queryParameters: {
-          'categoryId': widget.categoryId,
+          if (widget.uncategorized)
+            'uncategorized': 1
+          else
+            'categoryId': widget.categoryId,
           'page': _currentPage,
           'per_page': 20,
         },
@@ -209,7 +214,10 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
       final response = await dio.get(
         '/products',
         queryParameters: {
-          'categoryId': widget.categoryId,
+          if (widget.uncategorized)
+            'uncategorized': 1
+          else
+            'categoryId': widget.categoryId,
           'page': 1,
           'per_page': 20,
         },

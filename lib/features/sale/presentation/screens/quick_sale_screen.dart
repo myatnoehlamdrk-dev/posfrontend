@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:posfrontend/core/local/sync_manager.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/features/customer/data/repositories/customer_repository_impl.dart';
 import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart';
@@ -98,15 +99,21 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
   /// build, so it needs no setState.
   bool _sheetOpen = false;
 
-  /// The feed ([QuickSaleViewModel.feedKey]) the grid last showed. When it
-  /// changes — a chip tap, a settled search — the scroll starts over at the
-  /// top: the new feed is a different list, and keeping the old offset would
-  /// drop the cashier mid-list (or past its end) where the swap is invisible.
+  /// The key of the feed the grid last showed ([QuickSaleViewModel]
+  /// .settledFeedKey — it moves when a restart takes over, not per
+  /// keystroke). When it changes — a chip tap, a settled search — the scroll
+  /// starts over at the top: the new feed is a different list, and keeping
+  /// the old offset would drop the cashier mid-list (or past its end) where
+  /// the swap is invisible.
   String _lastFeedKey = '';
 
   @override
   void initState() {
     super.initState();
+    // One of the two screens the offline cache exists for. Opening it arms
+    // the background cache warmer, which stays dormant for sessions that
+    // never reach this screen or the product catalog.
+    SyncManager.instance.markCacheUsed();
     _catalog = widget.catalog ?? QuickSaleViewModel();
     // The same cart the new-sale screen drives: one submission path (draft
     // order, idempotency key, offline outbox) for every way of making a sale.
@@ -137,7 +144,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
   }
 
   void _onFeedChanged() {
-    final key = _catalog.feedKey;
+    final key = _catalog.settledFeedKey;
     if (key == _lastFeedKey) return;
     _lastFeedKey = key;
     if (_scrollCtrl.hasClients && _scrollCtrl.position.pixels > 0) {
@@ -253,11 +260,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                         _catalog.setSearchQuery('');
                         setState(() {});
                       },
-                      icon: Icon(
-                        Icons.close,
-                        size: 18,
-                        color: p.textSecondary,
-                      ),
+                      icon: Icon(Icons.close, size: 18, color: p.textSecondary),
                     ),
               isDense: true,
               filled: true,
@@ -367,7 +370,10 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
         // Nothing to scroll yet: the placeholder states keep the pull-to-
         // refresh shell, which stretches them so they can centre themselves.
-        if (_catalog.isLoading && _catalog.products.isEmpty) {
+        // A typed query waiting out its debounce counts as loading — its
+        // request has not even fired, so "no results" would be a lie.
+        if ((_catalog.isLoading || _catalog.isDebouncing) &&
+            _catalog.products.isEmpty) {
           return _refreshable(
             fill: true,
             child: CategoryProductsSkeleton(
@@ -395,7 +401,8 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
         // and disappears with the items it fetched. Nothing after the last
         // page — [QuickSaleViewModel.hasMore] is what the server's last page
         // settled on.
-        final itemCount = _catalog.products.length + (_catalog.isLoadingMore ? 1 : 0);
+        final itemCount =
+            _catalog.products.length + (_catalog.isLoadingMore ? 1 : 0);
 
         // One pass over the cart's lines instead of one scan per visible
         // card: the badge is read on every rebuild of every tile.
@@ -407,11 +414,13 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
         // The feed's own key: a category or search change starts the new
         // cards at zero opacity and fades them in — the one motion a switch
-        // gets. Deliberately *not* an `AnimatedSwitcher`: that would keep the
+        // gets. It is the *settled* key, so the remount happens when the new
+        // feed takes over, not on every keystroke leading up to it.
+        // Deliberately *not* an `AnimatedSwitcher`: that would keep the
         // outgoing grid alive, and two live grids would attach to the same
         // [ScrollController] at once.
         final grid = TweenAnimationBuilder<double>(
-          key: ValueKey(_catalog.feedKey),
+          key: ValueKey(_catalog.settledFeedKey),
           tween: Tween(begin: 0, end: 1),
           duration: const Duration(milliseconds: 160),
           curve: Curves.easeOut,
@@ -479,7 +488,11 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
     // can centre themselves; the grid case below is the one that cannot go
     // through [RefreshableBody].
     if (fill) {
-      return RefreshableBody(onRefresh: _catalog.refresh, fill: true, child: child);
+      return RefreshableBody(
+        onRefresh: _catalog.refresh,
+        fill: true,
+        child: child,
+      );
     }
     final p = context.palette;
     return RefreshIndicator(
@@ -562,10 +575,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
             ),
             child: Text(
               context.l10n.t('Retry'),
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
             ),
           ),
         ],
@@ -654,9 +664,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
     if (available <= 0) {
       showErrorMessage(
         context,
-        context.l10n
-            .t('{v1} is out of stock')
-            .replaceAll('{v1}', name),
+        context.l10n.t('{v1} is out of stock').replaceAll('{v1}', name),
       );
       return false;
     }
@@ -1011,9 +1019,7 @@ class _QuickSaleCard extends StatelessWidget {
                               ? Icons.remove_shopping_cart_outlined
                               : Icons.add_shopping_cart_outlined,
                           size: 14,
-                          color: _outOfStock
-                              ? p.textSecondary
-                              : p.accentText,
+                          color: _outOfStock ? p.textSecondary : p.accentText,
                         ),
                       ),
                     ],
@@ -1023,7 +1029,10 @@ class _QuickSaleCard extends StatelessWidget {
                     Text(
                       context.l10n
                           .t('{v1} variants')
-                          .replaceAll('{v1}', product.variants.length.toString()),
+                          .replaceAll(
+                            '{v1}',
+                            product.variants.length.toString(),
+                          ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(fontSize: 11, color: p.textSecondary),
@@ -1070,9 +1079,7 @@ class _QuickSaleCard extends StatelessWidget {
           end: Alignment.bottomRight,
         ),
       ),
-      child: Center(
-        child: Icon(product.icon, color: Colors.white, size: 34),
-      ),
+      child: Center(child: Icon(product.icon, color: Colors.white, size: 34)),
     );
   }
 }

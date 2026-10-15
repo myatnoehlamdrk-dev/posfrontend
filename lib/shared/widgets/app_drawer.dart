@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/theme/app_dimens.dart';
 import 'package:posfrontend/shared/theme/app_typography.dart';
@@ -44,16 +45,16 @@ import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
 /// thing that genuinely differs, which is where you are.
 enum DrawerDestination {
   dashboard(label: 'Dashboard', icon: Icons.dashboard_outlined),
-  product(label: 'Product', icon: Icons.category_outlined),
-  addProduct(label: 'Add Product', icon: Icons.add_circle_outline),
-  addToCart(label: 'Add to Cart', icon: Icons.shopping_cart_outlined),
-  inventory(label: 'Inventory', icon: Icons.inventory_2_outlined),
-  saleItem(label: 'Sale Item', icon: Icons.receipt_long_outlined),
 
   /// Sell from the shelf: a category-filtered product grid with the cart
   /// beside it, where a tap is a line and the sale is made in place. The
   /// history of those sales is [saleItem]; this is where they are created.
   quickSale(label: 'Quick Sale', icon: Icons.point_of_sale_outlined),
+  product(label: 'Product', icon: Icons.category_outlined),
+  addProduct(label: 'Add Product', icon: Icons.add_circle_outline),
+  addToCart(label: 'Add to Cart', icon: Icons.shopping_cart_outlined),
+  inventory(label: 'Inventory', icon: Icons.inventory_2_outlined),
+  saleItem(label: 'Sale Item', icon: Icons.receipt_long_outlined),
   purchaseItem(label: 'Purchase Item', icon: Icons.local_shipping_outlined),
   setting(label: 'Setting', icon: Icons.settings_outlined);
 
@@ -129,7 +130,7 @@ class AppDrawer extends StatelessWidget {
                         radius: 28,
                         backgroundColor: Colors.white.withValues(alpha: 0.25),
                         backgroundImage: imageUrl.isNotEmpty
-                            ? NetworkImage(imageUrl)
+                            ? CachedNetworkImageProvider(imageUrl, maxWidth: 280)
                             : null,
                         onBackgroundImageError: imageUrl.isNotEmpty
                             ? (error, stackTrace) {

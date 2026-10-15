@@ -168,6 +168,9 @@ const Map<String, String> japaneseStrings = {
   'Remove from package': 'パッケージから削除',
   'Remove Product': '商品を削除',
   'Remove': '削除',
+  'Remove photo?': '写真を削除しますか？',
+  'The current photo will be deleted. You can pick a new one later.':
+      '現在の写真は削除されます。後から別の写真を選べます。',
 
   // Inventory
   'Inventory': '在庫',
@@ -186,6 +189,8 @@ const Map<String, String> japaneseStrings = {
 
   // Cart
   'Add to Cart': 'カートに追加',
+  'Sale cancelled. Your products are saved in Add to Cart.':
+      '販売をキャンセルしました。商品は「カートに追加」に保存されています。',
   'Cart is empty': 'カートは空です',
   'Proceed to Checkout': 'レジに進む',
   'Checkout': 'レジ',
@@ -238,7 +243,6 @@ const Map<String, String> japaneseStrings = {
   'Setting': '設定',
   'Language': '言語',
   'Select Language': '言語を選択',
-  'Match System': 'システムに合わせる',
   'Privacy Policy': 'プライバシーポリシー',
   'Terms of Service': '利用規約',
   'About': 'について',

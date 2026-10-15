@@ -13,7 +13,7 @@ import 'package:posfrontend/features/sale/data/repositories/sale_product_reposit
 import 'package:posfrontend/features/sale/presentation/screens/sale_preview_screen.dart';
 import 'package:posfrontend/features/sale/presentation/viewmodels/sale_view_model.dart';
 import 'package:posfrontend/features/sale/presentation/widgets/percent_input_formatter.dart';
-import 'package:posfrontend/shared/services/voucher_pdf_service.dart';
+import 'package:posfrontend/shared/services/receipt_print_service.dart';
 import 'package:posfrontend/features/sale/presentation/screens/sale_items_screen.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
@@ -25,7 +25,6 @@ import 'package:posfrontend/shared/widgets/app_top_bar.dart'
     show navigateToDashboard;
 import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
-import 'package:printing/printing.dart';
 
 class NewSaleScreen extends StatefulWidget {
   final List<SaleItemEntity>? initialItems;
@@ -104,6 +103,9 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     setState(() {
       _pdfExportEnabled = prefs.getBool(_keyPdfExport) ?? true;
       _printVoucherEnabled = prefs.getBool(_keyPrintVoucher) ?? false;
+      if (_pdfExportEnabled && _printVoucherEnabled) {
+        _pdfExportEnabled = false;
+      }
       _printFormat = prefs.getString(_keyPrintFormat) ?? 'thermal';
       _paperSize = prefs.getString(_keyPaperSize) ?? '58mm';
     });
@@ -148,20 +150,25 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     final notes = _notesCtrl.text.isNotEmpty ? _notesCtrl.text : null;
     final voucherNo = 'INV-${_viewModel.voucherRandom}';
     final orderId = widget.existingOrderId ?? 'ORD-${_viewModel.orderRandom}';
-    final saleArgs = _buildSaleArgs(
-      customerName,
-      customerPhone,
-      customerLocation,
-      staffName,
-      voucherNo,
-      orderId,
-      itemsSnapshot,
-      _viewModel.discountPercent,
-      _viewModel.subtotal,
-      _viewModel.discountAmount,
-      _viewModel.totalPayable,
-      paymentMethod,
-      notes,
+    final shop = ShopScope.shopOf(context);
+    final saleArgs = ReceiptPrintService.buildArgs(
+      customerName: customerName,
+      customerPhone: customerPhone,
+      customerLocation: customerLocation,
+      staffName: staffName,
+      voucherNo: voucherNo,
+      orderId: orderId,
+      items: itemsSnapshot,
+      discountPct: _viewModel.discountPercent,
+      subtotal: _viewModel.subtotal,
+      discountAmt: _viewModel.discountAmount,
+      totalPayable: _viewModel.totalPayable,
+      paymentMethod: paymentMethod,
+      notes: notes,
+      shopName: shop?.name,
+      shopAddress: shop?.physicalAddress,
+      shopPhone: shop?.ownerInformation.phone,
+      shopImage: shop?.logoUrl ?? shop?.logoData,
     );
 
     final messenger = ScaffoldMessenger.of(context);
@@ -263,8 +270,22 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
 
   void _cancelSale() {
     final navigator = Navigator.of(context);
+    // Unsaved items mean the draft card in Add to Cart must survive this
+    // exit, and the pop result tells the caller so: true = the sale was
+    // saved and the draft can be consumed, false = keep it.
+    final hasUnsavedItems = _viewModel.items.isNotEmpty;
+    if (hasUnsavedItems) {
+      // A simple in-app snackbar, not a push: the cashier is looking at
+      // the screen and only needs to be told where the products went.
+      showSuccessMessage(
+        context,
+        context.l10n.t(
+          'Sale cancelled. Your products are saved in Add to Cart.',
+        ),
+      );
+    }
     if (navigator.canPop()) {
-      navigator.pop();
+      navigator.pop(!hasUnsavedItems);
     } else {
       navigateToDashboard(context);
     }
@@ -899,71 +920,9 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     );
   }
 
-  Map<String, dynamic> _buildSaleArgs(
-    String customerName,
-    String? customerPhone,
-    String? customerLocation,
-    String staffName,
-    String voucherNo,
-    String orderId,
-    List<SaleItemEntity> items,
-    double discountPct,
-    double subtotal,
-    double discountAmt,
-    double totalPayable,
-    String paymentMethod,
-    String? notes,
-  ) {
-    final shop = ShopScope.shopOf(context);
-    return {
-      'customerName': customerName,
-      'customerPhone': customerPhone,
-      'customerLocation': customerLocation,
-      'staffName': staffName,
-      'voucherNo': voucherNo,
-      'orderId': orderId,
-      'dateTime': DateTime.now(),
-      'items': items,
-      'discountPct': discountPct,
-      'subtotal': subtotal,
-      'discountAmt': discountAmt,
-      'totalPayable': totalPayable,
-      'paymentMethod': paymentMethod,
-      'notes': notes,
-      'shopName': shop?.name,
-      'shopAddress': shop?.physicalAddress,
-      'shopPhone': shop?.ownerInformation.phone,
-      'shopImage': shop?.logoUrl ?? shop?.logoData,
-    };
-  }
-
   void _autoExportPdf(Map<String, dynamic> args) async {
     try {
-      final pdfBytes = await VoucherPdfService.exportA4Pdf(
-        customerName: args['customerName'],
-        customerPhone: args['customerPhone'],
-        staffName: args['staffName'],
-        voucherNo: args['voucherNo'],
-        orderId: args['orderId'],
-        dateTime: args['dateTime'],
-        items: args['items'],
-        discountPct: args['discountPct'],
-        subtotal: args['subtotal'],
-        discountAmt: args['discountAmt'],
-        totalPayable: args['totalPayable'],
-        paymentMethod: args['paymentMethod'],
-        notes: args['notes'],
-        shopName: args['shopName'],
-        shopAddress: args['shopAddress'],
-        shopPhone: args['shopPhone'],
-        shopImage: args['shopImage'],
-      );
-      if (mounted) {
-        await Printing.sharePdf(
-          bytes: pdfBytes,
-          filename: 'Voucher_${args['voucherNo']}.pdf',
-        );
-      }
+      await ReceiptPrintService.exportPdf(args);
     } catch (e) {
       if (mounted)
         showErrorMessage(
@@ -977,50 +936,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
 
   void _autoPrintVoucher(Map<String, dynamic> args) async {
     try {
-      if (_printFormat == 'thermal') {
-        final paperWidthMm = _paperSize == '80mm' ? 78.0 : 56.7;
-        await VoucherPdfService.generateAndPrintReceipt(
-          customerName: args['customerName'],
-          customerPhone: args['customerPhone'],
-          staffName: args['staffName'],
-          voucherNo: args['voucherNo'],
-          orderId: args['orderId'],
-          dateTime: args['dateTime'],
-          items: args['items'],
-          discountPct: args['discountPct'],
-          subtotal: args['subtotal'],
-          discountAmt: args['discountAmt'],
-          totalPayable: args['totalPayable'],
-          paymentMethod: args['paymentMethod'],
-          notes: args['notes'],
-          shopName: args['shopName'],
-          shopAddress: args['shopAddress'],
-          shopPhone: args['shopPhone'],
-          shopImage: args['shopImage'],
-          paperWidthMm: paperWidthMm,
-          customerLocation: args['customerLocation'],
-        );
-      } else {
-        await VoucherPdfService.generateAndPrint(
-          customerName: args['customerName'],
-          customerPhone: args['customerPhone'],
-          staffName: args['staffName'],
-          voucherNo: args['voucherNo'],
-          orderId: args['orderId'],
-          dateTime: args['dateTime'],
-          items: args['items'],
-          discountPct: args['discountPct'],
-          subtotal: args['subtotal'],
-          discountAmt: args['discountAmt'],
-          totalPayable: args['totalPayable'],
-          paymentMethod: args['paymentMethod'],
-          notes: args['notes'],
-          shopName: args['shopName'],
-          shopAddress: args['shopAddress'],
-          shopPhone: args['shopPhone'],
-          shopImage: args['shopImage'],
-        );
-      }
+      await ReceiptPrintService.printReceipt(args, _printSettings);
     } catch (e) {
       if (mounted)
         showErrorMessage(
@@ -1031,6 +947,15 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         );
     }
   }
+
+  /// The settings sheet's live values, packaged the way the service reads
+  /// them — one implementation behind both sale surfaces.
+  SalePrintSettings get _printSettings => SalePrintSettings(
+    exportPdf: _pdfExportEnabled,
+    printVoucher: _printVoucherEnabled,
+    format: _printFormat,
+    paperSize: _paperSize,
+  );
 
   void _showPrintSettings() {
     showModalBottomSheet(
@@ -1088,8 +1013,14 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                         subtitle: context.l10n.t('Save PDF file after sale'),
                         value: _pdfExportEnabled,
                         onChanged: (v) {
-                          setSheetState(() => _pdfExportEnabled = v);
-                          setState(() => _pdfExportEnabled = v);
+                          setSheetState(() {
+                            _pdfExportEnabled = v;
+                            if (v) _printVoucherEnabled = false;
+                          });
+                          setState(() {
+                            _pdfExportEnabled = v;
+                            if (v) _printVoucherEnabled = false;
+                          });
                           _savePrintSettings();
                         },
                       ),
@@ -1100,8 +1031,14 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                         subtitle: context.l10n.t('Auto-print after sale'),
                         value: _printVoucherEnabled,
                         onChanged: (v) {
-                          setSheetState(() => _printVoucherEnabled = v);
-                          setState(() => _printVoucherEnabled = v);
+                          setSheetState(() {
+                            _printVoucherEnabled = v;
+                            if (v) _pdfExportEnabled = false;
+                          });
+                          setState(() {
+                            _printVoucherEnabled = v;
+                            if (v) _pdfExportEnabled = false;
+                          });
                           _savePrintSettings();
                         },
                       ),

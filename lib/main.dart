@@ -23,41 +23,32 @@ import 'package:posfrontend/shared/widgets/sync_status_pill.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Reset singletons on hot restart to ensure fresh database connections
+  // Bound the decoded-image budget. Every photo in the app now decodes
+  // through a memCacheWidth cap (see CachedProductImage), so entries are a few
+  // hundred KB rather than multi-MB camera originals; 64MB / 500 entries is
+  // roughly 80 grid tiles — far more than a screenful, and low enough that a
+  // long shift on a 2GB POS tablet can't let the image cache crowd out the
+  // UI. Flutter's defaults are 100MB / 1000 entries.
+  final imageCache = PaintingBinding.instance.imageCache;
+  imageCache.maximumSizeBytes = 64 * 1024 * 1024;
+  imageCache.maximumSize = 500;
   LocalStore.reset();
   SyncManager.reset();
   OutboxQueue.reset();
-  // Enable offline writes for development (create local orders when offline)
-  OfflineWrites.enabled = true;
-  // ConnectivityService doesn't hold resources that need reset
-  await init();
-  // Offline support. Connectivity first: the sync manager gates every run
-  // on `isOnline`, so starting it second means the startup refresh sees a
-  // considered answer instead of the optimistic initial value.
-  await ConnectivityService.instance.start();
-  SyncManager.instance.start();
-  // Restore the persisted "last synced" time so a cold start offline can
-  // say when the data on screen was last confirmed, not just that it is
-  // saved.
-  unawaited(SyncManager.instance.loadPersistedSyncTime());
-  // Load the outbox counts so a relaunch with queued sales shows them on
-  // the banner from the first frame, not after the next flush.
-  unawaited(OutboxQueue.instance.refreshCounts());
-  // Initialize Firebase Cloud Messaging (setup only, token registration after login)
+  OfflineWrites.enabled = true; // Enable offline
+  await init(); //wait app load
+  await ConnectivityService.instance.start(); // checking internect conectivity
+  SyncManager.instance.start(); //checking internet local storage to backend
+  unawaited(SyncManager.instance.loadPersistedSyncTime()); //Restore the last synchronization time
+  unawaited(OutboxQueue.instance.refreshCounts()); //Restore queued-write counts
   try {
-    await getIt<FcmService>().setup();
+    await getIt<FcmService>().setup(); // Initialize Firebase Cloud Messaging 
   } catch (e) {
     // FCM initialization failure should not block app startup
   }
-  // Resolve the theme and the language before the first frame so a dark-mode
-  // user never sees a white flash, and a Burmese or Thai user never sees a
-  // frame of English. The server copies are authoritative but arrive too late
-  // for this; the local mirrors are the launch-time source of truth.
-  await ThemeModeNotifier.load();
-  await LocaleNotifier.load();
-  // Load the saved notification history so the bell badge is correct on the
-  // very first frame, before any message listener can fire.
-  await NotificationStore.instance.init();
+  await ThemeModeNotifier.load(); //Load the saved theme
+  await LocaleNotifier.load(); //Load the saved language
+  await NotificationStore.instance.init(); //Initialize notification history
   runApp(const MyApp());
 }
 

@@ -6,6 +6,7 @@ import 'package:posfrontend/shared/theme/app_dimens.dart';
 import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
+import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 
 /// Premium, mobile-first image upload surface.
 ///
@@ -75,11 +76,14 @@ class PremiumImageUpload extends StatelessWidget {
     final custom = image;
     if (custom != null) return custom;
     if (imageBytes != null && imageBytes!.isNotEmpty) {
+      // cap the decode at ~1024px: this control is at most a screen wide, and
+      // the bytes may be an untrimmed camera photo.
       return Image.memory(
         imageBytes!,
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
+        cacheWidth: 1024,
       );
     }
     if (imageBase64 != null && imageBase64!.isNotEmpty) {
@@ -88,13 +92,12 @@ class PremiumImageUpload extends StatelessWidget {
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
+        cacheWidth: 1024,
       );
     }
-    return Image.network(
-      imageUrl!,
-      fit: BoxFit.cover,
-      width: double.infinity,
-      height: double.infinity,
+    return CachedProductImage(
+      url: imageUrl!,
+      memCacheWidth: 1024,
     );
   }
 
@@ -368,8 +371,12 @@ class PremiumAvatarUpload extends StatelessWidget {
                                 ? Image.memory(
                                     base64Decode(imageBase64!),
                                     fit: BoxFit.cover,
+                                    cacheWidth: 512,
                                   )
-                                : Image.network(imageUrl!, fit: BoxFit.cover)))
+                                : CachedProductImage(
+                                    url: imageUrl!,
+                                    memCacheWidth: 512,
+                                  )))
                       else if (isBusy)
                         const Center(
                           child: SizedBox(

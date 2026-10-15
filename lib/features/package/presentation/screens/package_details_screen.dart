@@ -14,6 +14,7 @@ import 'package:posfrontend/features/product/presentation/screens/product_detail
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/features/package/presentation/widgets/package_details_skeleton.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
+import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 import 'package:posfrontend/shared/widgets/error_retry_view.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
@@ -342,7 +343,12 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                 child: c.imageUrl != null
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(14),
-                        child: Image.network(c.imageUrl!, fit: BoxFit.cover),
+                        child: CachedProductImage(
+                          url: c.imageUrl!,
+                          width: 120,
+                          height: 120,
+                          memCacheWidth: 480,
+                        ),
                       )
                     : Center(
                         child: Icon(
@@ -689,12 +695,12 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
               ),
               clipBehavior: Clip.antiAlias,
               child: pr.imageUrl != null
-                  ? Image.network(
-                      pr.imageUrl!,
+                  ? CachedProductImage(
+                      url: pr.imageUrl!,
                       width: 80,
                       height: 80,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => Icon(
+                      memCacheWidth: 320,
+                      errorWidget: Icon(
                         pr.icon,
                         color: Colors.white.withValues(alpha: 0.9),
                         size: 36,

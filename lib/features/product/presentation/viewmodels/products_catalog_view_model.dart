@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:dio/dio.dart';
 import 'package:posfrontend/core/base/base_view_model.dart';
@@ -16,6 +17,56 @@ class ProductsCatalogViewModel extends BaseViewModel {
 
   List<CategoryShowcaseData> _categories = [];
   List<CategoryShowcaseData> get categories => _categories;
+
+  /// How many categories the grid shows before the user asks for more.
+  ///
+  /// Two is a deliberate number rather than a placeholder: one card is a
+  /// column that looks like a loading state, and three pushes the "more"
+  /// control below the fold on a phone, where it is the only way to see the
+  /// rest of the shop. Two leaves the plus button just visible, so the page
+  /// reads as "there is more here" without having to say so in words.
+  static const int initialCategoryCount = 2;
+
+  /// How many extra categories each press of the plus button reveals.
+  ///
+  /// Same reasoning as [initialCategoryCount]: two at a time keeps the grid's
+  /// two-column rhythm on a tablet, and makes the button's purpose — "keep
+  /// going" — obvious after the first press.
+  static const int categoryLoadMoreStep = 2;
+
+  /// How many of [_categories] are currently on screen.
+  ///
+  /// The endpoint has no category paging — `/categories/with-products` returns
+  /// the shop's whole catalogue in one go — so the window is applied here
+  /// rather than at the network. That keeps a single fetch behind the
+  /// screen: pressing the plus button is instant and works with no signal,
+  /// and the "no more" state is a pure comparison instead of a round trip.
+  int _visibleCategoryCount = initialCategoryCount;
+
+  /// The slice of [categories] the grid should actually render.
+  List<CategoryShowcaseData> get visibleCategories =>
+      _categories.take(_visibleCategoryCount).toList();
+
+  /// Whether the plus button still has categories left to reveal.
+  bool get hasMoreCategories => _visibleCategoryCount < _categories.length;
+
+  /// How many categories are still hidden behind the plus button.
+  int get remainingCategoryCount =>
+      hasMoreCategories ? _categories.length - _visibleCategoryCount : 0;
+
+  /// Reveals the next batch of categories.
+  ///
+  /// Never past the end of the list, so the last press simply lands on
+  /// everything and [hasMoreCategories] goes false — the button then removes
+  /// itself rather than sitting there doing nothing.
+  void loadMoreCategories() {
+    if (!hasMoreCategories) return;
+    _visibleCategoryCount = math.min(
+      _categories.length,
+      _visibleCategoryCount + categoryLoadMoreStep,
+    );
+    notifyListeners();
+  }
 
   List<CatalogProductView> _hotProducts = [];
 
@@ -186,6 +237,16 @@ class ProductsCatalogViewModel extends BaseViewModel {
           productCount: _countFrom(cat, products.length),
         );
       }).toList();
+
+      // A fresh fetch is a fresh start: collapse back to the opening pair so
+      // the page always comes up showing two categories, and let the user
+      // page out again from there. Clamped against the new list rather than
+      // set blindly, because a category deleted mid-refresh can leave the
+      // old window wider than what came back.
+      _visibleCategoryCount = math.min(
+        initialCategoryCount,
+        _categories.length,
+      );
     } on ApiException catch (e) {
       setError(e.message);
     } catch (e) {

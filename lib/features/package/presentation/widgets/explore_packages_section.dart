@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:posfrontend/features/package/domain/entities/package.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
+import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 import 'package:posfrontend/shared/widgets/pressable_card.dart';
 
 /// "Explore Packages": a horizontal strip of package tiles under the category
@@ -113,12 +114,11 @@ class _PackageTile extends StatelessWidget {
               width: double.infinity,
               child: imageUrl.isEmpty
                   ? _glyph(context)
-                  : Image.network(
-                      imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => _glyph(context),
-                      loadingBuilder: (context, child, progress) =>
-                          progress == null ? child : _glyph(context),
+                  : CachedProductImage(
+                      url: imageUrl,
+                      memCacheWidth: 384,
+                      errorWidget: _glyph(context),
+                      placeholder: _glyph(context),
                     ),
             ),
           ),

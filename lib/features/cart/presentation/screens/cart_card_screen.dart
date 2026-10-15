@@ -42,14 +42,22 @@ class _CartCardScreenState extends State<CartCardScreen> {
         )
         .toList();
     final orderId = widget.card.orderId.isNotEmpty ? widget.card.orderId : null;
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) =>
-            NewSaleScreen(initialItems: items, existingOrderId: orderId),
-      ),
-    );
+    // true = the sale was saved, so the draft card is consumed. false (or
+    // a null result from a system back) = the cashier backed out with the
+    // products still on the screen: the card stays in Add to Cart so the
+    // sale can be finished later — New Sale says so on the way out.
+    final draftConsumed =
+        await Navigator.of(context).push<bool>(
+              MaterialPageRoute(
+                builder: (_) =>
+                    NewSaleScreen(initialItems: items, existingOrderId: orderId),
+              ),
+            ) ??
+            false;
     if (!mounted) return;
-    await CartStore.instance.removeCard(widget.card.id);
+    if (draftConsumed) {
+      await CartStore.instance.removeCard(widget.card.id);
+    }
     if (!mounted) return;
     Navigator.of(context).pop();
   }

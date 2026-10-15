@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/core/network/media_url.dart';
+import 'package:posfrontend/core/utils/error_handler.dart';
 import 'package:posfrontend/shared/l10n/app_language.dart';
 import 'package:posfrontend/shared/l10n/locale_notifier.dart';
 import 'package:posfrontend/shared/theme/theme_mode_notifier.dart';
@@ -55,16 +56,18 @@ class SettingsViewModel extends BaseViewModel {
     try {
       _settings = await _repository.getSettings();
       _isInitialized = true;
-      // The server copy is authoritative once it arrives, except when the user
-      // has opted into following the OS: the API only models light/dark, so its
-      // value would silently switch "Match System" back off behind their back.
-      if (ThemeModeNotifier.instance.value != ThemeMode.system) {
-        ThemeModeNotifier.instance.setMode(
-          _settings.themeMode == AppThemeMode.dark
-              ? ThemeMode.dark
-              : ThemeMode.light,
-        );
+      // A stored "system" predates the removal of the Match System toggle:
+      // pin the brightness the OS is showing, then let the server copy take
+      // over like any other explicit choice. Without the pin the till would
+      // keep following the OS with no control left to change it.
+      if (ThemeModeNotifier.instance.value == ThemeMode.system) {
+        ThemeModeNotifier.instance.setMode(ThemeModeNotifier.system);
       }
+      ThemeModeNotifier.instance.setMode(
+        _settings.themeMode == AppThemeMode.dark
+            ? ThemeMode.dark
+            : ThemeMode.light,
+      );
       // Same reasoning for language: a shop that syncs settings across devices
       // should open in the language its owner chose elsewhere. Unlike the
       // theme there is no "follow the OS" opt-in, so the server always wins.
@@ -78,8 +81,8 @@ class SettingsViewModel extends BaseViewModel {
     }
   }
 
-  /// The brightness actually on screen, whether it comes from the OS or from an
-  /// explicit choice.
+  /// The brightness actually on screen. A residual "system" (only possible
+  /// before the first load pins it) resolves to the OS value.
   ThemeMode get _effectiveMode {
     final mode = ThemeModeNotifier.instance.value;
     if (mode != ThemeMode.system) return mode;
@@ -99,32 +102,6 @@ class SettingsViewModel extends BaseViewModel {
       _settings = await _repository.updateSettings(
         themeMode: newMode == AppThemeMode.dark ? 'dark' : 'light',
       );
-    } catch (e) {
-      setError('Failed to update theme');
-    }
-  }
-
-  /// Opt into following the OS brightness, or back to an explicit choice.
-  Future<void> setSystemTheme({required bool enabled}) async {
-    if (enabled) {
-      ThemeModeNotifier.instance.setMode(ThemeMode.system);
-    } else {
-      // Leaving "match system" should not change what is on screen, so pin the
-      // brightness the OS is already showing.
-      final effective = _effectiveMode;
-      ThemeModeNotifier.instance.setMode(effective);
-      _settings = _settings.copyWith(
-        themeMode: effective == ThemeMode.dark
-            ? AppThemeMode.dark
-            : AppThemeMode.light,
-      );
-    }
-    notifyListeners();
-    // The API only models light/dark, so the server keeps the last explicit
-    // value. Only the device preference is stored here.
-    try {
-      final resolved = _effectiveMode == ThemeMode.dark ? 'dark' : 'light';
-      _settings = await _repository.updateSettings(themeMode: resolved);
     } catch (e) {
       setError('Failed to update theme');
     }
@@ -192,14 +169,16 @@ class SettingsViewModel extends BaseViewModel {
       notifyListeners();
       _settings = await _repository.updateSettings(shopImage: result.url);
 
-      final shop = await _shopLocalRepository.getShop();
-      if (shop != null) {
-        await _shopLocalRepository.saveShop(
-          shop.copyWith(logoData: '', logoUrl: result.url),
-        );
-      }
+      try {
+        final shop = await _shopLocalRepository.getShop();
+        if (shop != null) {
+          await _shopLocalRepository.saveShop(
+            shop.copyWith(logoData: '', logoUrl: result.url),
+          );
+        }
+      } catch (_) {}
     } catch (e) {
-      setError('Failed to upload image');
+      setError('Failed to upload image: ${formatApiError(e)}');
     } finally {
       _isUploadingImage = false;
       notifyListeners();

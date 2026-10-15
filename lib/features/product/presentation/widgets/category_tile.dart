@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
+import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 import 'package:posfrontend/shared/widgets/pressable_card.dart';
 
 class CategoryTile extends StatelessWidget {
@@ -41,10 +42,10 @@ class CategoryTile extends StatelessWidget {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: product.imageUrl != null
-                        ? Image.network(
-                            product.imageUrl!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => _fallback(),
+                        ? CachedProductImage(
+                            url: product.imageUrl!,
+                            memCacheWidth: 640,
+                            errorWidget: _fallback(),
                           )
                         : _fallback(),
                   ),

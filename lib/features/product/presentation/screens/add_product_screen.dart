@@ -13,11 +13,11 @@ import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
+import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/shared/widgets/premium_image_upload.dart';
 import 'package:posfrontend/shared/widgets/responsive_scaffold.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
-
 
 class AddProductScreen extends StatefulWidget {
   final ProductDetailEntity? existingProduct;
@@ -320,72 +320,81 @@ class _AddProductScreenState extends State<AddProductScreen> {
     final url = _vm.imageUrl;
     final hasPreview = file != null || (url?.isNotEmpty ?? false);
 
+    final upload = PremiumImageUpload(
+      isBusy: _vm.uploading,
+      icon: Icons.image_outlined,
+      height: 168,
+      title: context.l10n.t('Product image'),
+      subtitle: context.l10n.t('Tap to choose an image file'),
+      hint: context.l10n.t('JPG or PNG up to 5MB'),
+      changeLabel: context.l10n.t('Change photo'),
+      image: !hasPreview
+          ? null
+          : RepaintBoundary(
+              child: file != null
+                  ? (kIsWeb
+                        ? Image.network(
+                            file.path,
+                            key: _vm.imageKey,
+                            height: 168,
+                            fit: BoxFit.cover,
+                            cacheWidth: 1024,
+                          )
+                        : Image.file(
+                            file,
+                            key: _vm.imageKey,
+                            height: 168,
+                            fit: BoxFit.cover,
+                            cacheWidth: 1024,
+                          ))
+                  : CachedProductImage(
+                      url: resolveMediaUrl(url!)!,
+                      key: _vm.imageKey,
+                      memCacheWidth: 1024,
+                      placeholder: const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.brandPurple,
+                        ),
+                      ),
+                      errorWidget: const Center(
+                        child: Icon(
+                          Icons.broken_image_outlined,
+                          size: 42,
+                          color: AppColors.brandPurple,
+                        ),
+                      ),
+                    ),
+            ),
+      onTap: _vm.uploading
+          ? null
+          : () async {
+              await _vm.pickAndUpload();
+              if (!mounted) return;
+              if (_vm.errorMessage == null) {
+                showSuccessMessage(context, context.l10n.t('Image uploaded'));
+              } else {
+                _showError();
+                _vm.resetError();
+              }
+            },
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        PremiumImageUpload(
-          isBusy: _vm.uploading,
-          icon: Icons.image_outlined,
-          height: 168,
-          title: context.l10n.t('Product image'),
-          subtitle: context.l10n.t('Tap to choose an image file'),
-          hint: context.l10n.t('JPG or PNG up to 5MB'),
-          changeLabel: context.l10n.t('Change photo'),
-          image: !hasPreview
-              ? null
-              : RepaintBoundary(
-                  child: file != null
-                      ? (kIsWeb
-                            ? Image.network(
-                                file.path,
-                                key: _vm.imageKey,
-                                height: 168,
-                                fit: BoxFit.cover,
-                              )
-                            : Image.file(
-                                file,
-                                key: _vm.imageKey,
-                                height: 168,
-                                fit: BoxFit.cover,
-                              ))
-                      : Image.network(
-                          resolveMediaUrl(url!)!,
-                          key: _vm.imageKey,
-                          height: 168,
-                          fit: BoxFit.cover,
-                          loadingBuilder: (_, child, progress) =>
-                              progress == null
-                              ? child
-                              : Center(
-                                  child: CircularProgressIndicator(
-                                    color: AppColors.brandPurple,
-                                  ),
-                                ),
-                          errorBuilder: (_, _, _) => const Center(
-                            child: Icon(
-                              Icons.broken_image_outlined,
-                              size: 42,
-                              color: AppColors.brandPurple,
-                            ),
-                          ),
-                        ),
-                ),
-          onTap: _vm.uploading
-              ? null
-              : () async {
-                  await _vm.pickAndUpload();
-                  if (!mounted) return;
-                  if (_vm.errorMessage == null) {
-                    showSuccessMessage(
-                      context,
-                      context.l10n.t('Image uploaded'),
-                    );
-                  } else {
-                    _showError();
-                    _vm.resetError();
-                  }
-                },
-        ),
+        // A photo is removable once one exists: the backend reads an omitted
+        // image as "keep the current one", so clearing a photo needs an
+        // explicit control rather than an empty form field.
+        if (!hasPreview)
+          upload
+        else
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              upload,
+              Positioned(top: 12, right: 12, child: _removePhotoButton()),
+            ],
+          ),
         if (url?.isNotEmpty ?? false)
           Padding(
             padding: const EdgeInsets.only(top: 10),
@@ -397,6 +406,52 @@ class _AddProductScreenState extends State<AddProductScreen> {
           ),
       ],
     );
+  }
+
+  Widget _removePhotoButton() {
+    return Material(
+      color: Colors.black.withValues(alpha: 0.55),
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: _vm.uploading ? null : _confirmRemoveImage,
+        child: const Padding(
+          padding: EdgeInsets.all(7),
+          child: Icon(Icons.close, size: 18, color: Colors.white),
+        ),
+      ),
+    );
+  }
+
+  /// Removing a photo deletes the remote copy for good once the product is
+  /// saved, so the tap is confirmed first.
+  Future<void> _confirmRemoveImage() async {
+    final p = context.palette;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(context.l10n.t('Remove photo?')),
+        content: Text(
+          context.l10n.t(
+            'The current photo will be deleted. You can pick a new one later.',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(context.l10n.t('Cancel')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              context.l10n.t('Remove'),
+              style: TextStyle(color: p.dangerFg),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) _vm.removeImage();
   }
 
   Widget _basicInfo() {
@@ -439,8 +494,13 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   Widget _categoryPackage() {
-    final categoryLabels = _vm.categories.map((c) => c.name).toList();
-    final selectedCategoryLabel = _vm.selectedCategory?.name;
+    final categoryLabels = [
+      AddProductViewModel.uncategorizedLabel,
+      ..._vm.categories.map((c) => c.name),
+    ];
+    final selectedCategoryLabel = _vm.uncategorized
+        ? AddProductViewModel.uncategorizedLabel
+        : _vm.selectedCategory?.name;
     final packageLabels = _vm.packages.map((p) => p.name).toList();
     final selectedPackageLabel = _vm.selectedPackage?.name;
 
@@ -451,9 +511,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
           'Category *',
           selectedCategoryLabel,
           categoryLabels,
-          _vm.categories.isEmpty
-              ? null
-              : (v) => _vm.onCategoryChanged(
+          (v) => v == AddProductViewModel.uncategorizedLabel
+              ? _vm.onCategoryUnfiled()
+              : _vm.onCategoryChanged(
                   _vm.categories.firstWhere((c) => c.name == v),
                 ),
         ),
@@ -499,7 +559,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
             width: double.infinity,
             height: 44,
             decoration: BoxDecoration(
-              border: Border.all(color: AppColors.brandPurple, style: BorderStyle.solid),
+              border: Border.all(
+                color: AppColors.brandPurple,
+                style: BorderStyle.solid,
+              ),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Center(
@@ -873,10 +936,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
           gradient: _saving
               ? null
               : LinearGradient(
-                  colors: [
-                    AppColors.brandPurple,
-                    AppColors.brandPurpleDark,
-                  ],
+                  colors: [AppColors.brandPurple, AppColors.brandPurpleDark],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),

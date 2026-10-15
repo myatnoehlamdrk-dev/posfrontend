@@ -42,6 +42,16 @@ enum SyncState {
 /// which is correct: there is no stale data to refresh, and the screens
 /// populate the cache as they are used.
 ///
+/// ## Activation
+///
+/// The triggers below stay dormant until a screen that actually reads the
+/// offline cache has been opened — the product catalog or quick sale, the
+/// only two screens the cache exists for. Those call [markCacheUsed] in
+/// their initState. Until then [syncNow] is a no-op: a till parked on
+/// Settings or the sales history reads no cached product data, so
+/// replaying the last session's URLs there is traffic the user can watch
+/// arrive in the server log and get nothing back for.
+///
 /// ## Triggers
 ///
 /// - connectivity flips offline → online (the reconnect moment),
@@ -92,6 +102,10 @@ class SyncManager {
   bool _running = false;
   bool _wasOnline = true;
   AppLifecycleListener? _lifecycle;
+
+  /// Whether a cache-reading screen has been opened this session; see
+  /// [markCacheUsed].
+  bool _cacheUsed = false;
 
   static SyncManager? _instance;
 
@@ -146,12 +160,20 @@ class SyncManager {
     if (cameBackOnline) syncNow();
   }
 
+  /// Arms the sync triggers. Idempotent, and called from the initState of
+  /// every screen that reads the offline cache — the product catalog and
+  /// quick sale. See the class docs for why the triggers start dormant.
+  void markCacheUsed() {
+    _cacheUsed = true;
+  }
+
   /// Refreshes every URL the app has cached under the current shop.
   ///
-  /// No-op when offline, when a run is already in flight, or when no shop
-  /// is signed in — all three are normal states, not errors.
+  /// No-op when no cache-reading screen has been opened yet (see
+  /// [markCacheUsed]), when offline, when a run is already in flight, or
+  /// when no shop is signed in — all four are normal states, not errors.
   Future<void> syncNow() async {
-    if (_running || !_connectivity.isOnline.value) return;
+    if (!_cacheUsed || _running || !_connectivity.isOnline.value) return;
 
     // Acquired synchronously, before the first await: three triggers
     // arriving in the same microtask (a reconnect firing the timer, the

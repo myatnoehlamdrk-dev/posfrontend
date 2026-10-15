@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:posfrontend/core/utils/image_compressor.dart';
 import 'package:posfrontend/features/auth/presentation/screens/register_screen.dart';
 import 'package:posfrontend/features/shop/presentation/viewmodels/shop_view_model.dart';
 import 'package:posfrontend/features/shop/domain/entities/shop.dart'
@@ -127,11 +128,17 @@ class _ShopScreenState extends State<ShopScreen> {
   }
 
   Future<void> _pickImage() async {
-    final xfile = await _picker.pickImage(source: ImageSource.gallery);
+    final xfile = await _picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1600,
+      imageQuality: 85,
+    );
     if (xfile == null) return;
-    final bytes = await xfile.readAsBytes();
+    final compressed = await compressImage(xfile);
     if (!mounted) return;
-    _viewModel.setLogo(base64Encode(bytes));
+    // Logo travels base64-encoded in the create-shop payload, so every byte
+    // here costs 1.33 on the wire — compress before encoding.
+    _viewModel.setLogo(base64Encode(compressed.bytes));
   }
 
   void _resetForm() {

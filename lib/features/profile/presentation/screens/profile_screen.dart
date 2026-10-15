@@ -1,7 +1,9 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:posfrontend/core/network/media_url.dart';
+import 'package:posfrontend/core/utils/image_compressor.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
@@ -150,15 +152,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _pickImage() async {
     if (_uploadingImage) return;
-    final xfile = await _picker.pickImage(source: ImageSource.gallery);
+    final xfile = await _picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 800,
+      imageQuality: 85,
+    );
     if (xfile == null) return;
-    final bytes = await xfile.readAsBytes();
     if (!mounted) return;
     setState(() => _uploadingImage = true);
     try {
+      // The avatar is rendered at ~88dp; uploading the camera original would
+      // store megabytes for a picture shown the size of a coin.
+      final compressed = await compressImage(xfile, maxEdge: 800);
       final result = await ImgbbRepositoryImpl().uploadImage(
-        bytes,
-        fileName: xfile.name,
+        compressed.bytes,
+        fileName: compressed.fileName,
       );
       if (!mounted) return;
       _viewModel.setImageUrl(result.url);
@@ -844,10 +852,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             radius: 54,
             image: image.isEmpty
                 ? null
-                : Image.network(
-                    image,
+                : CachedNetworkImage(
+                    imageUrl: image,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
+                    memCacheWidth: 432,
+                    errorWidget: (context, error, stackTrace) {
                       _viewModel.setImageUrl('');
                       ProfileImageNotifier.instance.update('');
                       return const SizedBox.shrink();

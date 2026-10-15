@@ -17,6 +17,7 @@ import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/app_shell.dart';
+import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 import 'package:posfrontend/shared/widgets/error_retry_view.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
 import 'package:posfrontend/shared/widgets/shop_scope.dart';
@@ -832,17 +833,18 @@ class _ProductListCard extends StatelessWidget {
                           ),
                           clipBehavior: Clip.antiAlias,
                           child: p.image.isNotEmpty
-                              ? Image.network(
-                                  p.image,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      Icon(
-                                        IconData(
-                                          p.iconCodePoint,
-                                          fontFamily: p.iconFontFamily,
-                                        ),
-                                        color: pal.textSecondary,
-                                      ),
+                              ? CachedProductImage(
+                                  url: p.image,
+                                  width: 48,
+                                  height: 48,
+                                  memCacheWidth: 192,
+                                  errorWidget: Icon(
+                                    IconData(
+                                      p.iconCodePoint,
+                                      fontFamily: p.iconFontFamily,
+                                    ),
+                                    color: pal.textSecondary,
+                                  ),
                                 )
                               : Icon(
                                   IconData(

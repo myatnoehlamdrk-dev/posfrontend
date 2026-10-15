@@ -7,6 +7,7 @@ import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/responsive_scaffold.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:posfrontend/core/network/app_exceptions.dart';
+import 'package:posfrontend/core/utils/image_compressor.dart';
 import 'package:posfrontend/features/product/data/models/product_create_models.dart';
 import 'package:posfrontend/features/product/data/repositories/product_create_repository_impl.dart';
 import 'package:posfrontend/shared/repositories/imgbb_repository_impl.dart';
@@ -88,19 +89,28 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
     if (source == null) return;
 
     final picker = ImagePicker();
-    final XFile? xfile = await picker.pickImage(source: source);
+    final XFile? xfile = await picker.pickImage(
+      source: source,
+      maxWidth: 1600,
+      imageQuality: 85,
+    );
     if (xfile == null) return;
 
-    final bytes = await xfile.readAsBytes();
     setState(() {
       _imageFile = File(xfile.path);
       _imageKey = UniqueKey();
       _uploading = true;
     });
     try {
+      final compressed = await compressImage(xfile, writePreviewFile: true);
+      if (!mounted) return;
+      setState(() {
+        _imageFile = compressed.previewFile ?? _imageFile;
+        _imageKey = UniqueKey();
+      });
       final result = await ImgbbRepositoryImpl().uploadImage(
-        bytes,
-        fileName: xfile.name,
+        compressed.bytes,
+        fileName: compressed.fileName,
       );
       if (!mounted) return;
       setState(() {
@@ -269,12 +279,14 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
                       key: _imageKey,
                       height: 168,
                       fit: BoxFit.cover,
+                      cacheWidth: 1024,
                     )
                   : Image.file(
                       file,
                       key: _imageKey,
                       height: 168,
                       fit: BoxFit.cover,
+                      cacheWidth: 1024,
                     ),
             ),
     );

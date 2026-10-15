@@ -5,13 +5,13 @@ import 'package:image_picker/image_picker.dart';
 import 'package:posfrontend/core/auth/session_store.dart';
 import 'package:posfrontend/core/auth/token_storage.dart';
 import 'package:posfrontend/core/network/api_client.dart';
+import 'package:posfrontend/core/utils/image_compressor.dart';
 import 'package:posfrontend/shared/l10n/app_strings.dart';
 import 'package:posfrontend/shared/l10n/app_language.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/shared/l10n/locale_notifier.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
-import 'package:posfrontend/shared/theme/theme_mode_notifier.dart';
 import 'package:posfrontend/shared/widgets/app_message.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
@@ -112,9 +112,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           if (_viewModel.isLoading && !_viewModel.isInitialized)
                             const SettingsSkeleton()
                           else ...[
-                            // Five failure paths in this ViewModel —
-                            // loadSettings, toggleTheme, setSystemTheme,
-                            // setLanguage and the image upload — call setError()
+                            // Four failure paths in this ViewModel —
+                            // loadSettings, toggleTheme, setLanguage and the
+                            // image upload — call setError()
                             // and then do nothing else with it. The only reader
                             // of errorMessage was the feedback dialog, so a
                             // settings save that silently failed still looked
@@ -247,43 +247,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  /// "Match System" is the only permanent control. The explicit light/dark
-  /// choice is a follow-up question, so it stays hidden until the user opts out
-  /// of following the OS.
+  /// One explicit light/dark switch. Following the OS was removed: the server
+  /// setting only models light/dark, so an OS-following till drifted out of
+  /// sync with it and there was no single source of truth for the theme.
   Widget _buildAppearanceCard() {
-    final isSystem = ThemeModeNotifier.instance.value == ThemeMode.system;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return _settingsCard(
-      child: Column(
-        children: [
-          _settingsRow(
-            icon: Icons.brightness_auto_outlined,
-            label: context.l10n.t('Match System'),
-            trailing: Switch(
-              // No explicit thumb/track colours: the theme's switchTheme already
-              // resolves them per brightness, and a hardcoded white thumb is
-              // invisible on a light track.
-              value: isSystem,
-              onChanged: (v) => _viewModel.setSystemTheme(enabled: v),
-            ),
-            onTap: () => _viewModel.setSystemTheme(enabled: !isSystem),
-          ),
-          if (!isSystem) ...[
-            Divider(height: 1, color: border),
-            _settingsRow(
-              icon: isDark
-                  ? Icons.dark_mode_outlined
-                  : Icons.light_mode_outlined,
-              label: isDark ? 'Dark Mode' : 'Light Mode',
-              trailing: Switch(
-                value: isDark,
-                onChanged: (_) => _viewModel.toggleTheme(),
-              ),
-              onTap: _viewModel.toggleTheme,
-            ),
-          ],
-        ],
+      child: _settingsRow(
+        icon: isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
+        label: isDark ? 'Dark Mode' : 'Light Mode',
+        trailing: Switch(
+          // No explicit thumb/track colours: the theme's switchTheme already
+          // resolves them per brightness, and a hardcoded white thumb is
+          // invisible on a light track.
+          value: isDark,
+          onChanged: (_) => _viewModel.toggleTheme(),
+        ),
+        onTap: _viewModel.toggleTheme,
       ),
     );
   }
@@ -384,10 +365,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _pickShopImage() async {
     final picker = ImagePicker();
-    final xfile = await picker.pickImage(source: ImageSource.gallery);
+    final xfile = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1600,
+      imageQuality: 85,
+    );
     if (xfile != null) {
-      final bytes = await xfile.readAsBytes();
-      _viewModel.updateShopImage(bytes, fileName: xfile.name);
+      final compressed = await compressImage(xfile);
+      _viewModel.updateShopImage(
+        compressed.bytes,
+        fileName: compressed.fileName,
+      );
     }
   }
 

@@ -8,6 +8,7 @@ import 'package:posfrontend/features/product/data/repositories/product_repositor
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
+import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 import 'package:posfrontend/shared/widgets/error_retry_view.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
@@ -257,7 +258,12 @@ class _AssignProductToPackageScreenState
               child: p.imageUrl != null
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.network(p.imageUrl!, fit: BoxFit.cover),
+                      child: CachedProductImage(
+                        url: p.imageUrl!,
+                        width: 48,
+                        height: 48,
+                        memCacheWidth: 192,
+                      ),
                     )
                   : Icon(p.icon, color: Colors.white, size: 22),
             ),

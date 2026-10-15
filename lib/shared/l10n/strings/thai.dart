@@ -169,6 +169,9 @@ const Map<String, String> thaiStrings = {
   'Remove from package': 'ลบออกจากแพ็คเกจ',
   'Remove Product': 'ลบสินค้า',
   'Remove': 'ลบ',
+  'Remove photo?': 'ลบรูปหรือไม่?',
+  'The current photo will be deleted. You can pick a new one later.':
+      'รูปปัจจุบันจะถูกลบ คุณสามารถเลือกรูปใหม่ได้ในภายหลัง',
 
   // Inventory
   'Inventory': 'สินค้าคงคลัง',
@@ -190,6 +193,8 @@ const Map<String, String> thaiStrings = {
 
   // Cart
   'Add to Cart': 'เพิ่มไปยังรถเข็น',
+  'Sale cancelled. Your products are saved in Add to Cart.':
+      'ยกเลิกการขายแล้ว สินค้าของคุณได้รับการบันทึกไว้ในรถเข็น',
   'Cart is empty': 'รถเข็นว่างเปล่า',
   'Proceed to Checkout': 'ดำเนินการชำระเงิน',
   'Checkout': 'ชำระเงิน',
@@ -243,7 +248,6 @@ const Map<String, String> thaiStrings = {
   'Setting': 'ตั้งค่า',
   'Language': 'ภาษา',
   'Select Language': 'เลือกภาษา',
-  'Match System': 'ตรงกับระบบ',
   'Privacy Policy': 'นโยบายความเป็นส่วนตัว',
   'Terms of Service': 'ข้อกำหนดการให้บริการ',
   'About': 'เกี่ยวกับ',

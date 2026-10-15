@@ -185,6 +185,9 @@ const Map<String, String> myStrings = {
   'Remove Product': 'ကုန်ပစ္စည်းဖယ်ထုတ်ရန်',
   'Remove': 'ဖယ်ထုတ်ရန်',
 
+  'Remove photo?': 'ပုံဖယ်ထုတ်မလား?',
+  'The current photo will be deleted. You can pick a new one later.':
+      'လက်ရှိပုံကို ဖယ်ထုတ်ပစ်မည်။ နောက်မှ ပုံအသစ် ထပ်ရွေးနိုင်ပါသည်။',
   // Inventory
   'Inventory': 'ငှားရမ်း',
   'More': 'နောက်ထပ်',
@@ -205,6 +208,8 @@ const Map<String, String> myStrings = {
 
   // Cart
   'Add to Cart': 'ခရက်လွှာထဲထည့်ရန်',
+  'Sale cancelled. Your products are saved in Add to Cart.':
+      'အရောင်းပယ်ဖျက်ပြီးပါပြီ။ သင့်ပစ္စည်းများကို ခရက်လွှာထဲတွင် သိမ်းဆည်းထားပါသည်။',
   'Cart is empty': 'ခရက်လွှာလွတ်ပါသည်',
   'Proceed to Checkout': 'ငှားရမ်းဆောင်ရွက်ရန်',
   'Checkout': 'ငှားရမ်း',
@@ -258,7 +263,6 @@ const Map<String, String> myStrings = {
   'Setting': 'ဆက်တင်',
   'Language': 'ဘာသာစကား',
   'Select Language': 'ဘာသာစကားရွေးပါ',
-  'Match System': 'စစ်စင်မှုနှင့်ကိုက်ညီ',
   'Privacy Policy': 'ကိုယ်ရေးအချက်အလက်',
   'Terms of Service': 'ဝန်ဆောင်မှုခြားမှုများ',
   'About': 'အကြောင်း',

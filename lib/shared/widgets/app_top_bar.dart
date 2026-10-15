@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/theme/app_dimens.dart';
 import 'package:posfrontend/shared/theme/app_typography.dart';
@@ -85,7 +86,7 @@ class AppTopBar extends StatelessWidget {
                 radius: 20,
                 backgroundColor: const Color(0xFF6D28D9),
                 backgroundImage: imageUrl.isNotEmpty
-                    ? NetworkImage(imageUrl)
+                    ? CachedNetworkImageProvider(imageUrl, maxWidth: 224)
                     : null,
                 onBackgroundImageError: imageUrl.isNotEmpty
                     ? (_, __) {

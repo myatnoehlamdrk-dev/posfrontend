@@ -9,10 +9,8 @@ import 'package:posfrontend/shared/widgets/skeleton.dart';
 /// anywhere else, because these cards are stacked full-width, so one wrong
 /// height pushes every section below it off by that much.
 ///
-/// The appearance card is drawn with two rows. The real one hides its second row
-/// when the theme is following the system, so the placeholder is right only some
-/// of the time — but a placeholder that is short by 55px every time the till is
-/// on "Match System" is the worse error.
+/// The appearance card is one light/dark switch row — the "Match System"
+/// toggle was removed — so its placeholder is a single switch-like row too.
 class SettingsSkeleton extends StatelessWidget {
   const SettingsSkeleton({super.key});
 
@@ -29,12 +27,7 @@ class SettingsSkeleton extends StatelessWidget {
             SizedBox(height: 28),
             _HeaderSkeleton(width: 96),
             SizedBox(height: 10),
-            _SettingsCardSkeleton(
-              rows: [
-                _RowSkeleton(switchLike: true),
-                _RowSkeleton(switchLike: true),
-              ],
-            ),
+            _SettingsCardSkeleton(rows: [_RowSkeleton(switchLike: true)]),
             SizedBox(height: 28),
             _HeaderSkeleton(width: 72),
             SizedBox(height: 10),

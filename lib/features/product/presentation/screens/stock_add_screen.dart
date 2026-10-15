@@ -10,6 +10,7 @@ import 'package:posfrontend/features/product/data/repositories/product_create_re
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
+import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
@@ -294,12 +295,12 @@ class _StockAddScreenState extends State<StockAddScreen> {
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: p.imageUrl.isNotEmpty
-                  ? Image.network(
-                      p.imageUrl,
+                  ? CachedProductImage(
+                      url: p.imageUrl,
                       width: 40,
                       height: 40,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => _placeholderIcon(),
+                      memCacheWidth: 160,
+                      errorWidget: _placeholderIcon(),
                     )
                   : _placeholderIcon(),
             ),

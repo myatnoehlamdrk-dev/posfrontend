@@ -10,6 +10,7 @@ import 'package:posfrontend/features/package/presentation/viewmodels/package_vie
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
+import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 import 'package:posfrontend/shared/widgets/error_retry_view.dart';
 import 'package:posfrontend/shared/widgets/error_snackbar.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
@@ -612,12 +613,12 @@ class _PackageScreenState extends State<PackageScreen> {
     final p = context.palette;
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
-      child: Image.network(
-        url,
-        fit: BoxFit.cover,
+      child: CachedProductImage(
+        url: url,
         width: 90,
         height: 90,
-        errorBuilder: (_, _, _) => Container(
+        memCacheWidth: 360,
+        errorWidget: Container(
           width: 90,
           height: 90,
           decoration: BoxDecoration(
@@ -683,11 +684,10 @@ class _PackageScreenState extends State<PackageScreen> {
         child: Icon(Icons.image_outlined, color: p.textSecondary, size: 16),
       );
     }
-    return Image.network(
-      url,
-      fit: BoxFit.cover,
-      width: double.infinity,
-      errorBuilder: (_, _, _) => Container(
+    return CachedProductImage(
+      url: url,
+      memCacheWidth: 360,
+      errorWidget: Container(
         color: p.chipBg,
         child: Icon(
           Icons.image_not_supported_outlined,

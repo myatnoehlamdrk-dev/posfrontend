@@ -602,7 +602,13 @@ class SalePreviewScreen extends StatelessWidget {
   Widget _base64Image(String data) {
     try {
       Uint8List bytes = base64Decode(data);
-      return Image.memory(bytes, width: 64, height: 64, fit: BoxFit.cover);
+      return Image.memory(
+        bytes,
+        width: 64,
+        height: 64,
+        fit: BoxFit.cover,
+        cacheWidth: 256,
+      );
     } catch (_) {
       return _shopPlaceholder();
     }

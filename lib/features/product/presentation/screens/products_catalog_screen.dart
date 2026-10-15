@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:posfrontend/core/local/sync_manager.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/features/category/domain/entities/category.dart';
 import 'package:posfrontend/features/package/domain/entities/package.dart';
@@ -86,6 +87,10 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
   @override
   void initState() {
     super.initState();
+    // One of the two screens the offline cache exists for. Opening it arms
+    // the background cache warmer, which stays dormant for sessions that
+    // never reach this screen or quick sale.
+    SyncManager.instance.markCacheUsed();
     _viewModel = ProductsCatalogViewModel();
     _scrollCtrl.addListener(_onScroll);
     _hotPageController = PageController(initialPage: 5000);
@@ -386,7 +391,10 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
           const SizedBox(height: 28),
         ],
         CategoryShowcaseGrid(
-          categories: categories,
+          // Only the windowed slice, not the whole catalogue. The first two
+          // categories are on screen and the rest wait behind the plus button
+          // below.
+          categories: _viewModel.visibleCategories,
           // The window is wide, so the cards sit side by side and the outline is
           // what separates them. On a phone they are one per row and the border
           // would only draw a column of boxes.
@@ -398,10 +406,15 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
               builder: (_) => CategoryProductsScreen(
                 categoryId: cat.id,
                 categoryName: cat.name,
+                uncategorized: cat.id.isEmpty,
               ),
             ),
           ),
         ),
+        if (_viewModel.hasMoreCategories) ...[
+          const SizedBox(height: 20),
+          _loadMoreCategoriesButton(),
+        ],
         // The gap belongs to the section rather than sitting outside it: with no
         // packages to show the section renders as nothing at all, and a spacer
         // left behind would be a band of dead space above the footer.
@@ -415,6 +428,92 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
         ],
         const CatalogFooter(),
       ],
+    );
+  }
+
+  /// The plus control that reveals the next pair of categories.
+  ///
+  /// Deliberately a full-width bar with a glyph *and* a word, rather than a
+  /// bare circular `+` parked under the grid. A lone plus on a product
+  /// catalog reads as "add category" — a management action — which is not
+  /// what it does, and a control nobody can name is a control nobody presses.
+  /// The label says what the press achieves, the count says whether it is
+  /// worth pressing, and the whole bar is the target.
+  Widget _loadMoreCategoriesButton() {
+    final accent = brandPurple;
+    final remaining = _viewModel.remainingCategoryCount;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: _viewModel.loadMoreCategories,
+        child: Ink(
+          decoration: BoxDecoration(
+            color: _p.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: _borderColor),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // The plus in a filled circle, so it holds its own against the
+                // category cards above instead of floating as loose line art.
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: accent,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.add_rounded,
+                    size: 18,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Flexible(
+                  child: Text(
+                    context.l10n.t('Show more categories'),
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: context.palette.textPrimary,
+                    ),
+                  ),
+                ),
+                if (remaining > 0) ...[
+                  const SizedBox(width: 8),
+                  // The exact remainder, so a shop with forty categories
+                  // isn't left counting presses to find the end.
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _p.chipBg,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '+$remaining',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: _p.textSecondary,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 

@@ -5,6 +5,7 @@ import 'package:posfrontend/features/product/presentation/entities/catalog_produ
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
 import 'package:posfrontend/features/sale/presentation/viewmodels/sale_view_model.dart';
 import 'package:posfrontend/features/sale/presentation/widgets/percent_input_formatter.dart';
+import 'package:posfrontend/shared/services/receipt_print_service.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_dimens.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
@@ -13,6 +14,7 @@ import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/quantity_control.dart';
+import 'package:posfrontend/shared/widgets/shop_scope.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
 /// The cart the quick-sale screen reveals beside the product grid.
@@ -68,10 +70,9 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
     if (widget.sale.isSubmitting || !widget.sale.hasItems) return;
     final name = _customerCtrl.text.trim();
     widget.sale.setCustomerName(name.isEmpty ? 'Customer' : name);
+    final staffName = AuthScope.userOf(context)?.fullName ?? 'Staff';
 
-    final success = await widget.sale.submitSale(
-      staffName: AuthScope.userOf(context)?.fullName ?? 'Staff',
-    );
+    final success = await widget.sale.submitSale(staffName: staffName);
 
     if (!success) {
       if (!mounted) return;
@@ -83,11 +84,61 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
     }
     if (!mounted) return;
 
+    // Snapshot the sale before the cart is cleared: the receipt describes
+    // what was just stored, not whatever gets tapped into next. The voucher
+    // and order numbers on the view model are the ones the stored sale used.
+    final sale = widget.sale;
+    final items = List<SaleItemEntity>.from(sale.items);
+    final shop = ShopScope.shopOf(context);
+    final args = ReceiptPrintService.buildArgs(
+      customerName: name.isEmpty ? 'Customer' : name,
+      staffName: staffName,
+      voucherNo: 'INV-${sale.voucherRandom}',
+      orderId: 'ORD-${sale.orderRandom}',
+      items: items,
+      discountPct: sale.discountPercent,
+      subtotal: sale.subtotal,
+      discountAmt: sale.discountAmount,
+      totalPayable: sale.totalPayable,
+      paymentMethod: sale.paymentMethod,
+      shopName: shop?.name,
+      shopAddress: shop?.physicalAddress,
+      shopPhone: shop?.ownerInformation.phone,
+      shopImage: shop?.logoUrl ?? shop?.logoData,
+    );
+
     _customerCtrl.clear();
     _discountCtrl.text = '0';
     widget.sale.clearCart();
     widget.onSaleCompleted?.call();
     showSuccessMessage(context, context.l10n.t('Sale saved successfully!'));
+
+    // The same preferences the new-sale screen's print sheet writes, so one
+    // setting drives both surfaces — a till set to auto-print 80mm vouchers
+    // there auto-prints here too. The sale is already stored, so a print
+    // failure is only a snackbar; it never undoes the sale.
+    final settings = await SalePrintSettings.load();
+    if (!mounted) return;
+    if (settings.printVoucher) {
+      _runPrint(
+        () => ReceiptPrintService.printReceipt(args, settings),
+        'Thermal printing failed: {v1}',
+      );
+    }
+  }
+
+  /// Printing is best-effort after a stored sale: report the failure, keep
+  /// the till moving.
+  Future<void> _runPrint(Future<void> Function() run, String messageKey) async {
+    try {
+      await run();
+    } catch (e) {
+      if (!mounted) return;
+      showErrorMessage(
+        context,
+        context.l10n.t(messageKey).replaceAll('{v1}', e.toString()),
+      );
+    }
   }
 
   void _confirmClear() {
@@ -208,7 +259,9 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       children: [
-        if (items.isEmpty) _emptyHint() else ...[
+        if (items.isEmpty)
+          _emptyHint()
+        else ...[
           for (var i = 0; i < items.length; i++)
             _itemRow(index: i, item: items[i]),
           const SizedBox(height: 4),
@@ -314,11 +367,7 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
                 visualDensity: VisualDensity.compact,
                 onPressed: () => widget.sale.removeItem(index),
                 tooltip: context.l10n.t('Remove'),
-                icon: Icon(
-                  Icons.delete_outline,
-                  size: 17,
-                  color: _p.dangerFg,
-                ),
+                icon: Icon(Icons.delete_outline, size: 17, color: _p.dangerFg),
               ),
             ],
           ),
@@ -421,8 +470,9 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
                         FilteringTextInputFormatter.digitsOnly,
                         const PercentInputFormatter(),
                       ],
-                      onChanged: (v) =>
-                          widget.sale.setDiscountPercent(double.tryParse(v) ?? 0),
+                      onChanged: (v) => widget.sale.setDiscountPercent(
+                        double.tryParse(v) ?? 0,
+                      ),
                       textAlign: TextAlign.right,
                       style: TextStyle(
                         fontSize: 13,
@@ -547,9 +597,7 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
       style: OutlinedButton.styleFrom(
         foregroundColor: _p.dangerFg,
         side: BorderSide(color: enabled ? _p.borderStrong : _borderColor),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         padding: const EdgeInsets.symmetric(vertical: 12),
       ),
       icon: const Icon(Icons.delete_sweep_outlined, size: 17),
