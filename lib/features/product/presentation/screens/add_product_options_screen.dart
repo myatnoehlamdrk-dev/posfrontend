@@ -51,7 +51,7 @@ class _AddProductOptionsScreenState extends State<AddProductOptionsScreen> {
                       icon: Icons.flash_on_rounded,
                       iconBgColor: const Color(0xFFFFF7ED),
                       iconColor: const Color(0xFFEA580C),
-                      title: context.l10n.t('Quick Add'),
+                      title: context.l10n.t('Express Item'),
                       subtitle: context.l10n.t(
                         'Add a product with minimal details — name, price, and stock only.',
                       ),
@@ -62,7 +62,7 @@ class _AddProductOptionsScreenState extends State<AddProductOptionsScreen> {
                       icon: Icons.inventory_2_outlined,
                       iconBgColor: const Color(0xFFF0FDF4),
                       iconColor: const Color(0xFF16A34A),
-                      title: context.l10n.t('Stock Add'),
+                      title: context.l10n.t('Update Stock'),
                       subtitle: context.l10n.t(
                         'Add stock to an existing product or create with detailed inventory tracking.',
                       ),
@@ -73,7 +73,7 @@ class _AddProductOptionsScreenState extends State<AddProductOptionsScreen> {
                       icon: Icons.edit_note_rounded,
                       iconBgColor: p.selectionTint,
                       iconColor: const Color(0xFF7C3AED),
-                      title: context.l10n.t('Normal Add'),
+                      title: context.l10n.t('New Product'),
                       subtitle: context.l10n.t(
                         'Full product creation with all details — image, variants, categories, and supply chain.',
                       ),

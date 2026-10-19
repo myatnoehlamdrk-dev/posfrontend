@@ -1,5 +1,6 @@
 import 'package:posfrontend/core/extensions/number_extensions.dart';
 import 'package:posfrontend/core/extensions/map_json_extensions.dart';
+import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/features/dashboard/domain/entities/dashboard.dart';
 import 'package:posfrontend/features/dashboard/domain/entities/dashboard_tables.dart';
 
@@ -175,7 +176,7 @@ static const List<int> _categoryColors = [
       final item = e as Map<String, dynamic>;
       final name = item['product_name'] as String? ?? 'Unknown';
       final qty = item.integer('total_quantity');
-      final image = item['product_image'] as String? ?? '';
+      final image = resolveMediaUrl(item['product_image'] as String?) ?? '';
       return ProductItemEntity(
         name: name,
         sold: '$qty sold',
@@ -189,7 +190,7 @@ static const List<int> _categoryColors = [
       final item = e as Map<String, dynamic>;
       final name = item['product_name'] as String? ?? 'Unknown';
       final qty = item.integer('total_quantity');
-      final image = item['product_image'] as String? ?? '';
+      final image = resolveMediaUrl(item['product_image'] as String?) ?? '';
       return ProductItemEntity(
         name: name,
         sold: '$qty sold',
@@ -202,7 +203,7 @@ static const List<int> _categoryColors = [
     final noBought = noBoughtRes.map<ProductItemEntity>((e) {
       final item = e as Map<String, dynamic>;
       final name = item['product_name'] as String? ?? 'Unknown';
-      final image = item['product_image'] as String? ?? '';
+      final image = resolveMediaUrl(item['product_image'] as String?) ?? '';
       return ProductItemEntity(
         name: name,
         sold: 'Never sold',

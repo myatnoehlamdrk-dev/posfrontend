@@ -7,12 +7,14 @@ import 'package:posfrontend/shared/l10n/api_message_l10n.dart';
 import 'package:posfrontend/shared/l10n/app_strings.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 
-/// Unified success/error message style for the whole app.
+/// Unified success/error/warning message style for the whole app.
 ///
 /// Success looks like the login screen's "Login successful" message (green),
-/// failure is always red. Use [AppMessageBanner] for inline messages, or
-/// [showSuccessMessage] / [showErrorMessage] for a floating toast.
-enum AppMessageKind { success, error }
+/// failure is always red, and a warning is amber: something the user should
+/// know did not stop the operation. Use [AppMessageBanner] for inline
+/// messages, or [showSuccessMessage] / [showErrorMessage] /
+/// [showWarningMessage] for a floating toast.
+enum AppMessageKind { success, error, warning }
 
 class AppMessageBanner extends StatelessWidget {
   final String message;
@@ -31,12 +33,21 @@ class AppMessageBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final success = kind == AppMessageKind.success;
-    final background = success ? p.successBg : p.dangerBg;
-    final foreground = success ? p.successFg : p.dangerFg;
-    final icon = success
-        ? Icons.check_circle_rounded
-        : Icons.error_outline_rounded;
+    final background = switch (kind) {
+      AppMessageKind.success => p.successBg,
+      AppMessageKind.warning => p.warningBg,
+      AppMessageKind.error => p.dangerBg,
+    };
+    final foreground = switch (kind) {
+      AppMessageKind.success => p.successFg,
+      AppMessageKind.warning => p.warningFg,
+      AppMessageKind.error => p.dangerFg,
+    };
+    final icon = switch (kind) {
+      AppMessageKind.success => Icons.check_circle_rounded,
+      AppMessageKind.warning => Icons.warning_amber_rounded,
+      AppMessageKind.error => Icons.error_outline_rounded,
+    };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
       decoration: BoxDecoration(
@@ -90,6 +101,17 @@ void showErrorMessage(BuildContext context, Object error) {
       message: error is AppException ? error.message : formatApiError(error),
       kind: AppMessageKind.error,
     ),
+  );
+}
+
+/// For an operation that succeeded but not the way the user would have chosen
+/// -- an image that was saved, say, only on this shop's own server. Red would
+/// imply the save failed; saying nothing would hide a photo that vanishes with
+/// the machine holding it.
+void showWarningMessage(BuildContext context, String message) {
+  _showMessage(
+    context,
+    AppMessageBanner(message: message, kind: AppMessageKind.warning),
   );
 }
 

@@ -53,6 +53,8 @@ const Map<String, String> thaiStrings = {
   'Retry': 'ลองอีกครั้ง',
   'No sales data': 'ไม่มีข้อมูลการขาย',
   'No category data': 'ไม่มีข้อมูลหมวดหมู่',
+  'Count': 'จำนวน',
+  'Percentage': 'เปอร์เซ็นต์',
   'In Stock': 'มีสินค้า',
   'Low Stock': 'สินค้าใกล้หมด',
   'Out of Stock': 'สินค้าหมด',
@@ -375,10 +377,12 @@ const Map<String, String> thaiStrings = {
   'Delete Category': 'ลบหมวดหมู่',
   'Enter notes...': 'กรอกหมายเหตุ...',
   'Export PDF': 'ส่งออก PDF',
+  'Express Item': 'สินค้าด่วน',
   'Failed to add product': 'เพิ่มสินค้าไม่สำเร็จ',
   'Failed to add stock': 'เพิ่มสต็อกไม่สำเร็จ',
   'Identification': 'รหัสประจำตัว',
   'Invoice no': 'เลขที่ใบแจ้งหนี้',
+  'New Product': 'สินค้าใหม่',
   'No categories available': 'ไม่มีหมวดหมู่',
   'No products': 'ไม่มีสินค้า',
   'No products found': 'ไม่พบสินค้า',
@@ -390,6 +394,7 @@ const Map<String, String> thaiStrings = {
   'Select category': 'เลือกหมวดหมู่',
   'Send OTP': 'ส่ง OTP',
   'Supply Chain': 'ซัพพลายเชน',
+  'Update Stock': 'อัปเดตสต็อก',
   '{v1} product': '{v1} รายการ',
   '{v1} products': '{v1} รายการ',
 
@@ -447,4 +452,8 @@ const Map<String, String> thaiStrings = {
   '{v1} has only {v2} in stock': '{v1} เหลือเพียง {v2} ชิ้น',
   '{v1} variants': '{v1} แบบ',
   'No products found for "{v1}"': 'ไม่พบสินค้าสำหรับ "{v1}"',
+  'Photo saved on this shop server only. Other devices may not load it.':
+      'บันทึกรูปภาพแล้ว แต่เก็บไว้เฉพาะเซิร์ฟเวอร์ของร้านนี้เท่านั้น อุปกรณ์อื่นอาจแสดงรูปไม่ได้',
+  'This photo could not be reduced and is uploading at full size.':
+      'ไม่สามารถย่อรูปนี้ได้ จึงอัปโหลดด้วยขนาดต้นฉบับ',
 };

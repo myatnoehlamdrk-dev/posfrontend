@@ -62,10 +62,17 @@ class OfflineCacheInterceptor extends Interceptor {
   /// URL roots whose GET responses may be cached. Deliberately narrow —
   /// the catalog is what a cashier needs to sell while offline; dashboards
   /// and reports can wait for the reconnect.
+  ///
+  /// `purchase-items` and `suppliers` earn their place because their endpoint
+  /// is the slowest in the API (remote TiDB, ~15s cold) and the first thing
+  /// to blow the receive timeout; without a cached body a timeout on that
+  /// screen can only ever end in the full-screen retry view.
   static const Set<String> _cacheableRoots = {
     'products',
     'categories',
     'packages',
+    'purchase-items',
+    'suppliers',
   };
 
   /// Set on a request when its response came from the cache, so the write

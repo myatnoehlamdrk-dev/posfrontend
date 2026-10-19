@@ -109,7 +109,9 @@ class TotalsPanel extends StatelessWidget {
           else if (discountPercent > 0)
             _row(
               context,
-              'Discount (${discountPercent.asPercent()}%)',
+              context.l10n
+                  .t('Discount ({v1}%)')
+                  .replaceAll('{v1}', discountPercent.asPercent().toString()),
               '-${format(discountAmount)}',
               valueColor: p.dangerFg,
             ),
@@ -202,7 +204,7 @@ class TotalsPanel extends StatelessWidget {
       children: [
         Expanded(
           child: Text(
-            label,
+            context.l10n.t(label),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: _type(

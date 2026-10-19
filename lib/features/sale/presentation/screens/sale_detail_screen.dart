@@ -86,7 +86,10 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                         const SizedBox(height: 12),
                         if (_order.saleItems.isNotEmpty) ...[
                           _buildInfoCard(
-                            'Ordered Items (${_order.saleItems.length})',
+                            context.l10n.t('Ordered Items ({v1})').replaceAll(
+                              '{v1}',
+                              _order.saleItems.length.toString(),
+                            ),
                             _order.saleItems.map((item) {
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 8),
@@ -161,11 +164,13 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                             'Payment Method',
                             _order.payMethod.isNotEmpty
                                 ? _order.payMethod
-                                : 'Cash',
+                                : context.l10n.t('Cash'),
                           ),
                           _infoRow(
                             'Payment Status',
-                            isAlreadySale ? 'Paid' : 'Pending',
+                            isAlreadySale
+                                ? context.l10n.t('Paid')
+                                : context.l10n.t('Pending'),
                           ),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -193,7 +198,9 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                           _infoRow('Order Date', _formatDate(_order.date)),
                           _infoRow(
                             'Order Status',
-                            isAlreadySale ? 'Completed' : 'Pending',
+                            isAlreadySale
+                                ? context.l10n.t('Completed')
+                                : context.l10n.t('Pending'),
                           ),
                           _infoRow(
                             'Voucher Ref',
@@ -325,7 +332,9 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  isAlreadySale ? 'Already Sale' : 'Will Be Sale',
+                  isAlreadySale
+                      ? context.l10n.t('Already Sale')
+                      : context.l10n.t('Will Be Sale'),
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -403,7 +412,7 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            title,
+            context.l10n.t(title),
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w600,
@@ -423,7 +432,7 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontSize: 13, color: gray)),
+          Text(context.l10n.t(label), style: const TextStyle(fontSize: 13, color: gray)),
           const SizedBox(width: 12),
           Flexible(
             child: Text(

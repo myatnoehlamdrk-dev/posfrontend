@@ -9,6 +9,7 @@ import 'package:posfrontend/core/utils/error_handler.dart';
 import 'package:posfrontend/features/auth/domain/entities/login_result.dart';
 import 'package:posfrontend/features/auth/domain/entities/user.dart';
 import 'package:posfrontend/features/auth/domain/usecases/login.dart';
+import 'package:posfrontend/features/settings/presentation/server_preferences.dart';
 import 'package:posfrontend/shared/services/fcm_service.dart';
 
 class LoginViewModel extends BaseViewModel with FormValidationMixin {
@@ -77,6 +78,13 @@ class LoginViewModel extends BaseViewModel with FormValidationMixin {
 
       // Register FCM token after successful authentication
       await _registerFcmToken();
+
+      // Bring the shop's saved theme and language across with the session.
+      // These used to load only when the Settings screen opened, so a till
+      // that never visited Settings kept whatever it had locally. Awaited so
+      // the dashboard's first frame is already in the right theme and
+      // language; the helper is time-boxed and swallows its own failures.
+      await syncServerPreferences();
 
       return result;
     } catch (e) {

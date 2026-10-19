@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/l10n/app_strings.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:posfrontend/core/network/media_url.dart';
@@ -164,6 +165,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       // The avatar is rendered at ~88dp; uploading the camera original would
       // store megabytes for a picture shown the size of a coin.
       final compressed = await compressImage(xfile, maxEdge: 800);
+      if (compressed.oversized && mounted) {
+        // Said before the upload rather than after it: the point is the wait
+        // the user is now in for.
+        showWarningMessage(context, AppStrings.of(context).photoNotOptimized);
+      }
       final result = await ImgbbRepositoryImpl().uploadImage(
         compressed.bytes,
         fileName: compressed.fileName,
@@ -175,7 +181,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
       final success = await _viewModel.saveProfile();
       if (success && mounted) {
-        showSuccessSnackBar(context, 'Profile updated successfully');
+        // A locally stored avatar is the more important half of this message:
+        // the save worked, but the file exists on one machine only, so it
+        // takes the place of the plain success toast.
+        if (result.storedLocally) {
+          showStoredLocallyWarning(context, result);
+        } else {
+          showSuccessSnackBar(context, 'Profile updated successfully');
+        }
       }
     } finally {
       if (mounted) setState(() => _uploadingImage = false);

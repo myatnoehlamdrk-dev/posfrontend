@@ -36,8 +36,22 @@ class ApiClient {
   /// The trailing slash on [baseUrl] is trimmed because a `BASE_URL` ending in
   /// one is an easy env slip, and `http://host//api/v1` produces a double slash
   /// that some proxies answer with a redirect rather than the API.
-  static String get apiRoot =>
-      '${baseUrl.endsWith('/') ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl}/api/$apiVersion';
+  static String get apiRoot => apiRootFor(baseUrl, apiVersion);
+
+  /// [baseUrl] joined to the versioned API path.
+  ///
+  /// Split out of [apiRoot] so the rule that produces it can be pinned with
+  /// values the compile-time constant cannot take: [baseUrl] is baked in at
+  /// build time, so a test running without `--dart-define` sees only the empty
+  /// string and could assert nothing about the shape of a real origin.
+  static String apiRootFor(String baseUrl, String version) {
+    // Every trailing slash, not just one: `http://host:8000//` is one stray
+    // keystroke away in a hand-edited env file, and it is the same double
+    // slash the single-trim rule existed to prevent.
+    final trimmed = baseUrl.replaceFirst(RegExp(r'/+$'), '');
+
+    return '$trimmed/api/$version';
+  }
 
   static Dio? _instance;
 

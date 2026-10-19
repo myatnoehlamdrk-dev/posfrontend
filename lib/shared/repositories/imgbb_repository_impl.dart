@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:posfrontend/core/network/api_client.dart';
+import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/shared/repositories/imgbb_repository.dart';
 
 class ImgbbRepositoryImpl implements ImgbbRepository {
@@ -59,9 +60,17 @@ class ImgbbRepositoryImpl implements ImgbbRepository {
       if (url == null) {
         throw ApiException(message: 'Upload did not return a URL');
       }
+      // The local fallback builds its URL from the host this device happened
+      // to reach the API on, and writing that into the row is what made the
+      // same shop folder show up under three different addresses. Resolving
+      // here means what is stored is already host-independent.
+      final resolved = resolveMediaUrl(url) ?? url;
       return ImgbbUploadResult(
-        url: url,
+        url: resolved,
         deleteUrl: (data['delete_url'] as String?) ?? '',
+        // Present only when the server fell back to local storage; a response
+        // that predates the flag is treated as the ImgBB success it was.
+        storedLocally: data['stored_locally'] == true,
       );
     } on DioException catch (e) {
       throw ApiException.fromDio(e);

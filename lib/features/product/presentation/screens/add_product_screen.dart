@@ -1,3 +1,4 @@
+import 'package:posfrontend/shared/l10n/app_strings.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -371,7 +372,25 @@ class _AddProductScreenState extends State<AddProductScreen> {
               await _vm.pickAndUpload();
               if (!mounted) return;
               if (_vm.errorMessage == null) {
-                showSuccessMessage(context, context.l10n.t('Image uploaded'));
+                // A photo kept on the shop's own server is the more important
+                // half of this message, so it replaces the plain success toast
+                // rather than fighting it for the same snackbar.
+                if (_vm.imageStoredLocally) {
+                  showWarningMessage(
+                    context,
+                    AppStrings.of(context).imageSavedLocally,
+                  );
+                } else if (_vm.imageOversized) {
+                  showWarningMessage(
+                    context,
+                    AppStrings.of(context).photoNotOptimized,
+                  );
+                } else {
+                  showSuccessMessage(
+                    context,
+                    context.l10n.t('Image uploaded'),
+                  );
+                }
               } else {
                 _showError();
                 _vm.resetError();
@@ -466,9 +485,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
           req: true,
         ),
         const SizedBox(height: 16),
-        _field('Brand', _vm.brand, 'e.g. SoundMax', req: true),
+        _field('Brand', _vm.brand, 'e.g. SoundMax'),
         const SizedBox(height: 16),
-        _field('SKU', _vm.sku, 'e.g. SM-WHP-001', req: true),
+        _field('SKU', _vm.sku, 'e.g. SM-WHP-001'),
         const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -881,7 +900,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     return Row(
       children: [
         Text(
-          text,
+          context.l10n.t(text),
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,

@@ -19,6 +19,7 @@ import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/app_shell.dart';
 import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 import 'package:posfrontend/shared/widgets/error_retry_view.dart';
+import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
 import 'package:posfrontend/shared/widgets/shop_scope.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
@@ -99,7 +100,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final data = resp.data;
       final image = (data is Map<String, dynamic>) ? (data['image'] ?? '') : '';
       if (image is String && image.isNotEmpty && mounted) {
-        ProfileImageNotifier.instance.update(image);
+        // Resolved here rather than trusted: this writes into the shared
+        // avatar notifier the whole app bar reads, and it fetches the raw
+        // JSON instead of going through the profile model that would have
+        // done it — so an avatar kept on the backend's own /uploads was
+        // being handed to the widget as a path nothing could fetch.
+        ProfileImageNotifier.instance.update(resolveMediaUrl(image) ?? image);
       }
     } catch (_) {
       // Profile image fetch failure is non-critical
@@ -450,6 +456,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
     List<CategoryDistributionEntity> items,
   ) {
     final p = context.palette;
+
+    // One dataset behind every visual: the donut, the bars, the counts and
+    // the percentages all read the same `items`, so they cannot disagree.
+    // `total` guards the percentage against a zero-total division; `maxCount`
+    // is what each bar is scaled against (the largest category fills its
+    // column).
+    final total = items.fold<int>(0, (sum, e) => sum + e.productCount);
+    var maxCount = 0;
+    for (final e in items) {
+      if (e.productCount > maxCount) maxCount = e.productCount;
+    }
+
     Widget buildPie() {
       return SizedBox(
         width: 220,
@@ -494,36 +512,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
       );
     }
 
-    Widget buildLegend() {
+    // The name and the bar split the free space by flex — never by a fixed
+    // width — so a long category name ellipsizes instead of pushing the row
+    // past the card, and both columns keep the same position on every line.
+    // On the stacked (narrow) layout the name takes the larger share: labels
+    // are what suffer first when the width runs out.
+    Widget buildList({required bool stacked}) {
+      final nameFlex = stacked ? 3 : 2;
+      final barFlex = stacked ? 2 : 3;
+
+      double percentOf(CategoryDistributionEntity e) =>
+          total <= 0 ? 0 : (e.productCount / total) * 100;
+      double fractionOf(CategoryDistributionEntity e) =>
+          maxCount <= 0 ? 0 : e.productCount / maxCount;
+
       return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
-        children: items.map((item) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 10,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    color: Color(item.colorValue),
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    item.category,
-                    style: TextStyle(fontSize: 12, color: p.textSecondary),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
+        children: [
+          _CategoryDistributionLine(
+            nameFlex: nameFlex,
+            barFlex: barFlex,
+            count: context.l10n.t('Count'),
+            percent: context.l10n.t('Percentage'),
+            isHeader: true,
+          ),
+          for (final e in items)
+            _CategoryDistributionLine(
+              nameFlex: nameFlex,
+              barFlex: barFlex,
+              name: e.category,
+              swatchColor: Color(e.colorValue),
+              barFraction: fractionOf(e).clamp(0.0, 1.0).toDouble(),
+              count: e.productCount.toString(),
+              percent: '${percentOf(e).toStringAsFixed(1)}%',
             ),
-          );
-        }).toList(),
+        ],
       );
     }
 
@@ -563,23 +587,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 )
               : LayoutBuilder(
                   builder: (context, constraints) {
-                    final wide = constraints.maxWidth >= 560;
+                    // Side-by-side only while the list keeps a workable width
+                    // beside the 220px donut; below that the chart stacks on
+                    // top and the list takes the full card width (mobile).
+                    final wide = constraints.maxWidth >= 640;
                     if (wide) {
                       return Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           buildPie(),
-                          const SizedBox(width: 32),
-                          Expanded(child: buildLegend()),
+                          const SizedBox(width: 24),
+                          // Exactly as tall as the chart, so it reads as a
+                          // separator between the two sections rather than a
+                          // table rule across the whole card.
+                          Container(width: 1, height: 220, color: p.border),
+                          const SizedBox(width: 24),
+                          Expanded(child: buildList(stacked: false)),
                         ],
                       );
                     }
                     return Column(
                       children: [
-                        buildPie(),
+                        Center(child: buildPie()),
                         const SizedBox(height: 16),
-                        buildLegend(),
+                        Container(height: 1, color: p.border),
+                        const SizedBox(height: 16),
+                        buildList(stacked: true),
                       ],
                     );
                   },
@@ -1235,4 +1268,189 @@ class _HorizontalBarChartPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _HorizontalBarChartPainter oldDelegate) =>
       oldDelegate.items != items || oldDelegate.palette != palette;
+}
+
+/// One line of the category distribution list: either the column-label header
+/// or a category row with its colour swatch, name, bar, count and percentage.
+///
+/// Header and rows go through this exact geometry — the fixed numeric column
+/// widths are constants on this class — so `Count` and `Percentage` sit
+/// directly above their numbers at every width. The name and the bar are
+/// `Expanded` by flex rather than fixed: a long name ellipsizes, the row can
+/// never overflow, and both columns keep the same position on every line.
+class _CategoryDistributionLine extends StatelessWidget {
+  const _CategoryDistributionLine({
+    required this.nameFlex,
+    required this.barFlex,
+    required this.count,
+    required this.percent,
+    this.name = '',
+    this.swatchColor,
+    this.barFraction = 0,
+    this.isHeader = false,
+  });
+
+  /// Numeric column widths, shared by the header and every row so the
+  /// numbers stay aligned under their labels.
+  static const double countWidth = 44;
+  static const double percentWidth = 60;
+
+  final int nameFlex;
+  final int barFlex;
+  final String name;
+  final Color? swatchColor;
+  final double barFraction;
+  final String count;
+  final String percent;
+  final bool isHeader;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+
+    // Header labels scale down inside the same fixed columns as the numbers
+    // below them, so a longer translation shrinks instead of wrapping or
+    // clipping, and stays right-aligned with the values.
+    Widget headerLabel(String text) => FittedBox(
+      alignment: Alignment.centerRight,
+      fit: BoxFit.scaleDown,
+      child: Text(
+        text,
+        maxLines: 1,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          color: p.textMuted,
+          letterSpacing: 0.4,
+        ),
+      ),
+    );
+
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: isHeader ? 4 : 6),
+      child: Row(
+        children: [
+          if (swatchColor != null)
+            Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                color: swatchColor,
+                borderRadius: BorderRadius.circular(3),
+              ),
+            )
+          else
+            // Header placeholder: keeps the name column's start edge — and
+            // with it every row's — identical between the two line kinds.
+            const SizedBox(width: 10, height: 10),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: nameFlex,
+            child: isHeader
+                ? const SizedBox.shrink()
+                : Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w500,
+                      color: p.textPrimary,
+                    ),
+                  ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            flex: barFlex,
+            child: isHeader
+                ? const SizedBox.shrink()
+                : _DistributionBar(
+                    fraction: barFraction,
+                    color: swatchColor ?? p.primary,
+                    trackColor: p.chipBg,
+                  ),
+          ),
+          const SizedBox(width: 10),
+          SizedBox(
+            width: countWidth,
+            child: isHeader
+                ? headerLabel(count)
+                : Text(
+                    count,
+                    textAlign: TextAlign.right,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: p.textPrimary,
+                    ),
+                  ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: percentWidth,
+            child: isHeader
+                ? headerLabel(percent)
+                : Text(
+                    percent,
+                    textAlign: TextAlign.right,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: p.textSecondary,
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A category's share of the largest category as an animated, rounded bar on
+/// a low-contrast track.
+///
+/// The fraction is count/max rather than count/total: this column reads as a
+/// comparison between categories (the biggest fills its cell), while the
+/// donut's slice sizes and the percentage column already carry the
+/// share-of-total view. The tween matches the pie's duration and curve, so a
+/// refresh animates both halves of the card together.
+class _DistributionBar extends StatelessWidget {
+  const _DistributionBar({
+    required this.fraction,
+    required this.color,
+    required this.trackColor,
+  });
+
+  final double fraction;
+  final Color color;
+  final Color trackColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 8,
+      decoration: BoxDecoration(
+        color: trackColor,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0, end: fraction.clamp(0.0, 1.0).toDouble()),
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeOutCubic,
+        builder: (context, value, _) => FractionallySizedBox(
+          alignment: Alignment.centerLeft,
+          widthFactor: value,
+          child: Container(
+            height: 8,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

@@ -53,6 +53,8 @@ const Map<String, String> japaneseStrings = {
   'Retry': '再試行',
   'No sales data': '売上データがありません',
   'No category data': 'カテゴリデータがありません',
+  'Count': '件数',
+  'Percentage': '割合',
   'In Stock': '在庫あり',
   'Low Stock': '在庫少',
   'Out of Stock': '在庫切れ',
@@ -368,10 +370,12 @@ const Map<String, String> japaneseStrings = {
   'Delete Category': 'カテゴリを削除',
   'Enter notes...': 'メモを入力...',
   'Export PDF': 'PDFをエクスポート',
+  'Express Item': 'クイック商品',
   'Failed to add product': '商品の追加に失敗しました',
   'Failed to add stock': '在庫の追加に失敗しました',
   'Identification': '識別情報',
   'Invoice no': '請求書番号',
+  'New Product': '新規商品',
   'No categories available': '利用可能なカテゴリがありません',
   'No products': '商品がありません',
   'No products found': '商品が見つかりません',
@@ -383,6 +387,7 @@ const Map<String, String> japaneseStrings = {
   'Select category': 'カテゴリを選択',
   'Send OTP': 'OTPを送信',
   'Supply Chain': 'サプライチェーン',
+  'Update Stock': '在庫更新',
   '{v1} product': '{v1} 件',
   '{v1} products': '{v1} 件',
 
@@ -440,4 +445,8 @@ const Map<String, String> japaneseStrings = {
   '{v1} has only {v2} in stock': '{v1}の在庫は{v2}点のみです',
   '{v1} variants': 'バリエーション{v1}種',
   'No products found for "{v1}"': '"{v1}"に一致する商品が見つかりません',
+  'Photo saved on this shop server only. Other devices may not load it.':
+      '写真は保存されましたが、この店舗のサーバーにのみ保存されています。他の端末では表示できない場合があります。',
+  'This photo could not be reduced and is uploading at full size.':
+      'この写真は圧縮できなかったため、元のサイズのままアップロードしています。',
 };

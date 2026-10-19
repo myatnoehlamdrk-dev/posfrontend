@@ -43,7 +43,7 @@ class FilterTabs extends StatelessWidget {
                   child: Text(
                     context.l10n
                         .t('{v1} ({v2})')
-                        .replaceAll('{v1}', (tabs[i].$1).toString())
+                        .replaceAll('{v1}', context.l10n.t(tabs[i].$1))
                         .replaceAll('{v2}', (tabs[i].$2).toString()),
                     style: TextStyle(
                       color: active ? Colors.white : p.textSecondary,

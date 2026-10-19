@@ -255,7 +255,9 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          isAlreadySale ? 'Already Sale' : 'Will Be Sale',
+                          isAlreadySale
+                              ? context.l10n.t('Already Sale')
+                              : context.l10n.t('Will Be Sale'),
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,

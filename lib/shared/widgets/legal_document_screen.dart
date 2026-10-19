@@ -81,7 +81,7 @@ class _Section extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            title,
+            context.l10n.t(title),
             style: TextStyle(
               color: p.textPrimary,
               fontSize: AppTypography.bodyLargeSize,
@@ -93,7 +93,7 @@ class _Section extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.s12),
               child: Text(
-                paragraph,
+                context.l10n.t(paragraph),
                 textAlign: TextAlign.justify,
                 style: TextStyle(
                   color: p.textSecondary,

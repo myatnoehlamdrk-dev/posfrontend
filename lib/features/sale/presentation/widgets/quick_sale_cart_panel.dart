@@ -113,18 +113,27 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
     widget.onSaleCompleted?.call();
     showSuccessMessage(context, context.l10n.t('Sale saved successfully!'));
 
-    // The same preferences the new-sale screen's print sheet writes, so one
-    // setting drives both surfaces — a till set to auto-print 80mm vouchers
-    // there auto-prints here too. The sale is already stored, so a print
-    // failure is only a snackbar; it never undoes the sale.
+    // Quick sale always emits the thermal slip: a till running quick sale
+    // has a roll printer behind it, and making the cashier hunt for the
+    // new-sale screen's print toggle to get a receipt is the wrong default
+    // for the surface built for the queue at the counter. Only the paper
+    // size still comes from the shared preference — that is a property of
+    // the printer, not of the sale surface. The sale is already stored, so
+    // a print failure is only a snackbar; it never undoes the sale.
     final settings = await SalePrintSettings.load();
     if (!mounted) return;
-    if (settings.printVoucher) {
-      _runPrint(
-        () => ReceiptPrintService.printReceipt(args, settings),
-        'Thermal printing failed: {v1}',
-      );
-    }
+    _runPrint(
+      () => ReceiptPrintService.printReceipt(
+        args,
+        SalePrintSettings(
+          exportPdf: false,
+          printVoucher: true,
+          format: 'thermal',
+          paperSize: settings.paperSize,
+        ),
+      ),
+      'Thermal printing failed: {v1}',
+    );
   }
 
   /// Printing is best-effort after a stored sale: report the failure, keep

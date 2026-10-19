@@ -1,3 +1,4 @@
+import 'package:posfrontend/shared/l10n/app_strings.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'dart:io';
 
@@ -6,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/responsive_scaffold.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:posfrontend/core/network/app_exceptions.dart';
 import 'package:posfrontend/core/utils/image_compressor.dart';
 import 'package:posfrontend/features/product/data/models/product_create_models.dart';
@@ -88,10 +90,35 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
     );
     if (source == null) return;
 
+    // The camera is a runtime permission on mobile: ask before the picker
+    // opens so a refusal lands here — with an explanation — instead of as a
+    // capture that silently does nothing. Scoped to Android/iOS (and web is
+    // excluded first, so the dart:io check never runs there): desktop has no
+    // permission model to ask about, and the gallery option needs none
+    // either (iOS 14+ picks photos through the out-of-process system picker).
+    final isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
+    if (isMobile && source == ImageSource.camera) {
+      var status = await Permission.camera.status;
+      if (!status.isGranted) {
+        status = await Permission.camera.request();
+      }
+      if (!status.isGranted) {
+        if (!mounted) return;
+        showErrorMessage(
+          context,
+          status.isPermanentlyDenied
+              ? 'Camera permission is denied. Allow camera access in your '
+                  'device settings to take a photo.'
+              : 'Camera permission is required to take a photo.',
+        );
+        return;
+      }
+    }
+
     final picker = ImagePicker();
     final XFile? xfile = await picker.pickImage(
       source: source,
-      maxWidth: 1600,
+      maxWidth: 1280,
       imageQuality: 85,
     );
     if (xfile == null) return;
@@ -108,6 +135,11 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
         _imageFile = compressed.previewFile ?? _imageFile;
         _imageKey = UniqueKey();
       });
+      if (compressed.oversized) {
+        // Said before the upload starts rather than after it finishes: the
+        // warning is about the wait the user is now in for.
+        showWarningMessage(context, AppStrings.of(context).photoNotOptimized);
+      }
       final result = await ImgbbRepositoryImpl().uploadImage(
         compressed.bytes,
         fileName: compressed.fileName,
@@ -118,6 +150,9 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
         _imageDeleteUrl = result.deleteUrl;
         _imageKey = UniqueKey();
       });
+      // Nothing at all when ImgBB took the photo; amber when the server had to
+      // keep it, since the file then exists on one machine only.
+      showStoredLocallyWarning(context, result);
     } on ApiException catch (e) {
       if (!mounted) return;
       showErrorMessage(context, e.message);
@@ -307,7 +342,7 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
         Row(
           children: [
             Text(
-              label,
+              context.l10n.t(label),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,

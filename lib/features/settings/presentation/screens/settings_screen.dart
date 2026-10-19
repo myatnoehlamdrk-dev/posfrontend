@@ -367,14 +367,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final picker = ImagePicker();
     final xfile = await picker.pickImage(
       source: ImageSource.gallery,
-      maxWidth: 1600,
+      maxWidth: 1280,
       imageQuality: 85,
     );
-    if (xfile != null) {
-      final compressed = await compressImage(xfile);
-      _viewModel.updateShopImage(
-        compressed.bytes,
-        fileName: compressed.fileName,
+    if (xfile == null) return;
+
+    final compressed = await compressImage(xfile);
+    if (compressed.oversized && mounted) {
+      // Said before the upload rather than after it: the point is the wait
+      // the user is now in for.
+      showWarningMessage(context, AppStrings.of(context).photoNotOptimized);
+    }
+    // Awaited, not fire-and-forget: the outcome decides what the user is told
+    // afterwards, and an upload nobody waits on is an upload nobody hears
+    // about. Failures already surface through the view model's error banner.
+    await _viewModel.updateShopImage(
+      compressed.bytes,
+      fileName: compressed.fileName,
+    );
+    if (!mounted || _viewModel.isUploadingImage) return;
+
+    if (_viewModel.imageStoredLocally) {
+      showWarningMessage(
+        context,
+        AppStrings.of(context).imageSavedLocally,
       );
     }
   }
@@ -491,7 +507,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(width: 14),
             Expanded(
               child: Text(
-                label,
+                context.l10n.t(label),
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w500,

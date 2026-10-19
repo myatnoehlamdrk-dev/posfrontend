@@ -34,7 +34,6 @@ class PackageDetailsScreen extends StatefulWidget {
 }
 
 class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
-  final TextEditingController _search = TextEditingController();
   late final PackageDetailViewModel _viewModel;
 
   @override
@@ -115,20 +114,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
   @override
   void dispose() {
     _viewModel.dispose();
-    _search.dispose();
     super.dispose();
-  }
-
-  List<CatalogProductView> get _filtered {
-    final q = _search.text.toLowerCase();
-    if (q.isEmpty) return _viewModel.products;
-    return _viewModel.products
-        .where(
-          (p) =>
-              p.name.toLowerCase().contains(q) ||
-              p.brand.toLowerCase().contains(q),
-        )
-        .toList();
   }
 
   @override
@@ -183,34 +169,28 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
     final loading = _viewModel.isLoading;
     final hasProducts = _viewModel.products.isNotEmpty;
 
-    return ListenableBuilder(
-      listenable: _search,
-      builder: (context, _) {
-        final products = _filtered;
-        return Column(
-          children: [
-            AppScreenTopBar(
-              title: context.l10n.t('Package Details'),
-              showMenuButton: false,
-              showBackButton: true,
-            ),
-            Expanded(
-              child: RefreshableBody(
-                onRefresh: _viewModel.load,
-                fill: true,
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: _body(
-                    loading: loading,
-                    hasProducts: hasProducts,
-                    products: products,
-                  ),
-                ),
+    return Column(
+      children: [
+        AppScreenTopBar(
+          title: context.l10n.t('Package Details'),
+          showMenuButton: false,
+          showBackButton: true,
+        ),
+        Expanded(
+          child: RefreshableBody(
+            onRefresh: _viewModel.load,
+            fill: true,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: _body(
+                loading: loading,
+                hasProducts: hasProducts,
+                products: _viewModel.products,
               ),
             ),
-          ],
-        );
-      },
+          ),
+        ),
+      ],
     );
   }
 
@@ -603,57 +583,32 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
 
   Widget _productsHeader() {
     final p = context.palette;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                context.l10n
-                    .t('Products in this Package ({v1})')
-                    .replaceAll('{v1}', (_viewModel.totalUnits).toString()),
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: p.textPrimary,
-                ),
-              ),
+        Expanded(
+          child: Text(
+            context.l10n
+                .t('Products in this Package ({v1})')
+                .replaceAll('{v1}', (_viewModel.totalUnits).toString()),
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: p.textPrimary,
             ),
-            Container(
-              height: 44,
-              width: 44,
-              decoration: BoxDecoration(
-                color: p.surface,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: p.border),
-              ),
-              child: IconButton(
-                icon: Icon(Icons.search, color: p.textPrimary),
-                onPressed: () {},
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              height: 44,
-              width: 44,
-              decoration: BoxDecoration(
-                color: p.surface,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: p.border),
-              ),
-              child: IconButton(
-                icon: Icon(Icons.filter_list, color: p.textPrimary),
-                onPressed: () {},
-              ),
-            ),
-          ],
+          ),
         ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _search,
-          onChanged: (_) {},
-          decoration: fieldDecorationFor(context, 'Search products...'),
+        Container(
+          height: 44,
+          width: 44,
+          decoration: BoxDecoration(
+            color: p.surface,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: p.border),
+          ),
+          child: IconButton(
+            icon: Icon(Icons.filter_list, color: p.textPrimary),
+            onPressed: () {},
+          ),
         ),
       ],
     );

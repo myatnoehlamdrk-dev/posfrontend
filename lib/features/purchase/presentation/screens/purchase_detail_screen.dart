@@ -152,7 +152,9 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
                           _infoRow(
                             context,
                             'Order Status',
-                            isCompleted ? 'Completed' : 'Pending',
+                            isCompleted
+                                ? context.l10n.t('Completed')
+                                : context.l10n.t('Pending'),
                           ),
                           _infoRow(context, 'Order ID', '#${_order.orderId}'),
                         ]),
@@ -320,7 +322,7 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            title,
+            context.l10n.t(title),
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w600,
@@ -341,7 +343,10 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: 13, color: p.textSecondary)),
+          Text(
+            context.l10n.t(label),
+            style: TextStyle(fontSize: 13, color: p.textSecondary),
+          ),
           const SizedBox(width: 12),
           Flexible(
             child: Text(

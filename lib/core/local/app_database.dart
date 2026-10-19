@@ -214,7 +214,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -235,6 +235,24 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(packages);
         await m.createTable(purchaseItems);
         await m.createTable(productVariants);
+      }
+      // v5: a device whose database was already migrated to v4 by a build
+      // that predates these tables never runs the `from < 4` branch above, so
+      // it can be missing `purchase_items` / `product_variants` while a fresh
+      // install has them. That surfaces as a permanent "unexpected error" on
+      // the purchase screen: the insert hits `no such table` after every
+      // successful 200 from the server. Re-create them idempotently.
+      if (from < 5) {
+        try {
+          await m.createTable(purchaseItems);
+        } catch (_) {
+          // Table already exists, continue
+        }
+        try {
+          await m.createTable(productVariants);
+        } catch (_) {
+          // Table already exists, continue
+        }
       }
     },
   );

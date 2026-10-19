@@ -143,4 +143,16 @@ class AppStrings {
   String get markAllRead => t('Mark all read');
   String get clearAll => t('Clear all');
   String get noNotificationsYet => t('No notifications yet');
+
+  // -- Media ---------------------------------------------------------------
+  /// Shown when an upload had to fall back to the API host instead of ImgBB.
+  /// The photo is saved and usable now, but it exists on one machine only.
+  String get imageSavedLocally =>
+      t('Photo saved on this shop server only. Other devices may not load it.');
+
+  /// Shown when a photo came back from the picker in a format nothing could
+  /// decode (HEIC and friends), so the budget was never applied and the
+  /// camera original is what goes over the wire.
+  String get photoNotOptimized =>
+      t('This photo could not be reduced and is uploading at full size.');
 }

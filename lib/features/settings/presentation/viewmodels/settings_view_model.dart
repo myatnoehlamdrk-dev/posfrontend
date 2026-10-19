@@ -3,8 +3,6 @@ import 'package:flutter/material.dart' show ThemeMode;
 import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/core/utils/error_handler.dart';
-import 'package:posfrontend/shared/l10n/app_language.dart';
-import 'package:posfrontend/shared/l10n/locale_notifier.dart';
 import 'package:posfrontend/shared/theme/theme_mode_notifier.dart';
 import 'package:posfrontend/features/settings/domain/entities/feedback.dart';
 import 'package:posfrontend/features/settings/domain/entities/settings.dart';
@@ -12,6 +10,7 @@ import 'package:posfrontend/features/settings/domain/repositories/feedback_repos
 import 'package:posfrontend/features/settings/domain/repositories/settings_repository.dart';
 import 'package:posfrontend/features/settings/data/repositories/feedback_repository_impl.dart';
 import 'package:posfrontend/features/settings/data/repositories/settings_repository_impl.dart';
+import 'package:posfrontend/features/settings/presentation/server_preferences.dart';
 import 'package:posfrontend/features/shop/domain/repositories/shop_repository.dart';
 import 'package:posfrontend/features/shop/data/repositories/shop_local_repository_impl.dart';
 import 'package:posfrontend/shared/repositories/imgbb_repository.dart';
@@ -47,6 +46,14 @@ class SettingsViewModel extends BaseViewModel {
   bool _isUploadingImage = false;
   bool get isUploadingImage => _isUploadingImage;
 
+  /// True when the shop photo was kept on the API host instead of ImgBB.
+  ///
+  /// [updateShopImage] still succeeds in that case — the file is saved and the
+  /// URL works — but it lives on one machine only, so the Settings screen
+  /// shows a warning in place of the success toast.
+  bool _imageStoredLocally = false;
+  bool get imageStoredLocally => _imageStoredLocally;
+
   bool _isSubmittingFeedback = false;
   bool get isSubmittingFeedback => _isSubmittingFeedback;
 
@@ -56,24 +63,9 @@ class SettingsViewModel extends BaseViewModel {
     try {
       _settings = await _repository.getSettings();
       _isInitialized = true;
-      // A stored "system" predates the removal of the Match System toggle:
-      // pin the brightness the OS is showing, then let the server copy take
-      // over like any other explicit choice. Without the pin the till would
-      // keep following the OS with no control left to change it.
-      if (ThemeModeNotifier.instance.value == ThemeMode.system) {
-        ThemeModeNotifier.instance.setMode(ThemeModeNotifier.system);
-      }
-      ThemeModeNotifier.instance.setMode(
-        _settings.themeMode == AppThemeMode.dark
-            ? ThemeMode.dark
-            : ThemeMode.light,
-      );
-      // Same reasoning for language: a shop that syncs settings across devices
-      // should open in the language its owner chose elsewhere. Unlike the
-      // theme there is no "follow the OS" opt-in, so the server always wins.
-      LocaleNotifier.instance.setLanguage(
-        AppLanguage.fromServer(_settings.language),
-      );
+      // Theme and language go through the same helper the post-login sync
+      // uses, so the Settings screen and session start always agree.
+      applyServerPreferences(_settings);
     } catch (e) {
       setError('Failed to load settings');
     } finally {
@@ -157,12 +149,14 @@ class SettingsViewModel extends BaseViewModel {
 
   Future<void> updateShopImage(Uint8List imageBytes, {String? fileName}) async {
     _isUploadingImage = true;
+    _imageStoredLocally = false;
     notifyListeners();
     try {
       final result = await _imgbbRepository.uploadImage(
         imageBytes,
         fileName: fileName ?? 'shop_image.jpg',
       );
+      _imageStoredLocally = result.storedLocally;
       _settings = _settings.copyWith(
         shopImage: resolveMediaUrl(result.url) ?? '',
       );

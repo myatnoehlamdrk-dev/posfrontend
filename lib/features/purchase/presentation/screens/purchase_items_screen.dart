@@ -92,7 +92,8 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
         onNotification: (notification) {
           if (notification is ScrollEndNotification &&
               notification.metrics.pixels >=
-                  notification.metrics.maxScrollExtent - 200) {
+                  notification.metrics.maxScrollExtent - 200 &&
+              _viewModel.hasMore) {
             _viewModel.loadPurchaseItems();
           }
           return false;
@@ -243,7 +244,9 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    isCompleted ? 'Completed' : 'Pending',
+                    isCompleted
+                        ? context.l10n.t('Completed')
+                        : context.l10n.t('Pending'),
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,

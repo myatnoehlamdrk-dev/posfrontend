@@ -7,6 +7,7 @@ import 'package:posfrontend/core/auth/auth_redirect.dart';
 import 'package:posfrontend/core/di/injection.dart';
 import 'package:posfrontend/core/local/local_store.dart';
 import 'package:posfrontend/core/local/sync_manager.dart';
+import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/core/network/connectivity.dart';
 import 'package:posfrontend/core/offline/offline_writes_flag.dart';
 import 'package:posfrontend/core/offline/outbox_queue.dart';
@@ -23,6 +24,19 @@ import 'package:posfrontend/shared/widgets/sync_status_pill.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // The compile-time origin is what every API call *and* every `/uploads/…`
+  // image URL is resolved against. When it is empty the app doesn't crash —
+  // it quietly asks for URLs no client can answer, which surfaced as
+  // broken-image icons on every screen instead of a single clear failure.
+  // So it is checked here, once, before anything is built.
+  assert(
+    ApiClient.baseUrl.isNotEmpty,
+    'BASE_URL is not set. Run/build with --dart-define-from-file=config/env.json '
+    '(see tool/run.bat and config/env.example.json).',
+  );
+  debugPrint(
+    'API origin: ${ApiClient.baseUrl.isEmpty ? '<UNSET — images and requests will fail>' : ApiClient.baseUrl}',
+  );
   // Bound the decoded-image budget. Every photo in the app now decodes
   // through a memCacheWidth cap (see CachedProductImage), so entries are a few
   // hundred KB rather than multi-MB camera originals; 64MB / 500 entries is

@@ -177,7 +177,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
           return Column(
             children: [
               AppScreenTopBar(
-                title: _inventoryLabel,
+                title: context.l10n.t(_inventoryLabel),
                 showBackButton: true,
                 showMenuButton: false,
               ),
@@ -250,7 +250,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
         GestureDetector(
           onTap: () {},
           child: Text(
-            _inventoryLabel,
+            context.l10n.t(_inventoryLabel),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontSize: 13, color: AppColors.brandPurpleDark),

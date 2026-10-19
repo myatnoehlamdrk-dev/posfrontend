@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:posfrontend/core/auth/session_store.dart';
-import 'package:posfrontend/core/local/local_store.dart';
 import 'package:posfrontend/features/purchase/data/datasources/purchase_local_data_source.dart';
 import 'package:posfrontend/features/purchase/data/datasources/purchase_remote_data_source.dart';
 import 'package:posfrontend/features/purchase/data/models/purchase_api_model.dart';
@@ -55,14 +54,21 @@ class PurchaseRepositoryImpl implements PurchaseItemRepository {
       cancelToken: cancelToken,
     );
 
-    // Cache the response for offline use
+    // Cache the response for offline use. Best-effort, like the cache read
+    // above: a local write failure (full disk, a database file that predates
+    // the purchase_items table) must never turn a successful network read
+    // into a full-screen error with a Retry button that fails identically.
     if (shopId != null && shopId.isNotEmpty) {
-      final data = response['data'];
-      if (data is List) {
-        final items = data
-            .map((json) => PurchaseOrderApiModel.fromJson(json as Map<String, dynamic>))
-            .toList();
-        await _localDataSource.cachePurchaseItems(shopId: shopId, items: items);
+      try {
+        final data = response['data'];
+        if (data is List) {
+          final items = data
+              .map((json) => PurchaseOrderApiModel.fromJson(json as Map<String, dynamic>))
+              .toList();
+          await _localDataSource.cachePurchaseItems(shopId: shopId, items: items);
+        }
+      } catch (_) {
+        // Ignore cache write errors and keep the network data.
       }
     }
 

@@ -130,7 +130,7 @@ class _ShopScreenState extends State<ShopScreen> {
   Future<void> _pickImage() async {
     final xfile = await _picker.pickImage(
       source: ImageSource.gallery,
-      maxWidth: 1600,
+      maxWidth: 1280,
       imageQuality: 85,
     );
     if (xfile == null) return;

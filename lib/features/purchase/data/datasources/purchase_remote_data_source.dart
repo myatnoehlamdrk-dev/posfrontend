@@ -18,6 +18,12 @@ class PurchaseRemoteDataSource {
       '/purchase-items',
       queryParameters: params,
       cancelToken: cancelToken,
+      // This is the slowest endpoint in the API: the first query after TiDB
+      // Serverless goes idle can take 12s+ of cold start on top of normal
+      // latency. The shared 20s receive timeout turns that into a screen-
+      // wide failure, so this call gets more headroom; a genuine hang still
+      // ends in the timeout rather than waiting forever.
+      options: Options(receiveTimeout: const Duration(seconds: 30)),
     );
     final payload = response.data;
     if (payload is Map<String, dynamic>) {
@@ -99,7 +105,13 @@ class PurchaseRemoteDataSource {
   Future<List<SupplierApiModel>> getSuppliers({
     CancelToken? cancelToken,
   }) async {
-    final response = await _dio.get('/suppliers', cancelToken: cancelToken);
+    final response = await _dio.get(
+      '/suppliers',
+      cancelToken: cancelToken,
+      // Loaded alongside purchase-items on the same screen; same remote-DB
+      // cold-start exposure, so the same headroom.
+      options: Options(receiveTimeout: const Duration(seconds: 30)),
+    );
     final payload = response.data;
     List<dynamic> itemsList;
     if (payload is Map<String, dynamic>) {

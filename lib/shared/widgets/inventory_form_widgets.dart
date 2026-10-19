@@ -433,7 +433,7 @@ class DropdownField extends StatelessWidget {
           ),
           isExpanded: true,
           items: items
-              .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+              .map((e) => DropdownMenuItem(value: e, child: Text(context.l10n.t(e))))
               .toList(),
           onChanged: onChanged,
         ),

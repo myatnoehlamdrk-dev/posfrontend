@@ -73,6 +73,23 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
   bool _uploadFailed = false;
   bool get uploadFailed => _uploadFailed;
 
+  /// True when the last photo was kept on the API host instead of ImgBB.
+  ///
+  /// The upload succeeded, so the screen that called [pickAndUpload] shows the
+  /// usual success message either way — this only decides whether it is the
+  /// amber warning instead, because the file is not on a host every device
+  /// can reach and will not outlive the machine holding it.
+  bool _imageStoredLocally = false;
+  bool get imageStoredLocally => _imageStoredLocally;
+
+  /// True when the picked photo could not be reduced before it was uploaded.
+  ///
+  /// Nothing in the pipeline could decode it (HEIC and similar), so the
+  /// camera original went over the wire — worth saying, since on a shop
+  /// connection that is the difference between a second and a minute.
+  bool _imageOversized = false;
+  bool get imageOversized => _imageOversized;
+
   Key _imageKey = UniqueKey();
   Key get imageKey => _imageKey;
 
@@ -289,7 +306,7 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
       source: ImageSource.gallery,
       // Native platforms shrink at pick time (cheap, in the platform
       // channel). Windows/Linux ignore these — imageCompressor covers them.
-      maxWidth: 1600,
+      maxWidth: 1280,
       imageQuality: 85,
     );
     if (xfile == null) return;
@@ -301,6 +318,7 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
       final compressed = await compressImage(xfile, writePreviewFile: true);
       _imageFile = compressed.previewFile ?? _imageFile;
       _imageKey = UniqueKey();
+      _imageOversized = compressed.oversized;
       notifyListeners();
       final result = await ImgbbRepositoryImpl().uploadImage(
         compressed.bytes,
@@ -309,6 +327,7 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
       _imageUrl = result.url;
       _imageDeleteUrl = result.deleteUrl;
       _uploadFailed = false;
+      _imageStoredLocally = result.storedLocally;
       _imageKey = UniqueKey();
       notifyListeners();
     } on ApiException catch (e) {
@@ -330,6 +349,7 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
     _imageDeleteUrl = null;
     _imageRemoved = true;
     _uploadFailed = false;
+    _imageStoredLocally = false;
     _imageKey = UniqueKey();
     notifyListeners();
   }

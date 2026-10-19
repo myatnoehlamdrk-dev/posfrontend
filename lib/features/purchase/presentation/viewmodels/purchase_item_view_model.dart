@@ -15,17 +15,34 @@ class PurchaseItemViewModel extends BaseViewModel {
   List<Supplier> get suppliers => _suppliers;
 
   int _currentPage = 1;
-  int _lastPage = 1;
-  bool get hasMore => _currentPage <= _lastPage;
+  bool _reachedEnd = false;
+
+  /// Whether another page might exist.
+  ///
+  /// The list endpoint returns a bare array with no pagination meta, so
+  /// `last_page` is always the default 1 and cannot be trusted. A page that
+  /// came back full is the only honest signal that the next one may hold
+  /// anything; a short or empty page means we are done.
+  bool get hasMore => !_reachedEnd;
 
   PurchaseItemViewModel({PurchaseItemRepository? repository})
     : _repository = repository ?? PurchaseRepositoryImpl();
+
+  /// Kept in step with the backend's default `per_page`; a full page is what
+  /// marks the response as "there may be more".
+  static const int _pageSize = 10;
 
   Future<void> loadPurchaseItems({bool refresh = false}) async {
     if (refresh) {
       _currentPage = 1;
       _purchaseItems = [];
+      _reachedEnd = false;
     }
+    // Without this guard the scroll listener re-fires on every scroll end
+    // once the last page is loaded, each time paying for a page the server
+    // answers with nothing -- on the slowest endpoint in the API that is a
+    // lot of wasted seconds per scroll.
+    if (!refresh && !hasMore) return;
     if (isLoading) return;
 
     setLoading(true);
@@ -43,7 +60,7 @@ class PurchaseItemViewModel extends BaseViewModel {
       _purchaseItems = _currentPage == 1
           ? paginated.data
           : [..._purchaseItems, ...paginated.data];
-      _lastPage = paginated.lastPage;
+      _reachedEnd = paginated.data.length < _pageSize;
       _currentPage++;
     } catch (e) {
       setError(formatApiError(e));

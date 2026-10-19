@@ -9,6 +9,7 @@ import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/features/auth/data/models/login_response.dart';
 import 'package:posfrontend/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:posfrontend/features/onboarding/presentation/screens/get_started_screen.dart';
+import 'package:posfrontend/features/settings/presentation/server_preferences.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/shared/services/fcm_service.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
@@ -159,6 +160,10 @@ class _SplashScreenState extends State<SplashScreen>
     // rotated would otherwise go on pushing to an id the server no longer
     // recognises. It self-swallows failures, so an offline launch is safe.
     getIt<FcmService>().registerTokenAfterLogin();
+    // The server's saved theme and language catch up the same way, in the
+    // background: the locally mirrored copy already painted the first frame,
+    // so there is nothing here worth delaying the hand-off for.
+    unawaited(syncServerPreferences());
 
     return true;
   }

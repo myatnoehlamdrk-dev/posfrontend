@@ -1,6 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Quick Add's "Take a Photo": image_picker's Android side only asks for
+         the camera at runtime when the app itself declares it, so without
+         this entry there is no system permission dialog to request. -->
+    <uses-permission android:name="android.permission.CAMERA"/>
     <application
         android:label="SmartPos"
         android:name="${applicationName}"
