@@ -82,6 +82,14 @@ class _ShopScreenState extends State<ShopScreen> {
   String _searchQuery = '';
   String _searchedQuery = '';
 
+  /// True while the picked logo is being compressed and base64-encoded.
+  ///
+  /// There is no *upload* progress to report here — the bytes travel inside
+  /// the create-shop payload, not over a separate request — but the work on a
+  /// full-size camera photo is real seconds, and the card used to sit frozen
+  /// through all of it.
+  bool _encodingLogo = false;
+
   /// Which half of the wizard is showing. Only meaningful in `create` mode.
   int _step = 0;
 
@@ -128,17 +136,24 @@ class _ShopScreenState extends State<ShopScreen> {
   }
 
   Future<void> _pickImage() async {
+    if (_encodingLogo) return;
     final xfile = await _picker.pickImage(
       source: ImageSource.gallery,
       maxWidth: 1280,
       imageQuality: 85,
     );
     if (xfile == null) return;
-    final compressed = await compressImage(xfile);
     if (!mounted) return;
-    // Logo travels base64-encoded in the create-shop payload, so every byte
-    // here costs 1.33 on the wire — compress before encoding.
-    _viewModel.setLogo(base64Encode(compressed.bytes));
+    setState(() => _encodingLogo = true);
+    try {
+      final compressed = await compressImage(xfile);
+      if (!mounted) return;
+      // Logo travels base64-encoded in the create-shop payload, so every byte
+      // here costs 1.33 on the wire — compress before encoding.
+      _viewModel.setLogo(base64Encode(compressed.bytes));
+    } finally {
+      if (mounted) setState(() => _encodingLogo = false);
+    }
   }
 
   void _resetForm() {
@@ -599,7 +614,9 @@ class _ShopScreenState extends State<ShopScreen> {
         ),
         SizedBox(height: 12),
         PremiumImageUpload(
-          onTap: _pickImage,
+          onTap: _encodingLogo ? null : _pickImage,
+          isBusy: _encodingLogo,
+          busyLabel: 'Optimising',
           imageUrl: logoUrl,
           imageBase64: logoData,
           title: context.l10n.t('Upload shop image'),

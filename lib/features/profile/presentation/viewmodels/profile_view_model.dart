@@ -1,6 +1,7 @@
 import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/core/base/form_validation_mixin.dart';
 import 'package:posfrontend/core/network/api_client.dart';
+import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/core/utils/error_handler.dart';
 import 'package:posfrontend/features/profile/domain/entities/profile.dart';
 import 'package:posfrontend/features/profile/domain/repositories/profile_repository.dart';
@@ -178,7 +179,11 @@ class ProfileViewModel extends BaseViewModel with FormValidationMixin {
     _dateOfBirth = _profile!.dateOfBirth;
     _gender = _profile!.gender;
     _type = _profile!.type;
-    _imageUrl = _profile!.image;
+    // Resolved against the API origin: an avatar stored as a backend-relative
+    // path (`/uploads/...`) or written with the *uploading* device's LAN host is
+    // unresolvable from any other device, and the profile widget would then
+    // render its fallback. ImgBB URLs pass through untouched.
+    _imageUrl = resolveMediaUrl(_profile!.image) ?? _profile!.image;
     notifyListeners();
   }
 

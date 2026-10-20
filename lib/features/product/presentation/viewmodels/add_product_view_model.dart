@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:posfrontend/core/base/base_view_model.dart';
@@ -53,6 +54,15 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
   File? _imageFile;
   File? get imageFile => _imageFile;
 
+  /// Compressed bytes of the picked photo, for the preview.
+  ///
+  /// The preview prefers these over [_imageFile] because on the web build
+  /// `image_picker` returns a `blob:` object URL: an image pointed at one stops
+  /// painting once the URL is revoked, which showed as a black preview while
+  /// the upload itself completed.
+  Uint8List? _imageBytes;
+  Uint8List? get imageBytes => _imageBytes;
+
   String? _imageUrl;
   String? get imageUrl => _imageUrl;
 
@@ -73,14 +83,29 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
   bool _uploadFailed = false;
   bool get uploadFailed => _uploadFailed;
 
-  /// True when the last photo was kept on the API host instead of ImgBB.
+  /// True when the last photo only reached the API host because ImgBB did
+  /// not — the fallback path, not the planned one.
   ///
   /// The upload succeeded, so the screen that called [pickAndUpload] shows the
   /// usual success message either way — this only decides whether it is the
   /// amber warning instead, because the file is not on a host every device
-  /// can reach and will not outlive the machine holding it.
-  bool _imageStoredLocally = false;
-  bool get imageStoredLocally => _imageStoredLocally;
+  /// can reach and will not outlive the machine holding it. Under the default
+  /// local-first storage a normal upload does not set this.
+  bool _imageUploadFellBack = false;
+  bool get imageUploadFellBack => _imageUploadFellBack;
+
+  /// 0.0–1.0 while the photo is uploading, null while it is being compressed
+  /// or when nothing is running.
+  ///
+  /// Null is deliberately distinct from 0.0: the card draws a *sweeping* bar
+  /// for null (unmeasurable work) and a *filling* bar for a real value. See
+  /// [UploadProgressOverlay].
+  double? _imageProgress;
+  double? get imageProgress => _imageProgress;
+
+  /// What the current wait is for, shown beside the bar.
+  String? _imageUploadPhase;
+  String? get imageUploadPhase => _imageUploadPhase;
 
   /// True when the picked photo could not be reduced before it was uploaded.
   ///
@@ -311,23 +336,38 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
     );
     if (xfile == null) return;
     _imageFile = File(xfile.path);
+    // Read once for the preview; on web the path is a blob URL we must not
+    // depend on. See [imageBytes].
+    _imageBytes = await xfile.readAsBytes();
     _imageKey = UniqueKey();
     _uploading = true;
+    _imageProgress = null;
+    _imageUploadPhase = 'Optimising';
     notifyListeners();
     try {
       final compressed = await compressImage(xfile, writePreviewFile: true);
       _imageFile = compressed.previewFile ?? _imageFile;
+      _imageBytes = compressed.bytes;
       _imageKey = UniqueKey();
       _imageOversized = compressed.oversized;
+      // Compression is done; from here the wait is bytes on the wire, which
+      // is measurable.
+      _imageProgress = 0;
+      _imageUploadPhase = 'Uploading';
       notifyListeners();
       final result = await ImgbbRepositoryImpl().uploadImage(
         compressed.bytes,
         fileName: compressed.fileName,
+        onProgress: (sent, total) {
+          if (total <= 0) return;
+          _imageProgress = (sent / total).clamp(0.0, 1.0);
+          notifyListeners();
+        },
       );
       _imageUrl = result.url;
       _imageDeleteUrl = result.deleteUrl;
       _uploadFailed = false;
-      _imageStoredLocally = result.storedLocally;
+      _imageUploadFellBack = result.fellBack;
       _imageKey = UniqueKey();
       notifyListeners();
     } on ApiException catch (e) {
@@ -335,6 +375,8 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
       setError(e.message);
     } finally {
       _uploading = false;
+      _imageProgress = null;
+      _imageUploadPhase = null;
       notifyListeners();
     }
   }
@@ -345,11 +387,14 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
   /// the backend retires the remote file when it writes the row.
   void removeImage() {
     _imageFile = null;
+    _imageBytes = null;
     _imageUrl = null;
     _imageDeleteUrl = null;
     _imageRemoved = true;
     _uploadFailed = false;
-    _imageStoredLocally = false;
+    _imageUploadFellBack = false;
+    _imageProgress = null;
+    _imageUploadPhase = null;
     _imageKey = UniqueKey();
     notifyListeners();
   }

@@ -88,11 +88,10 @@ class AppTopBar extends StatelessWidget {
                 backgroundImage: imageUrl.isNotEmpty
                     ? CachedNetworkImageProvider(imageUrl, maxWidth: 224)
                     : null,
-                onBackgroundImageError: imageUrl.isNotEmpty
-                    ? (_, __) {
-                        ProfileImageNotifier.instance.update('');
-                      }
-                    : null,
+                // No `onBackgroundImageError` handler on purpose -- see the
+                // note in app_screen_top_bar. Erasing the shared URL here
+                // blanked the avatar app-wide after one failed load, and
+                // nothing else refetches it.
                 child: imageUrl.isEmpty
                     ? const Icon(Icons.person, color: Colors.white, size: 22)
                     : null,

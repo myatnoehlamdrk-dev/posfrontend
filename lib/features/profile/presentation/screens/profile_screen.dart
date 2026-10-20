@@ -1,9 +1,8 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/l10n/app_strings.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:posfrontend/core/network/media_url.dart';
+import 'package:posfrontend/shared/services/profile_image_service.dart';
 import 'package:posfrontend/core/utils/image_compressor.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
@@ -31,6 +30,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _picker = ImagePicker();
   bool _uploadingImage = false;
+
+  /// 0.0–1.0 while the avatar uploads, null while compressing. Drives the
+  /// determinate bar so a slow connection shows movement instead of a stall.
+  double? _imageProgress;
 
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -160,7 +163,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
     if (xfile == null) return;
     if (!mounted) return;
-    setState(() => _uploadingImage = true);
+    setState(() {
+      _uploadingImage = true;
+      // Null means "busy but unmeasurable": the compression below has no
+      // progress to report, and the bar sweeps for it rather than being absent.
+      _imageProgress = null;
+    });
     try {
       // The avatar is rendered at ~88dp; uploading the camera original would
       // store megabytes for a picture shown the size of a coin.
@@ -170,28 +178,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
         // the user is now in for.
         showWarningMessage(context, AppStrings.of(context).photoNotOptimized);
       }
+      // Compression finished; the rest of the wait is bytes on the wire.
+      if (mounted) setState(() => _imageProgress = 0);
       final result = await ImgbbRepositoryImpl().uploadImage(
         compressed.bytes,
         fileName: compressed.fileName,
+        onProgress: (sent, total) {
+          if (total <= 0 || !mounted) return;
+          setState(() => _imageProgress = (sent / total).clamp(0.0, 1.0));
+        },
       );
       if (!mounted) return;
       _viewModel.setImageUrl(result.url);
-      ProfileImageNotifier.instance.update(
-        resolveMediaUrl(result.url) ?? result.url,
-      );
+      // Routed through the service so the app bar and drawer pick the new photo
+      // up too, and so it survives a refresh.
+      await ProfileImageService.remember(result.url);
       final success = await _viewModel.saveProfile();
       if (success && mounted) {
-        // A locally stored avatar is the more important half of this message:
-        // the save worked, but the file exists on one machine only, so it
-        // takes the place of the plain success toast.
-        if (result.storedLocally) {
+        // An upload that only reached the shop server because ImgBB did not is
+        // the more important half of this message: the save worked, but the
+        // file exists on one machine only, so it takes the place of the plain
+        // success toast.
+        if (result.fellBack) {
           showStoredLocallyWarning(context, result);
         } else {
           showSuccessSnackBar(context, 'Profile updated successfully');
         }
       }
     } finally {
-      if (mounted) setState(() => _uploadingImage = false);
+      if (mounted) {
+        setState(() {
+          _uploadingImage = false;
+          _imageProgress = null;
+        });
+      }
     }
   }
 
@@ -859,22 +879,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         children: [
           PremiumAvatarUpload(
-            onTap: _pickImage,
+            onTap: _uploadingImage ? null : _pickImage,
             isBusy: _uploadingImage,
+            progress: _imageProgress,
             imageUrl: image,
             radius: 54,
-            image: image.isEmpty
-                ? null
-                : CachedNetworkImage(
-                    imageUrl: image,
-                    fit: BoxFit.cover,
-                    memCacheWidth: 432,
-                    errorWidget: (context, error, stackTrace) {
-                      _viewModel.setImageUrl('');
-                      ProfileImageNotifier.instance.update('');
-                      return const SizedBox.shrink();
-                    },
-                  ),
+            // No custom `image:` widget. Passing one was what caused the black
+            // avatar: `PremiumAvatarUpload` treats any non-null `image` as
+            // "loaded", so the fallback glyph was suppressed -- and the widget
+            // passed here returned a zero-size transparent box on error, which
+            // painted as an empty dark circle. Left to render `imageUrl` it goes
+            // through `CachedProductImage`, which retries and then falls back to
+            // the icon.
           ),
           const SizedBox(height: 12),
           Text(

@@ -43,7 +43,10 @@ class SaleHistoryViewModel extends BaseViewModel {
   int? _yearOf(SaleOrderEntity order) {
     final raw = order.date.isNotEmpty ? order.date : order.createdAt;
     if (raw.isEmpty) return null;
-    return DateTime.tryParse(raw)?.year;
+    // Local, not UTC: the year shown is the year the sale happened *here*. A
+    // sale at 6:30am on Jan 1 in Myanmar is Dec 31 UTC, and grouping on the UTC
+    // year would file it under the previous year.
+    return DateTime.tryParse(raw)?.toLocal().year;
   }
 
   List<SaleOrderEntity> _applyYear(Iterable<SaleOrderEntity> source) {

@@ -132,11 +132,10 @@ class AppDrawer extends StatelessWidget {
                         backgroundImage: imageUrl.isNotEmpty
                             ? CachedNetworkImageProvider(imageUrl, maxWidth: 280)
                             : null,
-                        onBackgroundImageError: imageUrl.isNotEmpty
-                            ? (error, stackTrace) {
-                                ProfileImageNotifier.instance.update('');
-                              }
-                            : null,
+                        // No `onBackgroundImageError` handler on purpose -- see
+                        // the note in app_screen_top_bar. Erasing the shared URL
+                        // here blanked the avatar app-wide after one failed
+                        // load, and nothing else refetches it.
                         child: imageUrl.isEmpty
                             ? Text(
                                 initials,

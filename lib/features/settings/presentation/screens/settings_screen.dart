@@ -350,6 +350,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             PremiumImageUpload(
               onTap: _viewModel.isUploadingImage ? null : _pickShopImage,
               isBusy: _viewModel.isUploadingImage,
+              progress: _viewModel.imageProgress,
+              busyLabel: _viewModel.imageUploadPhase,
               imageUrl: hasImage ? shopImage : null,
               height: 150,
               title: context.l10n.t('Upload shop image'),
@@ -372,6 +374,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
     if (xfile == null) return;
 
+    // Before the compression, not after: `compressImage` is main-thread work
+    // on a full-size camera photo, and the card used to sit frozen through it.
+    _viewModel.beginImageUpload();
     final compressed = await compressImage(xfile);
     if (compressed.oversized && mounted) {
       // Said before the upload rather than after it: the point is the wait
@@ -387,7 +392,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
     if (!mounted || _viewModel.isUploadingImage) return;
 
-    if (_viewModel.imageStoredLocally) {
+    if (_viewModel.imageUploadFellBack) {
       showWarningMessage(
         context,
         AppStrings.of(context).imageSavedLocally,

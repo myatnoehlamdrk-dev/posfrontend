@@ -16,6 +16,7 @@ class ImgbbRepositoryImpl implements ImgbbRepository {
     Uint8List bytes, {
     String? fileName,
     CancelToken? cancelToken,
+    UploadProgressCallback? onProgress,
   }) async {
     try {
       final name =
@@ -50,6 +51,20 @@ class ImgbbRepositoryImpl implements ImgbbRepository {
         '/images',
         data: form,
         cancelToken: cancelToken,
+        // A shop on a slow connection is the case this exists for: without it
+        // the card can only say "waiting", which is what makes people tap
+        // again mid-upload. Setting the callback also stops Dio's default
+        // receiveTimeout from killing a slow-but-working transfer -- see
+        // ApiClient's upload timeout.
+        onSendProgress: onProgress,
+        options: Options(
+          // Sent in both directions on purpose: this is the *send* timeout for
+          // a multi-megabyte body, not the request timeout an ordinary JSON
+          // call wants. 20s is plenty for a small payload and far too short
+          // for a 5MB photo on a 1Mbps line.
+          sendTimeout: const Duration(seconds: 90),
+          receiveTimeout: const Duration(seconds: 90),
+        ),
       );
 
       final data = response.data;
@@ -68,9 +83,12 @@ class ImgbbRepositoryImpl implements ImgbbRepository {
       return ImgbbUploadResult(
         url: resolved,
         deleteUrl: (data['delete_url'] as String?) ?? '',
-        // Present only when the server fell back to local storage; a response
-        // that predates the flag is treated as the ImgBB success it was.
+        // Present only when the bytes are on the API host's disk.
         storedLocally: data['stored_locally'] == true,
+        // `fallback` is sent only when local storage caught an ImgBB failure;
+        // a response that predates the flag is treated as the ImgBB success
+        // it was, so nothing warns spuriously.
+        fellBack: data['fallback'] == true,
       );
     } on DioException catch (e) {
       throw ApiException.fromDio(e);

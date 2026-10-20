@@ -29,7 +29,9 @@ class CartCardEntity {
       id: json['id']?.toString() ?? '',
       orderId: json['orderId']?.toString() ?? '',
       createdAt:
-          DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+          // See cart_card_mapper: a cached value round-trips through `toJson`,
+          // so it is normalised to local on the way in and stays local.
+          DateTime.tryParse(json['createdAt']?.toString() ?? '')?.toLocal() ??
           DateTime.now(),
       items: (json['items'] as List? ?? const [])
           .map((e) => CartItemEntity.fromJson(e as Map<String, dynamic>))

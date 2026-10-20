@@ -521,7 +521,10 @@ class _NotificationTile extends StatelessWidget {
 
   String _timeLabel(BuildContext context, DateTime time) {
     final l10n = context.l10n;
-    final diff = DateTime.now().difference(time);
+    // Both sides normalised to local before subtracting. A UTC instant compared
+    // against a local `now()` yields the UTC offset rather than the elapsed
+    // time -- a notification that arrived seconds ago would read "6 hr ago".
+    final diff = DateTime.now().difference(time.toLocal());
     if (diff.inSeconds < 60) return l10n.t('Just now');
     if (diff.inMinutes < 60) {
       return l10n

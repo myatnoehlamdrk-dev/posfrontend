@@ -125,15 +125,20 @@ class DashboardTableRow extends Equatable {
     final parsed = DateTime.tryParse(raw);
     if (parsed == null) return raw;
 
+    // `tryParse` returns UTC for the API's `…Z` timestamps. Reading `.day`/
+    // `.hour` off that would print UTC wall-clock time -- six and a half hours
+    // behind in Myanmar -- so convert before formatting.
+    final local = parsed.toLocal();
+
     final date =
-        '${parsed.year.toString().padLeft(4, '0')}-'
-        '${parsed.month.toString().padLeft(2, '0')}-'
-        '${parsed.day.toString().padLeft(2, '0')}';
+        '${local.year.toString().padLeft(4, '0')}-'
+        '${local.month.toString().padLeft(2, '0')}-'
+        '${local.day.toString().padLeft(2, '0')}';
 
     if (!withTime) return date;
 
-    return '$date ${parsed.hour.toString().padLeft(2, '0')}:'
-        '${parsed.minute.toString().padLeft(2, '0')}';
+    return '$date ${local.hour.toString().padLeft(2, '0')}:'
+        '${local.minute.toString().padLeft(2, '0')}';
   }
 
   @override

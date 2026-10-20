@@ -15,6 +15,7 @@ import 'package:posfrontend/features/shop/domain/repositories/shop_repository.da
 import 'package:posfrontend/features/shop/data/repositories/shop_local_repository_impl.dart';
 import 'package:posfrontend/shared/repositories/imgbb_repository.dart';
 import 'package:posfrontend/shared/repositories/imgbb_repository_impl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsViewModel extends BaseViewModel {
   final SettingsRepository _repository;
@@ -46,13 +47,47 @@ class SettingsViewModel extends BaseViewModel {
   bool _isUploadingImage = false;
   bool get isUploadingImage => _isUploadingImage;
 
-  /// True when the shop photo was kept on the API host instead of ImgBB.
+  /// 0.0–1.0 while the shop photo is uploading, null when nothing measurable
+  /// is happening (compressing the picked file, or not uploading at all).
+  ///
+  /// A determinate value is what lets the Settings card draw a real progress
+  /// bar: on a slow connection the upload takes long enough that "still
+  /// running" and "silently stalled" look identical without one.
+  double? _imageProgress;
+  double? get imageProgress => _imageProgress;
+
+  /// What the current upload wait is for, for the card's label.
+  String? _imageUploadPhase;
+  String? get imageUploadPhase => _imageUploadPhase;
+
+  /// Marks the pick/compress/upload sequence as running, before any of it
+  /// starts.
+  ///
+  /// Called by the screen the moment the picker returns: compression happens
+  /// before [updateShopImage] runs, and on a large photo that is seconds of
+  /// work that used to happen with no indicator at all.
+  void beginImageUpload() {
+    _isUploadingImage = true;
+    _imageProgress = null;
+    _imageUploadPhase = 'Optimising';
+    notifyListeners();
+  }
+
+  /// True when the upload only reached the API host because ImgBB did not —
+  /// the fallback path, not the planned one.
   ///
   /// [updateShopImage] still succeeds in that case — the file is saved and the
   /// URL works — but it lives on one machine only, so the Settings screen
-  /// shows a warning in place of the success toast.
-  bool _imageStoredLocally = false;
-  bool get imageStoredLocally => _imageStoredLocally;
+  /// shows a warning in place of the success toast. Under the default
+  /// local-first storage this is false for a normal upload: keeping the photo
+  /// on the shop server is the plan there, and warning about every upload
+  /// would train the warning away.
+  bool _imageUploadFellBack = false;
+  bool get imageUploadFellBack => _imageUploadFellBack;
+
+  /// SharedPreferences key holding the shop image URL that last loaded —
+  /// the "last known good" shown when a fetch comes back empty or not at all.
+  static const String _lastShopImageKey = 'last_known_shop_image';
 
   bool _isSubmittingFeedback = false;
   bool get isSubmittingFeedback => _isSubmittingFeedback;
@@ -63,14 +98,57 @@ class SettingsViewModel extends BaseViewModel {
     try {
       _settings = await _repository.getSettings();
       _isInitialized = true;
+      if (_settings.shopImage.isEmpty) {
+        // The server answered but handed back no image (shop row missing a
+        // logo, a partially-seeded database…). Rather than dropping the card
+        // to its default state, fall back to the last image that did load —
+        // the same last-known-good copy the offline start uses.
+        final lastKnown = await _lastKnownShopImage();
+        if (lastKnown.isNotEmpty) {
+          _settings = _settings.copyWith(shopImage: lastKnown);
+        }
+      } else {
+        await _rememberShopImage(_settings.shopImage);
+      }
       // Theme and language go through the same helper the post-login sync
       // uses, so the Settings screen and session start always agree.
       applyServerPreferences(_settings);
     } catch (e) {
+      // The server did not answer at all: show the last image it did give us
+      // rather than an empty card.
+      final lastKnown = await _lastKnownShopImage();
+      if (lastKnown.isNotEmpty && _settings.shopImage.isEmpty) {
+        _settings = _settings.copyWith(shopImage: lastKnown);
+      }
       setError('Failed to load settings');
     } finally {
       setLoading(false);
     }
+  }
+
+  /// The shop image URL that last loaded successfully, or '' if none is
+  /// recorded yet. Never throws: a preferences failure must not mask the
+  /// error being reported by the caller.
+  Future<String> _lastKnownShopImage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString(_lastShopImageKey) ?? '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  /// Records [url] as the last-known shop image. An empty value clears the
+  /// record; failures are ignored — this is a cache, not a save.
+  Future<void> _rememberShopImage(String url) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (url.isEmpty) {
+        await prefs.remove(_lastShopImageKey);
+      } else {
+        await prefs.setString(_lastShopImageKey, url);
+      }
+    } catch (_) {}
   }
 
   /// The brightness actually on screen. A residual "system" (only possible
@@ -149,17 +227,29 @@ class SettingsViewModel extends BaseViewModel {
 
   Future<void> updateShopImage(Uint8List imageBytes, {String? fileName}) async {
     _isUploadingImage = true;
-    _imageStoredLocally = false;
+    _imageUploadFellBack = false;
+    // The bytes are about to move, so the bar switches from sweeping
+    // ("Optimising") to filling. Set before the request so a fast connection
+    // never shows the previous phase's label over a finished bar.
+    _imageProgress = 0;
+    _imageUploadPhase = 'Uploading';
     notifyListeners();
     try {
       final result = await _imgbbRepository.uploadImage(
         imageBytes,
         fileName: fileName ?? 'shop_image.jpg',
+        onProgress: (sent, total) {
+          if (total <= 0) return;
+          _imageProgress = (sent / total).clamp(0.0, 1.0);
+          notifyListeners();
+        },
       );
-      _imageStoredLocally = result.storedLocally;
+      _imageUploadFellBack = result.fellBack;
       _settings = _settings.copyWith(
         shopImage: resolveMediaUrl(result.url) ?? '',
       );
+      // A successful upload is by definition the new last-known-good image.
+      await _rememberShopImage(_settings.shopImage);
       notifyListeners();
       _settings = await _repository.updateSettings(shopImage: result.url);
 
@@ -175,6 +265,10 @@ class SettingsViewModel extends BaseViewModel {
       setError('Failed to upload image: ${formatApiError(e)}');
     } finally {
       _isUploadingImage = false;
+      // Cleared so the next upload starts from a clean bar rather than
+      // flashing the previous run's final percentage.
+      _imageProgress = null;
+      _imageUploadPhase = null;
       notifyListeners();
     }
   }

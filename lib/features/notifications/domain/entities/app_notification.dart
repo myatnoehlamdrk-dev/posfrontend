@@ -99,7 +99,10 @@ class AppNotification {
         body: json['body'] as String? ?? '',
         type: json['type'] as String? ?? '',
         data: (json['data'] as Map<String, dynamic>?) ?? const {},
-        receivedAt: DateTime.tryParse(json['receivedAt'] as String? ?? '') ??
+        // Normalised on the way in because this value is written back out by
+        // `toJson` and cached; see cart_card_mapper for the same reasoning.
+        receivedAt: DateTime.tryParse(json['receivedAt'] as String? ?? '')
+                ?.toLocal() ??
             DateTime.now(),
         read: json['read'] as bool? ?? false,
       );

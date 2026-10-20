@@ -10,7 +10,7 @@ class FeedbackApiModel {
       message: json['message'] as String? ?? '',
       userName: json['userName'] as String? ?? '',
       userEmail: json['userEmail'] as String? ?? '',
-      createdAt: DateTime.tryParse(json['createdAt'] as String? ?? ''),
+      createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '')?.toLocal(),
     );
   }
 }

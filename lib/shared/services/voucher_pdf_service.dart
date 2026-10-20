@@ -14,7 +14,6 @@ import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
 import 'package:posfrontend/shared/l10n/app_language.dart';
 import 'package:posfrontend/shared/l10n/app_strings.dart';
-import 'package:posfrontend/shared/l10n/locale_notifier.dart';
 import 'package:posfrontend/shared/services/pdf_fonts.dart';
 
 /// Runs [body] off the main thread where the platform allows it.
@@ -26,6 +25,16 @@ Future<T> _offMainThread<T>(FutureOr<T> Function() body) async {
   if (kIsWeb) return body();
   return Isolate.run(body);
 }
+
+/// The language every printed voucher/receipt uses.
+///
+/// Print is deliberately decoupled from the app's UI language: there is a
+/// single receipt style, in English, with the built-in Helvetica font. This is
+/// what mainstream POS thermal printers output, and it keeps the paper identical
+/// for every shop no matter which language the cashier picked. The bundled
+/// Noto faces exist only so the UI (and, before this, the A4 sheet) could show
+/// other scripts; a printed receipt never needs them.
+const AppLanguage _printLanguage = AppLanguage.english;
 
 String _fmt(double value) => value.withCommas();
 
@@ -1052,11 +1061,8 @@ class VoucherPdfService {
       shopImageBytes: imageBytes,
     );
 
-    final language = LocaleNotifier.instance.language;
-    final fontBytes = await PdfFonts.forLanguage(language);
-
     final pdfBytes = await _offMainThread(
-      () => _buildA4PdfBytes(params, language, fontBytes),
+      () => _buildA4PdfBytes(params, _printLanguage, null),
     );
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat format) async => pdfBytes,
@@ -1110,11 +1116,8 @@ class VoucherPdfService {
       customerLocation: customerLocation,
     );
 
-    final language = LocaleNotifier.instance.language;
-    final fontBytes = await PdfFonts.forLanguage(language);
-
     final pdfBytes = await _offMainThread(
-      () => _buildReceiptPdfBytes(params, language, fontBytes),
+      () => _buildReceiptPdfBytes(params, _printLanguage, null),
     );
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat format) async => pdfBytes,
@@ -1167,10 +1170,7 @@ class VoucherPdfService {
       shopImageBytes: imageBytes,
     );
 
-    final language = LocaleNotifier.instance.language;
-    final fontBytes = await PdfFonts.forLanguage(language);
-
-    return _offMainThread(() => _buildA4PdfBytes(params, language, fontBytes));
+    return _offMainThread(() => _buildA4PdfBytes(params, _printLanguage, null));
   }
 
   static Future<Uint8List> exportReceiptPdf({
@@ -1219,11 +1219,8 @@ class VoucherPdfService {
       customerLocation: customerLocation,
     );
 
-    final language = LocaleNotifier.instance.language;
-    final fontBytes = await PdfFonts.forLanguage(language);
-
     return _offMainThread(
-      () => _buildReceiptPdfBytes(params, language, fontBytes),
+      () => _buildReceiptPdfBytes(params, _printLanguage, null),
     );
   }
 }

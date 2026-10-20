@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
+import 'package:posfrontend/core/extensions/datetime_extensions.dart';
 import 'package:posfrontend/features/cart/data/cart_card_mapper.dart';
 import 'package:posfrontend/features/cart/data/cart_store.dart';
 import 'package:posfrontend/features/cart/domain/entities/cart_card_entity.dart';
@@ -452,10 +453,10 @@ class _CardTile extends StatelessWidget {
     );
   }
 
-  String _formatTime(DateTime dt) {
-    String two(int n) => n.toString().padLeft(2, '0');
-    return '${dt.year}-${two(dt.month)}-${two(dt.day)}  ${two(dt.hour)}:${two(dt.minute)}';
-  }
+  // Replaced the hand-rolled copy that used to live here: it read raw
+  // `.hour`/`.day` off the value, so a UTC timestamp from the API printed
+  // UTC wall-clock time. `toCompactDateTime` converts to local first.
+  String _formatTime(DateTime dt) => dt.toCompactDateTime();
 
   Future<void> _showDeleteDialog(BuildContext context) async {
     final dangerFg = context.palette.dangerFg;

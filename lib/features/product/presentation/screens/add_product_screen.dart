@@ -317,12 +317,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   Widget _imageSection() {
     final p = context.palette;
+    final bytes = _vm.imageBytes;
     final file = _vm.imageFile;
     final url = _vm.imageUrl;
-    final hasPreview = file != null || (url?.isNotEmpty ?? false);
+    final hasPreview = bytes != null || file != null || (url?.isNotEmpty ?? false);
 
     final upload = PremiumImageUpload(
       isBusy: _vm.uploading,
+      progress: _vm.imageProgress,
+      busyLabel: _vm.imageUploadPhase,
       icon: Icons.image_outlined,
       height: 168,
       title: context.l10n.t('Product image'),
@@ -332,39 +335,50 @@ class _AddProductScreenState extends State<AddProductScreen> {
       image: !hasPreview
           ? null
           : RepaintBoundary(
-              child: file != null
-                  ? (kIsWeb
-                        ? Image.network(
-                            file.path,
-                            key: _vm.imageKey,
-                            height: 168,
-                            fit: BoxFit.cover,
-                            cacheWidth: 1024,
-                          )
-                        : Image.file(
-                            file,
-                            key: _vm.imageKey,
-                            height: 168,
-                            fit: BoxFit.cover,
-                            cacheWidth: 1024,
-                          ))
-                  : CachedProductImage(
-                      url: resolveMediaUrl(url!)!,
+              child: bytes != null
+                  // Preferred over `file`: on web the file path is a `blob:`
+                  // URL, and an image pointed at one paints nothing after the
+                  // URL is revoked -- a black preview over a successful upload.
+                  ? Image.memory(
+                      bytes,
                       key: _vm.imageKey,
-                      memCacheWidth: 1024,
-                      placeholder: const Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.brandPurple,
-                        ),
-                      ),
-                      errorWidget: const Center(
-                        child: Icon(
-                          Icons.broken_image_outlined,
-                          size: 42,
-                          color: AppColors.brandPurple,
-                        ),
-                      ),
-                    ),
+                      height: 168,
+                      fit: BoxFit.cover,
+                      cacheWidth: 1024,
+                    )
+                  : (file != null
+                        ? (kIsWeb
+                              ? Image.network(
+                                  file.path,
+                                  key: _vm.imageKey,
+                                  height: 168,
+                                  fit: BoxFit.cover,
+                                  cacheWidth: 1024,
+                                )
+                              : Image.file(
+                                  file,
+                                  key: _vm.imageKey,
+                                  height: 168,
+                                  fit: BoxFit.cover,
+                                  cacheWidth: 1024,
+                                ))
+                        : CachedProductImage(
+                            url: resolveMediaUrl(url!)!,
+                            key: _vm.imageKey,
+                            memCacheWidth: 1024,
+                            placeholder: const Center(
+                              child: CircularProgressIndicator(
+                                color: AppColors.brandPurple,
+                              ),
+                            ),
+                            errorWidget: const Center(
+                              child: Icon(
+                                Icons.broken_image_outlined,
+                                size: 42,
+                                color: AppColors.brandPurple,
+                              ),
+                            ),
+                          )),
             ),
       onTap: _vm.uploading
           ? null
@@ -375,7 +389,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 // A photo kept on the shop's own server is the more important
                 // half of this message, so it replaces the plain success toast
                 // rather than fighting it for the same snackbar.
-                if (_vm.imageStoredLocally) {
+                if (_vm.imageUploadFellBack) {
                   showWarningMessage(
                     context,
                     AppStrings.of(context).imageSavedLocally,

@@ -120,11 +120,16 @@ class AppScreenTopBar extends StatelessWidget {
                   backgroundImage: imageUrl.isNotEmpty
                       ? CachedNetworkImageProvider(imageUrl, maxWidth: 224)
                       : null,
-                  onBackgroundImageError: imageUrl.isNotEmpty
-                      ? (_, _) {
-                          ProfileImageNotifier.instance.update('');
-                        }
-                      : null,
+                  // Deliberately no `onBackgroundImageError` handler.
+                  //
+                  // It used to call `ProfileImageNotifier.instance.update('')`,
+                  // which erased the shared avatar URL for the *whole app* on a
+                  // single failed load. Since nothing else refetches it (only
+                  // the dashboard's initState and the profile screen ever seed
+                  // it), one transient failure blanked the avatar everywhere
+                  // until the user happened to reopen the dashboard. A failed
+                  // render now just falls back to the initials below for this
+                  // frame, leaving the URL in place to retry.
                   child: imageUrl.isEmpty
                       ? Text(
                           user?.fullName.trim().isNotEmpty == true

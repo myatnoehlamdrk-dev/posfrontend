@@ -15,6 +15,7 @@ import 'package:posfrontend/features/notifications/data/notification_store.dart'
 import 'package:posfrontend/features/onboarding/presentation/screens/splash_screen.dart';
 import 'package:posfrontend/shared/l10n/locale_notifier.dart';
 import 'package:posfrontend/shared/services/fcm_service.dart';
+import 'package:posfrontend/shared/services/profile_image_service.dart';
 import 'package:posfrontend/shared/theme/app_theme.dart';
 import 'package:posfrontend/shared/theme/theme_mode_notifier.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
@@ -55,6 +56,10 @@ Future<void> main() async {
   SyncManager.instance.start(); //checking internet local storage to backend
   unawaited(SyncManager.instance.loadPersistedSyncTime()); //Restore the last synchronization time
   unawaited(OutboxQueue.instance.refreshCounts()); //Restore queued-write counts
+  // Seed the shared avatar for the whole app. Without this the app bar, screen
+  // top bar and drawer stay blank until the user happens to open the dashboard,
+  // because that was the only screen that ever fetched it.
+  unawaited(ProfileImageService.warmUp());
   try {
     await getIt<FcmService>().setup(); // Initialize Firebase Cloud Messaging 
   } catch (e) {

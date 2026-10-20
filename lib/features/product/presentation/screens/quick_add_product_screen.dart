@@ -1,6 +1,7 @@
 import 'package:posfrontend/shared/l10n/app_strings.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -37,6 +38,18 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
   String? _imageUrl;
   String? _imageDeleteUrl;
   bool _uploading = false;
+
+  /// 0.0–1.0 while the photo uploads, null while compressing — see
+  /// [UploadProgressOverlay].
+  double? _imageProgress;
+
+  /// The compressed bytes of the picked photo.
+  ///
+  /// The preview renders from these rather than from [_imageFile]'s path: on
+  /// the web build `image_picker` hands back a `blob:` object URL, and an
+  /// `<img>` pointed at one paints nothing once the URL is revoked — which is
+  /// what made the preview a black box while the upload itself succeeded.
+  Uint8List? _imageBytes;
   bool _saving = false;
   Key _imageKey = UniqueKey();
 
@@ -123,17 +136,27 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
     );
     if (xfile == null) return;
 
+    // Read once, up front: the preview needs bytes (see [_imageBytes]), and on
+    // web `xfile.path` is a blob URL that must not be relied on.
+    final pickedBytes = await xfile.readAsBytes();
+    if (!mounted) return;
+
     setState(() {
       _imageFile = File(xfile.path);
+      _imageBytes = pickedBytes;
       _imageKey = UniqueKey();
       _uploading = true;
+      _imageProgress = null;
     });
     try {
       final compressed = await compressImage(xfile, writePreviewFile: true);
       if (!mounted) return;
       setState(() {
         _imageFile = compressed.previewFile ?? _imageFile;
+        _imageBytes = compressed.bytes;
         _imageKey = UniqueKey();
+        // Compression done; the remaining wait is measurable bytes.
+        _imageProgress = 0;
       });
       if (compressed.oversized) {
         // Said before the upload starts rather than after it finishes: the
@@ -143,6 +166,10 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
       final result = await ImgbbRepositoryImpl().uploadImage(
         compressed.bytes,
         fileName: compressed.fileName,
+        onProgress: (sent, total) {
+          if (total <= 0 || !mounted) return;
+          setState(() => _imageProgress = (sent / total).clamp(0.0, 1.0));
+        },
       );
       if (!mounted) return;
       setState(() {
@@ -150,14 +177,20 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
         _imageDeleteUrl = result.deleteUrl;
         _imageKey = UniqueKey();
       });
-      // Nothing at all when ImgBB took the photo; amber when the server had to
-      // keep it, since the file then exists on one machine only.
+      // Silent when ImgBB took the photo; amber when the server had to keep
+      // it, since the file then exists on one machine only. The helper does
+      // the gating — see ImgbbUploadResult.fellBack.
       showStoredLocallyWarning(context, result);
     } on ApiException catch (e) {
       if (!mounted) return;
       showErrorMessage(context, e.message);
     } finally {
-      if (mounted) setState(() => _uploading = false);
+      if (mounted) {
+        setState(() {
+          _uploading = false;
+          _imageProgress = null;
+        });
+      }
     }
   }
 
@@ -294,9 +327,11 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
   }
 
   Widget _imageSection() {
-    final file = _imageFile;
+    final bytes = _imageBytes;
     return PremiumImageUpload(
       isBusy: _uploading,
+      progress: _imageProgress,
+      busyLabel: 'Uploading',
       onTap: _uploading ? null : _pickImage,
       height: 168,
       icon: Icons.add_a_photo_outlined,
@@ -304,25 +339,21 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
       subtitle: context.l10n.t('Take a photo or choose an image'),
       hint: context.l10n.t('JPG or PNG up to 5MB'),
       changeLabel: context.l10n.t('Change photo'),
-      image: file == null
+      // Rendered from the picked bytes rather than a file path: on web the
+      // path is a `blob:` URL that stops resolving, which left the preview
+      // black even though the photo uploaded fine. No `errorBuilder` is needed
+      // here -- `Image.memory` decodes synchronously from bytes we already hold.
+      image: bytes == null
           ? null
           : ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: kIsWeb
-                  ? Image.network(
-                      file.path,
-                      key: _imageKey,
-                      height: 168,
-                      fit: BoxFit.cover,
-                      cacheWidth: 1024,
-                    )
-                  : Image.file(
-                      file,
-                      key: _imageKey,
-                      height: 168,
-                      fit: BoxFit.cover,
-                      cacheWidth: 1024,
-                    ),
+              child: Image.memory(
+                bytes,
+                key: _imageKey,
+                height: 168,
+                fit: BoxFit.cover,
+                cacheWidth: 1024,
+              ),
             ),
     );
   }

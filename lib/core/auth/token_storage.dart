@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
+
 /// Persistent storage for the Sanctum bearer token.
 ///
 /// The token is full account access, so it lives in platform secure storage --
@@ -124,6 +126,14 @@ class TokenStorage {
 
     final legacy = await SharedPreferences.getInstance();
     await legacy.remove(_legacyPrefsKey);
+    // The cached avatar is dropped here rather than through
+    // ProfileImageService, because that service reads the token to decide
+    // whether to refresh — importing it would make these two files depend on
+    // each other. The storage key is duplicated deliberately; keep it in sync
+    // with ProfileImageService._prefsKey. The notifier itself is safe to touch:
+    // it is a leaf with no imports of its own.
+    await legacy.remove('profile_image_url');
+    ProfileImageNotifier.instance.update('');
   }
 
   /// Drop the in-memory copy without touching disk.

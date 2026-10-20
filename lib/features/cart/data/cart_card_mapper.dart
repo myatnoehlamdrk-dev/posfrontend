@@ -49,7 +49,10 @@ CartCardEntity? cartCardFromOrder(Map<String, dynamic> json) {
     id: 'backend-$orderId',
     orderId: orderId,
     createdAt:
-        DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+        // Converted on parse rather than at display time: this value is
+        // persisted by `toJson`, so a UTC instant left unconverted would be
+        // replayed as-is on the next launch and the offset would stick.
+        DateTime.tryParse(json['createdAt']?.toString() ?? '')?.toLocal() ??
         DateTime.now(),
     items: items,
   );

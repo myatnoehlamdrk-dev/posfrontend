@@ -13,10 +13,12 @@ import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 /// Visual layers (bottom → top):
 ///   1. Soft ambient glow behind the surface
 ///   2. Rounded surface with tinted fill and subtle primary outline
-///   3. Image / empty state / busy spinner
+///   3. Image / empty state
 ///   4. Optional gradient scrim for legibility over photos
 ///   5. Solid outline stays visible over any photo
 ///   6. Optional "change" chip anchored bottom-right
+///   7. Busy overlay — scrim, label and [progress] bar, drawn over whatever
+///      is underneath so a *replace* is as visible as a first upload
 ///
 /// Colours come from [AppPalette] so the control follows the active theme.
 class PremiumImageUpload extends StatelessWidget {
@@ -29,8 +31,22 @@ class PremiumImageUpload extends StatelessWidget {
   final Uint8List? imageBytes;
   final String? imageBase64;
 
-  /// When true the surface shows a busy indicator instead of the empty state.
+  /// When true the surface shows a busy overlay instead of the empty state —
+  /// and, when an image is already there, over the top of it too.
   final bool isBusy;
+
+  /// How far the upload has got, 0.0–1.0.
+  ///
+  /// A real value (from the transport's send callback) draws a determinate
+  /// bar, which is what a slow connection needs — "waiting with no number" is
+  /// what makes people tap again or assume it failed. Leave null for phases
+  /// with no measurable progress, such as compressing the picked photo: the
+  /// bar is still drawn, just sweeping.
+  final double? progress;
+
+  /// What the wait is for — "Uploading…", "Optimising…". Null shows just the
+  /// bar.
+  final String? busyLabel;
 
   final String title;
   final String subtitle;
@@ -53,6 +69,8 @@ class PremiumImageUpload extends StatelessWidget {
     this.imageBytes,
     this.imageBase64,
     this.isBusy = false,
+    this.progress,
+    this.busyLabel,
     this.title = 'Upload image',
     this.subtitle = 'Tap to browse your gallery',
     this.hint = 'JPG or PNG',
@@ -98,6 +116,12 @@ class PremiumImageUpload extends StatelessWidget {
     return CachedProductImage(
       url: imageUrl!,
       memCacheWidth: 1024,
+      // Same reasoning as the avatar: an empty box on failure would be
+      // indistinguishable from a broken control. The retry budget lives in
+      // `CachedProductImage`, so this icon only appears once it has given up.
+      errorWidget: Center(
+        child: Icon(icon, size: 34, color: context.palette.accentText),
+      ),
     );
   }
 
@@ -158,17 +182,6 @@ class PremiumImageUpload extends StatelessWidget {
                             ),
                           ),
                         )
-                      else if (isBusy)
-                        const Center(
-                          child: SizedBox(
-                            width: 26,
-                            height: 26,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.4,
-                              color: Colors.white,
-                            ),
-                          ),
-                        )
                       else
                         Positioned.fill(
                           child: _EmptyState(title: title, icon: icon),
@@ -186,11 +199,19 @@ class PremiumImageUpload extends StatelessWidget {
                           ),
                         ),
                       ),
-                      if (hasImage && showChangeChip)
+                      if (hasImage && showChangeChip && !isBusy)
                         Positioned(
                           right: 12,
                           bottom: 12,
                           child: _ChangeChip(label: changeLabel),
+                        ),
+                      if (isBusy)
+                        Positioned.fill(
+                          child: UploadProgressOverlay(
+                            progress: progress,
+                            label: busyLabel,
+                            borderRadius: borderRadius,
+                          ),
                         ),
                     ],
                   ),
@@ -198,6 +219,78 @@ class PremiumImageUpload extends StatelessWidget {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The busy state: a dimming scrim, an optional label, and a determinate
+/// **linear** progress bar.
+///
+/// A bar rather than a spinner because the wait has a known length: the bytes
+/// go out with a content length, so the transport can say how far along the
+/// upload is. On a free/slow connection a 5MB photo can take a minute, and a
+/// spinner that never changes is indistinguishable from one that has stalled.
+///
+/// [progress] null means "busy but unmeasurable" (compressing the picked
+/// photo, for example) and draws the same bar sweeping, so the control never
+/// changes shape between the two phases.
+class UploadProgressOverlay extends StatelessWidget {
+  final double? progress;
+  final String? label;
+  final double borderRadius;
+
+  const UploadProgressOverlay({
+    super.key,
+    this.progress,
+    this.label,
+    this.borderRadius = 20,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final value = progress?.clamp(0.0, 1.0);
+    final percent = value == null ? null : (value * 100).round();
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(borderRadius),
+      child: ColoredBox(
+        // Opaque enough to read over a bright or busy photo, translucent
+        // enough that the picture underneath still says which one is being
+        // replaced.
+        color: Colors.black.withValues(alpha: 0.55),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Center(
+              child: label == null
+                  ? const SizedBox.shrink()
+                  : Text(
+                      percent == null ? label! : '$label $percent%',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+            ),
+            // Pinned to the bottom edge: it reads as the surface filling up,
+            // and it does not cover the photo's centre.
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: LinearProgressIndicator(
+                value: value,
+                minHeight: 4,
+                backgroundColor: Colors.white.withValues(alpha: 0.22),
+                valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -307,6 +400,10 @@ class PremiumAvatarUpload extends StatelessWidget {
   final String? imageUrl;
   final String? imageBase64;
   final bool isBusy;
+
+  /// How far the upload has got, 0.0–1.0. Null draws the bar sweeping — see
+  /// [UploadProgressOverlay].
+  final double? progress;
   final IconData icon;
   final double radius;
 
@@ -317,6 +414,7 @@ class PremiumAvatarUpload extends StatelessWidget {
     this.imageUrl,
     this.imageBase64,
     this.isBusy = false,
+    this.progress,
     this.icon = Icons.person_outline,
     this.radius = 54,
   });
@@ -376,18 +474,20 @@ class PremiumAvatarUpload extends StatelessWidget {
                                 : CachedProductImage(
                                     url: imageUrl!,
                                     memCacheWidth: 512,
+                                    // A failed load must not leave an empty
+                                    // circle. Without this the widget is given
+                                    // *something* to paint, so `_hasImage` stays
+                                    // true and the placeholder glyph below is
+                                    // never reached -- and a transparent or
+                                    // zero-size error box then reads as a black
+                                    // avatar. `CachedProductImage` retries first
+                                    // and only gives up after three attempts.
+                                    errorWidget: Icon(
+                                      icon,
+                                      size: radius * 0.8,
+                                      color: p.accentText,
+                                    ),
                                   )))
-                      else if (isBusy)
-                        const Center(
-                          child: SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.4,
-                              color: Colors.white,
-                            ),
-                          ),
-                        )
                       else
                         Center(
                           // `accentText`: this placeholder glyph sits on
@@ -410,6 +510,17 @@ class PremiumAvatarUpload extends StatelessWidget {
                                 width: 2,
                               ),
                             ),
+                          ),
+                        ),
+                      // Over the top of the avatar, not instead of it: an
+                      // avatar being replaced used to show no feedback at all,
+                      // because the old branch only drew a spinner when there
+                      // was no image to fall back on.
+                      if (isBusy)
+                        Positioned.fill(
+                          child: UploadProgressOverlay(
+                            progress: progress,
+                            borderRadius: radius,
                           ),
                         ),
                     ],
