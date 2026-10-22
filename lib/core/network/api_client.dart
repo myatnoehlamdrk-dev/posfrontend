@@ -12,7 +12,18 @@ class ApiClient {
   /// those are served from the origin rather than from under `/api`. Prefixing
   /// here would silently rewrite every uploaded image URL to a 404. Use
   /// [apiRoot] when you need the versioned API base.
-  static const String baseUrl = String.fromEnvironment('BASE_URL');
+  ///
+  /// The default is the deployed Render service, so a build with no
+  /// `--dart-define` at all still talks to a host that answers rather than to
+  /// the empty string (which produced broken-image icons on every screen
+  /// instead of one clear failure). Pointing a build at a local backend is
+  /// now an explicit act: pass `--dart-define=BASE_URL=http://127.0.0.1:8000`,
+  /// or build through `tool/run.bat` / `tool/build.bat`, which read
+  /// `config/env.json`.
+  static const String baseUrl = String.fromEnvironment(
+    'BASE_URL',
+    defaultValue: 'https://mdrkposbackend.onrender.com',
+  );
 
   /// The API version to talk to, as a bare segment: `v1`.
   ///
