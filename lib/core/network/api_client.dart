@@ -12,7 +12,18 @@ class ApiClient {
   /// those are served from the origin rather than from under `/api`. Prefixing
   /// here would silently rewrite every uploaded image URL to a 404. Use
   /// [apiRoot] when you need the versioned API base.
-  static const String baseUrl = String.fromEnvironment('BASE_URL');
+  ///
+  /// The production origin is the default so that *every* build — including a
+  /// bare `flutter build apk` run without any flags — ships pointing at the
+  /// real server. An unset `BASE_URL` used to be baked into shipped APKs as
+  /// the empty string, which in release mode (where main.dart's assert is
+  /// stripped) meant every request quietly went to `http://localhost`. Passing
+  /// `--dart-define-from-file=config/env.json` still overrides this, which is
+  /// what `tool\run.bat` and `tool\build.bat` do to target a LAN dev server.
+  static const String baseUrl = String.fromEnvironment(
+    'BASE_URL',
+    defaultValue: 'https://mdrkposbackend.onrender.com',
+  );
 
   /// The API version to talk to, as a bare segment: `v1`.
   ///
@@ -49,6 +60,17 @@ class ApiClient {
     // keystroke away in a hand-edited env file, and it is the same double
     // slash the single-trim rule existed to prevent.
     final trimmed = baseUrl.replaceFirst(RegExp(r'/+$'), '');
+
+    // An unset origin used to be joined as-is, producing the *relative* path
+    // `/api/v1`. Dio 5 rejects that synchronously on every non-web platform
+    // (`Invalid argument (baseUrl): Must be a valid URL on platforms other
+    // than Web`), which threw out of main() before runApp() and froze the
+    // release build on the native window splash — no Flutter frame, no error
+    // dialog, nothing on screen to explain it. localhost is a valid absolute
+    // URL that no device answers, so an unbaked BASE_URL now degrades to
+    // "every request fails" — the behaviour main.dart's comment already
+    // promised — instead of an invisible startup crash.
+    if (trimmed.isEmpty) return 'http://localhost/api/$version';
 
     return '$trimmed/api/$version';
   }

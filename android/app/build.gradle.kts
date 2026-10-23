@@ -4,9 +4,7 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-import com.android.build.api.dsl.ApplicationExtension
-
-configure<ApplicationExtension> {
+android {
     namespace = "com.example.posfrontend"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
