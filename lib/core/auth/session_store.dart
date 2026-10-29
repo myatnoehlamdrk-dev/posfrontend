@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:posfrontend/core/local/local_store.dart';
 import 'package:posfrontend/features/auth/data/models/login_response.dart';
 import 'package:shared_preferences/shared_preferences.dart';

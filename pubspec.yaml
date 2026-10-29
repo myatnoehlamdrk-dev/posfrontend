@@ -81,6 +81,10 @@ dependencies:
   cached_network_image: ^4.0.4
   mm_nrc_kit: ^1.0.3
   permission_handler: 12.0.0
+  # Renders the bundled client brochure (assets/brochure/*.html) inside an
+  # in-app screen. Android/iOS only -- the web build never imports this
+  # package, see lib/shared/widgets/brochure_viewer_screen.dart.
+  webview_flutter: ^4.10.0
 
 dev_dependencies:
   flutter_test:
@@ -111,6 +115,10 @@ flutter:
     - assets/shop.png
     - assets/shop_rotated.png
     - assets/launcher.png
+    # Client brochure shown by the "Customer Guide" button on the welcome
+    # screen. The marketing/ folder at the repo root holds the editable
+    # sources; copy them here after editing.
+    - assets/brochure/
 
   # Poppins carries no Burmese, Thai or CJK glyphs, so text in those languages
   # would render as tofu boxes. These are applied as a per-glyph fallback

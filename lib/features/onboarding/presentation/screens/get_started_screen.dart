@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:posfrontend/features/auth/presentation/screens/login_screen.dart';
+import 'package:posfrontend/shared/widgets/brochure_viewer_screen.dart';
 
 /// Design tokens for the welcome page.
 ///
@@ -116,6 +117,15 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
     );
   }
 
+  /// The client brochure -- English and Myanmar in one screen, chosen with the
+  /// language switch at the top. It gets its own route rather than a dialog:
+  /// it is a document to read, not a feature to preview.
+  void _openBrochure() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const BrochureViewerScreen()),
+    );
+  }
+
   void _scrollToFeatures() {
     final target = _featureKey.currentContext;
     if (target == null) return;
@@ -198,6 +208,12 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
         _PrimaryButton(onPressed: _goToLogin),
         const SizedBox(height: 6),
         _SecondaryAction(onPressed: _openDemo),
+        const SizedBox(height: 6),
+        _SecondaryAction(
+          onPressed: _openBrochure,
+          icon: null,
+          label: 'Brochure for Customers',
+        ),
         const SizedBox(height: 5),
         const _SupportLine(),
         const SizedBox(height: 32),
@@ -232,6 +248,12 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
         _PrimaryButton(onPressed: _goToLogin),
         const SizedBox(height: 6),
         _SecondaryAction(onPressed: _openDemo),
+        const SizedBox(height: 6),
+        _SecondaryAction(
+          onPressed: _openBrochure,
+          icon: null,
+          label: 'Brochure for Customers',
+        ),
         const SizedBox(height: 5),
         const _SupportLine(),
         const SizedBox(height: 32),
@@ -262,6 +284,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
         _DesktopHeader(
           onGetStarted: _goToLogin,
           onNavigate: _scrollToFeatures,
+          onBrochure: _openBrochure,
         ),
         const Divider(color: _Spec.border, height: 1),
         const SizedBox(height: 65),
@@ -279,8 +302,17 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                   ),
                   // Actions sit inside the copy column on this layout, never
                   // under the illustration.
+                  //
+                  // Wrapped rather than laid out in a Row: at the medium
+                  // breakpoint this column is only about 340px across, which
+                  // cannot hold the primary button plus two secondary actions
+                  // side by side, and a run that wraps beats a row that
+                  // overflows.
                   const SizedBox(height: 28),
-                  Row(
+                  Wrap(
+                    spacing: 23,
+                    runSpacing: 12,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       _PrimaryButton(
                         onPressed: _goToLogin,
@@ -288,7 +320,6 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                         height: 53,
                         radius: 10,
                       ),
-                      const SizedBox(width: 23),
                       _SecondaryAction(onPressed: _openDemo, height: 53),
                     ],
                   ),
@@ -400,10 +431,12 @@ class _DesktopHeader extends StatelessWidget {
   const _DesktopHeader({
     required this.onGetStarted,
     required this.onNavigate,
+    required this.onBrochure,
   });
 
   final VoidCallback onGetStarted;
   final VoidCallback onNavigate;
+  final VoidCallback onBrochure;
 
   @override
   Widget build(BuildContext context) {
@@ -449,6 +482,8 @@ class _DesktopHeader extends StatelessWidget {
               _HeaderLink(label: 'Features', onTap: onNavigate),
               const SizedBox(width: 34),
               _HeaderLink(label: 'How it works', onTap: onNavigate),
+              const SizedBox(width: 34),
+              _HeaderLink(label: 'Brochure for Customers', onTap: onBrochure),
             ],
           ),
           const Spacer(),
@@ -2102,13 +2137,25 @@ class _SparkArrowState extends State<_SparkArrow>
 }
 
 class _SecondaryAction extends StatelessWidget {
-  const _SecondaryAction({required this.onPressed, this.height = 44});
+  const _SecondaryAction({
+    required this.onPressed,
+    this.height = 44,
+    this.icon = Icons.play_arrow_rounded,
+    this.label = 'See it in action',
+  });
 
   final VoidCallback onPressed;
 
-  /// Matched to the primary button's height on desktop so the pair reads as one
-  /// row of actions.
+  /// Matched to the primary button's height on desktop so the actions read as
+  /// one row.
   final double height;
+
+  /// Drawn inside the leading circle. `null` omits the circle and the gap
+  /// entirely, leaving a text-only action. The defaults keep the original
+  /// `See it in action` call sites byte-for-byte as they were.
+  final IconData? icon;
+
+  final String label;
 
   @override
   Widget build(BuildContext context) {
@@ -2120,26 +2167,37 @@ class _SecondaryAction extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           onTap: onPressed,
           child: Center(
+            // `widthFactor: 1` shrink-wraps the horizontal direction only.
+            //
+            // Without it this widget takes every bit of width it is offered
+            // whenever the parent's constraints are loose-but-bounded -- which
+            // is exactly what gives it a full-width tap target in the column
+            // layouts, but would make each action fill a whole run inside the
+            // desktop Wrap. Height stays untouched (the SizedBox above pins
+            // it), so the content still centres vertically in the 44/53px.
+            widthFactor: 1,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 20,
-                  height: 20,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: _Spec.border, width: 1.2),
+                if (icon != null) ...[
+                  Container(
+                    width: 20,
+                    height: 20,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: _Spec.border, width: 1.2),
+                    ),
+                    child: Icon(
+                      icon,
+                      size: 12,
+                      color: _Spec.ink,
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.play_arrow_rounded,
-                    size: 12,
-                    color: _Spec.ink,
-                  ),
-                ),
-                const SizedBox(width: 8),
+                  const SizedBox(width: 8),
+                ],
                 Text(
-                  'See it in action',
+                  label,
                   style: GoogleFonts.dmSans(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
