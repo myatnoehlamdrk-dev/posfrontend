@@ -286,6 +286,40 @@ const Map<String, String> japaneseStrings = {
   'Print Settings': '印刷設定',
   'Paper Size': '用紙サイズ',
   'Print Format': '印刷形式',
+
+  // Printers
+  'Printer Settings': 'プリンター設定',
+  'Printers': 'プリンター',
+  'Add Printer': 'プリンターを追加',
+  'Edit Printer': 'プリンターを編集',
+  'Printer Name': 'プリンター名',
+  'Printer Model': 'プリンターの機種',
+  'IP Address': 'IPアドレス',
+  'Port': 'ポート',
+  'Set as Default': 'デフォルトに設定',
+  'Default': 'デフォルト',
+  'No printers saved yet.': '保存されたプリンターはありません',
+  'Add your WiFi thermal printer to get started.':
+      '開始するにはWiFiプリンターを追加してください',
+  'Delete Printer': 'プリンターを削除',
+  'Delete this printer?': 'このプリンターを削除しますか？',
+  'Printer saved': 'プリンターを保存しました',
+  'Printer deleted': 'プリンターを削除しました',
+  'Default printer updated.': 'デフォルトプリンターを更新しました',
+  'The app saves printer details here. For printing, add the printer to '
+      'your system once (TCP/IP, port 9100) and it will appear in the print '
+      'dialog.':
+      'プリンターの情報はここに保存されます。印刷するには、プリンターをシステムに'
+      '一度追加してください（TCP/IP、ポート9100）。追加すると印刷ダイアログに表示されます。',
+  'Test Connection': '接続テスト',
+  'Printer reachable': 'プリンターに接続できました',
+  'Could not reach the printer.': 'プリンターに接続できませんでした。',
+  'Enter a printer name.': 'プリンター名を入力してください。',
+  'Enter a valid IP address, e.g. 192.168.1.100.':
+      '有効なIPアドレスを入力してください（例: 192.168.1.100）',
+  'Port must be between 1 and 65535.': 'ポートは1〜65535の範囲で入力してください。',
+  'e.g. Counter Printer': '例: カウンタープリンター',
+  'e.g. 192.168.1.100': '例: 192.168.1.100',
   'Save PDF file after sale': '販売後にPDFを保存',
   'Invoice Preview': '請求書プレビュー',
   'Invoice': '請求書',

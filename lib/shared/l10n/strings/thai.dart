@@ -291,6 +291,40 @@ const Map<String, String> thaiStrings = {
   'Print Settings': 'ตั้งค่าการพิมพ์',
   'Paper Size': 'ขนาดกระดาษ',
   'Print Format': 'รูปแบบการพิมพ์',
+
+  // Printers
+  'Printer Settings': 'ตั้งค่าเครื่องพิมพ์',
+  'Printers': 'เครื่องพิมพ์',
+  'Add Printer': 'เพิ่มเครื่องพิมพ์',
+  'Edit Printer': 'แก้ไขเครื่องพิมพ์',
+  'Printer Name': 'ชื่อเครื่องพิมพ์',
+  'Printer Model': 'รุ่นเครื่องพิมพ์',
+  'IP Address': 'ที่อยู่ IP',
+  'Port': 'พอร์ต',
+  'Set as Default': 'ตั้งเป็นค่าเริ่มต้น',
+  'Default': 'ค่าเริ่มต้น',
+  'No printers saved yet.': 'ยังไม่มีเครื่องพิมพ์ที่บันทึกไว้',
+  'Add your WiFi thermal printer to get started.':
+      'เพิ่มเครื่องพิมพ์ WiFi เพื่อเริ่มต้นใช้งาน',
+  'Delete Printer': 'ลบเครื่องพิมพ์',
+  'Delete this printer?': 'ลบเครื่องพิมพ์นี้หรือไม่?',
+  'Printer saved': 'บันทึกเครื่องพิมพ์แล้ว',
+  'Printer deleted': 'ลบเครื่องพิมพ์แล้ว',
+  'Default printer updated.': 'อัปเดตเครื่องพิมพ์เริ่มต้นแล้ว',
+  'The app saves printer details here. For printing, add the printer to '
+      'your system once (TCP/IP, port 9100) and it will appear in the print '
+      'dialog.':
+      'แอปบันทึกข้อมูลเครื่องพิมพ์ไว้ที่นี่ สำหรับการพิมพ์ ให้เพิ่มเครื่องพิมพ์'
+      'ลงในระบบหนึ่งครั้ง (TCP/IP, พอร์ต 9100) จากนั้นจะปรากฏในหน้าต่างพิมพ์',
+  'Test Connection': 'ทดสอบการเชื่อมต่อ',
+  'Printer reachable': 'เชื่อมต่อเครื่องพิมพ์ได้',
+  'Could not reach the printer.': 'ไม่สามารถเชื่อมต่อเครื่องพิมพ์ได้',
+  'Enter a printer name.': 'กรุณากรอกชื่อเครื่องพิมพ์',
+  'Enter a valid IP address, e.g. 192.168.1.100.':
+      'กรุณากรอกที่อยู่ IP ที่ถูกต้อง เช่น 192.168.1.100',
+  'Port must be between 1 and 65535.': 'พอร์ตต้องอยู่ระหว่าง 1 ถึง 65535',
+  'e.g. Counter Printer': 'เช่น Counter Printer',
+  'e.g. 192.168.1.100': 'เช่น 192.168.1.100',
   'Save PDF file after sale': 'บันทึก PDF หลังการขาย',
   'Invoice Preview': 'ดูตัวอย่างใบแจ้งหนี้',
   'Invoice': 'ใบแจ้งหนี้',

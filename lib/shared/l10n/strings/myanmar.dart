@@ -306,6 +306,41 @@ const Map<String, String> myStrings = {
   'Print Settings': 'print ဆက်တင်များ',
   'Paper Size': 'စာရွက်အရွယ်အစား',
   'Print Format': 'print ပုံစံ',
+
+  // Printers
+  'Printer Settings': 'ပရင်တာ ဆက်တင်များ',
+  'Printers': 'ပရင်တာများ',
+  'Add Printer': 'ပရင်တာ ထည့်ရန်',
+  'Edit Printer': 'ပရင်တာ ပြင်ရန်',
+  'Printer Name': 'ပရင်တာအမည်',
+  'Printer Model': 'ပရင်တာ မော်ဒယ်',
+  'IP Address': 'IP လိပ်စာ',
+  'Port': 'Port',
+  'Set as Default': 'မူလအဖြစ် သတ်မှတ်ရန်',
+  'Default': 'မူလ',
+  'No printers saved yet.': 'ပရင်တာ မသိမ်းရသေးပါ',
+  'Add your WiFi thermal printer to get started.':
+      'စတင်ရန် WiFi ပရင်တာ ထည့်ပါ',
+  'Delete Printer': 'ပရင်တာ ဖျက်ရန်',
+  'Delete this printer?': 'ဤပရင်တာကို ဖျက်မလား?',
+  'Printer saved': 'ပရင်တာ သိမ်းပြီးပါပြီ',
+  'Printer deleted': 'ပရင်တာ ဖျက်ပြီးပါပြီ',
+  'Default printer updated.': 'မူလပရင်တာ ပြောင်းပြီးပါပြီ',
+  'The app saves printer details here. For printing, add the printer to '
+      'your system once (TCP/IP, port 9100) and it will appear in the print '
+      'dialog.':
+      'ပရင်တာ အသေးစိတ်ကို ဤနေရာတွင် သိမ်းထားပါသည်။ ပုံနှိပ်ရန်အတွက် '
+      'ပရင်တာကို စနစ်တွင် တစ်ကြိမ် ထည့်သွင်းပါ (TCP/IP, port 9100)။ '
+      'ထို့နောက် print dialog တွင် ပေါ်လာပါမည်။',
+  'Test Connection': 'ချိတ်ဆက်မှု စစ်ဆေးရန်',
+  'Printer reachable': 'ပရင်တာ ချိတ်ဆက်နိုင်ပါသည်',
+  'Could not reach the printer.': 'ပရင်တာသို့ မချိတ်ဆက်နိုင်ပါ။',
+  'Enter a printer name.': 'ပရင်တာအမည် ထည့်ပါ။',
+  'Enter a valid IP address, e.g. 192.168.1.100.':
+      'IP လိပ်စာ မှန်ကန်စွာ ထည့်ပါ၊ ဥပမာ - 192.168.1.100',
+  'Port must be between 1 and 65535.': 'Port သည် 1 နှင့် 65535 အတွင်း ဖြစ်ရမည်။',
+  'e.g. Counter Printer': 'ဥပမာ - Counter Printer',
+  'e.g. 192.168.1.100': 'ဥပမာ - 192.168.1.100',
   'Save PDF file after sale': 'ရောင်းပြီးလျှင် PDF သိမ်းရန်',
   'Invoice Preview': 'ဝယ်ပီး မှတ်တမ်း အကြို',
   'Invoice': 'ဝယ်ပီးမှတ်တမ်း',

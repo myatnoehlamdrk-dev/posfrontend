@@ -22,6 +22,7 @@ import 'package:posfrontend/features/auth/presentation/screens/login_screen.dart
 import 'package:posfrontend/features/settings/domain/entities/feedback.dart';
 import 'package:posfrontend/features/settings/domain/entities/settings.dart';
 import 'package:posfrontend/features/settings/presentation/screens/privacy_policy_screen.dart';
+import 'package:posfrontend/features/settings/presentation/screens/printer_settings_screen.dart';
 import 'package:posfrontend/features/settings/presentation/screens/terms_of_service_screen.dart';
 import 'package:posfrontend/features/settings/presentation/viewmodels/settings_view_model.dart';
 import 'package:posfrontend/features/settings/presentation/widgets/settings_skeleton.dart';
@@ -147,6 +148,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             _buildShopImageCard(),
                             const SizedBox(height: 12),
                             _buildBusinessCard(),
+                            const SizedBox(height: 28),
+                            _sectionHeader('PRINTER'),
+                            const SizedBox(height: 10),
+                            _buildPrinterCard(),
                             const SizedBox(height: 28),
                             _sectionHeader('SUPPORT'),
                             const SizedBox(height: 10),
@@ -309,6 +314,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
         onTap: _showShopTypeModal,
       ),
     );
+  }
+
+  /// Entry point to the printer profiles. The row stays label + chevron like
+  /// the support rows — the screen behind it carries the list, and loading
+  /// SharedPreferences here just to show a count would add async state to a
+  /// card that has never needed any.
+  Widget _buildPrinterCard() {
+    return _settingsCard(
+      child: _settingsRow(
+        icon: Icons.print_outlined,
+        label: context.l10n.t('Printers'),
+        trailing: Icon(Icons.chevron_right, color: gray, size: 24),
+        onTap: _openPrinterSettings,
+      ),
+    );
+  }
+
+  void _openPrinterSettings() {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const PrinterSettingsScreen()));
   }
 
   Widget _buildShopImageCard() {

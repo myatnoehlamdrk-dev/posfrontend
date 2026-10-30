@@ -47,6 +47,17 @@ class SalePrintSettings {
     );
   }
 
+  /// Writes [paperSize] straight into the key the sheet reads, without
+  /// touching the other three.
+  ///
+  /// The printer profile store calls this when the default printer changes:
+  /// the printer's physical roll is the fact, and the receipt layout is what
+  /// has to follow it, so the sheet picks the new size up on its next open.
+  static Future<void> setPaperSize(String paperSize) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyPaperSize, paperSize);
+  }
+
   /// Paper width the receipt is laid out for. The PDF is drawn a couple of
   /// millimetres inside the physical roll so nothing is clipped by the
   /// printer's unprintable margins.
