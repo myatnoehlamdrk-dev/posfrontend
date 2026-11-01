@@ -6,6 +6,7 @@ import 'package:posfrontend/features/sale/domain/entities/sale.dart';
 import 'package:posfrontend/features/sale/presentation/viewmodels/sale_view_model.dart';
 import 'package:posfrontend/features/sale/presentation/widgets/percent_input_formatter.dart';
 import 'package:posfrontend/shared/services/receipt_print_service.dart';
+import 'package:posfrontend/shared/services/sale_output_service.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_dimens.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
@@ -113,39 +114,56 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
     widget.onSaleCompleted?.call();
     showSuccessMessage(context, context.l10n.t('Sale saved successfully!'));
 
-    // Quick sale always emits the thermal slip: a till running quick sale
-    // has a roll printer behind it, and making the cashier hunt for the
-    // new-sale screen's print toggle to get a receipt is the wrong default
-    // for the surface built for the queue at the counter. Only the paper
-    // size still comes from the shared preference — that is a property of
-    // the printer, not of the sale surface. The sale is already stored, so
-    // a print failure is only a snackbar; it never undoes the sale.
+    // One output setting drives both sale surfaces: whatever the new-sale
+    // screen's Print Settings sheet chose — share a PDF, Bluetooth thermal,
+    // Wi-Fi thermal — is what quick sale does after this sale too. The sale
+    // is already stored, so a print failure is only a snackbar; it never
+    // undoes the sale.
     final settings = await SalePrintSettings.load();
     if (!mounted) return;
-    _runPrint(
-      () => ReceiptPrintService.printReceipt(
-        args,
-        SalePrintSettings(
-          exportPdf: false,
-          printVoucher: true,
-          format: 'thermal',
-          paperSize: settings.paperSize,
-        ),
-      ),
-      'Thermal printing failed: {v1}',
-    );
+    await _runOutput(args, settings);
   }
 
   /// Printing is best-effort after a stored sale: report the failure, keep
-  /// the till moving.
-  Future<void> _runPrint(Future<void> Function() run, String messageKey) async {
+  /// the till moving — and for the thermal outputs offer the OS print dialog,
+  /// so a bad connection still ends with paper rather than an apology.
+  Future<void> _runOutput(
+    Map<String, dynamic> args,
+    SalePrintSettings settings,
+  ) async {
     try {
-      await run();
+      await SaleOutputService.printAfterSale(args, settings);
     } catch (e) {
       if (!mounted) return;
-      showErrorMessage(
+      final messageKey = settings.output == SalePrintSettings.outputPdf
+          ? 'PDF export failed: {v1}'
+          : 'Thermal printing failed: {v1}';
+      showErrorDetail(
         context,
-        context.l10n.t(messageKey).replaceAll('{v1}', e.toString()),
+        context.l10n
+            .t(messageKey)
+            .replaceAll('{v1}', context.l10n.t(e.toString())),
+        actionLabel: settings.isThermal
+            ? context.l10n.t('Open print dialog')
+            : null,
+        onAction: settings.isThermal
+            ? () async {
+                try {
+                  await ReceiptPrintService.printReceipt(args, settings);
+                } catch (fallbackError) {
+                  if (!mounted) return;
+                  showErrorDetail(
+                    context,
+                    context.l10n
+                        .t('Thermal printing failed: {v1}')
+                        .replaceAll(
+                          '{v1}',
+                          context.l10n.t(fallbackError.toString()),
+                        ),
+                  );
+                }
+              }
+            : null,
       );
     }
   }

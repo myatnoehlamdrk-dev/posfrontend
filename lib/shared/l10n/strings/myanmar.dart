@@ -73,8 +73,10 @@ const Map<String, String> myStrings = {
   'Low Stock': 'နည်း',
   'Out of Stock': 'စတော့ကုန်နေသည်',
   '{v1} left (threshold {v2})': '{v1} ကျန်သည် (သတ်မှတ်ချက် {v2})',
-  '{v1} out of stock, {v2} low stock': '{v1} ခု စတော့ကုန်နေသည်၊ {v2} ခု တန်ဖိုးနည်း',
-  'No product details in this message.': 'ဤအသိပေးချက်တွင် ကုန်ပစ္စည်း အသေးစိတ် မပါဝင်ပါ။',
+  '{v1} out of stock, {v2} low stock':
+      '{v1} ခု စတော့ကုန်နေသည်၊ {v2} ခု တန်ဖိုးနည်း',
+  'No product details in this message.':
+      'ဤအသိပေးချက်တွင် ကုန်ပစ္စည်း အသေးစိတ် မပါဝင်ပါ။',
   'Packages Out of Stock': 'ပက်ကေ့ဂျ်များ စတော့ကုန်နေသည်',
   'Total Products': 'ကုန်ပစ္စည်းစုစုပေါင်း',
   'Total Sales': 'ရောင်းရမှတ်စုစုပေါင်း',
@@ -306,6 +308,52 @@ const Map<String, String> myStrings = {
   'Print Settings': 'print ဆက်တင်များ',
   'Paper Size': 'စာရွက်အရွယ်အစား',
   'Print Format': 'print ပုံစံ',
+  // Print output (PDF / Bluetooth / Wi-Fi)
+  'Output': 'ရလဒ်',
+  'Bluetooth': 'ဘလူးတွပ်',
+  'Wi-Fi': 'ဝိုင်ဖိုင်',
+  'USB': 'USB',
+  'Print directly to a Bluetooth thermal printer':
+      'ဘလူးတွပ် အပူစက်ပြင်ထုတ်သို့ တိုက်ရိုက်ပို့ရန်',
+  'Print directly to a network thermal printer':
+      'ကွန်ရက် အပူစက်ပြင်ထုတ်သို့ တိုက်ရိုက်ပို့ရန်',
+  'Print directly to a USB thermal printer':
+      'USB အပူစက်ပြင်ထုတ်သို့ တိုက်ရိုက်ပို့ရန်',
+  'Thermal printing is not available here':
+      'ဤနေရာတွင် အပူစက်ပြင်ထုတ် မရရှိနိုင်ပါ',
+  'Bluetooth Printer': 'ဘလူးတွပ် ပရင်တာ',
+  'Network Printer': 'ကွန်ရက် ပရင်တာ',
+  'USB Printer': 'USB ပရင်တာ',
+  'No printer selected': 'ပရင်တာ မရွေးရသေးပါ',
+  'No printer configured': 'ပရင်တာ မသတ်မှတ်ရသေးပါ',
+  'Plug in the printer, then choose':
+      'ပရင်တာ ချိတ်ပြီး ရွေးပါ',
+  'Add a printer in Settings > Printers':
+      'ဆက်တင် > ပရင်တာ ထဲတွင် ပရင်တာ ထည့်ပါ',
+  'Choose': 'ရွေးရန်',
+  'Change': 'ပြောင်းရန်',
+  'Open print dialog': 'ပုံနှိပ်စက် dialog ဖွင့်ရန်',
+  'Choose Bluetooth Printer': 'ဘလူးတွပ် ပရင်တာ ရွေးရန်',
+  'Refresh': 'ပြန်ဖွင့်ရန်',
+  'No printers found': 'ပရင်တာ မတွေ့ပါ',
+  'Pair the printer in system settings, then refresh.':
+      'စနစ်ဆက်တင်တွင် ပရင်တာ ချိတ်ဆက်ပြီးမှ ပြန်ဖွင့်ပါ',
+  'Thermal printing failed: {v1}': 'အပူစက်ပြင်ထုတ် မအောင်မြင်ပါ: {v1}',
+  'PDF export failed: {v1}': 'PDF ထုတ်ယူခြင်း မအောင်မြင်ပါ: {v1}',
+  'Bluetooth is turned off. Turn it on and try again.':
+      'ဘလူးတွပ် ပိတ်ထားသည်။ ဖွင့်ပြီး ထပ်ကြိုးစားပါ',
+  'Bluetooth permission was denied.': 'ဘလူးတွပ် ခွင့်ပြုချက် ငြင်းပယ်ခံရသည်',
+  'The printer did not receive the receipt. Move it closer and try again.':
+      'ပရင်တာထံ ပြေစာ မရောက်ပါ။ နီးကပ်အောင်ပြီး ထပ်ကြိုးစားပါ',
+  'Could not connect to the printer.': 'ပရင်တာနှင့် ချိတ်ဆက်၍ မရပါ',
+  'No Bluetooth printer selected. Choose one in Print Settings.':
+      'ဘလူးတွပ် ပရင်တာ မရွေးရသေးပါ။ print ဆက်တင်များတွင် ရွေးပါ',
+  'No printer configured. Add one in Settings > Printers.':
+      'ပရင်တာ မသတ်မှတ်ရသေးပါ။ ဆက်တင် > ပရင်တာ တွင် ထည့်ပါ',
+  'Bluetooth printing is not available in the browser.':
+      'ဘရောက်ဆာတွင် ဘလူးတွပ်ဖြင့် ပို့၍ မရပါ',
+  'Wi-Fi printing is not available in the browser.':
+      'ဘရောက်ဆာတွင် Wi-Fi ဖြင့် ပို့၍ မရပါ',
 
   // Printers
   'Printer Settings': 'ပရင်တာ ဆက်တင်များ',
@@ -319,26 +367,26 @@ const Map<String, String> myStrings = {
   'Set as Default': 'မူလအဖြစ် သတ်မှတ်ရန်',
   'Default': 'မူလ',
   'No printers saved yet.': 'ပရင်တာ မသိမ်းရသေးပါ',
-  'Add your WiFi thermal printer to get started.':
-      'စတင်ရန် WiFi ပရင်တာ ထည့်ပါ',
+  'Add your WiFi thermal printer to get started.': 'စတင်ရန် WiFi ပရင်တာ ထည့်ပါ',
   'Delete Printer': 'ပရင်တာ ဖျက်ရန်',
   'Delete this printer?': 'ဤပရင်တာကို ဖျက်မလား?',
   'Printer saved': 'ပရင်တာ သိမ်းပြီးပါပြီ',
   'Printer deleted': 'ပရင်တာ ဖျက်ပြီးပါပြီ',
   'Default printer updated.': 'မူလပရင်တာ ပြောင်းပြီးပါပြီ',
-  'The app saves printer details here. For printing, add the printer to '
-      'your system once (TCP/IP, port 9100) and it will appear in the print '
-      'dialog.':
-      'ပရင်တာ အသေးစိတ်ကို ဤနေရာတွင် သိမ်းထားပါသည်။ ပုံနှိပ်ရန်အတွက် '
-      'ပရင်တာကို စနစ်တွင် တစ်ကြိမ် ထည့်သွင်းပါ (TCP/IP, port 9100)။ '
-      'ထို့နောက် print dialog တွင် ပေါ်လာပါမည်။',
+  'The app saves printer details here. With Wi-Fi chosen in Print Settings, '
+          'sales print straight to this printer — the print dialog fallback uses '
+          'the printer your system already knows.':
+      'ပရင်တာ အသေးစိတ်ကို ဤနေရာတွင် သိမ်းထားပါသည်။ print ဆက်တင်များတွင် '
+      'Wi-Fi ကို ရွေးပါက ရောင်းချမှုများသည် ဤပရင်တာသို့ တိုက်ရိုက်ပို့ပါသည်။ '
+      'print dialog အရန်လမ်းကြောင်းက စနစ်တွင် ရှိပြီးသား ပရင်တာကို အသုံးပြုပါသည်။',
   'Test Connection': 'ချိတ်ဆက်မှု စစ်ဆေးရန်',
   'Printer reachable': 'ပရင်တာ ချိတ်ဆက်နိုင်ပါသည်',
   'Could not reach the printer.': 'ပရင်တာသို့ မချိတ်ဆက်နိုင်ပါ။',
   'Enter a printer name.': 'ပရင်တာအမည် ထည့်ပါ။',
   'Enter a valid IP address, e.g. 192.168.1.100.':
       'IP လိပ်စာ မှန်ကန်စွာ ထည့်ပါ၊ ဥပမာ - 192.168.1.100',
-  'Port must be between 1 and 65535.': 'Port သည် 1 နှင့် 65535 အတွင်း ဖြစ်ရမည်။',
+  'Port must be between 1 and 65535.':
+      'Port သည် 1 နှင့် 65535 အတွင်း ဖြစ်ရမည်။',
   'e.g. Counter Printer': 'ဥပမာ - Counter Printer',
   'e.g. 192.168.1.100': 'ဥပမာ - 192.168.1.100',
   'Save PDF file after sale': 'ရောင်းပြီးလျှင် PDF သိမ်းရန်',
@@ -455,7 +503,8 @@ const Map<String, String> myStrings = {
   'Mark all read': 'အားလုံးကို ဖတ်ပြီးပြီဟု မှတ်ရန်',
   'Clear all': 'အားလုံးဖျက်ရန်',
   'No notifications yet': 'အသိပေးချက်များ မရှိသေးပါ',
-  'Stock alerts will appear here.': 'စတော့အသိပေးချက်များ ဤနေရာတွင် ပေါ်လာပါမည်။',
+  'Stock alerts will appear here.':
+      'စတော့အသိပေးချက်များ ဤနေရာတွင် ပေါ်လာပါမည်။',
   'Thank-you messages will appear here.':
       'ကျေးဇူးတင်စကားများ ဤနေရာတွင် ပေါ်လာပါမည်။',
   'Thank you for your feedback, {v1}!':
@@ -604,7 +653,8 @@ const Map<String, String> myStrings = {
       'လုပ်ငန်းဒေတာ - ငွေရောင်းငွေယူစနစ်နှင့် ပစ္စည်းစီမံခန့်ခွဲမှု လုပ်ဆောင်ချက်များ အလုပ်လုပ်စေရန် သင်ထည့်သွင်းသော ကုန်ပစ္စည်းများ၊ အမျိုးအစားများ၊ ပက်ကေ့များ၊ စျေးနှုန်းများ၊ စတော့အတိုင်းအတာများ၊ ဝယ်ယူမှုများ၊ ရောင်းချမှုများနှင့် ဖောက်သည်အသေးစိတ်များ အပါအဝင် အချက်အလက်များကို သိမ်းဆည်းပါသည်။',
   'Usage Information: We may collect basic technical information such as device type, operating system, app version, and general usage patterns to maintain and improve the Service.':
       'အသုံးပြုမှုအချက်အလက် - ဝန်ဆောင်မှုကို ထိန်းသိမ်းပြီး ပိုမိုကောင်းမွန်စေရန် စက်အမျိုးအစား၊ လည်ပတ်စနစ်၊ အက်ပ်ဗားရှင်းနှင့် အသုံးပြုပုံများကဲ့သို့သော အခြေချ နည်းပညာအချက်အလက်များကို စုဆောင်းနိုင်ပါသည်။',
-  '3. How We Use Your Information': '၃။ သင့်အချက်အလက်ကို ကျွန်ုပ်တို့ အသုံးပြုပုံ',
+  '3. How We Use Your Information':
+      '၃။ သင့်အချက်အလက်ကို ကျွန်ုပ်တို့ အသုံးပြုပုံ',
   'We use your information to provide, maintain, and improve the Service, including processing sales, tracking inventory and stock, generating reports, and managing your account. We may also use your contact information to send important notices about the Service, such as security alerts, updates, or changes to these terms.':
       'ကျွန်ုပ်တို့သည် ဝန်ဆောင်မှု ပေးအပ်ခြင်း၊ ထိန်းသိမ်းခြင်းနှင့် ပိုမိုကောင်းမွန်စေခြင်းအတွက် — ရောင်းချမှုများ ဆောင်ရွက်ခြင်း၊ ပစ္စည်းနှင့် စတော့များ ခြေရာခံခြင်း၊ အစီရင်ခံစာများ ထုတ်ယူခြင်းနှင့် သင့်အကောင့် စီမံခြင်းအပါအဝင် သင့်အချက်အလက်ကို အသုံးပြုပါသည်။ လုံခြုံရေးသတိပေးချက်များ၊ အသစ်များ သို့မဟုတ် ဤစည်းမျဉ်းများ ပြောင်းလဲမှုများကဲ့သို့ ဝန်ဆောင်မှုနှင့် ပတ်သက်သော အရေးကြီး အကြောင်းကြားချက်များ ပေးပို့ရန် သင့်ဆက်သွယ်ရန်အချက်အလက်ကိုလည်း အသုံးပြုနိုင်ပါသည်။',
   'We do not sell your personal information. We only use the data you provide to operate the Service as described in this Privacy Policy.':
@@ -625,7 +675,8 @@ const Map<String, String> myStrings = {
   '7. Your Rights': '၇။ သင့်အခွင့်အရေးများ',
   'Depending on your jurisdiction, you may have the right to access, correct, update, export, or delete your personal information, and to object to or restrict certain processing activities. To exercise any of these rights, please contact us using the details below and we will respond within a reasonable time.':
       'သင့်နိုင်ငံ/ဥပဒေ ကွာခြားမှုရှိနိုင်သော်လည်း သင့်ကိုယ်ရေးအချက်အလက်ကို ဝင်ရောက်ကြည့်ရှုခြင်း၊ ပြင်ဆင်ခြင်း၊ အသစ်ပြင်ဆင်ခြင်း၊ ထုတ်ယူခြင်း သို့ ဖျက်ပစ်ခြင်း ပြုလုပ်ခွင့်၊ အချို့ ဆောင်ရွက်ချက်များကို ကန့်ကွက်ခြင်း သို့ ကန့်သတ်ခြင်း ပြုလုပ်ခွင့် ရှိနိုင်ပါသည်။ ဤအခွင့်အရေးများ အသုံးပြုရန် အောက်ပါအချက်အလက်များဖြင့် ကျွန်ုပ်တို့ထံ ဆက်သွယ်ပါ — သင့်လျော်သော အချိန်အတွင်း ပြန်လည်ဖြေကြားပါမည်။',
-  '8. Changes to This Privacy Policy': '၈။ ဤကိုယ်ရေးအချက်အလက်မူဝါဒ ပြောင်းလဲမှုများ',
+  '8. Changes to This Privacy Policy':
+      '၈။ ဤကိုယ်ရေးအချက်အလက်မူဝါဒ ပြောင်းလဲမှုများ',
   'We may update this Privacy Policy from time to time to reflect changes in our practices or applicable law. When we make changes, we will update the "Last Updated" date at the top of this policy and notify you where appropriate. Your continued use of the Service after changes take effect constitutes your acceptance of the revised policy.':
       'ကျွန်ုပ်တို့၏ လုပ်ဆောင်ပုံများ သို့ သက်ဆိုင်သော ဥပဒေ ပြောင်းလဲမှုများကို ထင်ဟပ်စေရန် ဤကိုယ်ရေးအချက်အလက်မူဝါဒကို အခါအားလျော်စွာ ပြင်ဆင်နိုင်ပါသည်။ ပြောင်းလဲမှု ပြုလုပ်သောအခါ ဤမူဝါဒ၏ ထိပ်တွင်ရှိ "နောက်ဆုံးပြင်ဆင်သည့်ရက်"ကို အသစ်ပြင်ဆင်ပြီး သင့်လျော်သလို အကြောင်းကြားပါမည်။ ပြောင်းလဲမှုများ အကျုံးဝင်ပြီးနောက် ဝန်ဆောင်မှုကို ဆက်လက်အသုံးပြုခြင်းသည် ပြင်ဆင်ထားသော မူဝါဒကို သင်လက်ခံကြောင်း ဖြစ်ပါသည်။',
   '9. Contact Us': '၉။ ကျွန်ုပ်တို့ထံ ဆက်သွယ်ရန်',

@@ -3,9 +3,9 @@
 /// A profile is an address book entry, not a connection: it records where the
 /// printer sits on the network (IP + port) and what roll it prints on, so the
 /// operator types the NS06H's IP once instead of per sale, and the receipt
-/// layout matches the physical paper. The app itself does not talk to the
-/// printer — printing goes through the system's print dialog, which is where
-/// the same IP is entered the first time the printer is added to the OS.
+/// layout matches the physical paper. When Wi-Fi is the chosen output, a
+/// finished sale sends its ESC/POS bytes straight to this address over raw
+/// TCP — the OS print dialog is only the manual fallback.
 class PrinterProfile {
   const PrinterProfile({
     required this.id,

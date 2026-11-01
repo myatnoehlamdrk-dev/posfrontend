@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:flutter/services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:posfrontend/core/extensions/datetime_extensions.dart';
 import 'package:posfrontend/features/cart/data/cart_store.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
@@ -12,8 +11,15 @@ import 'package:posfrontend/features/sale/data/repositories/sale_repository_impl
 import 'package:posfrontend/features/sale/data/repositories/sale_product_repository_impl.dart';
 import 'package:posfrontend/features/sale/presentation/screens/sale_preview_screen.dart';
 import 'package:posfrontend/features/sale/presentation/viewmodels/sale_view_model.dart';
+import 'package:posfrontend/features/sale/presentation/widgets/bluetooth_printer_picker.dart';
 import 'package:posfrontend/features/sale/presentation/widgets/percent_input_formatter.dart';
+import 'package:posfrontend/features/settings/domain/entities/printer_profile.dart';
+import 'package:posfrontend/shared/services/bluetooth_printer_candidate.dart';
 import 'package:posfrontend/shared/services/receipt_print_service.dart';
+import 'package:posfrontend/shared/services/sale_output_service.dart';
+import 'package:posfrontend/shared/services/thermal_printer_transport.dart';
+import 'package:posfrontend/shared/services/usb_printer_candidate.dart';
+import 'package:posfrontend/shared/services/usb_printer_transport.dart';
 import 'package:posfrontend/features/sale/presentation/screens/sale_items_screen.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
@@ -66,14 +72,14 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   final TextEditingController _customerLocationCtrl = TextEditingController();
   late final SaleViewModel _viewModel;
 
-  bool _pdfExportEnabled = true;
-  bool _printVoucherEnabled = false;
-  String _printFormat = 'thermal';
+  /// The one output choice both sale surfaces read, mirrored into local
+  /// state so the sheet can edit it without awaiting prefs on every tap.
+  String _output = SalePrintSettings.outputPdf;
   String _paperSize = '58mm';
-  static const _keyPdfExport = 'print_pdf_export';
-  static const _keyPrintVoucher = 'print_voucher_enabled';
-  static const _keyPrintFormat = 'print_format';
-  static const _keyPaperSize = 'print_paper_size';
+  String _btPrinterAddress = '';
+  String _btPrinterName = '';
+  PrinterProfile? _wifiPrinter;
+  UsbPrinterCandidate? _usbPrinter;
 
   @override
   void initState() {
@@ -98,25 +104,32 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   }
 
   Future<void> _loadPrintSettings() async {
-    final prefs = await SharedPreferences.getInstance();
+    final settings = await SalePrintSettings.load();
+    final printer = await SaleOutputService.defaultNetworkPrinter();
+    final usb = UsbPrinterTransport.isSupported
+        ? await UsbPrinterTransport.loadSelected()
+        : null;
     if (!mounted) return;
     setState(() {
-      _pdfExportEnabled = prefs.getBool(_keyPdfExport) ?? true;
-      _printVoucherEnabled = prefs.getBool(_keyPrintVoucher) ?? false;
-      if (_pdfExportEnabled && _printVoucherEnabled) {
-        _pdfExportEnabled = false;
-      }
-      _printFormat = prefs.getString(_keyPrintFormat) ?? 'thermal';
-      _paperSize = prefs.getString(_keyPaperSize) ?? '58mm';
+      _output = settings.output;
+      _paperSize = settings.paperSize;
+      _btPrinterAddress = settings.btPrinterAddress;
+      _btPrinterName = settings.btPrinterName;
+      _wifiPrinter = printer;
+      _usbPrinter = usb;
     });
   }
 
+  /// Persists everything the sheet holds. The keys live in
+  /// [SalePrintSettings] alone — the sheet used to carry its own copies of
+  /// them, which is exactly how the two surfaces drifted apart before.
   Future<void> _savePrintSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_keyPdfExport, _pdfExportEnabled);
-    await prefs.setBool(_keyPrintVoucher, _printVoucherEnabled);
-    await prefs.setString(_keyPrintFormat, _printFormat);
-    await prefs.setString(_keyPaperSize, _paperSize);
+    await SalePrintSettings.setOutput(_output);
+    await SalePrintSettings.setPaperSize(_paperSize);
+    await SalePrintSettings.setBluetoothPrinter(
+      address: _btPrinterAddress,
+      name: _btPrinterName,
+    );
   }
 
   Future<void> _submitSale() async {
@@ -191,10 +204,10 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       }
     }
 
-    if (_pdfExportEnabled || _printVoucherEnabled) {
-      if (_pdfExportEnabled) _autoExportPdf(saleArgs);
-      if (_printVoucherEnabled) _autoPrintVoucher(saleArgs);
-    }
+    // The output choice is read from the sheet's live state: whatever the
+    // operator last picked is what this sale follows. The sale is already
+    // stored, so a failure here is only a snackbar — it never undoes it.
+    _runOutput(saleArgs, _printSettings);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || !messenger.mounted) return;
@@ -920,41 +933,56 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     );
   }
 
-  void _autoExportPdf(Map<String, dynamic> args) async {
+  /// Runs the chosen post-sale output, best-effort: whatever the setting says
+  /// (share a PDF, send to Bluetooth, send over Wi-Fi) happens here, and the
+  /// only response to failure is a snackbar offering the OS print dialog as
+  /// the manual way out — for the thermal outputs, where a bad connection
+  /// should still end with paper.
+  void _runOutput(Map<String, dynamic> args, SalePrintSettings settings) async {
     try {
-      await ReceiptPrintService.exportPdf(args);
+      await SaleOutputService.printAfterSale(args, settings);
     } catch (e) {
-      if (mounted)
-        showErrorMessage(
-          context,
-          context.l10n
-              .t('PDF export failed: {v1}')
-              .replaceAll('{v1}', (e).toString()),
-        );
-    }
-  }
-
-  void _autoPrintVoucher(Map<String, dynamic> args) async {
-    try {
-      await ReceiptPrintService.printReceipt(args, _printSettings);
-    } catch (e) {
-      if (mounted)
-        showErrorMessage(
-          context,
-          context.l10n
-              .t('Thermal printing failed: {v1}')
-              .replaceAll('{v1}', (e).toString()),
-        );
+      if (!mounted) return;
+      final messageKey = settings.output == SalePrintSettings.outputPdf
+          ? 'PDF export failed: {v1}'
+          : 'Thermal printing failed: {v1}';
+      showErrorDetail(
+        context,
+        context.l10n
+            .t(messageKey)
+            .replaceAll('{v1}', context.l10n.t(e.toString())),
+        actionLabel: settings.isThermal
+            ? context.l10n.t('Open print dialog')
+            : null,
+        onAction: settings.isThermal
+            ? () async {
+                try {
+                  await ReceiptPrintService.printReceipt(args, settings);
+                } catch (fallbackError) {
+                  if (!mounted) return;
+                  showErrorDetail(
+                    context,
+                    context.l10n
+                        .t('Thermal printing failed: {v1}')
+                        .replaceAll(
+                          '{v1}',
+                          context.l10n.t(fallbackError.toString()),
+                        ),
+                  );
+                }
+              }
+            : null,
+      );
     }
   }
 
   /// The settings sheet's live values, packaged the way the service reads
   /// them — one implementation behind both sale surfaces.
   SalePrintSettings get _printSettings => SalePrintSettings(
-    exportPdf: _pdfExportEnabled,
-    printVoucher: _printVoucherEnabled,
-    format: _printFormat,
+    output: _output,
     paperSize: _paperSize,
+    btPrinterAddress: _btPrinterAddress,
+    btPrinterName: _btPrinterName,
   );
 
   void _showPrintSettings() {
@@ -1007,102 +1035,70 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                         ],
                       ),
                       const SizedBox(height: 24),
-                      _toggleRow(
-                        icon: Icons.picture_as_pdf,
-                        title: context.l10n.t('Export PDF'),
+                      _sectionTitle('Output'),
+                      const SizedBox(height: 10),
+                      _outputOption(
+                        setSheetState,
+                        title: context.l10n.t('PDF'),
                         subtitle: context.l10n.t('Save PDF file after sale'),
-                        value: _pdfExportEnabled,
-                        onChanged: (v) {
-                          setSheetState(() {
-                            _pdfExportEnabled = v;
-                            if (v) _printVoucherEnabled = false;
-                          });
-                          setState(() {
-                            _pdfExportEnabled = v;
-                            if (v) _printVoucherEnabled = false;
-                          });
-                          _savePrintSettings();
-                        },
+                        value: SalePrintSettings.outputPdf,
+                        icon: Icons.picture_as_pdf,
                       ),
-                      const SizedBox(height: 16),
-                      _toggleRow(
-                        icon: Icons.print_outlined,
-                        title: context.l10n.t('Print Voucher'),
-                        subtitle: context.l10n.t('Auto-print after sale'),
-                        value: _printVoucherEnabled,
-                        onChanged: (v) {
-                          setSheetState(() {
-                            _printVoucherEnabled = v;
-                            if (v) _pdfExportEnabled = false;
-                          });
-                          setState(() {
-                            _printVoucherEnabled = v;
-                            if (v) _pdfExportEnabled = false;
-                          });
-                          _savePrintSettings();
-                        },
-                      ),
-                      if (_printVoucherEnabled) ...[
-                        const SizedBox(height: 20),
-                        Text(
-                          context.l10n.t('Print Format'),
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: _titleColor,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        _formatOption(
-                          ctx,
+                      const SizedBox(height: 8),
+                      // WebUSB is the browser's only direct thermal path, so
+                      // on the web build it sits above the pair the browser
+                      // cannot reach (Bluetooth SPP / raw TCP).
+                      if (UsbPrinterTransport.isSupported) ...[
+                        _outputOption(
                           setSheetState,
-                          'Thermal Paper',
-                          'thermal',
-                          Icons.receipt_long,
+                          title: context.l10n.t('USB'),
+                          subtitle: context.l10n.t(
+                            'Print directly to a USB thermal printer',
+                          ),
+                          value: SalePrintSettings.outputUsb,
+                          icon: Icons.usb,
                         ),
                         const SizedBox(height: 8),
-                        _formatOption(
-                          ctx,
-                          setSheetState,
-                          'A4 Paper',
-                          'a4',
-                          Icons.description_outlined,
-                        ),
                       ],
-                      if (_printVoucherEnabled &&
-                          _printFormat == 'thermal') ...[
-                        const SizedBox(height: 20),
-                        Text(
-                          context.l10n.t('Paper Size'),
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: _titleColor,
-                          ),
+                      _outputOption(
+                        setSheetState,
+                        title: context.l10n.t('Bluetooth'),
+                        subtitle: context.l10n.t(
+                          'Print directly to a Bluetooth thermal printer',
                         ),
+                        value: SalePrintSettings.outputBluetooth,
+                        icon: Icons.bluetooth,
+                        enabled: ThermalPrinterTransport.isSupported,
+                      ),
+                      const SizedBox(height: 8),
+                      _outputOption(
+                        setSheetState,
+                        title: context.l10n.t('Wi-Fi'),
+                        subtitle: context.l10n.t(
+                          'Print directly to a network thermal printer',
+                        ),
+                        value: SalePrintSettings.outputWifi,
+                        icon: Icons.wifi,
+                        enabled: ThermalPrinterTransport.isSupported,
+                      ),
+                      if (!ThermalPrinterTransport.isSupported &&
+                          !UsbPrinterTransport.isSupported) ...[
                         const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _paperSizeOption(
-                                ctx,
-                                setSheetState,
-                                '58mm',
-                                Icons.crop_free,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _paperSizeOption(
-                                ctx,
-                                setSheetState,
-                                '80mm',
-                                Icons.aspect_ratio,
-                              ),
-                            ),
-                          ],
+                        Text(
+                          context.l10n.t(
+                            'Thermal printing is not available here',
+                          ),
+                          style: TextStyle(fontSize: 12, color: _mutedColor),
                         ),
                       ],
+                      if (_output == SalePrintSettings.outputUsb)
+                        _usbSection(ctx, setSheetState),
+                      if (_output == SalePrintSettings.outputBluetooth)
+                        _bluetoothSection(ctx, setSheetState),
+                      if (_output == SalePrintSettings.outputWifi)
+                        _wifiSection(),
+                      if (_output != SalePrintSettings.outputPdf)
+                        _paperSizeSection(ctx, setSheetState),
                       const SizedBox(height: 24),
                     ],
                   ),
@@ -1115,51 +1111,378 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
     );
   }
 
-  Widget _formatOption(
-    BuildContext ctx,
-    StateSetter setSheetState,
-    String label,
-    String value,
-    IconData icon,
-  ) {
-    final isSelected = _printFormat == value;
+  Widget _sectionTitle(String key) => Text(
+    context.l10n.t(key),
+    style: TextStyle(
+      fontSize: 14,
+      fontWeight: FontWeight.w600,
+      color: _titleColor,
+    ),
+  );
+
+  /// One of the three outputs. Disabled options (the thermal pair in a
+  /// browser) stay visible so the choice reads as deliberate rather than
+  /// mysteriously missing, but they cannot be tapped.
+  Widget _outputOption(
+    StateSetter setSheetState, {
+    required String title,
+    required String subtitle,
+    required String value,
+    required IconData icon,
+    bool enabled = true,
+  }) {
+    final isSelected = _output == value;
     return GestureDetector(
-      onTap: () {
-        setSheetState(() => _printFormat = value);
-        setState(() => _printFormat = value);
-        _savePrintSettings();
-      },
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isSelected ? _p.selectionTint : _p.surface,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: isSelected ? _accentColor : _borderColor),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              color: isSelected ? _accentColor : _mutedColor,
-              size: 20,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: isSelected ? _accentColor : _titleColor,
+      onTap: enabled
+          ? () {
+              setSheetState(() => _output = value);
+              setState(() => _output = value);
+              _savePrintSettings();
+            }
+          : null,
+      child: Opacity(
+        opacity: enabled ? 1 : 0.45,
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isSelected ? _p.selectionTint : _p.surface,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: isSelected ? _accentColor : _borderColor),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                color: isSelected ? _accentColor : _mutedColor,
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: isSelected ? _accentColor : _titleColor,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: TextStyle(fontSize: 12, color: _mutedColor),
+                    ),
+                  ],
                 ),
               ),
-            ),
-            if (isSelected)
-              Icon(Icons.check_circle, color: _accentColor, size: 20),
-          ],
+              if (isSelected)
+                Icon(Icons.check_circle, color: _accentColor, size: 20),
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  /// Which USB printer [SalePrintSettings.outputUsb] prints to — the device
+  /// the browser's WebUSB chooser granted, remembered so the sheet can say
+  /// what is selected without re-opening the chooser.
+  Widget _usbSection(BuildContext ctx, StateSetter setSheetState) {
+    final chosen = _usbPrinter != null;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 20),
+        _sectionTitle('USB Printer'),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: _p.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _borderColor),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: _p.chipBg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.usb,
+                  color: chosen ? _accentColor : _mutedColor,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      chosen
+                          ? _usbPrinter!.name
+                          : context.l10n.t('No printer selected'),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: _titleColor,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      chosen
+                          ? 'id:${_usbPrinter!.vendorId.toRadixString(16).padLeft(4, '0')}:${_usbPrinter!.productId.toRadixString(16).padLeft(4, '0')}'
+                          : context.l10n.t('Plug in the printer, then choose'),
+                      style: TextStyle(fontSize: 12, color: _mutedColor),
+                    ),
+                  ],
+                ),
+              ),
+              TextButton(
+                onPressed: () => _pickUsbPrinter(ctx, setSheetState),
+                child: Text(
+                  context.l10n.t(chosen ? 'Change' : 'Choose'),
+                  style: TextStyle(
+                    color: _accentColor,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Opens the browser's WebUSB chooser. Must stay on the tap's user
+  /// gesture — Chrome rejects [requestDevice] after an await.
+  Future<void> _pickUsbPrinter(
+    BuildContext sheetCtx,
+    StateSetter setSheetState,
+  ) async {
+    try {
+      final picked = await UsbPrinterTransport.requestDevice();
+      if (!sheetCtx.mounted) return;
+      setSheetState(() => _usbPrinter = picked);
+      setState(() => _usbPrinter = picked);
+      // Choosing a USB printer is an explicit intent to print to it.
+      setState(() => _output = SalePrintSettings.outputUsb);
+      setSheetState(() => _output = SalePrintSettings.outputUsb);
+      await _savePrintSettings();
+    } catch (e) {
+      if (!sheetCtx.mounted) return;
+      showErrorDetail(sheetCtx, e.toString());
+    }
+  }
+
+  /// Which Bluetooth printer the [SalePrintSettings.outputBluetooth] output
+  /// prints to — remembered, not re-discovered, so the sheet can say what is
+  /// selected even with the adapter off.
+  Widget _bluetoothSection(BuildContext ctx, StateSetter setSheetState) {
+    final chosen = _btPrinterAddress.isNotEmpty;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 20),
+        _sectionTitle('Bluetooth Printer'),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: _p.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _borderColor),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: _p.chipBg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.bluetooth,
+                  color: chosen ? _accentColor : _mutedColor,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      chosen && _btPrinterName.isNotEmpty
+                          ? _btPrinterName
+                          : context.l10n.t('No printer selected'),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: _titleColor,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      chosen ? _btPrinterAddress : '',
+                      style: TextStyle(fontSize: 12, color: _mutedColor),
+                    ),
+                  ],
+                ),
+              ),
+              TextButton(
+                onPressed: () => _pickBluetoothPrinter(ctx, setSheetState),
+                child: Text(
+                  context.l10n.t(chosen ? 'Change' : 'Choose'),
+                  style: TextStyle(
+                    color: _accentColor,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Where [SalePrintSettings.outputWifi] prints: the default network printer
+  /// from Printer settings, shown so the operator can confirm the till is
+  /// pointed at the right machine without leaving the sale.
+  Widget _wifiSection() {
+    final printer = _wifiPrinter;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 20),
+        _sectionTitle('Network Printer'),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: _p.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _borderColor),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: _p.chipBg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.wifi,
+                  color: printer != null ? _accentColor : _mutedColor,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      printer != null
+                          ? printer.name
+                          : context.l10n.t('No printer configured'),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: _titleColor,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      printer != null
+                          ? '${printer.host}:${printer.port}'
+                          : context.l10n.t(
+                              'Add a printer in Settings > Printers',
+                            ),
+                      style: TextStyle(fontSize: 12, color: _mutedColor),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _paperSizeSection(BuildContext ctx, StateSetter setSheetState) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 20),
+        _sectionTitle('Paper Size'),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: _paperSizeOption(
+                ctx,
+                setSheetState,
+                '58mm',
+                Icons.crop_free,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _paperSizeOption(
+                ctx,
+                setSheetState,
+                '80mm',
+                Icons.aspect_ratio,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// Opens the picker above the settings sheet, then stores the choice.
+  Future<void> _pickBluetoothPrinter(
+    BuildContext sheetCtx,
+    StateSetter setSheetState,
+  ) async {
+    final picked = await showModalBottomSheet<BluetoothPrinterCandidate>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) =>
+          BluetoothPrinterPicker(selectedAddress: _btPrinterAddress),
+    );
+    if (picked == null || !mounted) return;
+    await SalePrintSettings.setBluetoothPrinter(
+      address: picked.address,
+      name: picked.name,
+    );
+    if (!mounted) return;
+    setState(() {
+      _btPrinterAddress = picked.address;
+      _btPrinterName = picked.name;
+    });
+    // The settings sheet is its own route above this screen: the screen's
+    // setState does not repaint it, so nudge it too.
+    setSheetState(() {});
   }
 
   Widget _paperSizeOption(
@@ -1205,65 +1528,6 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             ],
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _toggleRow({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required bool value,
-    required ValueChanged<bool> onChanged,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: _p.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _borderColor),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: _p.chipBg,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: _mutedColor, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: _titleColor,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: TextStyle(fontSize: 12, color: _mutedColor),
-                ),
-              ],
-            ),
-          ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeThumbColor: Colors.white,
-            activeTrackColor: _accentColor,
-            inactiveThumbColor: Colors.white,
-            inactiveTrackColor: _borderColor,
-          ),
-        ],
       ),
     );
   }

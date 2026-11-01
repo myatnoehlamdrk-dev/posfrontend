@@ -62,6 +62,10 @@ dependencies:
   printing: ^5.14.3
   # PDF generation
   pdf: ^3.11.2
+  # Direct thermal printing over Bluetooth (Android SPP / iOS BLE).
+  print_bluetooth_thermal: ^1.2.5
+  # ESC/POS byte generation shared by the Bluetooth and WiFi print paths.
+  esc_pos_utils_plus: ^2.0.4
   # Local notifications for stock alerts
   flutter_local_notifications: ^17.2.2
   # Firebase for push notifications (FCM)

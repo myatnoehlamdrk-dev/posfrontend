@@ -5,6 +5,15 @@
          the camera at runtime when the app itself declares it, so without
          this entry there is no system permission dialog to request. -->
     <uses-permission android:name="android.permission.CAMERA"/>
+    <!-- Bluetooth thermal printing (print_bluetooth_thermal). The plugin
+         merges its own copies of these; the app-level entries pin the modern
+         shapes — legacy Bluetooth stops at Android 11, and BLUETOOTH_SCAN
+         carries neverForLocation so listing printers never drags a location
+         requirement in with it. The plugin requests the runtime grants. -->
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
     <application
         android:label="SmartPos"
         android:name="${applicationName}"

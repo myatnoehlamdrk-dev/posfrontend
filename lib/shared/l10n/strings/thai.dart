@@ -291,6 +291,51 @@ const Map<String, String> thaiStrings = {
   'Print Settings': 'ตั้งค่าการพิมพ์',
   'Paper Size': 'ขนาดกระดาษ',
   'Print Format': 'รูปแบบการพิมพ์',
+  // Print output (PDF / Bluetooth / Wi-Fi)
+  'Output': 'ผลลัพธ์',
+  'Bluetooth': 'บลูทูธ',
+  'Wi-Fi': 'ไวไฟ',
+  'USB': 'USB',
+  'Print directly to a Bluetooth thermal printer':
+      'พิมพ์ตรงไปยังเครื่องพิมพ์ความร้อนบลูทูธ',
+  'Print directly to a network thermal printer':
+      'พิมพ์ตรงไปยังเครื่องพิมพ์ความร้อนในเครือข่าย',
+  'Print directly to a USB thermal printer':
+      'พิมพ์ตรงไปยังเครื่องพิมพ์ความร้อน USB',
+  'Thermal printing is not available here': 'ไม่สามารถพิมพ์ความร้อนที่นี่ได้',
+  'Bluetooth Printer': 'เครื่องพิมพ์บลูทูธ',
+  'Network Printer': 'เครื่องพิมพ์เครือข่าย',
+  'USB Printer': 'เครื่องพิมพ์ USB',
+  'No printer selected': 'ยังไม่ได้เลือกเครื่องพิมพ์',
+  'No printer configured': 'ยังไม่ได้ตั้งค่าเครื่องพิมพ์',
+  'Plug in the printer, then choose':
+      'เสียบเครื่องพิมพ์ แล้วเลือก',
+  'Add a printer in Settings > Printers':
+      'เพิ่มเครื่องพิมพ์ในการตั้งค่า > เครื่องพิมพ์',
+  'Choose': 'เลือก',
+  'Change': 'เปลี่ยน',
+  'Open print dialog': 'เปิดกล่องโต้ตอบการพิมพ์',
+  'Choose Bluetooth Printer': 'เลือกเครื่องพิมพ์บลูทูธ',
+  'Refresh': 'รีเฟรช',
+  'No printers found': 'ไม่พบเครื่องพิมพ์',
+  'Pair the printer in system settings, then refresh.':
+      'จับคู่เครื่องพิมพ์ในการตั้งค่าระบบ แล้วรีเฟรช',
+  'Thermal printing failed: {v1}': 'การพิมพ์ความร้อนล้มเหลว: {v1}',
+  'PDF export failed: {v1}': 'การส่งออก PDF ล้มเหลว: {v1}',
+  'Bluetooth is turned off. Turn it on and try again.':
+      'บลูทูธถูกปิดอยู่ เปิดแล้วลองใหม่อีกครั้ง',
+  'Bluetooth permission was denied.': 'สิทธิ์บลูทูธถูกปฏิเสธ',
+  'The printer did not receive the receipt. Move it closer and try again.':
+      'เครื่องพิมพ์ไม่ได้รับใบเสร็จ นำไปใกล้ๆ แล้วลองใหม่อีกครั้ง',
+  'Could not connect to the printer.': 'เชื่อมต่อเครื่องพิมพ์ไม่ได้',
+  'No Bluetooth printer selected. Choose one in Print Settings.':
+      'ยังไม่ได้เลือกเครื่องพิมพ์บลูทูธ เลือกในการตั้งค่าการพิมพ์',
+  'No printer configured. Add one in Settings > Printers.':
+      'ยังไม่ได้ตั้งค่าเครื่องพิมพ์ เพิ่มในการตั้งค่า > เครื่องพิมพ์',
+  'Bluetooth printing is not available in the browser.':
+      'ไม่สามารถพิมพ์ผ่านบลูทูธในเบราว์เซอร์ได้',
+  'Wi-Fi printing is not available in the browser.':
+      'ไม่สามารถพิมพ์ผ่าน Wi-Fi ในเบราว์เซอร์ได้',
 
   // Printers
   'Printer Settings': 'ตั้งค่าเครื่องพิมพ์',
@@ -311,11 +356,12 @@ const Map<String, String> thaiStrings = {
   'Printer saved': 'บันทึกเครื่องพิมพ์แล้ว',
   'Printer deleted': 'ลบเครื่องพิมพ์แล้ว',
   'Default printer updated.': 'อัปเดตเครื่องพิมพ์เริ่มต้นแล้ว',
-  'The app saves printer details here. For printing, add the printer to '
-      'your system once (TCP/IP, port 9100) and it will appear in the print '
-      'dialog.':
-      'แอปบันทึกข้อมูลเครื่องพิมพ์ไว้ที่นี่ สำหรับการพิมพ์ ให้เพิ่มเครื่องพิมพ์'
-      'ลงในระบบหนึ่งครั้ง (TCP/IP, พอร์ต 9100) จากนั้นจะปรากฏในหน้าต่างพิมพ์',
+  'The app saves printer details here. With Wi-Fi chosen in Print Settings, '
+          'sales print straight to this printer — the print dialog fallback uses '
+          'the printer your system already knows.':
+      'แอปบันทึกข้อมูลเครื่องพิมพ์ไว้ที่นี่ เมื่อเลือก Wi-Fi ในการตั้งค่าการพิมพ์ '
+      'การขายจะพิมพ์ไปยังเครื่องนี้โดยตรง ส่วนช่องทางสำรองในหน้าต่างพิมพ์ '
+      'จะใช้เครื่องพิมพ์ที่ระบบของคุณรู้จักอยู่แล้ว',
   'Test Connection': 'ทดสอบการเชื่อมต่อ',
   'Printer reachable': 'เชื่อมต่อเครื่องพิมพ์ได้',
   'Could not reach the printer.': 'ไม่สามารถเชื่อมต่อเครื่องพิมพ์ได้',
@@ -438,10 +484,8 @@ const Map<String, String> thaiStrings = {
   'Clear all': 'ล้างทั้งหมด',
   'No notifications yet': 'ยังไม่มีการแจ้งเตือน',
   'Stock alerts will appear here.': 'การแจ้งเตือนสต็อกจะแสดงที่นี่',
-  'Thank-you messages will appear here.':
-      'ข้อความขอบคุณจะแสดงที่นี่',
-  'Thank you for your feedback, {v1}!':
-      'ขอบคุณสำหรับความคิดเห็นของคุณ {v1}!',
+  'Thank-you messages will appear here.': 'ข้อความขอบคุณจะแสดงที่นี่',
+  'Thank you for your feedback, {v1}!': 'ขอบคุณสำหรับความคิดเห็นของคุณ {v1}!',
   'Thank you for your feedback!': 'ขอบคุณสำหรับความคิดเห็นของคุณ!',
   'Your message': 'ข้อความของคุณ',
   'Reference': 'อ้างอิง',

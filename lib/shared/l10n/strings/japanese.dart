@@ -286,6 +286,45 @@ const Map<String, String> japaneseStrings = {
   'Print Settings': '印刷設定',
   'Paper Size': '用紙サイズ',
   'Print Format': '印刷形式',
+  // Print output (PDF / Bluetooth / Wi-Fi)
+  'Output': '出力',
+  'Bluetooth': 'Bluetooth',
+  'Wi-Fi': 'Wi-Fi',
+  'USB': 'USB',
+  'Print directly to a Bluetooth thermal printer': 'Bluetoothサーマルプリンターへ直接印刷',
+  'Print directly to a network thermal printer': 'ネットワークサーマルプリンターへ直接印刷',
+  'Print directly to a USB thermal printer': 'USBサーマルプリンターへ直接印刷',
+  'Thermal printing is not available here': 'ここではサーマル印刷は使えません',
+  'Bluetooth Printer': 'Bluetoothプリンター',
+  'Network Printer': 'ネットワークプリンター',
+  'USB Printer': 'USBプリンター',
+  'No printer selected': 'プリンターが未選択です',
+  'No printer configured': 'プリンターが未設定です',
+  'Plug in the printer, then choose': 'プリンターを接続してから選択してください',
+  'Add a printer in Settings > Printers': '設定 > プリンター から追加してください',
+  'Choose': '選択',
+  'Change': '変更',
+  'Open print dialog': '印刷ダイアログを開く',
+  'Choose Bluetooth Printer': 'Bluetoothプリンターを選択',
+  'Refresh': '更新',
+  'No printers found': 'プリンターが見つかりません',
+  'Pair the printer in system settings, then refresh.':
+      'システム設定でプリンターをペアリングしてから更新してください',
+  'Thermal printing failed: {v1}': 'サーマル印刷に失敗しました: {v1}',
+  'PDF export failed: {v1}': 'PDFエクスポートに失敗しました: {v1}',
+  'Bluetooth is turned off. Turn it on and try again.':
+      'Bluetoothがオフです。オンにして再試行してください',
+  'Bluetooth permission was denied.': 'Bluetoothの許可が拒否されました',
+  'The printer did not receive the receipt. Move it closer and try again.':
+      'プリンターがレシートを受け取りませんでした。近くに置いて再試行してください',
+  'Could not connect to the printer.': 'プリンターに接続できませんでした',
+  'No Bluetooth printer selected. Choose one in Print Settings.':
+      'Bluetoothプリンターが未選択です。印刷設定で選択してください',
+  'No printer configured. Add one in Settings > Printers.':
+      'プリンターが未設定です。設定 > プリンター から追加してください',
+  'Bluetooth printing is not available in the browser.':
+      'ブラウザではBluetooth印刷は使えません',
+  'Wi-Fi printing is not available in the browser.': 'ブラウザではWi-Fi印刷は使えません',
 
   // Printers
   'Printer Settings': 'プリンター設定',
@@ -299,18 +338,18 @@ const Map<String, String> japaneseStrings = {
   'Set as Default': 'デフォルトに設定',
   'Default': 'デフォルト',
   'No printers saved yet.': '保存されたプリンターはありません',
-  'Add your WiFi thermal printer to get started.':
-      '開始するにはWiFiプリンターを追加してください',
+  'Add your WiFi thermal printer to get started.': '開始するにはWiFiプリンターを追加してください',
   'Delete Printer': 'プリンターを削除',
   'Delete this printer?': 'このプリンターを削除しますか？',
   'Printer saved': 'プリンターを保存しました',
   'Printer deleted': 'プリンターを削除しました',
   'Default printer updated.': 'デフォルトプリンターを更新しました',
-  'The app saves printer details here. For printing, add the printer to '
-      'your system once (TCP/IP, port 9100) and it will appear in the print '
-      'dialog.':
-      'プリンターの情報はここに保存されます。印刷するには、プリンターをシステムに'
-      '一度追加してください（TCP/IP、ポート9100）。追加すると印刷ダイアログに表示されます。',
+  'The app saves printer details here. With Wi-Fi chosen in Print Settings, '
+          'sales print straight to this printer — the print dialog fallback uses '
+          'the printer your system already knows.':
+      'プリンターの情報はここに保存されます。印刷設定でWi-Fiを選べば、販売データは'
+      'このプリンターへ直接送信されます。印刷ダイアログの代替手段は、システムに'
+      '登録済みのプリンターを使用します。',
   'Test Connection': '接続テスト',
   'Printer reachable': 'プリンターに接続できました',
   'Could not reach the printer.': 'プリンターに接続できませんでした。',
@@ -431,10 +470,8 @@ const Map<String, String> japaneseStrings = {
   'Clear all': 'すべてクリア',
   'No notifications yet': '通知はまだありません',
   'Stock alerts will appear here.': '在庫アラートがここに表示されます',
-  'Thank-you messages will appear here.':
-      '感謝メッセージがここに表示されます',
-  'Thank you for your feedback, {v1}!':
-      '{v1}さん、フィードバックありがとうございます！',
+  'Thank-you messages will appear here.': '感謝メッセージがここに表示されます',
+  'Thank you for your feedback, {v1}!': '{v1}さん、フィードバックありがとうございます！',
   'Thank you for your feedback!': 'フィードバックありがとうございます！',
   'Your message': 'あなたのメッセージ',
   'Reference': '参照',
@@ -442,8 +479,7 @@ const Map<String, String> japaneseStrings = {
   'Alert': 'アラート',
   'News': 'ニュース',
   'Clear all notifications?': 'すべての通知を削除しますか？',
-  'This removes the saved notification history.':
-      '保存済みの通知履歴がすべて削除されます。',
+  'This removes the saved notification history.': '保存済みの通知履歴がすべて削除されます。',
   'Just now': 'たった今',
   '{v1} min ago': '{v1}分前',
   '{v1} hr ago': '{v1}時間前',

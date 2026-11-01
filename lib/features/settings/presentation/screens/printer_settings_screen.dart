@@ -152,9 +152,7 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
         // The default is outlined rather than filled: one card in the list is
         // the state the whole app depends on, and a tinted border is the
         // cheapest way to say which one without competing with the brand fill.
-        border: Border.all(
-          color: printer.isDefault ? orange : p.border,
-        ),
+        border: Border.all(color: printer.isDefault ? orange : p.border),
         boxShadow: [
           BoxShadow(
             color: p.cardShadow,
@@ -206,7 +204,10 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
                         '${printer.model} • ${printer.host}:${printer.port}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 12.5, color: p.textSecondary),
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: p.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -234,13 +235,21 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
                 onPressed: () => _openForm(existing: printer),
                 tooltip: context.l10n.t('Edit'),
                 visualDensity: VisualDensity.compact,
-                icon: Icon(Icons.edit_outlined, size: 20, color: p.textSecondary),
+                icon: Icon(
+                  Icons.edit_outlined,
+                  size: 20,
+                  color: p.textSecondary,
+                ),
               ),
               IconButton(
                 onPressed: () => _confirmDelete(printer),
                 tooltip: context.l10n.t('Delete'),
                 visualDensity: VisualDensity.compact,
-                icon: Icon(Icons.delete_outline, size: 20, color: p.textSecondary),
+                icon: Icon(
+                  Icons.delete_outline,
+                  size: 20,
+                  color: p.textSecondary,
+                ),
               ),
             ],
           ),
@@ -293,10 +302,11 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
     );
   }
 
-  /// What this feature does and does not do, in one place. The profile is
-  /// address-book data; the OS print dialog still needs the printer added
-  /// once before it can list it, and that step is invisible from inside the
-  /// app, so it is said here rather than discovered at the till.
+  /// What this feature does, in one place. The profile is the address the
+  /// till's own print job is sent to when Wi-Fi is the chosen output — no
+  /// system-side registration is involved anymore — and the one step that is
+  /// invisible from inside the app is said here rather than discovered at
+  /// the till.
   Widget _hintBox() {
     final p = context.palette;
     return Container(
@@ -314,9 +324,10 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
           Expanded(
             child: Text(
               context.l10n.t(
-                'The app saves printer details here. For printing, add the '
-                'printer to your system once (TCP/IP, port 9100) and it will '
-                'appear in the print dialog.',
+                'The app saves printer details here. With Wi-Fi chosen in '
+                'Print Settings, sales print straight to this printer — the '
+                'print dialog fallback uses the printer your system already '
+                'knows.',
               ),
               style: TextStyle(fontSize: 12, color: p.textSecondary),
             ),
