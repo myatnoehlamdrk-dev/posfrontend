@@ -117,7 +117,27 @@ class _SaleAnalysisDetailScreenState extends State<SaleAnalysisDetailScreen> {
             ),
             Expanded(
               child:
-                  widget.metric == 'revenue' ? _revenuePage() : _genericPage(),
+                  widget.metric == 'revenue'
+                      ? _revenuePage()
+                      : widget.metric == 'cogs'
+                          ? _cogsPage()
+                          : widget.metric == 'grossProfit'
+                              ? _grossProfitPage()
+                              : widget.metric == 'margin'
+                                  ? _marginPage()
+                              : widget.metric == 'units'
+                                  ? _unitsPage()
+                              : widget.metric == 'transactions'
+                                  ? _transactionsPage()
+                              : widget.metric == 'aov'
+                                  ? _aovPage()
+                              : widget.metric == 'avgUnits'
+                                  ? _avgUnitsPage()
+                              : widget.metric == 'netProfit'
+                                  ? _operatingExpensesPage()
+                              : widget.metric == 'netProfit'
+                                  ? _netProfitPage()
+                              : _genericPage(),
             ),
           ],
         ),
@@ -351,6 +371,874 @@ class _SaleAnalysisDetailScreenState extends State<SaleAnalysisDetailScreen> {
           ),
           const SizedBox(height: 24),
         ],
+      ),
+    );
+  }
+
+  Widget _cogsPage() {
+    final p = context.palette;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _kpiCard('Total COGS', '28.5M', '↑ 8.5% vs prev'),
+              _kpiCard('COGS Ratio', '62.2%', 'COGS / Revenue'),
+              _kpiCard('Units Sold', '1,250', 'Total quantities'),
+              _kpiCard('Avg Cost / Unit', '22.8K', 'COGS / units sold'),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text('Illustrative values in MMK.', style: TextStyle(fontSize: 11, color: p.textMuted)),
+          const SizedBox(height: 16),
+          _sectionTitle('COGS Trend'),
+          SizedBox(height: 260, child: _cogsTrendChart()),
+          const SizedBox(height: 16),
+          _sectionTitle('COGS by Category'),
+          SizedBox(height: 200, child: _cogsPieChart()),
+          const SizedBox(height: 8),
+          _simpleTable(
+            headers: const ['Category', 'COGS'],
+            rows: const [
+              ['Electronics', '13.5M'],
+              ['Accessories', '8.2M'],
+              ['Computer', '4.5M'],
+              ['Others', '2.3M'],
+            ],
+          ),
+          const SizedBox(height: 16),
+          _sectionTitle('COGS by Product'),
+          _simpleTable(
+            headers: const ['Product', 'Units sold', 'COGS'],
+            rows: const [
+              ['Headphones', '300', '9M'],
+              ['Keyboard', '200', '6M'],
+              ['Mouse', '250', '3M'],
+            ],
+          ),
+          const SizedBox(height: 16),
+          _sectionTitle('Product Cost Analysis'),
+          _simpleTable(
+            headers: const ['Product', 'Unit cost', 'Selling price'],
+            rows: const [
+              ['Headphones', '20,000', '30,000'],
+              ['Keyboard', '25,000', '35,000'],
+              ['Mouse', '10,000', '15,000'],
+            ],
+          ),
+          const SizedBox(height: 16),
+          _sectionTitle('Period Comparison'),
+          _simpleTable(
+            headers: const ['Metric', 'This month', 'Last month'],
+            rows: const [
+              ['Total COGS', '28.5M', '26M'],
+              ['Units sold', '1,250', '1,100'],
+              ['Avg cost/unit', '22.8K', '23.6K'],
+              ['COGS ratio', '62.2%', '64%'],
+            ],
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _cogsTrendChart() {
+    final p = context.palette;
+    const vals = [0.7, 1.05, 0.9, 1.4, 1.75, 1.2, 2.1, 1.6];
+    final spots = vals.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList();
+    return LineChart(
+      LineChartData(
+        lineBarsData: [
+          LineChartBarData(spots: spots, isCurved: true, color: AppColors.red, barWidth: 3, belowBarData: BarAreaData(show: true, color: AppColors.red.withValues(alpha: 0.15))),
+        ],
+        titlesData: FlTitlesData(
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 44, getTitlesWidget: (v, _) => Text('${v.toStringAsFixed(1)}M', style: TextStyle(fontSize: 9, color: p.textMuted)))),
+          bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (v, _) {
+            const labels = ['Nov 1', 'Nov 2', 'Nov 3', 'Nov 4', 'Nov 5', 'Nov 6', 'Nov 7', 'Nov 8'];
+            final i = v.toInt();
+            if (i < 0 || i >= labels.length) return const SizedBox();
+            return Text(labels[i], style: TextStyle(fontSize: 9, color: p.textMuted));
+          })),
+        ),
+      ),
+    );
+  }
+
+  Widget _cogsPieChart() {
+    final sections = [
+      PieChartSectionData(value: 13.5, color: AppColors.brandPurple, title: 'Electronics'),
+      PieChartSectionData(value: 8.2, color: AppColors.teal, title: 'Accessories'),
+      PieChartSectionData(value: 4.5, color: AppColors.orange, title: 'Computer'),
+      PieChartSectionData(value: 2.3, color: AppColors.blue, title: 'Others'),
+    ];
+    return PieChart(PieChartData(sections: sections, centerSpaceRadius: 30));
+  }
+
+  Widget _grossProfitPage() {
+    final p = context.palette;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _kpiCard('Total Gross Profit', '9.7M', '↑ 8.5% vs prev'),
+              _kpiCard('Gross Profit Margin', '34%', 'Gross Profit / Revenue'),
+              _kpiCard('Total Revenue', '28.5M', 'Completed sales'),
+              _kpiCard('Total COGS', '18.8M', 'Cost of products sold'),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text('Illustrative values in MMK.', style: TextStyle(fontSize: 11, color: p.textMuted)),
+          const SizedBox(height: 16),
+          _sectionTitle('Gross Profit Trend'),
+          SizedBox(height: 260, child: _grossProfitTrendChart()),
+          const SizedBox(height: 16),
+          _sectionTitle('Gross Profit by Category'),
+          SizedBox(height: 200, child: _categoryBarChart([4.2, 2.8, 1.8, 0.9])),
+          const SizedBox(height: 8),
+          _simpleTable(
+            headers: const ['Category', 'Revenue', 'COGS', 'Gross Profit'],
+            rows: const [
+              ['Electronics', '13.5M', '9.3M', '4.2M'],
+              ['Accessories', '8.2M', '5.4M', '2.8M'],
+              ['Computer', '4.5M', '2.7M', '1.8M'],
+              ['Others', '2.3M', '1.4M', '0.9M'],
+            ],
+          ),
+          const SizedBox(height: 16),
+          _sectionTitle('Product Profitability'),
+          _simpleTable(
+            headers: const ['Product', 'Revenue', 'COGS', 'Gross Profit', 'Margin'],
+            rows: const [
+              ['Headphones', '500,000', '300,000', '200,000', '40%'],
+              ['Keyboard', '350,000', '200,000', '150,000', '42.9%'],
+              ['Mouse', '200,000', '150,000', '50,000', '25%'],
+            ],
+          ),
+          const SizedBox(height: 16),
+          _sectionTitle('Period Comparison'),
+          _simpleTable(
+            headers: const ['Metric', 'This month', 'Last month', 'Change'],
+            rows: const [
+              ['Gross Profit', '9.7M', '8.9M', '↑ 9%'],
+              ['Gross Profit Margin', '34%', '32%', '↑ 2%'],
+              ['Revenue', '28.5M', '26M', '↑ 9.6%'],
+              ['COGS', '18.8M', '17.1M', '↑ 9.9%'],
+            ],
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _grossProfitTrendChart() {
+    final p = context.palette;
+    const vals = [0.6, 0.9, 0.7, 1.1, 1.3, 0.8, 1.2, 1.5];
+    final spots = vals.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList();
+    return LineChart(
+      LineChartData(
+        lineBarsData: [
+          LineChartBarData(
+            spots: spots,
+            isCurved: true,
+            color: AppColors.green,
+            barWidth: 3,
+            belowBarData: BarAreaData(show: true, color: AppColors.green.withValues(alpha: 0.15)),
+          ),
+        ],
+        titlesData: FlTitlesData(
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 44, getTitlesWidget: (v, _) => Text('${v.toStringAsFixed(1)}M', style: TextStyle(fontSize: 9, color: p.textMuted)))),
+          bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (v, _) {
+            const labels = ['Nov 1', 'Nov 2', 'Nov 3', 'Nov 4', 'Nov 5', 'Nov 6', 'Nov 7', 'Nov 8'];
+            final i = v.toInt();
+            if (i < 0 || i >= labels.length) return const SizedBox();
+            return Text(labels[i], style: TextStyle(fontSize: 9, color: p.textMuted));
+          })),
+        ),
+      ),
+    );
+  }
+
+  Widget _marginPage() {
+    final p = context.palette;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _kpiCard('Avg Profit Margin', '34%', 'Overall gross margin'),
+              _kpiCard('Highest Margin', 'Keyboard', '42.9%'),
+              _kpiCard('Lowest Margin', 'Mouse', '25%'),
+              _kpiCard('Total Gross Profit', '9.7M', 'Before operating expenses'),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text('Illustrative values in MMK.', style: TextStyle(fontSize: 11, color: p.textMuted)),
+          const SizedBox(height: 16),
+          _sectionTitle('Margin Trend'),
+          SizedBox(height: 260, child: _marginTrendChart()),
+          const SizedBox(height: 16),
+          _sectionTitle('Margin by Category'),
+          SizedBox(height: 200, child: _categoryBarChart([31, 34, 40, 39])),
+          const SizedBox(height: 8),
+          _simpleTable(
+            headers: const ['Category', 'Revenue', 'COGS', 'Gross Profit', 'Margin'],
+            rows: const [
+              ['Electronics', '13.5M', '9.3M', '4.2M', '31%'],
+              ['Accessories', '8.2M', '5.4M', '2.8M', '34%'],
+              ['Computer', '4.5M', '2.7M', '1.8M', '40%'],
+              ['Others', '2.3M', '1.4M', '0.9M', '39%'],
+            ],
+          ),
+          const SizedBox(height: 16),
+          _sectionTitle('Product Margin Analysis'),
+          _simpleTable(
+            headers: const ['Product', 'Selling Price', 'Unit Cost', 'Gross Profit', 'Margin'],
+            rows: const [
+              ['Product A', '10,000', '6,000', '4,000', '40%'],
+              ['Product B', '15,000', '9,000', '6,000', '40%'],
+              ['Product C', '8,000', '6,000', '2,000', '25%'],
+            ],
+          ),
+          const SizedBox(height: 16),
+          _sectionTitle('Margin Comparison'),
+          _simpleTable(
+            headers: const ['Metric', 'This month', 'Last month', 'Change'],
+            rows: const [
+              ['Avg Profit Margin', '34%', '32%', '↑ 2%'],
+              ['Electronics Margin', '31%', '29%', '↑ 2%'],
+              ['Accessories Margin', '34%', '33%', '↑ 1%'],
+              ['Computer Margin', '40%', '38%', '↑ 2%'],
+            ],
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _marginTrendChart() {
+    final p = context.palette;
+    const vals = [30, 32, 34, 33, 35, 34, 33, 36];
+    final spots = vals.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.toDouble())).toList();
+    return LineChart(
+      LineChartData(
+        lineBarsData: [
+          LineChartBarData(
+            spots: spots,
+            isCurved: true,
+            color: AppColors.orange,
+            barWidth: 3,
+            belowBarData: BarAreaData(show: true, color: AppColors.orange.withValues(alpha: 0.15)),
+          ),
+        ],
+        titlesData: FlTitlesData(
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 44, getTitlesWidget: (v, _) => Text('${v.toInt()}%', style: TextStyle(fontSize: 9, color: p.textMuted)))),
+          bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (v, _) {
+            const labels = ['Nov 1', 'Nov 2', 'Nov 3', 'Nov 4', 'Nov 5', 'Nov 6', 'Nov 7', 'Nov 8'];
+            final i = v.toInt();
+            if (i < 0 || i >= labels.length) return const SizedBox();
+            return Text(labels[i], style: TextStyle(fontSize: 9, color: p.textMuted));
+          })),
+        ),
+      ),
+    );
+  }
+
+  Widget _unitsPage() {
+    final p = context.palette;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _kpiCard('Total Units Sold', '1,250', 'Completed sales'),
+              _kpiCard('Avg Units per Sale', '7', 'Units ÷ transactions'),
+              _kpiCard('Best-Selling Product', 'Headphones', '300 units'),
+              _kpiCard('Best-Selling Category', 'Electronics', '520 units'),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text('Illustrative values.', style: TextStyle(fontSize: 11, color: p.textMuted)),
+          const SizedBox(height: 16),
+          _sectionTitle('Units Sold Trend'),
+          SizedBox(height: 260, child: _unitsTrendChart()),
+          const SizedBox(height: 16),
+          _sectionTitle('Units Sold by Category'),
+          SizedBox(height: 200, child: _categoryBarChart([520, 300, 240, 190])),
+          const SizedBox(height: 8),
+          _simpleTable(
+            headers: const ['Category', 'Units Sold', 'Revenue'],
+            rows: const [
+              ['Electronics', '520', '13.5M'],
+              ['Accessories', '300', '8.2M'],
+              ['Computer', '240', '4.5M'],
+              ['Others', '190', '2.3M'],
+            ],
+          ),
+          const SizedBox(height: 16),
+          _sectionTitle('Product Sales Performance'),
+          _simpleTable(
+            headers: const ['Product', 'Units Sold', 'Revenue', '% of Total Units'],
+            rows: const [
+              ['Product A', '250', '2,500,000', '50%'],
+              ['Product B', '150', '1,500,000', '30%'],
+              ['Product C', '100', '1,000,000', '20%'],
+            ],
+          ),
+          const SizedBox(height: 16),
+          _sectionTitle('Period Comparison'),
+          _simpleTable(
+            headers: const ['Metric', 'This month', 'Last month', 'Change'],
+            rows: const [
+              ['Total units sold', '1,250', '1,100', '↑ 13.6%'],
+              ['Best-selling product', 'Headphones', 'Keyboard', '—'],
+              ['Best-selling category', 'Electronics', 'Electronics', '—'],
+            ],
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _unitsTrendChart() {
+    final p = context.palette;
+    const vals = [120, 160, 140, 180, 200, 150, 170, 190];
+    final spots = vals.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.toDouble())).toList();
+    return LineChart(
+      LineChartData(
+        lineBarsData: [
+          LineChartBarData(
+            spots: spots,
+            isCurved: true,
+            color: AppColors.brandPurple,
+            barWidth: 3,
+            belowBarData: BarAreaData(show: true, color: AppColors.brandPurple.withValues(alpha: 0.15)),
+          ),
+        ],
+        titlesData: FlTitlesData(
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 44, getTitlesWidget: (v, _) => Text('${v.toInt()}', style: TextStyle(fontSize: 9, color: p.textMuted)))),
+          bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (v, _) {
+            const labels = ['Nov 1', 'Nov 2', 'Nov 3', 'Nov 4', 'Nov 5', 'Nov 6', 'Nov 7', 'Nov 8'];
+            final i = v.toInt();
+            if (i < 0 || i >= labels.length) return const SizedBox();
+            return Text(labels[i], style: TextStyle(fontSize: 9, color: p.textMuted));
+          })),
+        ),
+      ),
+    );
+  }
+
+  Widget _transactionsPage() {
+    final p = context.palette;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _kpiCard('Total Transactions', '180', 'Completed sales'),
+              _kpiCard('Avg Transaction Value', '83.3K', 'Revenue ÷ transactions'),
+              _kpiCard('Highest Transaction', 'INV-045', '250,000'),
+              _kpiCard('Pending Payments', '12', 'Unpaid balances'),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text('Illustrative values in MMK.', style: TextStyle(fontSize: 11, color: p.textMuted)),
+          const SizedBox(height: 16),
+          _sectionTitle('Transaction Trend'),
+          SizedBox(height: 260, child: _transactionsTrendChart()),
+          const SizedBox(height: 16),
+          _sectionTitle('By Payment Method'),
+          SizedBox(height: 200, child: _categoryBarChart([78, 56, 34, 12])),
+          const SizedBox(height: 8),
+          _simpleTable(
+            headers: const ['Payment Method', 'Transactions', 'Collected'],
+            rows: const [
+              ['Cash', '78', '11.7M'],
+              ['Bank transfer', '56', '8.4M'],
+              ['Mobile payment', '34', '5.1M'],
+              ['Credit', '12', '1.8M'],
+            ],
+          ),
+          const SizedBox(height: 16),
+          _sectionTitle('By Payment Status'),
+          _simpleTable(
+            headers: const ['Status', 'Transactions', 'Amount'],
+            rows: const [
+              ['Paid', '160', '24M'],
+              ['Partial', '8', '1.2M'],
+              ['Unpaid', '12', '1.8M'],
+            ],
+          ),
+          const SizedBox(height: 16),
+          _sectionTitle('Transaction History'),
+          _filterRow('Payment', const ['All', 'Cash', 'Bank', 'Mobile', 'Credit'], 'All', (_) {}),
+          const SizedBox(height: 4),
+          _filterRow('Status', const ['All', 'Paid', 'Partial', 'Unpaid'], 'All', (_) {}),
+          const SizedBox(height: 8),
+          _simpleTable(
+            headers: const ['Voucher No.', 'Date', 'Customer', 'Payment Method', 'Total Amount', 'Status'],
+            rows: const [
+              ['INV-001', 'Nov 01', 'Customer A', 'Cash', '50,000', 'Paid'],
+              ['INV-002', 'Nov 01', 'Customer B', 'KPay', '80,000', 'Paid'],
+              ['INV-003', 'Nov 02', 'Customer C', 'Cash', '35,000', 'Partial'],
+            ],
+            minTableWidth: 720,
+          ),
+          const SizedBox(height: 16),
+          _sectionTitle('Period Comparison'),
+          _simpleTable(
+            headers: const ['Metric', 'This month', 'Last month', 'Change'],
+            rows: const [
+              ['Transaction count', '180', '160', '↑ 12.5%'],
+              ['Avg transaction value', '83.3K', '78.1K', '↑ 6.7%'],
+              ['Pending payments', '12', '15', '↓ 20%'],
+            ],
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _transactionsTrendChart() {
+    final p = context.palette;
+    const vals = [6, 9, 7, 11, 13, 8, 10, 12];
+    final spots = vals.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.toDouble())).toList();
+    return LineChart(
+      LineChartData(
+        lineBarsData: [
+          LineChartBarData(
+            spots: spots,
+            isCurved: true,
+            color: AppColors.blue,
+            barWidth: 3,
+            belowBarData: BarAreaData(show: true, color: AppColors.blue.withValues(alpha: 0.15)),
+          ),
+        ],
+        titlesData: FlTitlesData(
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 44, getTitlesWidget: (v, _) => Text('${v.toInt()}', style: TextStyle(fontSize: 9, color: p.textMuted)))),
+          bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (v, _) {
+            const labels = ['Nov 1', 'Nov 2', 'Nov 3', 'Nov 4', 'Nov 5', 'Nov 6', 'Nov 7', 'Nov 8'];
+            final i = v.toInt();
+            if (i < 0 || i >= labels.length) return const SizedBox();
+            return Text(labels[i], style: TextStyle(fontSize: 9, color: p.textMuted));
+          })),
+        ),
+      ),
+    );
+  }
+
+  Widget _aovPage() {
+    final p = context.palette;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _kpiCard('Average Order Value', '83.3K', 'Revenue ÷ transactions'),
+              _kpiCard('Highest Order Value', 'INV-045', '250,000'),
+              _kpiCard('Lowest Order Value', 'INV-012', '12,000'),
+              _kpiCard('Total Revenue', '15M', 'Completed sales'),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text('Illustrative values in MMK.', style: TextStyle(fontSize: 11, color: p.textMuted)),
+          const SizedBox(height: 16),
+          _sectionTitle('AOV Trend'),
+          SizedBox(height: 260, child: _aovTrendChart()),
+          const SizedBox(height: 16),
+          _sectionTitle('AOV by Category'),
+          SizedBox(height: 200, child: _categoryBarChart([120, 95, 80, 60])),
+          const SizedBox(height: 8),
+          _simpleTable(
+            headers: const ['Category', 'Avg Order Value'],
+            rows: const [
+              ['Electronics', '120,000'],
+              ['Accessories', '95,000'],
+              ['Computer', '80,000'],
+              ['Others', '60,000'],
+            ],
+          ),
+          const SizedBox(height: 16),
+          _sectionTitle('Transaction Value Distribution'),
+          SizedBox(height: 200, child: _categoryBarChart([35, 50, 25, 10])),
+          const SizedBox(height: 8),
+          _simpleTable(
+            headers: const ['Transaction Range', 'Number of Transactions'],
+            rows: const [
+              ['Under 20,000', '35'],
+              ['20,000–50,000', '50'],
+              ['50,001–100,000', '25'],
+              ['Above 100,000', '10'],
+            ],
+          ),
+          const SizedBox(height: 16),
+          _sectionTitle('Period Comparison'),
+          _simpleTable(
+            headers: const ['Metric', 'This month', 'Last month', 'Change'],
+            rows: const [
+              ['Average Order Value', '83.3K', '78.1K', '↑ 6.7%'],
+              ['Total revenue', '15M', '14M', '↑ 7.1%'],
+              ['Transaction count', '180', '179', '↑ 0.6%'],
+            ],
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _aovTrendChart() {
+    final p = context.palette;
+    const vals = [80, 85, 82, 88, 90, 84, 86, 89];
+    final spots = vals.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.toDouble())).toList();
+    return LineChart(
+      LineChartData(
+        lineBarsData: [
+          LineChartBarData(
+            spots: spots,
+            isCurved: true,
+            color: AppColors.teal,
+            barWidth: 3,
+            belowBarData: BarAreaData(show: true, color: AppColors.teal.withValues(alpha: 0.15)),
+          ),
+        ],
+        titlesData: FlTitlesData(
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 44, getTitlesWidget: (v, _) => Text('${v.toInt()}K', style: TextStyle(fontSize: 9, color: p.textMuted)))),
+          bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (v, _) {
+            const labels = ['Nov 1', 'Nov 2', 'Nov 3', 'Nov 4', 'Nov 5', 'Nov 6', 'Nov 7', 'Nov 8'];
+            final i = v.toInt();
+            if (i < 0 || i >= labels.length) return const SizedBox();
+            return Text(labels[i], style: TextStyle(fontSize: 9, color: p.textMuted));
+          })),
+        ),
+      ),
+    );
+  }
+
+  Widget _avgUnitsPage() {
+    final p = context.palette;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _kpiCard('Avg Units per Transaction', '2.5', 'Units ÷ transactions'),
+              _kpiCard('Total Units Sold', '450', 'Completed sales'),
+              _kpiCard('Total Transactions', '180', 'Completed sales'),
+              _kpiCard('Highest Units per Txn', '8 units', 'Single transaction'),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text('Illustrative values.', style: TextStyle(fontSize: 11, color: p.textMuted)),
+          const SizedBox(height: 16),
+          _sectionTitle('Avg Units per Transaction Trend'),
+          SizedBox(height: 260, child: _avgUnitsTrendChart()),
+          const SizedBox(height: 16),
+          _sectionTitle('Avg Units by Category'),
+          SizedBox(height: 200, child: _categoryBarChart([3, 2.2, 1.8, 1.5])),
+          const SizedBox(height: 8),
+          _simpleTable(
+            headers: const ['Category', 'Avg Units per Txn'],
+            rows: const [
+              ['Electronics', '3.0'],
+              ['Accessories', '2.2'],
+              ['Computer', '1.8'],
+              ['Others', '1.5'],
+            ],
+          ),
+          const SizedBox(height: 16),
+          _sectionTitle('Transaction Quantity Distribution'),
+          SizedBox(height: 200, child: _categoryBarChart([40, 55, 25, 10])),
+          const SizedBox(height: 8),
+          _simpleTable(
+            headers: const ['Units per Transaction', 'Transactions'],
+            rows: const [
+              ['1 unit', '40'],
+              ['2–3 units', '55'],
+              ['4–5 units', '25'],
+              ['More than 5 units', '10'],
+            ],
+          ),
+          const SizedBox(height: 16),
+          _sectionTitle('Period Comparison'),
+          _simpleTable(
+            headers: const ['Metric', 'This month', 'Last month', 'Change'],
+            rows: const [
+              ['Avg units per txn', '2.5', '2.3', '↑ 8.7%'],
+              ['Total units sold', '450', '420', '↑ 7.1%'],
+              ['Transaction count', '180', '182', '↓ 1.1%'],
+            ],
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _avgUnitsTrendChart() {
+    final p = context.palette;
+    const vals = [2.2, 2.5, 2.4, 2.7, 2.9, 2.5, 2.6, 2.8];
+    final spots = vals.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.toDouble())).toList();
+    return LineChart(
+      LineChartData(
+        lineBarsData: [
+          LineChartBarData(
+            spots: spots,
+            isCurved: true,
+            color: AppColors.orange,
+            barWidth: 3,
+            belowBarData: BarAreaData(show: true, color: AppColors.orange.withValues(alpha: 0.15)),
+          ),
+        ],
+        titlesData: FlTitlesData(
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 44, getTitlesWidget: (v, _) => Text('${v.toStringAsFixed(1)}', style: TextStyle(fontSize: 9, color: p.textMuted)))),
+          bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (v, _) {
+            const labels = ['Nov 1', 'Nov 2', 'Nov 3', 'Nov 4', 'Nov 5', 'Nov 6', 'Nov 7', 'Nov 8'];
+            final i = v.toInt();
+            if (i < 0 || i >= labels.length) return const SizedBox();
+            return Text(labels[i], style: TextStyle(fontSize: 9, color: p.textMuted));
+          })),
+        ),
+      ),
+    );
+  }
+
+  Widget _operatingExpensesPage() {
+    final p = context.palette;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _kpiCard('Total Operating Expenses', '2M', 'Selected period'),
+              _kpiCard('Expense Ratio', '13.3%', 'Expenses ÷ Revenue × 100'),
+              _kpiCard('Avg Daily Expense', '66.7K', 'Expenses ÷ days'),
+              _kpiCard('Highest Expense Category', 'Rent', '300,000'),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text('Illustrative values in MMK.', style: TextStyle(fontSize: 11, color: p.textMuted)),
+          const SizedBox(height: 16),
+          _sectionTitle('Expense Trend'),
+          SizedBox(height: 260, child: _expensesTrendChart()),
+          const SizedBox(height: 16),
+          _sectionTitle('Expense by Category'),
+          SizedBox(height: 200, child: _categoryBarChart([300, 150, 80, 60, 40, 30, 20, 120])),
+          const SizedBox(height: 8),
+          _simpleTable(
+            headers: const ['Category', 'Amount'],
+            rows: const [
+              ['Rent', '300,000'],
+              ['Staff salaries', '150,000'],
+              ['Electricity and water', '80,000'],
+              ['Internet and phone', '60,000'],
+              ['Transportation', '40,000'],
+              ['Maintenance', '30,000'],
+              ['Marketing', '20,000'],
+              ['Other expenses', '120,000'],
+            ],
+          ),
+          const SizedBox(height: 16),
+          _sectionTitle('Expense History'),
+          _filterRow('Category', const ['All', 'Rent', 'Salaries', 'Utilities', 'Internet', 'Transport', 'Maintenance', 'Marketing', 'Other'], 'All', (_) {}),
+          const SizedBox(height: 8),
+          _simpleTable(
+            headers: const ['Date', 'Description', 'Category', 'Amount'],
+            rows: const [
+              ['Nov 01', 'Shop rent', 'Rent', '300,000'],
+              ['Nov 03', 'Electricity bill', 'Utilities', '50,000'],
+              ['Nov 05', 'Internet bill', 'Internet', '30,000'],
+            ],
+            minTableWidth: 720,
+          ),
+          const SizedBox(height: 16),
+          _sectionTitle('Period Comparison'),
+          _simpleTable(
+            headers: const ['Metric', 'This month', 'Last month', 'Change'],
+            rows: const [
+              ['Total Operating Expenses', '2M', '1.8M', '↑ 11.1%'],
+              ['Expense Ratio', '13.3%', '13.8%', '↓ 0.5%'],
+              ['Avg Daily Expense', '66.7K', '60K', '↑ 11.1%'],
+            ],
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _expensesTrendChart() {
+    final p = context.palette;
+    const vals = [0.3, 0.5, 0.4, 0.6, 0.5, 0.4, 0.6, 0.7];
+    final spots = vals.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.toDouble())).toList();
+    return LineChart(
+      LineChartData(
+        lineBarsData: [
+          LineChartBarData(
+            spots: spots,
+            isCurved: true,
+            color: AppColors.red,
+            barWidth: 3,
+            belowBarData: BarAreaData(show: true, color: AppColors.red.withValues(alpha: 0.15)),
+          ),
+        ],
+        titlesData: FlTitlesData(
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 44, getTitlesWidget: (v, _) => Text('${v.toStringAsFixed(1)}M', style: TextStyle(fontSize: 9, color: p.textMuted)))),
+          bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (v, _) {
+            const labels = ['Nov 1', 'Nov 2', 'Nov 3', 'Nov 4', 'Nov 5', 'Nov 6', 'Nov 7', 'Nov 8'];
+            final i = v.toInt();
+            if (i < 0 || i >= labels.length) return const SizedBox();
+            return Text(labels[i], style: TextStyle(fontSize: 9, color: p.textMuted));
+          })),
+        ),
+      ),
+    );
+  }
+
+  Widget _netProfitPage() {
+    final p = context.palette;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _kpiCard('Total Net Profit', '7.7M', 'Revenue − COGS − Expenses'),
+              _kpiCard('Net Profit Margin', '27%', 'Net Profit ÷ Revenue × 100'),
+              _kpiCard('Total Revenue', '28.5M', 'Completed sales'),
+              _kpiCard('Total Expenses', '20.8M', 'COGS + Operating Expenses'),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text('Illustrative values in MMK. Estimated Net Profit — tax, interest and other non-operating items are not deducted.', style: TextStyle(fontSize: 11, color: p.textMuted)),
+          const SizedBox(height: 16),
+          _sectionTitle('Net Profit Trend'),
+          SizedBox(height: 260, child: _netProfitTrendChart()),
+          const SizedBox(height: 16),
+          _sectionTitle('Revenue to Net Profit Breakdown'),
+          _simpleTable(
+            headers: const ['Item', 'Amount'],
+            rows: const [
+              ['Revenue', '28.5M'],
+              ['COGS', '18.8M'],
+              ['Gross Profit', '9.7M'],
+              ['Operating Expenses', '2M'],
+              ['Net Profit', '7.7M'],
+            ],
+          ),
+          const SizedBox(height: 16),
+          _sectionTitle('Net Profit by Category'),
+          SizedBox(height: 200, child: _categoryBarChart([3.2, 1.8, 1.3, 1.4])),
+          const SizedBox(height: 8),
+          _simpleTable(
+            headers: const ['Category', 'Net Profit', 'Margin'],
+            rows: const [
+              ['Electronics', '3.2M', '24%'],
+              ['Accessories', '1.8M', '22%'],
+              ['Computer', '1.3M', '29%'],
+              ['Others', '1.4M', '61%'],
+            ],
+          ),
+          const SizedBox(height: 16),
+          _sectionTitle('Period Comparison'),
+          _simpleTable(
+            headers: const ['Metric', 'This month', 'Last month', 'Change'],
+            rows: const [
+              ['Net Profit', '7.7M', '6.8M', '↑ 13.2%'],
+              ['Net Profit Margin', '27%', '26%', '↑ 1%'],
+              ['Revenue', '28.5M', '26M', '↑ 9.6%'],
+              ['COGS', '18.8M', '17.1M', '↑ 9.9%'],
+              ['Operating Expenses', '2M', '1.8M', '↑ 11.1%'],
+            ],
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _netProfitTrendChart() {
+    final p = context.palette;
+    const vals = [0.9, 1.2, 1.0, 1.3, 1.5, 1.1, 1.4, 1.3];
+    final spots = vals.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.toDouble())).toList();
+    return LineChart(
+      LineChartData(
+        lineBarsData: [
+          LineChartBarData(
+            spots: spots,
+            isCurved: true,
+            color: AppColors.green,
+            barWidth: 3,
+            belowBarData: BarAreaData(show: true, color: AppColors.green.withValues(alpha: 0.15)),
+          ),
+        ],
+        titlesData: FlTitlesData(
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 44, getTitlesWidget: (v, _) => Text('${v.toStringAsFixed(1)}M', style: TextStyle(fontSize: 9, color: p.textMuted)))),
+          bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (v, _) {
+            const labels = ['Nov 1', 'Nov 2', 'Nov 3', 'Nov 4', 'Nov 5', 'Nov 6', 'Nov 7', 'Nov 8'];
+            final i = v.toInt();
+            if (i < 0 || i >= labels.length) return const SizedBox();
+            return Text(labels[i], style: TextStyle(fontSize: 9, color: p.textMuted));
+          })),
+        ),
       ),
     );
   }
@@ -1160,7 +2048,7 @@ class _SaleAnalysisDetailScreenState extends State<SaleAnalysisDetailScreen> {
             .map((e) => BarChartGroupData(
                   x: e.key,
                   barRods: [
-                    BarChartRodData(toY: e.value, color: colors[e.key]),
+                    BarChartRodData(toY: e.value, color: colors[e.key % colors.length]),
                   ],
                 ))
             .toList(),

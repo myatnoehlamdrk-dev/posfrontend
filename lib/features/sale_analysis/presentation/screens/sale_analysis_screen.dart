@@ -117,7 +117,7 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
       _Kpi('Units Sold', '$unitsSold', Icons.inventory_2, 'units'),
       _Kpi('Transactions', '$transactionCount', Icons.receipt_long, 'transactions'),
       _Kpi('AOV', _fmt(aov), Icons.payments, 'aov'),
-      _Kpi('Avg Units/Txn', avgUnits.toStringAsFixed(2), Icons.shopping_bag, 'units'),
+      _Kpi('Avg Units/Txn', avgUnits.toStringAsFixed(2), Icons.shopping_bag, 'avgUnits'),
       _Kpi('Operating Exp.', _fmt(operatingExpenses), Icons.money_off, 'netProfit'),
       _Kpi('Net Profit', _fmt(netProfit), Icons.account_balance, 'netProfit'),
     ];
