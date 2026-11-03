@@ -20,6 +20,7 @@ import 'package:posfrontend/shared/services/sale_output_service.dart';
 import 'package:posfrontend/shared/services/thermal_printer_transport.dart';
 import 'package:posfrontend/shared/services/usb_printer_candidate.dart';
 import 'package:posfrontend/shared/services/usb_printer_transport.dart';
+import 'package:posfrontend/shared/services/usb_setup_download.dart';
 import 'package:posfrontend/features/sale/presentation/screens/sale_items_screen.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
@@ -204,29 +205,33 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       }
     }
 
-    // The output choice is read from the sheet's live state: whatever the
-    // operator last picked is what this sale follows. The sale is already
-    // stored, so a failure here is only a snackbar — it never undoes it.
-    _runOutput(saleArgs, _printSettings);
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !messenger.mounted) return;
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: const AppMessageBanner(
-              message: 'Sale saved successfully!',
-              kind: AppMessageKind.success,
+      if (mounted && messenger.mounted) {
+        messenger
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: const AppMessageBanner(
+                message: 'Sale saved successfully!',
+                kind: AppMessageKind.success,
+              ),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              behavior: SnackBarBehavior.floating,
+              padding: EdgeInsets.zero,
+              margin: const EdgeInsets.all(16),
+              duration: const Duration(seconds: 3),
             ),
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            behavior: SnackBarBehavior.floating,
-            padding: EdgeInsets.zero,
-            margin: const EdgeInsets.all(16),
-            duration: const Duration(seconds: 3),
-          ),
-        );
+          );
+      }
+      // The output runs *after* the success banner, never before it: both
+      // banners share one messenger, and a print failure that landed first
+      // used to be wiped out by the callback's hideCurrentSnackBar above —
+      // the operator saw "saved successfully", no paper, and no explanation.
+      // The output choice is read from the sheet's live state: whatever the
+      // operator last picked is what this sale follows. The sale is already
+      // stored, so a failure here is only a snackbar — it never undoes it.
+      _runOutput(saleArgs, _printSettings);
     });
   }
 
@@ -1258,8 +1263,42 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             ],
           ),
         ),
+        // The one-time driver swap lives outside the browser, so the link to
+        // it sits with the USB card it applies to — where a till would hit
+        // the error it prevents.
+        if (UsbPrinterTransport.isSupported)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: _openUsbSetupDownload,
+              icon: const Icon(Icons.download_rounded, size: 16),
+              label: Text(
+                context.l10n.t('Download USB setup for this computer'),
+                style: TextStyle(
+                  color: _accentColor,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ),
       ],
     );
+  }
+
+  /// Fetches the one-time Windows driver package. A refused launch (popup
+  /// blocker) says so rather than leaving the operator with nothing.
+  Future<void> _openUsbSetupDownload() async {
+    final ok = await UsbSetupDownload.open();
+    if (!ok && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            context.l10n.t('The download could not be started. Try again.'),
+          ),
+        ),
+      );
+    }
   }
 
   /// Opens the browser's WebUSB chooser. Must stay on the tap's user

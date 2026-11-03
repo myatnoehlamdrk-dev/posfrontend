@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import 'package:posfrontend/features/settings/data/printer_profile_store.dart';
 import 'package:posfrontend/features/settings/domain/entities/printer_profile.dart';
 import 'package:posfrontend/shared/services/print_output_exception.dart';
@@ -19,6 +21,9 @@ abstract final class SaleOutputService {
     Map<String, dynamic> args,
     SalePrintSettings settings,
   ) async {
+    // Which output actually ran — a "no error, no paper" report is
+    // undiagnosable without knowing whether the USB branch was even taken.
+    debugPrint('[print] output=${settings.output} paper=${settings.paperSize}');
     switch (settings.output) {
       case SalePrintSettings.outputBluetooth:
         if (!ThermalPrinterTransport.isSupported) {

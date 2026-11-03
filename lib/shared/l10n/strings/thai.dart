@@ -534,4 +534,8 @@ const Map<String, String> thaiStrings = {
       'บันทึกรูปภาพแล้ว แต่เก็บไว้เฉพาะเซิร์ฟเวอร์ของร้านนี้เท่านั้น อุปกรณ์อื่นอาจแสดงรูปไม่ได้',
   'This photo could not be reduced and is uploading at full size.':
       'ไม่สามารถย่อรูปนี้ได้ จึงอัปโหลดด้วยขนาดต้นฉบับ',
+  'Download USB setup for this computer':
+      'ดาวน์โหลดการตั้งค่า USB สำหรับคอมพิวเตอร์เครื่องนี้',
+  'The download could not be started. Try again.':
+      'ไม่สามารถเริ่มการดาวน์โหลดได้ โปรดลองอีกครั้ง',
 };

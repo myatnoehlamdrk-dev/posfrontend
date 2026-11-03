@@ -723,4 +723,8 @@ const Map<String, String> myStrings = {
   '13. Contact Us': '၁၃။ ကျွန်ုပ်တို့ထံ ဆက်သွယ်ရန်',
   'If you have any questions about these Terms of Service, please contact us through the support channels provided within the application.':
       'ဤဝန်ဆောင်မှုစည်းမျဉ်းများနှင့် ပတ်သက်၍ မေးခွန်းရှိပါက အက်ပ်အတွင်း ပေးအပ်ထားသော အထောက်အကူပြု လမ်းကြောင်းများမှတစ်ဆင့် ကျွန်ုပ်တို့ထံ ဆက်သွယ်ပါ။',
+  'Download USB setup for this computer':
+      'ဤကွန်ပျူတာအတွက် USB တပ်ဆင်ရေးကို ဒေါင်းလုဒ်လုပ်ပါ',
+  'The download could not be started. Try again.':
+      'ဒေါင်းလုဒ်စတင်၍ မရပါ။ ထပ်ကြိုးစားကြည့်ပါ။',
 };

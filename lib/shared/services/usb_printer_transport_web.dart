@@ -1,8 +1,9 @@
 // ignore_for_file: avoid_web_libraries_in_flutter
 
+import 'dart:async';
 import 'dart:js_interop';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:posfrontend/shared/services/print_output_exception.dart';
@@ -30,10 +31,11 @@ extension type USBDevice._(JSObject _) implements JSObject {
   external String? get serialNumber;
   external bool get opened;
   external USBConfiguration? get configuration;
+  external JSArray<USBConfiguration> get configurations;
 
-  external JSPromise<JSAny> open();
-  external JSPromise<JSAny> selectConfiguration(int configurationValue);
-  external JSPromise<JSAny> claimInterface(int interfaceNumber);
+  external JSPromise<JSAny?> open();
+  external JSPromise<JSAny?> selectConfiguration(int configurationValue);
+  external JSPromise<JSAny?> claimInterface(int interfaceNumber);
   external JSPromise<USBOutTransferResult> transferOut(
     int endpointNumber,
     JSAny data,
@@ -83,6 +85,11 @@ const _keyName = 'print_usb_name';
 const _keyVendorId = 'print_usb_vendor_id';
 const _keyProductId = 'print_usb_product_id';
 const _keySerial = 'print_usb_serial';
+
+/// How long the whole device stage may take before the watchdog declares
+/// the printer unresponsive — long enough for a slow claim on a busy bus,
+/// short enough that the operator is not left staring at silence.
+const _stageTimeout = Duration(seconds: 15);
 
 USBNavigator get _usb {
   final nav = _usbNavigator;
@@ -194,18 +201,46 @@ Future<void> send({required List<int> bytes}) async {
     );
   }
 
+  // A trace of every step: "no error, no paper" is only decidable from how
+  // far the chain got — a trace that stops mid-way means a promise that
+  // never settled, a complete trace with silence means the printer took the
+  // bytes and printed nothing (paper, cover, or protocol).
+  debugPrint(
+    '[usb] sending ${bytes.length} bytes to ${selected.name} '
+    '(vid:${selected.vendorId.toRadixString(16).padLeft(4, '0')} '
+    'pid:${selected.productId.toRadixString(16).padLeft(4, '0')})',
+  );
+
   try {
-    if (!device.opened) {
-      await device.open().toDart;
-    }
-    await _ensureConfiguration(device);
-    final endpoint = await _claimBulkOut(device);
-    await _transfer(device, endpoint, bytes);
+    await _openClaimAndSend(device, bytes).timeout(_stageTimeout);
   } on PrintOutputException {
     rethrow;
+  } on TimeoutException {
+    // A promise that never settles used to leave the operator with no error
+    // and no paper; the watchdog turns that silence into a sentence.
+    debugPrint('[usb] device stage timed out after $_stageTimeout');
+    throw const PrintOutputException(
+      'The USB printer did not respond. Check its power and cable, '
+      'then try again.',
+    );
   } catch (e) {
+    debugPrint('[usb] failed at device stage: $e');
     throw PrintOutputException(_friendlyDeviceError(e));
   }
+}
+
+/// The device stage — open, configure, claim, stream — split out so the
+/// whole chain carries one watchdog timeout instead of hanging forever when
+/// a browser promise never settles.
+Future<void> _openClaimAndSend(USBDevice device, List<int> bytes) async {
+  if (!device.opened) {
+    await device.open().toDart;
+  }
+  await _ensureConfiguration(device);
+  final endpoint = await _claimBulkOut(device);
+  debugPrint('[usb] open+claim ok, bulk OUT endpoint $endpoint');
+  await _transfer(device, endpoint, bytes);
+  debugPrint('[usb] transfer finished cleanly');
 }
 
 Future<USBDevice?> _resolveDevice(UsbPrinterCandidate selected) async {
@@ -224,15 +259,29 @@ Future<USBDevice?> _resolveDevice(UsbPrinterCandidate selected) async {
 
 Future<void> _ensureConfiguration(USBDevice device) async {
   if (device.configuration != null) return;
-  // Configuration 1 is the only one virtually every composite device has;
-  // a printer that needs another value would fail claim and surface the
-  // operator-facing error from [send].
-  await device.selectConfiguration(1).toDart;
+  // The device's own first configuration, not a hardcoded 1: virtually every
+  // printer uses 1, but the value is a fact of the descriptor and picking it
+  // wrong fails with a NotFoundError that reads to the operator like a dead
+  // printer rather than a wrong guess.
+  final configurations = device.configurations.toDart;
+  final value = configurations.isEmpty
+      ? 1
+      : configurations.first.configurationValue;
+  debugPrint('[usb] selecting configuration $value');
+  await device.selectConfiguration(value).toDart;
 }
 
 /// Claims the first interface that exposes a bulk OUT endpoint and returns
 /// that endpoint's number. Printers put it on interface 0 or on a vendor
 /// interface behind a CDC pair — scanning beats assuming 0.
+///
+/// A refused claim is remembered, not swallowed: per the WebUSB spec it is
+/// either a SecurityError (the picked interface is a *protected class* —
+/// HID, mass storage, hub — which the browser never lets a page claim) or a
+/// NetworkError (the OS refused exclusive control, which on Windows means
+/// the printer's own driver still holds the interface). Both used to fall
+/// through to "does not expose a print endpoint", so the operator was told
+/// the device was wrong when the real cause was the driver or the pick.
 Future<int> _claimBulkOut(USBDevice device) async {
   final configuration = device.configuration;
   if (configuration == null) {
@@ -241,25 +290,37 @@ Future<int> _claimBulkOut(USBDevice device) async {
     );
   }
 
+  var sawPrintEndpoint = false;
+  Object? firstClaimFailure;
   for (final iface in configuration.interfaces.toDart) {
     for (final alternate in iface.alternates.toDart) {
       for (final endpoint in alternate.endpoints.toDart) {
         if (endpoint.direction == 'out' && endpoint.type == 'bulk') {
+          sawPrintEndpoint = true;
           try {
             await device.claimInterface(iface.interfaceNumber).toDart;
-          } catch (_) {
-            // Another interface may still be claimable — keep scanning.
+            debugPrint(
+              '[usb] claimed interface ${iface.interfaceNumber} '
+              '(bulk OUT endpoint ${endpoint.endpointNumber})',
+            );
+            return endpoint.endpointNumber;
+          } catch (e) {
+            // Another interface may still be claimable — keep scanning, but
+            // keep the first refusal for the message below.
+            firstClaimFailure ??= e;
             continue;
           }
-          return endpoint.endpointNumber;
         }
       }
     }
   }
 
-  throw const PrintOutputException(
-    'This USB device does not expose a print endpoint.',
-  );
+  if (!sawPrintEndpoint) {
+    throw const PrintOutputException(
+      'This USB device does not expose a print endpoint.',
+    );
+  }
+  throw PrintOutputException(_friendlyClaimError(firstClaimFailure));
 }
 
 /// WebUSB caps a single transfer (16 KB is the safe common denominator);
@@ -276,15 +337,32 @@ Future<void> _transfer(
   for (var offset = 0; offset < data.length; offset += chunkSize) {
     final end =
         offset + chunkSize > data.length ? data.length : offset + chunkSize;
-    final result = await device
-        .transferOut(endpoint, data.sublist(offset, end).toJS)
-        .toDart;
-    if (result.status != 'ok') {
-      throw PrintOutputException(
-        result.status == 'babble'
-            ? 'The USB printer reported an overflow. Check the cable and try again.'
-            : 'The USB printer did not accept the receipt. Check the connection.',
+    // A chunk can come back partially written with status still "ok"; taking
+    // that at face value would drop the rest of the receipt in silence, so
+    // keep writing until the chunk is whole and treat a zero-progress write
+    // as a dead connection instead of an infinite loop.
+    var start = offset;
+    while (start < end) {
+      final result = await device
+          .transferOut(endpoint, data.sublist(start, end).toJS)
+          .toDart;
+      debugPrint(
+        '[usb] transferOut ${end - start} bytes -> status=${result.status} '
+        'written=${result.bytesWritten}',
       );
+      if (result.status != 'ok') {
+        throw PrintOutputException(
+          result.status == 'babble'
+              ? 'The USB printer reported an overflow. Check the cable and try again.'
+              : 'The USB printer did not accept the receipt. Check the connection.',
+        );
+      }
+      if (result.bytesWritten <= 0) {
+        throw const PrintOutputException(
+          'The USB printer stopped accepting data. Check the connection.',
+        );
+      }
+      start += result.bytesWritten;
     }
   }
 }
@@ -316,21 +394,48 @@ String _friendlyChooserError(Object error) {
     return 'No printer was chosen.';
   }
   if (text.contains('SecurityError') || text.contains('allowed')) {
-    return 'USB permission was denied. Allow the printer and try again.';
+    // Per the WebUSB spec requestDevice only rejects with SecurityError when
+    // it lost its transient user activation ("Must be handling a user
+    // gesture") — the picker itself is fine, the tap got lost. The raw
+    // browser text rides along so the next failure says which it was.
+    return 'USB permission was denied. Tap Choose again directly '
+        '(the page must run on HTTPS or localhost). ($text)';
   }
-  return 'Could not open the USB printer chooser.';
+  return 'Could not open the USB printer chooser. ($text)';
 }
 
 String _friendlyDeviceError(Object error) {
   final text = error.toString();
-  if (text.contains('Access denied') || text.contains('SecurityError')) {
-    return 'USB permission was denied. Choose the printer again in Print Settings.';
-  }
   if (text.contains('No device selected') || text.contains('NotFoundError')) {
     return 'The USB printer was unplugged. Plug it in and choose it again.';
   }
   if (text.contains('InvalidStateError') || text.contains('busy')) {
     return 'The USB printer is busy. Close other tabs using it and try again.';
   }
-  return 'Could not send to the USB printer. Check the connection.';
+  if (text.contains('SecurityError')) {
+    return 'USB permission was denied. Choose the printer again in '
+        'Print Settings. ($text)';
+  }
+  // open() and selectConfiguration() reject with NetworkError when the
+  // platform refuses the session — on Windows that is the printer's own
+  // driver (usbprint.sys or the vendor's) still holding the interface, so
+  // the browser, which can only talk WinUSB, is turned away. The cable and
+  // the chooser are fine; blaming the connection here is what made a
+  // plugged-in printer look broken.
+  if (text.contains('Access denied') || text.contains('NetworkError')) {
+    return 'The system driver is using this printer, so the browser cannot '
+        'control it. Close any program printing to it and try again '
+        '(on Windows the printer must be bound to WinUSB). ($text)';
+  }
+  return 'Could not send to the USB printer. Check the connection. ($text)';
+}
+
+String _friendlyClaimError(Object? error) {
+  final text = error?.toString() ?? '';
+  if (text.contains('SecurityError')) {
+    return 'The browser refuses to claim protected devices (HID, storage, '
+        'hub) — pick the printer itself in the chooser, not another USB '
+        'device. ($text)';
+  }
+  return _friendlyDeviceError(error ?? '');
 }

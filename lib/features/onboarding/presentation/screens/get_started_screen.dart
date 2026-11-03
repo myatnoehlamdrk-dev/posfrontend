@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:posfrontend/features/auth/presentation/screens/login_screen.dart';
+import 'package:posfrontend/shared/services/usb_printer_transport.dart';
+import 'package:posfrontend/shared/services/usb_setup_download.dart';
 
 /// Design tokens for the welcome page.
 ///
@@ -2787,6 +2789,70 @@ class _TrustRow extends StatelessWidget {
   }
 }
 
+/// Footer link to the one-time Windows driver package for the WebUSB
+/// printer.
+///
+/// Shipped as a footer action rather than an auto-download because browsers
+/// block downloads that no one asked for, and a native Android install has
+/// nothing to use a Windows zip — [UsbPrinterTransport.isSupported] keeps it
+/// on exactly the machines that need it.
+class _SetupDownloadButton extends StatelessWidget {
+  const _SetupDownloadButton();
+
+  @override
+  Widget build(BuildContext context) {
+    if (!UsbPrinterTransport.isSupported) return const SizedBox.shrink();
+
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: () => _open(context),
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: _Spec.border),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.download_rounded,
+                size: 13,
+                color: _Spec.purple,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'USB printer setup (Windows)',
+                style: GoogleFonts.dmSans(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: _Spec.purple,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// A refused launch (popup blocker) has to say something — the download
+  /// silently not happening is the same failure mode USB printing had.
+  Future<void> _open(BuildContext context) async {
+    final ok = await UsbSetupDownload.open();
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('The download could not be started. Try again.'),
+        ),
+      );
+    }
+  }
+}
+
 /// Phone footer: brand, tagline and copyright stacked and centred.
 class _Footer extends StatelessWidget {
   const _Footer();
@@ -2804,6 +2870,8 @@ class _Footer extends StatelessWidget {
           textAlign: TextAlign.center,
           style: GoogleFonts.dmSans(fontSize: 10, color: _Spec.muted),
         ),
+        const SizedBox(height: 12),
+        const _SetupDownloadButton(),
         const SizedBox(height: 12),
         Text(
           '© ${DateTime.now().year} Smart POS',
@@ -2829,12 +2897,16 @@ class _FooterRow extends StatelessWidget {
           children: [
             const _Wordmark(size: 19),
             const SizedBox(width: 12),
-            Flexible(
+            // Expanded rather than loose-flexible so the setup button and
+            // copyright stay flush right once the button takes a slot.
+            Expanded(
               child: Text(
                 'A smarter way to run your everyday.',
                 style: GoogleFonts.dmSans(fontSize: 11, color: _Spec.muted),
               ),
             ),
+            const SizedBox(width: 16),
+            const _SetupDownloadButton(),
             const SizedBox(width: 16),
             Text(
               '© ${DateTime.now().year} Smart POS',

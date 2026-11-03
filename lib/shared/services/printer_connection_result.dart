@@ -8,8 +8,9 @@ class ConnectionTestResult {
   /// True when something accepted a TCP connection on the printer's port.
   final bool ok;
 
-  /// Technical reason for a failure — the raw socket message. Display code
-  /// translates its own summary and appends this as-is; it is diagnostics,
-  /// not copy.
+  /// Technical reason for a failure — the raw socket message, plus the
+  /// device's own network context when the platform can supply it (see the
+  /// io implementation's `_explain`). Display code appends this as-is; it is
+  /// diagnostics for the operator, not a translated summary.
   final String detail;
 }

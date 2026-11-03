@@ -519,4 +519,8 @@ const Map<String, String> japaneseStrings = {
       '写真は保存されましたが、この店舗のサーバーにのみ保存されています。他の端末では表示できない場合があります。',
   'This photo could not be reduced and is uploading at full size.':
       'この写真は圧縮できなかったため、元のサイズのままアップロードしています。',
+  'Download USB setup for this computer':
+      'このコンピューター用USBセットアップをダウンロード',
+  'The download could not be started. Try again.':
+      'ダウンロードを開始できませんでした。もう一度お試しください。',
 };
