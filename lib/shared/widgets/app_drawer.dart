@@ -14,6 +14,7 @@ import 'package:posfrontend/features/dashboard/presentation/screens/dashboard_sc
 import 'package:posfrontend/features/inventory/presentation/screens/inventory_screen.dart';
 import 'package:posfrontend/features/purchase/presentation/screens/purchase_items_screen.dart';
 import 'package:posfrontend/features/settings/presentation/screens/settings_screen.dart';
+import 'package:posfrontend/features/sale_analysis/presentation/screens/sale_analysis_screen.dart';
 import 'package:posfrontend/features/cart/presentation/screens/add_to_cart_screen.dart';
 
 import 'package:posfrontend/shared/l10n/app_strings.dart';
@@ -56,6 +57,7 @@ enum DrawerDestination {
   inventory(label: 'Inventory', icon: Icons.inventory_2_outlined),
   saleItem(label: 'Sale Item', icon: Icons.receipt_long_outlined),
   purchaseItem(label: 'Purchase Item', icon: Icons.local_shipping_outlined),
+  saleAnalysis(label: 'Sale Analysis', icon: Icons.analytics_outlined),
   setting(label: 'Setting', icon: Icons.settings_outlined);
 
   const DrawerDestination({required this.label, required this.icon});
@@ -81,6 +83,7 @@ enum DrawerDestination {
     DrawerDestination.saleItem => const SaleItemScreen(),
     DrawerDestination.quickSale => const QuickSaleScreen(),
     DrawerDestination.purchaseItem => const PurchaseItemsScreen(),
+    DrawerDestination.saleAnalysis => const SaleAnalysisScreen(),
     DrawerDestination.addToCart => const AddToCartScreen(),
     DrawerDestination.setting => const SettingsScreen(),
   };
