@@ -4,9 +4,11 @@ import 'package:dio/dio.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:posfrontend/core/extensions/number_extensions.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/features/dashboard/domain/entities/dashboard.dart';
 import 'package:posfrontend/features/dashboard/data/repositories/dashboard_repository_impl.dart';
+import 'package:posfrontend/features/dashboard/domain/entities/dashboard_table.dart';
 import 'package:posfrontend/features/dashboard/domain/entities/dashboard_tables.dart';
 import 'package:posfrontend/features/dashboard/presentation/screens/dashboard_table_screen.dart';
 import 'package:posfrontend/features/dashboard/presentation/viewmodels/dashboard_view_model.dart';
@@ -20,9 +22,18 @@ import 'package:posfrontend/shared/widgets/app_shell.dart';
 import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 import 'package:posfrontend/shared/widgets/error_retry_view.dart';
 import 'package:posfrontend/core/network/media_url.dart';
+import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
-import 'package:posfrontend/shared/widgets/shop_scope.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
+import 'package:posfrontend/shared/widgets/skeleton.dart';
+
+/// Which group of sections the header's tab is showing.
+///
+/// The design puts three tabs in the page header; they are filters over the
+/// same dashboard rather than three dashboards, so a tab only decides which
+/// cards are on screen. Every card still reads the one payload already
+/// loaded — switching tabs costs no request.
+enum _DashboardTab { overview, sales, inventory }
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -36,6 +47,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   late final DashboardViewModel _viewModel;
   final CancelToken _cancelToken = CancelToken();
 
+  _DashboardTab _tab = _DashboardTab.overview;
+
+  static const Map<_DashboardTab, String> _tabLabels = {
+    _DashboardTab.overview: 'Overview',
+    _DashboardTab.sales: 'Sales',
+    _DashboardTab.inventory: 'Inventory',
+  };
 
   @override
   void initState() {
@@ -148,53 +166,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         horizontal: 24,
                         vertical: 24,
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (_viewModel.isLoading && _viewModel.data == null)
-                            const DashboardSkeleton()
-                          else if (_viewModel.hasError)
-                            ErrorRetryView(
-                              message: _viewModel.errorMessage ??
-                                  'Something went wrong',
-                              onRetry: _viewModel.load,
-                            )
-                          else if (_viewModel.data == null)
-                            const DashboardSkeleton()
-                          else ...[
-                            _buildMetricSection(
-                              context.l10n.t('Summary'),
-                              _viewModel.data!.metrics,
-                            ),
-                            const SizedBox(height: 24),
-                            _buildCategoryDistributionSection(
-                              _viewModel.data!.categoryDistribution,
-                            ),
-                            const SizedBox(height: 24),
-                            _buildCategoryQuantitySection(
-                              _viewModel.data!.categoryQuantity,
-                            ),
-                            const SizedBox(height: 24),
-                            _buildMonthlySalesSection(),
-                            const SizedBox(height: 24),
-                            Text(
-                              context.l10n.t('Product Trend'),
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: p.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            _buildProductTrendSection(
-                              _viewModel.data!.mostBought,
-                              _viewModel.data!.leastBought,
-                              _viewModel.data!.noBought,
-                            ),
-                          ],
-                          const SizedBox(height: 24),
-                        ],
-                      ),
+                      child: _buildBody(context, p),
                     ),
                   );
                 },
@@ -206,160 +178,233 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _summaryCard(MetricEntity m) {
-    final p = context.palette;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: p.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: p.border),
-        boxShadow: [
-          BoxShadow(
-            color: p.cardShadow,
-            blurRadius: 12,
-            offset: const Offset(0, 2),
-          ),
+  Widget _buildBody(BuildContext context, AppPalette p) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_viewModel.isLoading && _viewModel.data == null)
+          const DashboardSkeleton()
+        else if (_viewModel.hasError)
+          ErrorRetryView(
+            message:
+                _viewModel.errorMessage ?? 'Something went wrong',
+            onRetry: _viewModel.load,
+          )
+        else if (_viewModel.data == null)
+          const DashboardSkeleton()
+        else ...[
+          _buildHeader(context, p),
+          const SizedBox(height: 24),
+          ..._sections(context, p, _viewModel.data!),
         ],
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  // ---------------------------------------------------------------- header
+
+  Widget _buildHeader(BuildContext context, AppPalette p) {
+    final titleBlock = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          context.l10n.t('Dashboard'),
+          style: TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.w700,
+            color: p.textPrimary,
+            letterSpacing: -0.3,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          context.l10n.t("Here's what's happening with your store today."),
+          style: TextStyle(fontSize: 13, color: p.textSecondary),
+        ),
+      ],
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= 760) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: titleBlock),
+              const SizedBox(width: 24),
+              _buildTabBar(context, p),
+            ],
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            titleBlock,
+            const SizedBox(height: 16),
+            _buildTabBar(context, p),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildTabBar(BuildContext context, AppPalette p) {
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: p.surfaceAlt,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: p.border),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            flex: 3,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Color(m.iconBgValue),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    IconData(
-                      int.parse(m.iconCodePoint),
-                      fontFamily: m.iconFontFamily,
-                    ),
-                    color: Color(m.iconColorValue),
-                    size: 24,
-                  ),
+          for (final tab in _DashboardTab.values)
+            GestureDetector(
+              onTap: () => setState(() => _tab = tab),
+              behavior: HitTestBehavior.opaque,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                curve: Curves.easeOut,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  context.l10n.t(m.label),
-                  style: TextStyle(fontSize: 13, color: p.textSecondary),
+                decoration: BoxDecoration(
+                  color: _tab == tab ? p.primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  m.value.length > 12
-                      ? '${m.value.substring(0, 12)}...'
-                      : m.value,
+                child: Text(
+                  context.l10n.t(_tabLabels[tab]!),
                   style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w700,
-                    color: p.textPrimary,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.clip,
-                ),
-                if (m.tableKey != null) ...[
-                  const SizedBox(height: 8),
-                  GestureDetector(
-                    onTap: () => _openSummaryTable(m.tableKey),
-                    child: Row(
-                      children: [
-                        Text(
-                          context.l10n.t('View all'),
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: p.accentText,
-                          ),
-                        ),
-                        const SizedBox(width: 2),
-                        Icon(
-                          Icons.chevron_right,
-                          size: 13,
-                          color: p.accentText,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          if (m.details.isNotEmpty) ...[
-            const SizedBox(width: 16),
-            Expanded(
-              flex: 2,
-              child: Table(
-                columnWidths: const {
-                  0: FlexColumnWidth(1),
-                  1: FlexColumnWidth(1),
-                },
-                defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                border: TableBorder(
-                  horizontalInside: BorderSide(
-                    color: Color(m.iconColorValue),
-                    width: 1,
-                  ),
-                  verticalInside: BorderSide(
-                    color: Color(m.iconColorValue),
-                    width: 1,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: _tab == tab ? Colors.white : p.textSecondary,
                   ),
                 ),
-                children: [
-                  for (final d in m.details)
-                    TableRow(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 5,
-                          ),
-                          child: Text(
-                            context.l10n.t(d.label),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: p.textSecondary,
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 5,
-                          ),
-                          child: Text(
-                            d.value,
-                            textAlign: TextAlign.right,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: p.textPrimary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                ],
               ),
             ),
-          ],
         ],
       ),
     );
   }
 
-  /// Maps a summary card to the table of rows behind it. Total Sales is the
-  /// only card whose value is money rather than a count, but it has a table
-  /// too, so the mapping is on the label for all four.
+  // -------------------------------------------------------------- sections
+
+  /// The cards currently on screen, in the design's order, each followed by
+  /// its gap. Tabs drop sections rather than restyle them, so a card is built
+  /// exactly the same way on every tab that shows it.
+  List<Widget> _sections(
+    BuildContext context,
+    AppPalette p,
+    DashboardEntity d,
+  ) {
+    final out = <Widget>[];
+    void section(Widget child) {
+      out.add(child);
+      out.add(const SizedBox(height: 24));
+    }
+
+    final showSales = _tab != _DashboardTab.inventory;
+    final showInventory = _tab != _DashboardTab.sales;
+
+    section(
+      _KpiGrid(
+        metrics: d.metrics,
+        trends: _viewModel.trends,
+        sparklines: _viewModel.sparklines,
+        trendsLoaded: _viewModel.trendsLoaded,
+        onOpenTable: _openSummaryTable,
+      ),
+    );
+
+    if (showSales) {
+      section(
+        _pair(
+          _monthlySalesCard(context, p),
+          _SalesSummaryCard(stats: d.stats, trends: _viewModel.trends),
+          leftFlex: 2,
+          rightFlex: 1,
+        ),
+      );
+    }
+
+    final allocation = _categoryAllocationCard(context, p, d);
+    final quantity = _quantitySoldCard(context, p, d);
+    if (showSales && showInventory) {
+      section(_pair(allocation, quantity));
+    } else if (showInventory) {
+      section(allocation);
+    } else {
+      section(quantity);
+    }
+
+    final trend = _productTrendCard(context, p, d);
+    final stock = _StockStatusCard(stats: d.stats);
+    if (showSales && showInventory) {
+      section(_pair(trend, stock));
+    } else if (showSales) {
+      section(trend);
+    } else {
+      section(stock);
+    }
+
+    if (showInventory) {
+      section(
+        _pair(
+          _lowStockPreview(context, p),
+          _notSoldPreview(context, p),
+        ),
+      );
+    }
+
+    final recentSales = _recentSalesPreview(context, p);
+    final recentProducts = _recentProductsPreview(context, p);
+    if (showSales && showInventory) {
+      section(_pair(recentSales, recentProducts));
+    } else if (showSales) {
+      section(recentSales);
+    } else {
+      section(recentProducts);
+    }
+
+    out.add(const _Footer());
+    return out;
+  }
+
+  /// Two cards side by side on a wide window, stacked on a narrow one. The
+  /// flex ratio keeps the chart wider than the summary panel beside it, the
+  /// way the design splits that row.
+  Widget _pair(
+    Widget left,
+    Widget right, {
+    int leftFlex = 1,
+    int rightFlex = 1,
+    double gap = 24,
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 900) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [left, SizedBox(height: gap), right],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(flex: leftFlex, child: left),
+            SizedBox(width: gap),
+            Expanded(flex: rightFlex, child: right),
+          ],
+        );
+      },
+    );
+  }
+
   void _openSummaryTable(DashboardTableKey? key) {
     final route = switch (key) {
       DashboardTableKey.products => DashboardTableScreen.route(
@@ -382,288 +427,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     Navigator.of(context).push(route);
   }
 
-  Widget _buildMetricSection(String title, List<MetricEntity> metrics) {
-    if (metrics.isEmpty) return const SizedBox.shrink();
-    final p = context.palette;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: p.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 12),
-        _buildMetricGrid(metrics),
-      ],
-    );
-  }
+  // -------------------------------------------------------- monthly + summary
 
-  /// Lays the cards out two per row, the way the summary has always read, and
-  /// falls back to a single column on the narrowest phones.
-  Widget _buildMetricGrid(List<MetricEntity> metrics) {
-    return LayoutBuilder(
-      builder: (ctx, constraints) {
-        final cards = metrics.map(_summaryCard).toList();
-        final width = constraints.maxWidth;
-        final columns = width < 360 ? 1 : 2;
-
-        if (columns == 1) {
-          return Column(
-            children: cards
-                .map(
-                  (c) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: c,
-                  ),
-                )
-                .toList(),
-          );
-        }
-
-        final rows = <Widget>[];
-        for (var i = 0; i < cards.length; i += columns) {
-          final rowCards = cards.sublist(
-            i,
-            i + columns > cards.length ? cards.length : i + columns,
-          );
-          rows.add(
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (var j = 0; j < columns; j++) ...[
-                  if (j > 0) const SizedBox(width: 12),
-                  Expanded(
-                    child: j < rowCards.length
-                        ? rowCards[j]
-                        : const SizedBox.shrink(),
-                  ),
-                ],
-              ],
-            ),
-          );
-          if (i + columns < cards.length) rows.add(const SizedBox(height: 12));
-        }
-        return Column(children: rows);
-      },
-    );
-  }
-
-  Widget _buildCategoryDistributionSection(
-    List<CategoryDistributionEntity> items,
-  ) {
-    final p = context.palette;
-
-    // One dataset behind every visual: the donut, the bars, the counts and
-    // the percentages all read the same `items`, so they cannot disagree.
-    // `total` guards the percentage against a zero-total division; `maxCount`
-    // is what each bar is scaled against (the largest category fills its
-    // column).
-    final total = items.fold<int>(0, (sum, e) => sum + e.productCount);
-    var maxCount = 0;
-    for (final e in items) {
-      if (e.productCount > maxCount) maxCount = e.productCount;
-    }
-
-    Widget buildPie() {
-      return SizedBox(
-        width: 220,
-        height: 220,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            PieChart(
-              PieChartData(
-                sectionsSpace: 2,
-                centerSpaceRadius: 40,
-                startDegreeOffset: -90,
-                sections: items.asMap().entries.map((entry) {
-                  final item = entry.value;
-                  return PieChartSectionData(
-                    value: item.productCount.toDouble(),
-                    color: Color(item.colorValue),
-                    radius: 60,
-                    showTitle: false,
-                  );
-                }).toList(),
-              ),
-              duration: const Duration(milliseconds: 400),
-              curve: Curves.easeOutCubic,
-            ),
-            SizedBox(
-              width: 80,
-              child: Text(
-                ShopScope.shopOf(context)?.name ?? 'Shop',
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: p.textPrimary,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // The name and the bar split the free space by flex — never by a fixed
-    // width — so a long category name ellipsizes instead of pushing the row
-    // past the card, and both columns keep the same position on every line.
-    // On the stacked (narrow) layout the name takes the larger share: labels
-    // are what suffer first when the width runs out.
-    Widget buildList({required bool stacked}) {
-      final nameFlex = stacked ? 3 : 2;
-      final barFlex = stacked ? 2 : 3;
-
-      double percentOf(CategoryDistributionEntity e) =>
-          total <= 0 ? 0 : (e.productCount / total) * 100;
-      double fractionOf(CategoryDistributionEntity e) =>
-          maxCount <= 0 ? 0 : e.productCount / maxCount;
-
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _CategoryDistributionLine(
-            nameFlex: nameFlex,
-            barFlex: barFlex,
-            count: context.l10n.t('Count'),
-            percent: context.l10n.t('Percentage'),
-            isHeader: true,
-          ),
-          for (final e in items)
-            _CategoryDistributionLine(
-              nameFlex: nameFlex,
-              barFlex: barFlex,
-              name: e.category,
-              swatchColor: Color(e.colorValue),
-              barFraction: fractionOf(e).clamp(0.0, 1.0).toDouble(),
-              count: e.productCount.toString(),
-              percent: '${percentOf(e).toStringAsFixed(1)}%',
-            ),
-        ],
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          context.l10n.t('Product Distribution by Category'),
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: p.textPrimary,
-          ),
-        ),
-        SizedBox(height: 12),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: p.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: p.border),
-            boxShadow: [
-              BoxShadow(
-                color: p.cardShadow,
-                blurRadius: 12,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: items.isEmpty
-              ? SizedBox(
-                  height: 200,
-                  child: Center(
-                    child: Text(context.l10n.t('No category data')),
-                  ),
-                )
-              : LayoutBuilder(
-                  builder: (context, constraints) {
-                    // Side-by-side only while the list keeps a workable width
-                    // beside the 220px donut; below that the chart stacks on
-                    // top and the list takes the full card width (mobile).
-                    final wide = constraints.maxWidth >= 640;
-                    if (wide) {
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          buildPie(),
-                          const SizedBox(width: 24),
-                          // Exactly as tall as the chart, so it reads as a
-                          // separator between the two sections rather than a
-                          // table rule across the whole card.
-                          Container(width: 1, height: 220, color: p.border),
-                          const SizedBox(width: 24),
-                          Expanded(child: buildList(stacked: false)),
-                        ],
-                      );
-                    }
-                    return Column(
-                      children: [
-                        Center(child: buildPie()),
-                        const SizedBox(height: 16),
-                        Container(height: 1, color: p.border),
-                        const SizedBox(height: 16),
-                        buildList(stacked: true),
-                      ],
-                    );
-                  },
-                ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCategoryQuantitySection(List<CategoryQuantityEntity> items) {
-    final p = context.palette;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          context.l10n.t('Quantity Sold by Category'),
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: p.textPrimary,
-          ),
-        ),
-        SizedBox(height: 12),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: p.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: p.border),
-            boxShadow: [
-              BoxShadow(
-                color: p.cardShadow,
-                blurRadius: 12,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: items.isEmpty
-              ? SizedBox(
-                  height: 200,
-                  child: Center(child: Text(context.l10n.t('No sales data'))),
-                )
-              : _HorizontalCategoryChart(items: items, palette: p),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMonthlySalesSection() {
-    final p = context.palette;
+  Widget _monthlySalesCard(BuildContext context, AppPalette p) {
     var years = _viewModel.years.isEmpty
         ? [DateTime.now().year]
         : _viewModel.years;
@@ -671,150 +437,1171 @@ class _DashboardScreenState extends State<DashboardScreen> {
       years = [_viewModel.selectedYear, ...years];
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                context.l10n.t('Monthly Sales'),
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: p.textPrimary,
-                ),
-              ),
+    return _PanelCard(
+      title: context.l10n.t('Monthly Sales'),
+      trailing: _YearDropdown(
+        years: years,
+        value: _viewModel.selectedYear,
+        onChanged: (year) => _viewModel.loadMonthlySales(year: year),
+      ),
+      child: _viewModel.isLoadingMonthly
+          ? const MonthlySalesChartSkeleton()
+          : _viewModel.monthlySales.isEmpty
+          ? SizedBox(
+              height: 260,
+              child: Center(child: Text(context.l10n.t('No sales data'))),
+            )
+          : _MonthlySalesChart(
+              items: _viewModel.monthlySales,
+              palette: p,
             ),
-            _YearDropdown(
-              years: years,
-              value: _viewModel.selectedYear,
-              onChanged: (year) => _viewModel.loadMonthlySales(year: year),
-            ),
-          ],
-        ),
-        SizedBox(height: 12),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: p.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: p.border),
-            boxShadow: [
-              BoxShadow(
-                color: p.cardShadow,
-                blurRadius: 12,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: _viewModel.isLoadingMonthly
-              ? const MonthlySalesChartSkeleton()
-              : _viewModel.monthlySales.isEmpty
-              ? SizedBox(
-                  height: 260,
-                  child: Center(child: Text(context.l10n.t('No sales data'))),
-                )
-              : _HorizontalBarChart(items: _viewModel.monthlySales, palette: p),
-        ),
-      ],
     );
   }
 
-  Widget _buildProductTrendSection(
-    List<ProductItemEntity> most,
-    List<ProductItemEntity> least,
-    List<ProductItemEntity> noBought,
-  ) {
-    final p = context.palette;
-    final mostCard = _ProductListCard(
-      title: context.l10n.t('Most Bought'),
-      titleColor: p.successFg,
-      items: most,
-      onViewAll: () => Navigator.of(context).push(
-        DashboardTableScreen.route(
-          spec: DashboardTables.bought,
-          showDirectionToggle: true,
-        ),
-      ),
-    );
-    final leastCard = _ProductListCard(
-      title: context.l10n.t('Least Bought'),
-      titleColor: p.dangerFg,
-      items: least,
-      onViewAll: () => Navigator.of(context).push(
-        DashboardTableScreen.route(
-          spec: DashboardTables.leastBought,
-          showDirectionToggle: true,
-          initialDirection: 'asc',
-        ),
-      ),
-    );
-    final noBoughtCard = _ProductListCard(
-      title: context.l10n.t('No Bought'),
-      titleColor: p.textSecondary,
-      items: noBought,
-      onViewAll: () => Navigator.of(
-        context,
-      ).push(DashboardTableScreen.route(spec: DashboardTables.noBought)),
-    );
+  // ------------------------------------------------------- category sections
 
-    return LayoutBuilder(
-      builder: (ctx, constraints) {
-        if (constraints.maxWidth < 560) {
-          return Column(
-            children: [
-              mostCard,
-              const SizedBox(height: 12),
-              leastCard,
-              const SizedBox(height: 12),
-              noBoughtCard,
-            ],
-          );
-        }
-        if (constraints.maxWidth < 880) {
-          return Column(
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: mostCard),
-                  const SizedBox(width: 12),
-                  Expanded(child: leastCard),
-                ],
+  Widget _categoryAllocationCard(
+    BuildContext context,
+    AppPalette p,
+    DashboardEntity d,
+  ) {
+    final items = d.categoryDistribution;
+    final total = items.fold<int>(0, (sum, e) => sum + e.productCount);
+
+    return _PanelCard(
+      title: context.l10n.t('Product Allocation by Category'),
+      trailing: _ViewAllLink(
+        onTap: () => Navigator.of(context).push(
+          DashboardTableScreen.route(spec: DashboardTables.products),
+        ),
+      ),
+      child: items.isEmpty
+          ? SizedBox(
+              height: 200,
+              child: Center(
+                child: Text(context.l10n.t('No category data')),
               ),
-              const SizedBox(height: 12),
-              noBoughtCard,
+            )
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                final donut = _CategoryDonut(
+                  items: items,
+                  total: total,
+                  palette: p,
+                );
+                final legend = _CategoryLegend(
+                  items: items,
+                  total: total,
+                  palette: p,
+                );
+                // Side by side only while the legend keeps a workable width
+                // beside the donut; below that they stack (mobile).
+                if (constraints.maxWidth >= 560) {
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      donut,
+                      const SizedBox(width: 20),
+                      Container(width: 1, height: 200, color: p.border),
+                      const SizedBox(width: 20),
+                      Expanded(child: legend),
+                    ],
+                  );
+                }
+                return Column(
+                  children: [
+                    Center(child: donut),
+                    const SizedBox(height: 16),
+                    legend,
+                  ],
+                );
+              },
+            ),
+    );
+  }
+
+  Widget _quantitySoldCard(
+    BuildContext context,
+    AppPalette p,
+    DashboardEntity d,
+  ) {
+    final items = d.categoryQuantity;
+    return _PanelCard(
+      title: context.l10n.t('Quantity Sold by Category'),
+      trailing: _TagChip(label: context.l10n.t('By Quantity')),
+      child: items.isEmpty
+          ? SizedBox(
+              height: 240,
+              child: Center(child: Text(context.l10n.t('No sales data'))),
+            )
+          : _HorizontalCategoryChart(items: items, palette: p),
+    );
+  }
+
+  // ------------------------------------------------------------- trend/stock
+
+  Widget _productTrendCard(
+    BuildContext context,
+    AppPalette p,
+    DashboardEntity d,
+  ) {
+    final tiles = [
+      _TrendTile(
+        title: context.l10n.t('Most Bought'),
+        tint: p.successBg,
+        titleColor: p.successFg,
+        items: d.mostBought,
+        onViewAll: () => Navigator.of(context).push(
+          DashboardTableScreen.route(
+            spec: DashboardTables.bought,
+            showDirectionToggle: true,
+          ),
+        ),
+      ),
+      _TrendTile(
+        title: context.l10n.t('Least Bought'),
+        tint: p.warningBg,
+        titleColor: p.warningFg,
+        items: d.leastBought,
+        onViewAll: () => Navigator.of(context).push(
+          DashboardTableScreen.route(
+            spec: DashboardTables.leastBought,
+            showDirectionToggle: true,
+            initialDirection: 'asc',
+          ),
+        ),
+      ),
+      _TrendTile(
+        title: context.l10n.t('No Sales'),
+        tint: p.dangerBg,
+        titleColor: p.dangerFg,
+        items: d.noBought,
+        onViewAll: () => Navigator.of(context).push(
+          DashboardTableScreen.route(spec: DashboardTables.noBought),
+        ),
+      ),
+    ];
+
+    return _PanelCard(
+      title: context.l10n.t('Product Trend'),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          Widget rowOf(List<Widget> children) => Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (var i = 0; i < children.length; i++) ...[
+                if (i > 0) const SizedBox(width: 16),
+                Expanded(child: children[i]),
+              ],
             ],
           );
-        }
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: mostCard),
-            const SizedBox(width: 12),
-            Expanded(child: leastCard),
-            const SizedBox(width: 12),
-            Expanded(child: noBoughtCard),
-          ],
-        );
-      },
+
+          if (constraints.maxWidth < 560) {
+            return Column(
+              children: [
+                for (var i = 0; i < tiles.length; i++) ...[
+                  if (i > 0) const SizedBox(height: 16),
+                  tiles[i],
+                ],
+              ],
+            );
+          }
+          if (constraints.maxWidth < 900) {
+            return Column(
+              children: [
+                rowOf([tiles[0], tiles[1]]),
+                const SizedBox(height: 16),
+                tiles[2],
+              ],
+            );
+          }
+          return rowOf(tiles);
+        },
+      ),
+    );
+  }
+
+  // -------------------------------------------------------- preview tables
+
+  Widget _lowStockPreview(BuildContext context, AppPalette p) {
+    return _PreviewTableCard(
+      title: context.l10n.t('Low Stock Items'),
+      columns: DashboardTablePreviews.lowStockItems.columns,
+      page: _viewModel.tablePreviews['lowStockItems'],
+      loaded: _viewModel.previewsLoaded,
+      onViewAll: () => Navigator.of(context).push(
+        DashboardTableScreen.route(
+          spec: DashboardTables.lowStock,
+          query: const {'low': 1},
+        ),
+      ),
+    );
+  }
+
+  Widget _notSoldPreview(BuildContext context, AppPalette p) {
+    return _PreviewTableCard(
+      title: context.l10n.t('Products Not Sold'),
+      columns: DashboardTablePreviews.productsNotSold.columns,
+      page: _viewModel.tablePreviews['productsNotSold'],
+      loaded: _viewModel.previewsLoaded,
+      onViewAll: () => Navigator.of(context).push(
+        DashboardTableScreen.route(spec: DashboardTables.noBought),
+      ),
+    );
+  }
+
+  Widget _recentSalesPreview(BuildContext context, AppPalette p) {
+    return _PreviewTableCard(
+      title: context.l10n.t('Recent Sales'),
+      columns: DashboardTablePreviews.recentSales.columns,
+      page: _viewModel.tablePreviews['recentSales'],
+      loaded: _viewModel.previewsLoaded,
+      onViewAll: () => Navigator.of(context).push(
+        DashboardTableScreen.route(spec: DashboardTables.sales),
+      ),
+    );
+  }
+
+  Widget _recentProductsPreview(BuildContext context, AppPalette p) {
+    return _PreviewTableCard(
+      title: context.l10n.t('Recent Products'),
+      columns: DashboardTablePreviews.recentProducts.columns,
+      page: _viewModel.tablePreviews['recentProducts'],
+      loaded: _viewModel.previewsLoaded,
+      onViewAll: () => Navigator.of(context).push(
+        DashboardTableScreen.route(spec: DashboardTables.products),
+      ),
     );
   }
 }
 
-class _ProductListCard extends StatelessWidget {
+// ============================================================ shared pieces
+
+/// Lays [children] out in a responsive grid: [maxColumns] across on wide
+/// windows, two on medium, one on phones, with [gap] between cells.
+///
+/// Rows are always full-width and the last row's missing cells collapse to a
+/// gap, so a five-item grid on a four-column window reads as four then one
+/// rather than stretching five across.
+Widget _responsiveGrid(
+  List<Widget> children, {
+  double wideAt = 1080,
+  double mediumAt = 620,
+  double gap = 16,
+  int maxColumns = 4,
+}) {
+  if (children.isEmpty) return const SizedBox.shrink();
+  return LayoutBuilder(
+    builder: (context, constraints) {
+      final width = constraints.maxWidth;
+      final columns = width >= wideAt
+          ? maxColumns
+          : width >= mediumAt
+          ? 2
+          : 1;
+
+      final rows = <Widget>[];
+      for (var i = 0; i < children.length; i += columns) {
+        final end = i + columns > children.length
+            ? children.length
+            : i + columns;
+        final slice = children.sublist(i, end);
+        rows.add(
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (var j = 0; j < columns; j++) ...[
+                if (j > 0) SizedBox(width: gap),
+                Expanded(
+                  child: j < slice.length
+                      ? slice[j]
+                      : const SizedBox.shrink(),
+                ),
+              ],
+            ],
+          ),
+        );
+        if (end < children.length) rows.add(SizedBox(height: gap));
+      }
+      return Column(children: rows);
+    },
+  );
+}
+
+class _KpiGrid extends StatelessWidget {
+  final List<MetricEntity> metrics;
+  final SummaryTrendsEntity? trends;
+  final Map<MetricTrendKey, List<double>> sparklines;
+  final bool trendsLoaded;
+  final void Function(DashboardTableKey? key) onOpenTable;
+
+  const _KpiGrid({
+    required this.metrics,
+    required this.trends,
+    required this.sparklines,
+    required this.trendsLoaded,
+    required this.onOpenTable,
+  });
+
+  /// The arrow for one tile, or null when the tile declares no comparison
+  /// or the windows could not be fetched.
+  TrendEntity? _trendFor(MetricEntity metric) =>
+      metric.trendKey == MetricTrendKey.none ? null : trends?.forMetric(
+        metric.trendKey,
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    return _responsiveGrid(
+      [
+        for (final metric in metrics)
+          _KpiCard(
+            metric: metric,
+            trend: _trendFor(metric),
+            series: sparklines[metric.trendKey],
+            // A tile that will show an arrow keeps its row until the answer
+            // arrives, so the cards below do not shift when it does.
+            reserveBadge:
+                metric.trendKey != MetricTrendKey.none &&
+                _trendFor(metric) == null &&
+                !trendsLoaded,
+            onOpenTable: onOpenTable,
+          ),
+      ],
+      wideAt: 1080,
+      mediumAt: 620,
+      gap: 16,
+    );
+  }
+}
+
+class _KpiCard extends StatelessWidget {
+  final MetricEntity metric;
+  final TrendEntity? trend;
+
+  /// The tile's daily line, or null while it is still being fetched.
+  final List<double>? series;
+  final bool reserveBadge;
+  final void Function(DashboardTableKey? key) onOpenTable;
+
+  const _KpiCard({
+    required this.metric,
+    required this.trend,
+    required this.series,
+    required this.reserveBadge,
+    required this.onOpenTable,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return InkWell(
+      onTap: metric.tableKey == null ? null : () => onOpenTable(metric.tableKey),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: p.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: p.border),
+          boxShadow: p.cardElevation,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: Color(metric.iconBgValue),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                metric.icon,
+                size: 22,
+                color: Color(metric.iconColorValue),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          context.l10n.t(metric.label),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            color: p.textSecondary,
+                          ),
+                        ),
+                      ),
+                      if (metric.tableKey != null)
+                        Icon(
+                          Icons.chevron_right,
+                          size: 16,
+                          color: p.textMuted,
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  // Scaled rather than truncated: `MMK 11,280,000` must stay
+                  // whole, and an ellipsis would cut the very figure the card
+                  // exists to show.
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            metric.value,
+                            maxLines: 1,
+                            style: TextStyle(
+                              fontSize: 21,
+                              fontWeight: FontWeight.w700,
+                              color: p.textPrimary,
+                              letterSpacing: -0.4,
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (series != null && series!.length > 1) ...[
+                        const SizedBox(width: 8),
+                        // The design's little line beside the figure: the
+                        // metric's recent shape, tinted the same way as the
+                        // arrow underneath it.
+                        _Sparkline(values: series!, trend: trend),
+                      ],
+                    ],
+                  ),
+                  if (trend != null) ...[
+                    const SizedBox(height: 6),
+                    // The photo's `↑ 18% from last month`, in the same badge
+                    // the Sales Summary rows use. Absent when the API keeps
+                    // no history for this tile — a guessed arrow would be
+                    // worse than none.
+                    _TrendBadge(trend: trend!),
+                  ] else if (reserveBadge)
+                    // Same height as the badge above, held empty until the
+                    // comparison arrives.
+                    const SizedBox(height: 20),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A bordered panel with an optional heading and a trailing affordance (a
+/// year picker, a "View all" link, a chip).
+///
+/// [titlePadding] exists so a table can run its header and row stripes edge
+/// to edge while the heading keeps the normal inset: pass
+/// `padding: EdgeInsets.zero` with a title padding and the table supplies its
+/// own horizontal inset.
+class _PanelCard extends StatelessWidget {
+  final String? title;
+  final Widget? trailing;
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry? titlePadding;
+
+  const _PanelCard({
+    this.title,
+    this.trailing,
+    required this.child,
+    this.padding = const EdgeInsets.all(16),
+    this.titlePadding,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: p.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: p.border),
+        boxShadow: p.cardElevation,
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (title != null || trailing != null)
+            Padding(
+              padding: titlePadding ?? padding,
+              child: Row(
+                children: [
+                  if (title != null)
+                    Expanded(
+                      child: Text(
+                        title!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: p.textPrimary,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                    ),
+                  ?trailing,
+                ],
+              ),
+            ),
+          if (title != null) const SizedBox(height: 14),
+          Padding(padding: padding, child: child),
+        ],
+      ),
+    );
+  }
+}
+
+class _ViewAllLink extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _ViewAllLink({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              context.l10n.t('View all'),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: p.accentText,
+              ),
+            ),
+            const SizedBox(width: 2),
+            Icon(Icons.chevron_right, size: 14, color: p.accentText),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A small non-interactive label in a card header, e.g. "By Quantity".
+class _TagChip extends StatelessWidget {
+  final String label;
+
+  const _TagChip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: p.surfaceAlt,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: p.border),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11.5,
+          fontWeight: FontWeight.w600,
+          color: p.textSecondary,
+        ),
+      ),
+    );
+  }
+}
+
+// ======================================================= sales summary panel
+
+class _SummaryRowData {
+  final IconData icon;
+  final int bgValue;
+  final int fgValue;
+  final String label;
+  final Widget value;
+
+  /// The change behind this figure, drawn under it. Null when the comparison
+  /// could not be fetched — the row still shows its number, without a sign.
+  final TrendEntity? trend;
+
+  const _SummaryRowData({
+    required this.icon,
+    required this.bgValue,
+    required this.fgValue,
+    required this.label,
+    required this.value,
+    this.trend,
+  });
+}
+
+class _SalesSummaryCard extends StatelessWidget {
+  final DashboardStatsEntity stats;
+  final SummaryTrendsEntity? trends;
+
+  const _SalesSummaryCard({required this.stats, required this.trends});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    final valueStyle = TextStyle(
+      fontSize: 14,
+      fontWeight: FontWeight.w700,
+      color: p.textPrimary,
+    );
+
+    final rows = [
+      _SummaryRowData(
+        icon: Icons.attach_money,
+        bgValue: 0xFFF3E8FF,
+        fgValue: 0xFF7952DB,
+        label: 'Total Revenue',
+        value: PriceText(stats.totalSales.toDouble(), style: valueStyle),
+        trend: trends?.revenue,
+      ),
+      _SummaryRowData(
+        icon: Icons.receipt_long_outlined,
+        bgValue: 0xFFDBEAFE,
+        fgValue: 0xFF3B82F6,
+        label: 'Total Orders',
+        value: Text(stats.salesCount.withCommas(), style: valueStyle),
+        trend: trends?.orders,
+      ),
+      _SummaryRowData(
+        icon: Icons.shopping_bag_outlined,
+        bgValue: 0xFFFEE2E2,
+        fgValue: 0xFFEF4444,
+        label: 'Avg. Order Value',
+        value: PriceText(stats.avgOrderValue.toDouble(), style: valueStyle),
+        trend: trends?.avgOrderValue,
+      ),
+      _SummaryRowData(
+        icon: Icons.shopping_cart_outlined,
+        bgValue: 0xFFDCFCE7,
+        fgValue: 0xFF16A34A,
+        label: 'Items Sold',
+        value: Text(stats.itemsSold.withCommas(), style: valueStyle),
+        trend: trends?.itemsSold,
+      ),
+    ];
+
+    return _PanelCard(
+      title: context.l10n.t('Sales Summary'),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var i = 0; i < rows.length; i++) ...[
+            if (i > 0) ...[
+              const SizedBox(height: 12),
+              Divider(height: 1, color: p.border),
+              const SizedBox(height: 12),
+            ],
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: Color(rows[i].bgValue),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    rows[i].icon,
+                    size: 18,
+                    color: Color(rows[i].fgValue),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  flex: 3,
+                  child: Text(
+                    context.l10n.t(rows[i].label),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 13, color: p.textSecondary),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Loose, so the money can scale down inside a bounded box
+                // instead of pushing the row past the card. The sign sits
+                // under the figure rather than beside it: a row that already
+                // carries `MMK 11,280,000` has no room left for an arrow.
+                Flexible(
+                  flex: 2,
+                  fit: FlexFit.loose,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      rows[i].value,
+                      if (rows[i].trend != null) ...[
+                        const SizedBox(height: 2),
+                        _TrendBadge(trend: rows[i].trend!),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// The bullish/bearish sign under a summary figure: an arrow and the size of
+/// the move, green up and red down.
+///
+/// The percentage is unsigned because the arrow already carries the sign —
+/// `▼ 12.4%` reads faster than `-12.4%` next to a red arrow. The word lives
+/// in the tooltip rather than on the surface: four labels printed down a
+/// narrow card would crowd the figures they describe.
+class _TrendBadge extends StatelessWidget {
+  final TrendEntity trend;
+
+  const _TrendBadge({required this.trend});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+
+    // The arrow follows the number; the colour follows whether that direction
+    // is good news. Low Stock Items rising is a warning, so it draws red
+    // while pointing up.
+    final (color, icon, label) = switch (trend.direction) {
+      TrendDirection.up => trend.isBullish
+          ? (p.successFg, Icons.trending_up, 'Bullish')
+          : (p.dangerFg, Icons.trending_up, 'Bearish'),
+      TrendDirection.down => trend.isBearish
+          ? (p.dangerFg, Icons.trending_down, 'Bearish')
+          : (p.successFg, Icons.trending_down, 'Bullish'),
+      TrendDirection.flat => (p.textMuted, Icons.trending_flat, 'No change'),
+    };
+
+    return Tooltip(
+      message: context.l10n.t(label),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          if (trend.percent != null) ...[
+            const SizedBox(width: 3),
+            Text(
+              '${trend.percent!.abs().toStringAsFixed(1)}%',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: color,
+                letterSpacing: -0.1,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// The little line beside a KPI figure: the metric's recent shape drawn as a
+/// bare polyline, tinted the way the tile's arrow points.
+///
+/// Deliberately not a chart — no axes, no grid, no labels. It exists so the
+/// tile reads as "this moved" at a glance, which is what the design's spark
+/// in the corner does.
+class _Sparkline extends StatelessWidget {
+  final List<double> values;
+  final TrendEntity? trend;
+
+  const _Sparkline({required this.values, required this.trend});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+
+    final color = switch (trend?.direction) {
+      TrendDirection.up => trend!.isBullish ? p.successFg : p.dangerFg,
+      TrendDirection.down => trend!.isBearish ? p.dangerFg : p.successFg,
+      _ => p.textMuted,
+    };
+
+    return SizedBox(
+      width: 64,
+      height: 26,
+      child: CustomPaint(painter: _SparklinePainter(values, color)),
+    );
+  }
+}
+
+class _SparklinePainter extends CustomPainter {
+  final List<double> values;
+  final Color color;
+
+  _SparklinePainter(this.values, this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (values.length < 2 || size.isEmpty) return;
+
+    var min = values.first;
+    var max = values.first;
+    for (final v in values) {
+      if (v < min) min = v;
+      if (v > max) max = v;
+    }
+    // A flat series still wants a line, just not one pinned to an edge where
+    // the stroke would be half-clipped.
+    final span = max - min < 1e-6 ? 1.0 : max - min;
+
+    // Inset by the stroke width so the round caps are not cut off.
+    const pad = 1.5;
+    final width = size.width - pad * 2;
+    final height = size.height - pad * 2;
+
+    final path = Path();
+    for (var i = 0; i < values.length; i++) {
+      final x = pad + width * i / (values.length - 1);
+      final y = pad + height * (1 - (values[i] - min) / span);
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.8
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _SparklinePainter oldDelegate) =>
+      oldDelegate.values != values || oldDelegate.color != color;
+}
+
+// ============================================================ category donut
+
+class _CategoryDonut extends StatelessWidget {
+  final List<CategoryDistributionEntity> items;
+  final int total;
+  final AppPalette palette;
+
+  const _CategoryDonut({
+    required this.items,
+    required this.total,
+    required this.palette,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 200,
+      height: 200,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          PieChart(
+            PieChartData(
+              sectionsSpace: 2,
+              centerSpaceRadius: 54,
+              startDegreeOffset: -90,
+              sections: [
+                for (final item in items)
+                  PieChartSectionData(
+                    value: item.productCount.toDouble(),
+                    color: Color(item.colorValue),
+                    radius: 46,
+                    showTitle: false,
+                  ),
+              ],
+            ),
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeOutCubic,
+          ),
+          SizedBox(
+            width: 96,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  total.withCommas(),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w700,
+                    color: palette.textPrimary,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  context.l10n.t('Products'),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  style: TextStyle(fontSize: 11, color: palette.textSecondary),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CategoryLegend extends StatelessWidget {
+  final List<CategoryDistributionEntity> items;
+  final int total;
+  final AppPalette palette;
+
+  const _CategoryLegend({
+    required this.items,
+    required this.total,
+    required this.palette,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final p = palette;
+    double percentOf(CategoryDistributionEntity e) =>
+        total <= 0 ? 0 : (e.productCount / total) * 100;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < items.length; i++) ...[
+          if (i > 0) ...[
+            const SizedBox(height: 8),
+            Divider(height: 1, color: p.border),
+            const SizedBox(height: 8),
+          ],
+          Row(
+            children: [
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: Color(items[i].colorValue),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  items[i].category,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w500,
+                    color: p.textPrimary,
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 44,
+                child: Text(
+                  items[i].productCount.withCommas(),
+                  textAlign: TextAlign.right,
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: p.textPrimary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 56,
+                child: Text(
+                  '${percentOf(items[i]).toStringAsFixed(1)}%',
+                  textAlign: TextAlign.right,
+                  maxLines: 1,
+                  style: TextStyle(fontSize: 12, color: p.textSecondary),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+// ============================================================== stock status
+
+class _StockStatusRow {
+  final IconData icon;
+  final int tintValue;
+  final int colorValue;
+  final String label;
+  final int count;
+
+  const _StockStatusRow({
+    required this.icon,
+    required this.tintValue,
+    required this.colorValue,
+    required this.label,
+    required this.count,
+  });
+}
+
+class _StockStatusCard extends StatelessWidget {
+  final DashboardStatsEntity stats;
+
+  const _StockStatusCard({required this.stats});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    final rows = [
+      _StockStatusRow(
+        icon: Icons.check_circle_outline,
+        tintValue: 0xFFDCFCE7,
+        colorValue: 0xFF16A34A,
+        label: 'In Stock',
+        count: stats.inStock,
+      ),
+      _StockStatusRow(
+        icon: Icons.warning_amber_outlined,
+        tintValue: 0xFFFEF3C7,
+        colorValue: 0xFFF59E0B,
+        label: 'Low Stock',
+        count: stats.lowStock,
+      ),
+      _StockStatusRow(
+        icon: Icons.cancel_outlined,
+        tintValue: 0xFFFEE2E2,
+        colorValue: 0xFFEF4444,
+        label: 'Out of Stock',
+        count: stats.outStock,
+      ),
+    ];
+
+    return _PanelCard(
+      title: context.l10n.t('Stock Status'),
+      trailing: _ViewAllLink(
+        onTap: () => Navigator.of(context).push(
+          DashboardTableScreen.route(spec: DashboardTables.inStock),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var i = 0; i < rows.length; i++) ...[
+            if (i > 0) const SizedBox(height: 16),
+            Row(
+              children: [
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: Color(rows[i].tintValue),
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: Icon(
+                    rows[i].icon,
+                    size: 16,
+                    color: Color(rows[i].colorValue),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                SizedBox(
+                  width: 86,
+                  child: Text(
+                    context.l10n.t(rows[i].label),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: p.textPrimary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _DistributionBar(
+                    fraction: stats.shareOf(rows[i].count),
+                    color: Color(rows[i].colorValue),
+                    trackColor: p.chipBg,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                SizedBox(
+                  width: 30,
+                  child: Text(
+                    rows[i].count.withCommas(),
+                    textAlign: TextAlign.right,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: p.textPrimary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 48,
+                  child: Text(
+                    '${(stats.shareOf(rows[i].count) * 100).toStringAsFixed(1)}%',
+                    textAlign: TextAlign.right,
+                    maxLines: 1,
+                    style: TextStyle(fontSize: 11.5, color: p.textSecondary),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================================== trend tiles
+
+class _TrendTile extends StatelessWidget {
   final String title;
+  final Color tint;
   final Color titleColor;
   final List<ProductItemEntity> items;
-
-  /// Opens the full table of rows for this list. The card only holds three rows,
-  /// so without a way out the list is a dead end.
   final VoidCallback onViewAll;
 
-  const _ProductListCard({
+  const _TrendTile({
     required this.title,
+    required this.tint,
     required this.titleColor,
     required this.items,
     required this.onViewAll,
@@ -822,132 +1609,394 @@ class _ProductListCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pal = context.palette;
+    final p = context.palette;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: pal.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: pal.border),
-        boxShadow: [
-          BoxShadow(
-            color: pal.cardShadow,
-            blurRadius: 12,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: tint,
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: titleColor,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: titleColor,
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: onViewAll,
+                behavior: HitTestBehavior.opaque,
+                child: Icon(Icons.chevron_right, size: 18, color: titleColor),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
-          Column(
-            children: items
-                .map(
-                  (p) => Padding(
-                    key: ValueKey(p.name),
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Row(
+          const SizedBox(height: 10),
+          if (items.isEmpty)
+            Text(
+              context.l10n.t('Nothing to show'),
+              style: TextStyle(fontSize: 11.5, color: p.textSecondary),
+            ),
+          for (final item in items)
+            Padding(
+              key: ValueKey(item.name),
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  _ProductThumb(item: item, size: 30),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: pal.chipBg,
-                            borderRadius: BorderRadius.circular(12),
+                        Text(
+                          item.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: p.textPrimary,
                           ),
-                          clipBehavior: Clip.antiAlias,
-                          child: p.image.isNotEmpty
-                              ? CachedProductImage(
-                                  url: p.image,
-                                  width: 48,
-                                  height: 48,
-                                  memCacheWidth: 192,
-                                  errorWidget: Icon(
-                                    IconData(
-                                      p.iconCodePoint,
-                                      fontFamily: p.iconFontFamily,
-                                    ),
-                                    color: pal.textSecondary,
-                                  ),
-                                )
-                              : Icon(
-                                  IconData(
-                                    p.iconCodePoint,
-                                    fontFamily: p.iconFontFamily,
-                                  ),
-                                  color: pal.textSecondary,
-                                ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                p.name,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: pal.textPrimary,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                p.sold,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: pal.textSecondary,
-                                ),
-                              ),
-                            ],
+                        const SizedBox(height: 1),
+                        Text(
+                          item.sold,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: p.textSecondary,
                           ),
                         ),
                       ],
                     ),
                   ),
-                )
-                .toList(),
-          ),
-          const SizedBox(height: 4),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton(
-              onPressed: onViewAll,
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                minimumSize: const Size(0, 32),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    context.l10n.t('View all'),
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: pal.accentText,
-                    ),
-                  ),
-                  const SizedBox(width: 2),
-                  Icon(
-                    Icons.chevron_right,
-                    size: 14,
-                    color: pal.accentText,
-                  ),
                 ],
               ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProductThumb extends StatelessWidget {
+  final ProductItemEntity item;
+  final double size;
+
+  const _ProductThumb({required this.item, required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: p.surface,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: item.image.isNotEmpty
+          ? CachedProductImage(
+              url: item.image,
+              width: size,
+              height: size,
+              memCacheWidth: (size * 3).round(),
+              errorWidget: Icon(
+                item.icon,
+                size: size * 0.5,
+                color: p.textSecondary,
+              ),
+            )
+          : Icon(item.icon, size: size * 0.5, color: p.textSecondary),
+    );
+  }
+}
+
+// ========================================================== preview tables
+
+/// The first few rows of one dashboard table, inline, with a way out to the
+/// full screen.
+///
+/// Cells are laid out by flex proportional to the spec's column widths rather
+/// than at those widths: a preview sits in half a row, so the columns share
+/// whatever width the card has instead of scrolling sideways. The full
+/// screen behind "View all" still uses the absolute widths, where there is a
+/// scroll view to carry them.
+class _PreviewTableCard extends StatelessWidget {
+  final String title;
+  final List<TableColumn> columns;
+  final TablePage? page;
+  final bool loaded;
+  final VoidCallback onViewAll;
+
+  /// Horizontal inset for the header and row stripes, matching the card's
+  /// normal padding while the stripes themselves run edge to edge.
+  static const double _inset = 16;
+
+  const _PreviewTableCard({
+    required this.title,
+    required this.columns,
+    required this.page,
+    required this.loaded,
+    required this.onViewAll,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    final rows = page?.rows ?? const <DashboardTableRow>[];
+
+    return _PanelCard(
+      title: title,
+      trailing: _ViewAllLink(onTap: onViewAll),
+      padding: EdgeInsets.zero,
+      titlePadding: const EdgeInsets.fromLTRB(_inset, 16, _inset, 0),
+      child: !loaded
+          ? Padding(
+              padding: const EdgeInsets.symmetric(horizontal: _inset),
+              child: _PreviewTableSkeleton(columns: columns),
+            )
+          : rows.isEmpty
+          ? SizedBox(
+              height: 160,
+              child: Center(
+                child: Text(
+                  context.l10n.t('Nothing to show'),
+                  style: TextStyle(fontSize: 13, color: p.textMuted),
+                ),
+              ),
+            )
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  color: p.surfaceAlt,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: _inset,
+                    vertical: 9,
+                  ),
+                  child: Row(
+                    children: [
+                      _numberCell(
+                        context,
+                        p,
+                        Text(
+                          context.l10n.t('#'),
+                          maxLines: 1,
+                          style: _headerStyle(p),
+                        ),
+                      ),
+                      for (final column in columns)
+                        _flexCell(
+                          column,
+                          Text(
+                            context.l10n.t(column.label),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: _headerStyle(p),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                for (var i = 0; i < rows.length; i++) ...[
+                  if (i > 0) Divider(height: 1, color: p.border),
+                  Container(
+                    color: i.isEven
+                        ? Colors.transparent
+                        : p.surfaceAlt.withValues(alpha: 0.35),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: _inset,
+                      vertical: 10,
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _numberCell(
+                          context,
+                          p,
+                          Text(
+                            (i + 1).toString(),
+                            maxLines: 1,
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              color: p.textMuted,
+                            ),
+                          ),
+                        ),
+                        for (final column in columns)
+                          _flexCell(column, _value(context, p, column, rows[i])),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+    );
+  }
+
+  static TextStyle _headerStyle(AppPalette p) => TextStyle(
+    fontSize: 11.5,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 0.2,
+    color: p.textSecondary,
+  );
+
+  /// The row-number column. Fixed flex so the numbers sit above their column
+  /// on every row and every card.
+  Widget _numberCell(BuildContext context, AppPalette p, Widget child) =>
+      Expanded(
+        flex: 30,
+        child: Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: child,
+        ),
+      );
+
+  Widget _flexCell(TableColumn column, Widget child) => Expanded(
+    flex: column.width.round(),
+    child: Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: Align(
+        alignment: column.align == TableColumnAlign.right
+            ? Alignment.centerRight
+            : Alignment.centerLeft,
+        child: child,
+      ),
+    ),
+  );
+
+  Widget _value(
+    BuildContext context,
+    AppPalette p,
+    TableColumn column,
+    DashboardTableRow row,
+  ) {
+    // Money goes through PriceText, like every other money surface: it scales
+    // to the cell instead of ellipsizing `MMK 1,234,5...`.
+    if (column.kind == TableValueKind.currency) {
+      return PriceText(
+        row.number(column.fieldKey),
+        style: TextStyle(
+          fontSize: 12.5,
+          fontWeight: FontWeight.w600,
+          color: p.textPrimary,
+        ),
+      );
+    }
+
+    return Text(
+      row.display(column),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      textAlign: column.align == TableColumnAlign.right
+          ? TextAlign.right
+          : TextAlign.left,
+      style: TextStyle(
+        fontSize: 12.5,
+        color: p.textPrimary,
+        fontWeight: column.kind == TableValueKind.text
+            ? FontWeight.w400
+            : FontWeight.w600,
+      ),
+    );
+  }
+}
+
+/// Inert blocks in the shape of a preview table: a header row plus five data
+/// rows. No sweep of its own — four concurrent sweeps on one screen is the
+/// thing `SkeletonSweep` exists to avoid, and these are replaced within a
+/// second of the dashboard itself appearing.
+class _PreviewTableSkeleton extends StatelessWidget {
+  final List<TableColumn> columns;
+
+  const _PreviewTableSkeleton({required this.columns});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            Expanded(
+              flex: 30,
+              child: SkeletonBox(height: 10, width: 14, radius: 5),
+            ),
+            for (final column in columns) ...[
+              const SizedBox(width: 8),
+              Expanded(
+                flex: column.width.round(),
+                child: SkeletonBox(height: 10, radius: 5),
+              ),
+            ],
+          ],
+        ),
+        for (var i = 0; i < 5; i++) ...[
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                flex: 30,
+                child: SkeletonBox(height: 12, width: 18, radius: 6),
+              ),
+              for (final column in columns) ...[
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: column.width.round(),
+                  child: SkeletonBox(height: 12, radius: 6),
+                ),
+              ],
+            ],
+          ),
+        ],
+        const SizedBox(height: 8),
+      ],
+    );
+  }
+}
+
+// ==================================================================== footer
+
+class _Footer extends StatelessWidget {
+  const _Footer();
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Wrap(
+        alignment: WrapAlignment.spaceBetween,
+        runSpacing: 8,
+        children: [
+          Text(
+            '© ${DateTime.now().year} Simple POS. All rights reserved.',
+            style: TextStyle(fontSize: 12, color: p.textMuted),
+          ),
+          Text(
+            context.l10n.t('Simple POS. Greater Business.'),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: p.textMuted,
             ),
           ),
         ],
@@ -955,6 +2004,216 @@ class _ProductListCard extends StatelessWidget {
     );
   }
 }
+
+// ================================================================= controls
+
+class _YearDropdown extends StatelessWidget {
+  final List<int> years;
+  final int value;
+  final ValueChanged<int> onChanged;
+
+  const _YearDropdown({
+    required this.years,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: p.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: p.border),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<int>(
+          value: years.contains(value) ? value : years.first,
+          icon: const Icon(Icons.keyboard_arrow_down, size: 18),
+          style: TextStyle(fontSize: 13, color: p.textSecondary),
+          items: years
+              .map((e) => DropdownMenuItem(value: e, child: Text('$e')))
+              .toList(),
+          onChanged: (v) {
+            if (v != null && v != value) onChanged(v);
+          },
+        ),
+      ),
+    );
+  }
+}
+
+// ========================================================== monthly chart
+
+/// Twelve monthly columns with the money scale on the left, matching the
+/// design's vertical bars. The old chart drew the same data horizontally,
+/// which put the months down the side and the money along the bottom — a
+/// different reading of the same numbers, and not the one the design asks for.
+class _MonthlySalesChart extends StatelessWidget {
+  final List<MonthlySalesEntity> items;
+  final AppPalette palette;
+
+  const _MonthlySalesChart({required this.items, required this.palette});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 280,
+      width: double.infinity,
+      child: CustomPaint(
+        painter: _MonthlySalesChartPainter(items, palette),
+      ),
+    );
+  }
+}
+
+class _MonthlySalesChartPainter extends CustomPainter {
+  final List<MonthlySalesEntity> items;
+  final AppPalette palette;
+
+  _MonthlySalesChartPainter(this.items, this.palette);
+
+  static const List<String> _monthLabels = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final sorted = [...items]..sort((a, b) => a.month.compareTo(b.month));
+    if (sorted.isEmpty) return;
+
+    const leftPad = 52.0;
+    const rightPad = 16.0;
+    const topPad = 30.0;
+    const bottomPad = 32.0;
+    final plot = Rect.fromLTRB(
+      leftPad,
+      topPad,
+      size.width - rightPad,
+      size.height - bottomPad,
+    );
+    if (plot.width <= 0 || plot.height <= 0) return;
+
+    final maxVal = sorted
+        .map((e) => e.total)
+        .reduce((a, b) => a > b ? a : b);
+    final chartMax = maxVal <= 0 ? 1.0 : maxVal * 1.15;
+
+    final gridPaint = Paint()
+      ..color = palette.border
+      ..strokeWidth = 1;
+
+    // Money scale on the left, with a horizontal rule at each step so a bar's
+    // height can be read without a tooltip.
+    const ticks = 4;
+    for (var t = 0; t <= ticks; t++) {
+      final y = plot.bottom - (t / ticks) * plot.height;
+      canvas.drawLine(Offset(plot.left, y), Offset(plot.right, y), gridPaint);
+
+      final label = _formatValue(chartMax * (t / ticks));
+      final tp = TextPainter(
+        text: TextSpan(
+          text: label,
+          style: TextStyle(fontSize: 10, color: palette.textSecondary),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      tp.paint(canvas, Offset(plot.left - tp.width - 8, y - tp.height / 2));
+    }
+
+    // Twelve fixed slots whether or not every month has a sale, so the axis
+    // never shifts as data arrives.
+    final slotWidth = plot.width / 12;
+    final barWidth = (slotWidth * 0.5).clamp(6.0, 40.0);
+
+    for (var m = 0; m < 12; m++) {
+      final tp = TextPainter(
+        text: TextSpan(
+          text: _monthLabels[m],
+          style: TextStyle(fontSize: 10.5, color: palette.textSecondary),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      tp.paint(
+        canvas,
+        Offset(
+          plot.left + slotWidth * (m + 0.5) - tp.width / 2,
+          plot.bottom + 8,
+        ),
+      );
+    }
+
+    final barPaint = Paint()..color = AppColors.brandPurple;
+    for (final entry in sorted) {
+      if (entry.month < 1 || entry.month > 12) continue;
+      final centreX =
+          plot.left + slotWidth * ((entry.month - 1) + 0.5);
+      final height = (entry.total / chartMax) * plot.height;
+      final rect = Rect.fromLTWH(
+        centreX - barWidth / 2,
+        plot.bottom - height,
+        barWidth,
+        height,
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndCorners(
+          rect,
+          topLeft: const Radius.circular(6),
+          topRight: const Radius.circular(6),
+        ),
+        barPaint,
+      );
+
+      // Value above the bar, dropped when the bar is tall enough that the
+      // label would leave the plot — a clipped figure is worse than none.
+      final vp = TextPainter(
+        text: TextSpan(
+          text: _formatValue(entry.total.toDouble()),
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: palette.textPrimary,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      final y = plot.bottom - height - vp.height - 5;
+      if (y >= plot.top - 6) {
+        vp.paint(canvas, Offset(centreX - vp.width / 2, y));
+      }
+    }
+  }
+
+  String _formatValue(double value) {
+    if (value >= 1000000) return '${_trim(value / 1000000)}M';
+    if (value >= 1000) return '${_trim(value / 1000)}k';
+    return value.round().toString();
+  }
+
+  String _trim(double v) {
+    final s = v.toStringAsFixed(1);
+    return s.endsWith('.0') ? s.substring(0, s.length - 2) : s;
+  }
+
+  @override
+  bool shouldRepaint(covariant _MonthlySalesChartPainter oldDelegate) =>
+      oldDelegate.items != items || oldDelegate.palette != palette;
+}
+
+// ====================================================== category quantity bar
 
 class _HorizontalCategoryChart extends StatelessWidget {
   final List<CategoryQuantityEntity> items;
@@ -980,7 +2239,6 @@ class _HorizontalCategoryChartPainter extends CustomPainter {
   final AppPalette palette;
 
   _HorizontalCategoryChartPainter(this.items, this.palette);
-
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1011,6 +2269,7 @@ class _HorizontalCategoryChartPainter extends CustomPainter {
       size.width - rightPad,
       size.height - bottomPad,
     );
+    if (plot.width <= 0 || plot.height <= 0) return;
 
     final values = sorted.map((e) => e.totalQuantity.toDouble()).toList();
     final maxVal = values.reduce((a, b) => a > b ? a : b);
@@ -1076,7 +2335,10 @@ class _HorizontalCategoryChartPainter extends CustomPainter {
         ),
         textDirection: TextDirection.ltr,
       )..layout();
-      final vx = (plot.left + barW + 6).clamp(plot.left, plot.right - vp.width);
+      final vx = (plot.left + barW + 6).clamp(
+        plot.left,
+        plot.right - vp.width,
+      );
       if (vx >= plot.left) {
         vp.paint(canvas, Offset(vx, cy - vp.height / 2));
       }
@@ -1103,319 +2365,13 @@ class _HorizontalCategoryChartPainter extends CustomPainter {
       oldDelegate.items != items || oldDelegate.palette != palette;
 }
 
-class _YearDropdown extends StatelessWidget {
-  final List<int> years;
-  final int value;
-  final ValueChanged<int> onChanged;
-
-  const _YearDropdown({
-    required this.years,
-    required this.value,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.palette;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: p.surface,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: p.border),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<int>(
-          value: years.contains(value) ? value : years.first,
-          icon: const Icon(Icons.keyboard_arrow_down, size: 18),
-          style: TextStyle(fontSize: 13, color: p.textSecondary),
-          items: years
-              .map((e) => DropdownMenuItem(value: e, child: Text('$e')))
-              .toList(),
-          onChanged: (v) {
-            if (v != null && v != value) onChanged(v);
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class _HorizontalBarChart extends StatelessWidget {
-  final List<MonthlySalesEntity> items;
-  final AppPalette palette;
-
-  const _HorizontalBarChart({required this.items, required this.palette});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 300,
-      width: double.infinity,
-      child: CustomPaint(painter: _HorizontalBarChartPainter(items, palette)),
-    );
-  }
-}
-
-class _HorizontalBarChartPainter extends CustomPainter {
-  final List<MonthlySalesEntity> items;
-  final AppPalette palette;
-
-  _HorizontalBarChartPainter(this.items, this.palette);
-
-  static const List<String> _monthLabels = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final sorted = [...items]..sort((a, b) => a.month.compareTo(b.month));
-    if (sorted.isEmpty) return;
-
-    const leftPad = 52.0;
-    const rightPad = 16.0;
-    const topPad = 16.0;
-    const bottomPad = 32.0;
-    final plot = Rect.fromLTRB(
-      leftPad,
-      topPad,
-      size.width - rightPad,
-      size.height - bottomPad,
-    );
-
-    final values = sorted.map((e) => e.total.toDouble()).toList();
-    final maxVal = values.reduce((a, b) => a > b ? a : b);
-    final chartMax = maxVal <= 0 ? 1.0 : maxVal * 1.1;
-
-    final gridPaint = Paint()
-      ..color = palette.border
-      ..strokeWidth = 1;
-
-    const ticks = 4;
-    for (var t = 0; t <= ticks; t++) {
-      final x = plot.left + (t / ticks) * plot.width;
-      canvas.drawLine(Offset(x, plot.top), Offset(x, plot.bottom), gridPaint);
-      final value = chartMax * (t / ticks);
-      final label = _formatAxisValue(value);
-      final tp = TextPainter(
-        text: TextSpan(
-          text: label,
-          style: TextStyle(fontSize: 10, color: palette.textSecondary),
-        ),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      tp.paint(canvas, Offset(x - tp.width / 2, plot.bottom + 8));
-    }
-
-    final n = sorted.length;
-    final rowH = plot.height / n;
-    final barH = (rowH * 0.62).clamp(6.0, 18.0);
-    final barPaint = Paint()..color = AppColors.brandPurple;
-
-    for (var i = 0; i < n; i++) {
-      final entry = sorted[i];
-      final cy = plot.top + rowH * (i + 0.5);
-      final barW = (entry.total / chartMax) * plot.width;
-
-      final label = _monthLabels[(entry.month - 1) % 12];
-      final lp = TextPainter(
-        text: TextSpan(
-          text: label,
-          style: TextStyle(fontSize: 11, color: palette.textSecondary),
-        ),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      lp.paint(canvas, Offset(plot.left - lp.width - 8, cy - lp.height / 2));
-
-      final rect = RRect.fromRectAndCorners(
-        Rect.fromLTWH(plot.left, cy - barH / 2, barW, barH),
-        topLeft: const Radius.circular(6),
-        topRight: const Radius.circular(6),
-        bottomLeft: const Radius.circular(6),
-        bottomRight: const Radius.circular(6),
-      );
-      canvas.drawRRect(rect, barPaint);
-    }
-  }
-
-  String _formatAxisValue(double value) {
-    if (value >= 1000000) {
-      return '${_trimDouble(value / 1000000)}M';
-    }
-    if (value >= 1000) {
-      return '${_trimDouble(value / 1000)}k';
-    }
-    return value.round().toString();
-  }
-
-  String _trimDouble(double v) {
-    final s = v.toStringAsFixed(1);
-    return s.endsWith('.0') ? s.substring(0, s.length - 2) : s;
-  }
-
-  @override
-  bool shouldRepaint(covariant _HorizontalBarChartPainter oldDelegate) =>
-      oldDelegate.items != items || oldDelegate.palette != palette;
-}
-
-/// One line of the category distribution list: either the column-label header
-/// or a category row with its colour swatch, name, bar, count and percentage.
-///
-/// Header and rows go through this exact geometry — the fixed numeric column
-/// widths are constants on this class — so `Count` and `Percentage` sit
-/// directly above their numbers at every width. The name and the bar are
-/// `Expanded` by flex rather than fixed: a long name ellipsizes, the row can
-/// never overflow, and both columns keep the same position on every line.
-class _CategoryDistributionLine extends StatelessWidget {
-  const _CategoryDistributionLine({
-    required this.nameFlex,
-    required this.barFlex,
-    required this.count,
-    required this.percent,
-    this.name = '',
-    this.swatchColor,
-    this.barFraction = 0,
-    this.isHeader = false,
-  });
-
-  /// Numeric column widths, shared by the header and every row so the
-  /// numbers stay aligned under their labels.
-  static const double countWidth = 44;
-  static const double percentWidth = 60;
-
-  final int nameFlex;
-  final int barFlex;
-  final String name;
-  final Color? swatchColor;
-  final double barFraction;
-  final String count;
-  final String percent;
-  final bool isHeader;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.palette;
-
-    // Header labels scale down inside the same fixed columns as the numbers
-    // below them, so a longer translation shrinks instead of wrapping or
-    // clipping, and stays right-aligned with the values.
-    Widget headerLabel(String text) => FittedBox(
-      alignment: Alignment.centerRight,
-      fit: BoxFit.scaleDown,
-      child: Text(
-        text,
-        maxLines: 1,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          color: p.textMuted,
-          letterSpacing: 0.4,
-        ),
-      ),
-    );
-
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: isHeader ? 4 : 6),
-      child: Row(
-        children: [
-          if (swatchColor != null)
-            Container(
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(
-                color: swatchColor,
-                borderRadius: BorderRadius.circular(3),
-              ),
-            )
-          else
-            // Header placeholder: keeps the name column's start edge — and
-            // with it every row's — identical between the two line kinds.
-            const SizedBox(width: 10, height: 10),
-          const SizedBox(width: 8),
-          Expanded(
-            flex: nameFlex,
-            child: isHeader
-                ? const SizedBox.shrink()
-                : Text(
-                    name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w500,
-                      color: p.textPrimary,
-                    ),
-                  ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            flex: barFlex,
-            child: isHeader
-                ? const SizedBox.shrink()
-                : _DistributionBar(
-                    fraction: barFraction,
-                    color: swatchColor ?? p.primary,
-                    trackColor: p.chipBg,
-                  ),
-          ),
-          const SizedBox(width: 10),
-          SizedBox(
-            width: countWidth,
-            child: isHeader
-                ? headerLabel(count)
-                : Text(
-                    count,
-                    textAlign: TextAlign.right,
-                    maxLines: 1,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: p.textPrimary,
-                    ),
-                  ),
-          ),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: percentWidth,
-            child: isHeader
-                ? headerLabel(percent)
-                : Text(
-                    percent,
-                    textAlign: TextAlign.right,
-                    maxLines: 1,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: p.textSecondary,
-                    ),
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 /// A category's share of the largest category as an animated, rounded bar on
 /// a low-contrast track.
 ///
-/// The fraction is count/max rather than count/total: this column reads as a
-/// comparison between categories (the biggest fills its cell), while the
-/// donut's slice sizes and the percentage column already carry the
-/// share-of-total view. The tween matches the pie's duration and curve, so a
-/// refresh animates both halves of the card together.
+/// Used by both the allocation legend and the stock-status rows: in each case
+/// the bar compares a part against the largest part (or, for stock, against
+/// the whole), and the tween means a refresh animates the bars rather than
+/// snapping them.
 class _DistributionBar extends StatelessWidget {
   const _DistributionBar({
     required this.fraction,

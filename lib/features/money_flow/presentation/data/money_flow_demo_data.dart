@@ -379,7 +379,7 @@ class MoneyFlowDemoData {
 
   /// Dates a period preset opens on. Fixed rather than `DateTime.now()`, so the
   /// demo always lands on the month its anchors describe.
-  DateTimeRange rangeForPreset(String preset) => switch (preset) {
+  static DateTimeRange rangeForPreset(String preset) => switch (preset) {
     'Last Month' => DateTimeRange(
       start: DateTime(2026, 10, 1),
       end: DateTime(2026, 10, 31),

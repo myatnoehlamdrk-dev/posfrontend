@@ -163,9 +163,9 @@ class CashFlowTrendPanel extends StatelessWidget {
         const SizedBox(height: 8),
         Row(
           children: [
-            _legendDot(AppColors.green, 'Inflow'),
+            _legendDot(context, AppColors.green, 'Inflow'),
             const SizedBox(width: 16),
-            _legendDot(AppColors.red, 'Outflow'),
+            _legendDot(context, AppColors.red, 'Outflow'),
           ],
         ),
         const SizedBox(height: 8),
@@ -182,7 +182,7 @@ class CashFlowTrendPanel extends StatelessWidget {
     );
   }
 
-  Widget _legendDot(Color color, String label) {
+  Widget _legendDot(BuildContext context, Color color, String label) {
     final p = context.palette;
     return Row(
       mainAxisSize: MainAxisSize.min,

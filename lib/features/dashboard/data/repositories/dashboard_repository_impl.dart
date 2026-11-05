@@ -1,3 +1,4 @@
+import 'package:posfrontend/core/extensions/map_json_extensions.dart';
 import 'package:posfrontend/features/dashboard/domain/entities/dashboard.dart';
 import 'package:posfrontend/features/dashboard/domain/entities/dashboard_table.dart';
 import 'package:posfrontend/features/dashboard/domain/repositories/dashboard_repository.dart';
@@ -35,6 +36,41 @@ class DashboardRepositoryImpl implements DashboardRepository {
         .where((e) => e.month >= 1 && e.month <= 12)
         .toList();
     return (years: years, months: months);
+  }
+
+  @override
+  Future<List<SalesChartPointEntity>> getSalesChart({
+    required int days,
+  }) async {
+    final rows = await _remoteDataSource.getSalesChart(days: days);
+    return rows.whereType<Map<String, dynamic>>().map((row) {
+      // The column is `DATE(created_at)`, so it parses as a date-only
+      // timestamp; an unparseable one becomes the epoch rather than throwing,
+      // which drops the point out of both windows below instead of failing
+      // the whole comparison.
+      final date = DateTime.tryParse(row.str('date')) ?? DateTime(1970);
+      return SalesChartPointEntity(
+        date: date,
+        orders: row.integer('count'),
+        total: row.integer('total'),
+      );
+    }).toList();
+  }
+
+  @override
+  Future<int> getItemsSold({required int days}) async {
+    // The full dashboard payload carries `category_quantity`, and no lighter
+    // endpoint exposes it — so this reads the same document the dashboard
+    // does and takes only the one list off it.
+    final json = await _remoteDataSource.getDashboardData(days: days);
+    final rows = (json['category_quantity'] as List<dynamic>? ?? const [])
+        .whereType<Map<String, dynamic>>();
+
+    var total = 0;
+    for (final row in rows) {
+      total += row.integer('total_quantity');
+    }
+    return total;
   }
 
   @override

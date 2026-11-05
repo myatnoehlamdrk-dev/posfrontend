@@ -42,7 +42,7 @@ class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen> {
     final previous = _data.totalsFor(_data.previousPeriod(_range));
     final buckets = _data.trendBuckets(_range, _granularity);
     return AppShell(
-      active: DrawerDestination.moneyFlow,
+      active: DrawerDestination.saleAnalysis,
       scaffoldKey: _scaffoldKey,
       backgroundColor: p.scaffoldBg,
       wrap: (_, shell) => shell,

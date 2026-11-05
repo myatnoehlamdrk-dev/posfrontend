@@ -52,7 +52,7 @@ class _MoneyFlowTransactionsScreenState
     }
     final net = inflow - outflow;
     return AppShell(
-      active: DrawerDestination.moneyFlow,
+      active: DrawerDestination.saleAnalysis,
       backgroundColor: p.scaffoldBg,
       wrap: (_, shell) => shell,
       body: (context, _) => SafeArea(

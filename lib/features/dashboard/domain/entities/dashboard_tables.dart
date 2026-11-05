@@ -199,3 +199,135 @@ class DashboardTables {
     ],
   );
 }
+
+/// The four tables drawn inline on the dashboard, each a narrow slice of the
+/// full table it links to.
+///
+/// A preview cannot reuse the full spec: the full specs are sized for a
+/// horizontal scroll view with every column on screen, while a preview sits in
+/// half a row and would rather drop a column than scroll. So each entry here
+/// keeps only the columns the design shows and states its own widths; "View
+/// all" still opens the full spec from [DashboardTables], with the full column
+/// set.
+class DashboardTablePreviews {
+  const DashboardTablePreviews._();
+
+  static const lowStockItems = DashboardTableSpec(
+    title: 'Low Stock Items',
+    endpoint: '/dashboard/tables/stock',
+    columns: [
+      TableColumn(label: 'Product Name', width: 200, jsonKey: 'name'),
+      TableColumn(label: 'Category', width: 120, jsonKey: 'category'),
+      TableColumn(
+        label: 'Stock',
+        width: 64,
+        jsonKey: 'stock',
+        align: TableColumnAlign.right,
+        kind: TableValueKind.number,
+      ),
+    ],
+  );
+
+  /// The backend has no "days since last sale" column, so the design's Days
+  /// column is answered with the price and the creator instead — the two
+  /// things the row actually carries.
+  static const productsNotSold = DashboardTableSpec(
+    title: 'Products Not Sold',
+    endpoint: '/dashboard/tables/no-bought-products',
+    columns: [
+      TableColumn(label: 'Product Name', width: 200, jsonKey: 'name'),
+      TableColumn(
+        label: 'Price',
+        width: 110,
+        jsonKey: 'price',
+        align: TableColumnAlign.right,
+        kind: TableValueKind.currency,
+      ),
+      TableColumn(label: 'Created By', width: 120, jsonKey: 'creator_name'),
+    ],
+  );
+
+  static const recentSales = DashboardTableSpec(
+    title: 'Recent Sales',
+    endpoint: '/dashboard/tables/sales',
+    columns: [
+      TableColumn(
+        label: 'Date',
+        width: 100,
+        jsonKey: 'date',
+        kind: TableValueKind.date,
+      ),
+      TableColumn(
+        label: 'Items',
+        width: 64,
+        jsonKey: 'product_count',
+        align: TableColumnAlign.right,
+        kind: TableValueKind.number,
+      ),
+      TableColumn(
+        label: 'Total',
+        width: 110,
+        jsonKey: 'price',
+        align: TableColumnAlign.right,
+        kind: TableValueKind.currency,
+      ),
+      TableColumn(label: 'Payment', width: 96, jsonKey: 'pay_method'),
+    ],
+  );
+
+  static const recentProducts = DashboardTableSpec(
+    title: 'Recent Products',
+    endpoint: '/dashboard/tables/products',
+    columns: [
+      TableColumn(label: 'Product Name', width: 180, jsonKey: 'name'),
+      TableColumn(label: 'Category', width: 104, jsonKey: 'category'),
+      TableColumn(
+        label: 'Stock',
+        width: 64,
+        jsonKey: 'stock',
+        align: TableColumnAlign.right,
+        kind: TableValueKind.number,
+      ),
+      TableColumn(
+        label: 'Added Date',
+        width: 110,
+        jsonKey: 'created_at',
+        kind: TableValueKind.date,
+      ),
+    ],
+  );
+
+  /// How many rows each preview fetches. Five is what the design shows and
+  /// what fits above a fold without the card growing taller than the chart
+  /// beside it.
+  static const int rowsPerPage = 5;
+
+  /// The requests behind [tablePreviews] on the view model, keyed the way the
+  /// screen looks them up. `low: 1` is the same flag the Low Stock "View all"
+  /// link sends, so the preview and the screen behind it show the same rows.
+  static const List<
+    ({String key, String endpoint, Map<String, dynamic> query})
+  >
+  requests = [
+    (
+      key: 'lowStockItems',
+      endpoint: '/dashboard/tables/stock',
+      query: <String, dynamic>{'low': 1},
+    ),
+    (
+      key: 'productsNotSold',
+      endpoint: '/dashboard/tables/no-bought-products',
+      query: <String, dynamic>{},
+    ),
+    (
+      key: 'recentSales',
+      endpoint: '/dashboard/tables/sales',
+      query: <String, dynamic>{},
+    ),
+    (
+      key: 'recentProducts',
+      endpoint: '/dashboard/tables/products',
+      query: <String, dynamic>{},
+    ),
+  ];
+}
