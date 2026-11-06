@@ -30,11 +30,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
   String get _inventoryLabel {
     switch (widget.inventoryType) {
-      case 'public':
-        return 'Public Inventory';
-      case 'self':
-      default:
-        return 'Self Inventory';
+       case 'public':
+         return 'Public Store';
+       case 'self':
+       default:
+         return 'Self Store';
     }
   }
 
@@ -242,7 +242,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
         GestureDetector(
           onTap: () => Navigator.of(context).pop(),
           child: Text(
-            context.l10n.t('Inventory'),
+             context.l10n.t('Store'),
             style: TextStyle(fontSize: 13, color: AppColors.brandPurpleDark),
           ),
         ),

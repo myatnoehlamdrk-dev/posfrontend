@@ -113,18 +113,18 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
               FilterTabs(
                 tabs: [
                   ('All', _viewModel.purchaseItems.length),
-                  (
-                    'Completed',
-                    _viewModel.purchaseItems
-                        .where((o) => o.status == PurchaseStatus.completed)
-                        .length,
-                  ),
-                  (
-                    'Pending',
-                    _viewModel.purchaseItems
-                        .where((o) => o.status == PurchaseStatus.pending)
-                        .length,
-                  ),
+                   (
+                     'Shop',
+                     _viewModel.purchaseItems
+                         .where((o) => o.status == PurchaseStatus.completed)
+                         .length,
+                   ),
+                   (
+                     'Inventory',
+                     _viewModel.purchaseItems
+                         .where((o) => o.status == PurchaseStatus.pending)
+                         .length,
+                   ),
                 ],
                 selectedIndex: _selectedTab,
                 onTabChanged: (i) => setState(() => _selectedTab = i),
@@ -244,9 +244,9 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    isCompleted
-                        ? context.l10n.t('Completed')
-                        : context.l10n.t('Pending'),
+                        isCompleted
+                            ? context.l10n.t('Shop')
+                            : context.l10n.t('Inventory'),
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -332,7 +332,7 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        context.l10n.t('Mark Completed'),
+                         context.l10n.t('Mark as Shop'),
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,

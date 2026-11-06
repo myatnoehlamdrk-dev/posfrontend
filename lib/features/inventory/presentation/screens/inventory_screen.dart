@@ -12,7 +12,7 @@ import 'package:posfrontend/shared/widgets/app_shell.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 
-/// Inventory selection: pick which inventory to work in.
+/// Shop selection: pick which shop inventory to work in.
 ///
 /// The page is a single left-aligned column capped at [_contentMaxWidth]. A
 /// centred wrapper would leave the breadcrumb floating in the middle of a wide
@@ -63,13 +63,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
       // would otherwise cut a hard horizontal seam across the gradient.
       child: DecoratedBox(
         decoration: BoxDecoration(gradient: colors.pageGradient),
-        child: AppShell(
-          active: DrawerDestination.inventory,
-          scaffoldKey: _scaffoldKey,
-          backgroundColor: Colors.transparent,
-          wrap: (_, shell) => shell,
-          body: (context, isWide) => _buildContent(isWide: isWide),
-        ),
+          child: AppShell(
+            active: DrawerDestination.inventory,
+            scaffoldKey: _scaffoldKey,
+            backgroundColor: Colors.transparent,
+            wrap: (_, shell) => shell,
+            body: (context, isWide) => _buildContent(isWide: isWide),
+          ),
       ),
     );
   }
@@ -80,7 +80,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       child: Column(
         children: [
           AppScreenTopBar(
-            title: context.l10n.t('Inventory'),
+            title: context.l10n.t('Shop'),
             showMenuButton: !isWide,
             onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
             backgroundColor: Colors.transparent,
@@ -91,9 +91,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
               child: Align(
                 alignment: Alignment.topLeft,
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: _contentMaxWidth,
-                  ),
+                  constraints: const BoxConstraints(maxWidth: _contentMaxWidth),
                   child: Padding(
                     padding: const EdgeInsets.all(32),
                     child: Column(
@@ -102,10 +100,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                         _breadcrumb(colors),
                         const SizedBox(height: 8),
                         const SizedBox(height: 20),
-                        _buildOptionCards(
-                          _viewModel.options,
-                          colors: colors,
-                        ),
+                        _buildOptionCards(_viewModel.options, colors: colors),
                         const SizedBox(height: 28),
                         _infoCard(colors),
                       ],
@@ -123,10 +118,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
   Widget _breadcrumb(_InventoryColors colors) {
     return Row(
       children: [
-        // The trail starts at Inventory: the Dashboard crumb it used to lead
+        // The trail starts at Shop: the Dashboard crumb it used to lead
         // with was one hop too many, and this screen is the trail's root.
         Text(
-          context.l10n.t('Inventory'),
+          context.l10n.t('Shop'),
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
@@ -214,11 +209,16 @@ class _InventoryScreenState extends State<InventoryScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          _bullet(colors, context.l10n.t('Self Inventory: Only you can view and manage.')),
+          _bullet(
+            colors,
+            context.l10n.t('Self Store: Only you can view and manage.'),
+          ),
           const SizedBox(height: 6),
           _bullet(
             colors,
-            context.l10n.t('Public Inventory: Shared and visible to other users.'),
+            context.l10n.t(
+              'Public Store: Shared and visible to other users.',
+            ),
           ),
         ],
       ),
@@ -233,11 +233,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
         Expanded(
           child: Text(
             text,
-            style: TextStyle(
-              fontSize: 13,
-              color: colors.muted,
-              height: 1.6,
-            ),
+            style: TextStyle(fontSize: 13, color: colors.muted, height: 1.6),
           ),
         ),
       ],
@@ -330,11 +326,7 @@ class _InventoryOptionCardState extends State<_InventoryOptionCard> {
                 Text(
                   context.l10n.t(widget.option.description),
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: c.muted,
-                    height: 1.6,
-                  ),
+                  style: TextStyle(fontSize: 13, color: c.muted, height: 1.6),
                 ),
                 const SizedBox(height: 24),
                 _OpenButton(
@@ -360,11 +352,7 @@ class _InventoryOptionCardState extends State<_InventoryOptionCard> {
         ),
         boxShadow: active ? c.iconGlow : null,
       ),
-      child: Icon(
-        look.icon,
-        size: 36,
-        color: active ? c.iconHover : c.icon,
-      ),
+      child: Icon(look.icon, size: 36, color: active ? c.iconHover : c.icon),
     );
   }
 }
@@ -582,20 +570,10 @@ class _InventoryColors {
         offset: Offset(0, 12),
       ),
     ],
-    iconGradient: [
-      Color(0xE6322850),
-      Color(0xF21E1932),
-    ],
-    iconGradientHover: [
-      Color(0xF26D28D9),
-      Color(0xF2472A8F),
-    ],
+    iconGradient: [Color(0xE6322850), Color(0xF21E1932)],
+    iconGradientHover: [Color(0xF26D28D9), Color(0xF2472A8F)],
     iconGlow: [
-      BoxShadow(
-        color: Color(0x668B5CF6),
-        blurRadius: 24,
-        spreadRadius: 2,
-      ),
+      BoxShadow(color: Color(0x668B5CF6), blurRadius: 24, spreadRadius: 2),
     ],
     icon: AppColors.purple700,
     iconHover: AppColors.violet300,
@@ -643,20 +621,10 @@ class _InventoryColors {
         offset: Offset(0, 10),
       ),
     ],
-    iconGradient: [
-      Color(0xFFF3EEFE),
-      Color(0xFFE7DFF9),
-    ],
-    iconGradientHover: [
-      Color(0xFFEFE6FE),
-      Color(0xFFDDD0FB),
-    ],
+    iconGradient: [Color(0xFFF3EEFE), Color(0xFFE7DFF9)],
+    iconGradientHover: [Color(0xFFEFE6FE), Color(0xFFDDD0FB)],
     iconGlow: [
-      BoxShadow(
-        color: Color(0x4D8B5CF6),
-        blurRadius: 20,
-        spreadRadius: 1,
-      ),
+      BoxShadow(color: Color(0x4D8B5CF6), blurRadius: 20, spreadRadius: 1),
     ],
     icon: AppColors.purple700,
     iconHover: AppColors.violet400,

@@ -167,6 +167,8 @@ const Map<String, String> japaneseStrings = {
   'No products found.': '商品が見つかりません',
   'Self Inventory': '自己在庫',
   'Stock Status': '在庫状況',
+  'Product Stock Status': '商品在庫状況',
+  'Inventory Stock Status': '在庫状況',
   'Remove from package': 'パッケージから削除',
   'Remove Product': '商品を削除',
   'Remove': '削除',
@@ -176,6 +178,8 @@ const Map<String, String> japaneseStrings = {
 
   // Inventory
   'Inventory': '在庫',
+  'Shop': 'ショップ',
+  'Inventory data will appear here.': '在庫データがここに表示されます。',
   'Private': '非公開',
   'Shared': '共有',
   'Open': '開く',
@@ -437,6 +441,8 @@ const Map<String, String> japaneseStrings = {
   '+ Add': '+ 追加',
   '+ Add Variant': '+ バリエーション追加',
   'Add products to your cart': 'カートに商品を追加',
+  'View the products saved in your cart and pick up where you left off.':
+      'カートに保存された商品を確認し、続きから再開できます。',
   'Audit Information': '監査情報',
   'Choose how you want to add a product': '商品の追加方法を選択',
   'Color': '色',
@@ -519,8 +525,7 @@ const Map<String, String> japaneseStrings = {
       '写真は保存されましたが、この店舗のサーバーにのみ保存されています。他の端末では表示できない場合があります。',
   'This photo could not be reduced and is uploading at full size.':
       'この写真は圧縮できなかったため、元のサイズのままアップロードしています。',
-  'Download USB setup for this computer':
-      'このコンピューター用USBセットアップをダウンロード',
+  'Download USB setup for this computer': 'このコンピューター用USBセットアップをダウンロード',
   'The download could not be started. Try again.':
       'ダウンロードを開始できませんでした。もう一度お試しください。',
 };

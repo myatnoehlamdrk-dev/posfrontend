@@ -63,6 +63,7 @@ static const List<int> _categoryColors = [
     final lowStock = statsJson.integer('low_stock_count');
     final totalSales = statsJson.integer('total_sales');
     final outStock = statsJson.integer('out_stock_count');
+    final stockUnits = statsJson.integer('stock_units');
     final salesCount = statsJson.integer('sales_count');
     final avgOrderValue = statsJson.integer('avg_sale_last10');
 
@@ -88,6 +89,7 @@ static const List<int> _categoryColors = [
       inStock: inStock,
       lowStock: lowStock,
       outStock: outStock,
+      stockUnits: stockUnits,
       salesCount: salesCount,
       avgOrderValue: avgOrderValue,
       itemsSold: itemsSold,

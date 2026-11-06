@@ -3,6 +3,7 @@ import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/features/product/presentation/screens/add_product_screen.dart';
 import 'package:posfrontend/features/product/presentation/screens/quick_add_product_screen.dart';
 import 'package:posfrontend/features/product/presentation/screens/stock_add_screen.dart';
+import 'package:posfrontend/features/cart/presentation/screens/add_to_cart_screen.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
@@ -79,6 +80,17 @@ class _AddProductOptionsScreenState extends State<AddProductOptionsScreen> {
                       ),
                       onTap: () => _navigateTo(context, 'normal'),
                     ),
+                    const SizedBox(height: 16),
+                    _OptionCard(
+                      icon: Icons.shopping_cart_outlined,
+                      iconBgColor: const Color(0xFFEFF6FF),
+                      iconColor: const Color(0xFF2563EB),
+                      title: context.l10n.t('Add to Cart'),
+                      subtitle: context.l10n.t(
+                        'View the products saved in your cart and pick up where you left off.',
+                      ),
+                      onTap: () => _navigateTo(context, 'cart'),
+                    ),
                   ],
                 ),
               ),
@@ -93,6 +105,7 @@ class _AddProductOptionsScreenState extends State<AddProductOptionsScreen> {
     final Widget screen = switch (type) {
       'quick' => const QuickAddProductScreen(),
       'stock' => const StockAddScreen(),
+      'cart' => const AddToCartScreen(),
       _ => const AddProductScreen(),
     };
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));

@@ -243,7 +243,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Breadcrumb([
-          BreadcrumbItem(context.l10n.t('Inventory'), false),
+           BreadcrumbItem(context.l10n.t('Store'), false),
           BreadcrumbItem(widget.category.name, false),
           BreadcrumbItem(p.name, false),
           const BreadcrumbItem('Package Detail', true),

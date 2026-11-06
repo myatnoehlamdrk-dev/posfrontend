@@ -56,6 +56,9 @@ class DashboardStatsEntity extends Equatable {
   /// Products with no stock left.
   final int outStock;
 
+  /// Sum of available stock units across all products.
+  final int stockUnits;
+
   /// Number of sales (orders), not units.
   final int salesCount;
 
@@ -72,6 +75,7 @@ class DashboardStatsEntity extends Equatable {
     required this.inStock,
     required this.lowStock,
     required this.outStock,
+    this.stockUnits = 0,
     required this.salesCount,
     required this.avgOrderValue,
     required this.itemsSold,
@@ -91,6 +95,7 @@ class DashboardStatsEntity extends Equatable {
     inStock,
     lowStock,
     outStock,
+    stockUnits,
     salesCount,
     avgOrderValue,
     itemsSold,

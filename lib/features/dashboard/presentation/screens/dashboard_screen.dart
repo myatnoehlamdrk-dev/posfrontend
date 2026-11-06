@@ -25,6 +25,7 @@ import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
+import 'package:posfrontend/shared/widgets/shop_scope.dart';
 import 'package:posfrontend/shared/widgets/skeleton.dart';
 
 /// Which group of sections the header's tab is showing.
@@ -82,11 +83,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _lastReportCheck = now;
 
     try {
-      final resp = await ApiClient.instance
-          .post('/notifications/daily-report/check');
+      final resp = await ApiClient.instance.post(
+        '/notifications/daily-report/check',
+      );
       final data = resp.data;
-      final reason =
-          (data is Map<String, dynamic>) ? data['reason'] : null;
+      final reason = (data is Map<String, dynamic>) ? data['reason'] : null;
 
       if (reason == 'already_sent') {
         _reportRetryTimer?.cancel();
@@ -111,10 +112,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _loadProfileImage() async {
     try {
       final dio = ApiClient.instance;
-      final resp = await dio.get(
-        '/auth/profile',
-        cancelToken: _cancelToken,
-      );
+      final resp = await dio.get('/auth/profile', cancelToken: _cancelToken);
       final data = resp.data;
       final image = (data is Map<String, dynamic>) ? (data['image'] ?? '') : '';
       if (image is String && image.isNotEmpty && mounted) {
@@ -186,8 +184,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const DashboardSkeleton()
         else if (_viewModel.hasError)
           ErrorRetryView(
-            message:
-                _viewModel.errorMessage ?? 'Something went wrong',
+            message: _viewModel.errorMessage ?? 'Something went wrong',
             onRetry: _viewModel.load,
           )
         else if (_viewModel.data == null)
@@ -205,12 +202,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // ---------------------------------------------------------------- header
 
   Widget _buildHeader(BuildContext context, AppPalette p) {
+    // The page's own name stays in the top bar; this heading names the shop
+    // the numbers below belong to. Falls back to the page name while the
+    // shop is still loading (or when a device has none), so the header is
+    // never blank. Reading it through the scope also means the heading
+    // repaints itself the moment the shop arrives — no manual refresh.
+    final shopName = ShopScope.shopOf(context)?.name.trim() ?? '';
+    final heading = shopName.isEmpty
+        ? context.l10n.t('Dashboard')
+        : shopName;
     final titleBlock = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          context.l10n.t('Dashboard'),
+          heading,
           style: TextStyle(
             fontSize: 26,
             fontWeight: FontWeight.w700,
@@ -323,27 +329,50 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     if (showSales) {
       section(
-        _pair(
-          _monthlySalesCard(context, p),
-          _SalesSummaryCard(stats: d.stats, trends: _viewModel.trends),
+        _equalHeightPair(
+          (fill, _) => _monthlySalesCard(context, p, fill: fill),
+          (fill, _) => _SalesSummaryCard(
+            stats: d.stats,
+            trends: _viewModel.trends,
+            fill: fill,
+          ),
           leftFlex: 2,
-          rightFlex: 1,
         ),
       );
     }
 
-    final allocation = _categoryAllocationCard(context, p, d);
-    final quantity = _quantitySoldCard(context, p, d);
     if (showSales && showInventory) {
-      section(_pair(allocation, quantity));
+      section(
+        _equalHeightPair(
+          // The pair already knows each card's width, so the allocation card
+          // can choose its side-by-side or stacked shape without a nested
+          // LayoutBuilder (which IntrinsicHeight cannot measure).
+          (fill, width) => _categoryAllocationCard(
+            context,
+            p,
+            d,
+            fill: fill,
+            bodyWidth: width - 32,
+          ),
+          (fill, _) => _quantitySoldCard(context, p, d, fill: fill),
+        ),
+      );
     } else if (showInventory) {
-      section(allocation);
+      section(_categoryAllocationCard(context, p, d));
     } else {
-      section(quantity);
+      section(_quantitySoldCard(context, p, d));
     }
 
     final trend = _productTrendCard(context, p, d);
-    final stock = _StockStatusCard(stats: d.stats);
+    final stock = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _StockStatusCard(stats: d.stats),
+        const SizedBox(height: 24),
+        const _InventoryStockStatusCard(),
+      ],
+    );
     if (showSales && showInventory) {
       section(_pair(trend, stock));
     } else if (showSales) {
@@ -353,12 +382,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     if (showInventory) {
-      section(
-        _pair(
-          _lowStockPreview(context, p),
-          _notSoldPreview(context, p),
-        ),
-      );
+      section(_pair(_lowStockPreview(context, p), _notSoldPreview(context, p)));
     }
 
     final recentSales = _recentSalesPreview(context, p);
@@ -376,8 +400,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   /// Two cards side by side on a wide window, stacked on a narrow one. The
-  /// flex ratio keeps the chart wider than the summary panel beside it, the
-  /// way the design splits that row.
+  /// optional flex ratio lets one side take more of the width than the other.
   Widget _pair(
     Widget left,
     Widget right, {
@@ -390,7 +413,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         if (constraints.maxWidth < 900) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [left, SizedBox(height: gap), right],
+            children: [
+              left,
+              SizedBox(height: gap),
+              right,
+            ],
           );
         }
         return Row(
@@ -429,7 +456,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   // -------------------------------------------------------- monthly + summary
 
-  Widget _monthlySalesCard(BuildContext context, AppPalette p) {
+  Widget _monthlySalesCard(
+    BuildContext context,
+    AppPalette p, {
+    bool fill = false,
+  }) {
     var years = _viewModel.years.isEmpty
         ? [DateTime.now().year]
         : _viewModel.years;
@@ -439,6 +470,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return _PanelCard(
       title: context.l10n.t('Monthly Sales'),
+      fill: fill,
       trailing: _YearDropdown(
         years: years,
         value: _viewModel.selectedYear,
@@ -454,7 +486,63 @@ class _DashboardScreenState extends State<DashboardScreen> {
           : _MonthlySalesChart(
               items: _viewModel.monthlySales,
               palette: p,
+              expand: fill,
             ),
+    );
+  }
+
+  /// Two cards side by side on a wide window, both the same height, stacked on
+  /// a narrow one.
+  ///
+  /// The row takes the taller card's intrinsic height and
+  /// [CrossAxisAlignment.stretch] makes the shorter card match, so the two
+  /// panels line up along the bottom instead of ending wherever their contents
+  /// happen to end. Each builder receives `fill`, true when the cards are
+  /// stretched into that shared height, so a card can hand the spare height to
+  /// its body — a chart grows into it, a list spreads its rows — rather than
+  /// leaving a blank strip under the shorter card. It also receives the width
+  /// the card will get, for bodies that choose their shape from their own
+  /// width: under IntrinsicHeight a nested LayoutBuilder cannot be measured, so
+  /// the decision has to be made before the card is built. On a narrow window
+  /// the cards stack and keep their natural heights.
+  Widget _equalHeightPair(
+    Widget Function(bool fill, double width) left,
+    Widget Function(bool fill, double width) right, {
+    int leftFlex = 1,
+    int rightFlex = 1,
+    double gap = 24,
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 900) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              left(false, constraints.maxWidth),
+              SizedBox(height: gap),
+              right(false, constraints.maxWidth),
+            ],
+          );
+        }
+        final totalFlex = leftFlex + rightFlex;
+        final available = constraints.maxWidth - gap;
+        return IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                flex: leftFlex,
+                child: left(true, available * leftFlex / totalFlex),
+              ),
+              SizedBox(width: gap),
+              Expanded(
+                flex: rightFlex,
+                child: right(true, available * rightFlex / totalFlex),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -463,78 +551,90 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _categoryAllocationCard(
     BuildContext context,
     AppPalette p,
-    DashboardEntity d,
-  ) {
+    DashboardEntity d, {
+    bool fill = false,
+    double? bodyWidth,
+  }) {
     final items = d.categoryDistribution;
     final total = items.fold<int>(0, (sum, e) => sum + e.productCount);
 
     return _PanelCard(
       title: context.l10n.t('Product Allocation by Category'),
+      fill: fill,
       trailing: _ViewAllLink(
-        onTap: () => Navigator.of(context).push(
-          DashboardTableScreen.route(spec: DashboardTables.products),
-        ),
+        onTap: () => Navigator.of(
+          context,
+        ).push(DashboardTableScreen.route(spec: DashboardTables.products)),
       ),
       child: items.isEmpty
           ? SizedBox(
               height: 200,
-              child: Center(
-                child: Text(context.l10n.t('No category data')),
-              ),
+              child: Center(child: Text(context.l10n.t('No category data'))),
             )
+          : bodyWidth != null
+          ? _allocationBody(p, items, total, bodyWidth)
           : LayoutBuilder(
-              builder: (context, constraints) {
-                final donut = _CategoryDonut(
-                  items: items,
-                  total: total,
-                  palette: p,
-                );
-                final legend = _CategoryLegend(
-                  items: items,
-                  total: total,
-                  palette: p,
-                );
-                // Side by side only while the legend keeps a workable width
-                // beside the donut; below that they stack (mobile).
-                if (constraints.maxWidth >= 560) {
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      donut,
-                      const SizedBox(width: 20),
-                      Container(width: 1, height: 200, color: p.border),
-                      const SizedBox(width: 20),
-                      Expanded(child: legend),
-                    ],
-                  );
-                }
-                return Column(
-                  children: [
-                    Center(child: donut),
-                    const SizedBox(height: 16),
-                    legend,
-                  ],
-                );
-              },
+              builder: (context, constraints) =>
+                  _allocationBody(p, items, total, constraints.maxWidth),
             ),
+    );
+  }
+
+  /// The donut and legend side by side while the legend keeps a workable width
+  /// beside it, stacked below that.
+  ///
+  /// The width is passed in rather than measured so the equal-height row can
+  /// decide the shape before laying the card out: a nested LayoutBuilder cannot
+  /// be measured by IntrinsicHeight.
+  Widget _allocationBody(
+    AppPalette p,
+    List<CategoryDistributionEntity> items,
+    int total,
+    double width,
+  ) {
+    final donut = _CategoryDonut(items: items, total: total, palette: p);
+    final legend = _CategoryLegend(items: items, total: total, palette: p);
+    if (width >= 560) {
+      return Row(
+        // Centred rather than top-aligned so the donut sits level with the
+        // legend when the card is stretched to match its neighbour.
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          donut,
+          const SizedBox(width: 20),
+          Container(width: 1, height: 200, color: p.border),
+          const SizedBox(width: 20),
+          Expanded(child: legend),
+        ],
+      );
+    }
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Center(child: donut),
+        const SizedBox(height: 16),
+        legend,
+      ],
     );
   }
 
   Widget _quantitySoldCard(
     BuildContext context,
     AppPalette p,
-    DashboardEntity d,
-  ) {
+    DashboardEntity d, {
+    bool fill = false,
+  }) {
     final items = d.categoryQuantity;
     return _PanelCard(
       title: context.l10n.t('Quantity Sold by Category'),
+      fill: fill,
       trailing: _TagChip(label: context.l10n.t('By Quantity')),
       child: items.isEmpty
           ? SizedBox(
               height: 240,
               child: Center(child: Text(context.l10n.t('No sales data'))),
             )
-          : _HorizontalCategoryChart(items: items, palette: p),
+          : _HorizontalCategoryChart(items: items, palette: p, expand: fill),
     );
   }
 
@@ -576,9 +676,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         tint: p.dangerBg,
         titleColor: p.dangerFg,
         items: d.noBought,
-        onViewAll: () => Navigator.of(context).push(
-          DashboardTableScreen.route(spec: DashboardTables.noBought),
-        ),
+        onViewAll: () => Navigator.of(
+          context,
+        ).push(DashboardTableScreen.route(spec: DashboardTables.noBought)),
       ),
     ];
 
@@ -644,9 +744,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       columns: DashboardTablePreviews.productsNotSold.columns,
       page: _viewModel.tablePreviews['productsNotSold'],
       loaded: _viewModel.previewsLoaded,
-      onViewAll: () => Navigator.of(context).push(
-        DashboardTableScreen.route(spec: DashboardTables.noBought),
-      ),
+      onViewAll: () => Navigator.of(
+        context,
+      ).push(DashboardTableScreen.route(spec: DashboardTables.noBought)),
     );
   }
 
@@ -656,9 +756,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       columns: DashboardTablePreviews.recentSales.columns,
       page: _viewModel.tablePreviews['recentSales'],
       loaded: _viewModel.previewsLoaded,
-      onViewAll: () => Navigator.of(context).push(
-        DashboardTableScreen.route(spec: DashboardTables.sales),
-      ),
+      onViewAll: () => Navigator.of(
+        context,
+      ).push(DashboardTableScreen.route(spec: DashboardTables.sales)),
     );
   }
 
@@ -668,9 +768,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       columns: DashboardTablePreviews.recentProducts.columns,
       page: _viewModel.tablePreviews['recentProducts'],
       loaded: _viewModel.previewsLoaded,
-      onViewAll: () => Navigator.of(context).push(
-        DashboardTableScreen.route(spec: DashboardTables.products),
-      ),
+      onViewAll: () => Navigator.of(
+        context,
+      ).push(DashboardTableScreen.route(spec: DashboardTables.products)),
     );
   }
 }
@@ -713,9 +813,7 @@ Widget _responsiveGrid(
               for (var j = 0; j < columns; j++) ...[
                 if (j > 0) SizedBox(width: gap),
                 Expanded(
-                  child: j < slice.length
-                      ? slice[j]
-                      : const SizedBox.shrink(),
+                  child: j < slice.length ? slice[j] : const SizedBox.shrink(),
                 ),
               ],
             ],
@@ -746,9 +844,9 @@ class _KpiGrid extends StatelessWidget {
   /// The arrow for one tile, or null when the tile declares no comparison
   /// or the windows could not be fetched.
   TrendEntity? _trendFor(MetricEntity metric) =>
-      metric.trendKey == MetricTrendKey.none ? null : trends?.forMetric(
-        metric.trendKey,
-      );
+      metric.trendKey == MetricTrendKey.none
+      ? null
+      : trends?.forMetric(metric.trendKey);
 
   @override
   Widget build(BuildContext context) {
@@ -796,7 +894,9 @@ class _KpiCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.palette;
     return InkWell(
-      onTap: metric.tableKey == null ? null : () => onOpenTable(metric.tableKey),
+      onTap: metric.tableKey == null
+          ? null
+          : () => onOpenTable(metric.tableKey),
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -842,11 +942,7 @@ class _KpiCard extends StatelessWidget {
                         ),
                       ),
                       if (metric.tableKey != null)
-                        Icon(
-                          Icons.chevron_right,
-                          size: 16,
-                          color: p.textMuted,
-                        ),
+                        Icon(Icons.chevron_right, size: 16, color: p.textMuted),
                     ],
                   ),
                   const SizedBox(height: 6),
@@ -916,12 +1012,19 @@ class _PanelCard extends StatelessWidget {
   final EdgeInsetsGeometry padding;
   final EdgeInsetsGeometry? titlePadding;
 
+  /// Whether the body should consume the card's whole remaining height.
+  ///
+  /// Only safe when the card is given a bounded height, i.e. it is stretched
+  /// to match a sibling; on its own the body keeps its natural height.
+  final bool fill;
+
   const _PanelCard({
     this.title,
     this.trailing,
     required this.child,
     this.padding = const EdgeInsets.all(16),
     this.titlePadding,
+    this.fill = false,
   });
 
   @override
@@ -964,7 +1067,12 @@ class _PanelCard extends StatelessWidget {
               ),
             ),
           if (title != null) const SizedBox(height: 14),
-          Padding(padding: padding, child: child),
+          if (fill)
+            Expanded(
+              child: Padding(padding: padding, child: child),
+            )
+          else
+            Padding(padding: padding, child: child),
         ],
       ),
     );
@@ -1059,7 +1167,15 @@ class _SalesSummaryCard extends StatelessWidget {
   final DashboardStatsEntity stats;
   final SummaryTrendsEntity? trends;
 
-  const _SalesSummaryCard({required this.stats, required this.trends});
+  /// Whether to spread the rows over the card's full height so this panel can
+  /// stand level with the taller monthly chart beside it.
+  final bool fill;
+
+  const _SalesSummaryCard({
+    required this.stats,
+    required this.trends,
+    this.fill = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1107,8 +1223,12 @@ class _SalesSummaryCard extends StatelessWidget {
 
     return _PanelCard(
       title: context.l10n.t('Sales Summary'),
+      fill: fill,
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: fill
+            ? MainAxisAlignment.spaceBetween
+            : MainAxisAlignment.start,
         children: [
           for (var i = 0; i < rows.length; i++) ...[
             if (i > 0) ...[
@@ -1143,13 +1263,17 @@ class _SalesSummaryCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                // Loose, so the money can scale down inside a bounded box
-                // instead of pushing the row past the card. The sign sits
-                // under the figure rather than beside it: a row that already
-                // carries `MMK 11,280,000` has no room left for an arrow.
-                Flexible(
+                // Tight, so the column takes its whole share of the row and
+                // every figure — and every percentage under it — ends on the
+                // same right edge. Loose let the column shrink to its widest
+                // child and sit at the left of the flex area, so rows with
+                // different values drifted out of line. The money still scales
+                // down inside this bounded box instead of pushing the row past
+                // the card. The sign sits under the figure rather than beside
+                // it: a row that already carries `MMK 11,280,000` has no room
+                // left for an arrow.
+                Expanded(
                   flex: 2,
-                  fit: FlexFit.loose,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     mainAxisSize: MainAxisSize.min,
@@ -1191,12 +1315,14 @@ class _TrendBadge extends StatelessWidget {
     // is good news. Low Stock Items rising is a warning, so it draws red
     // while pointing up.
     final (color, icon, label) = switch (trend.direction) {
-      TrendDirection.up => trend.isBullish
-          ? (p.successFg, Icons.trending_up, 'Bullish')
-          : (p.dangerFg, Icons.trending_up, 'Bearish'),
-      TrendDirection.down => trend.isBearish
-          ? (p.dangerFg, Icons.trending_down, 'Bearish')
-          : (p.successFg, Icons.trending_down, 'Bullish'),
+      TrendDirection.up =>
+        trend.isBullish
+            ? (p.successFg, Icons.trending_up, 'Bullish')
+            : (p.dangerFg, Icons.trending_up, 'Bearish'),
+      TrendDirection.down =>
+        trend.isBearish
+            ? (p.dangerFg, Icons.trending_down, 'Bearish')
+            : (p.successFg, Icons.trending_down, 'Bullish'),
       TrendDirection.flat => (p.textMuted, Icons.trending_flat, 'No change'),
     };
 
@@ -1483,38 +1609,110 @@ class _StockStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final p = context.palette;
-    final rows = [
-      _StockStatusRow(
-        icon: Icons.check_circle_outline,
-        tintValue: 0xFFDCFCE7,
-        colorValue: 0xFF16A34A,
-        label: 'In Stock',
-        count: stats.inStock,
-      ),
-      _StockStatusRow(
-        icon: Icons.warning_amber_outlined,
-        tintValue: 0xFFFEF3C7,
-        colorValue: 0xFFF59E0B,
-        label: 'Low Stock',
-        count: stats.lowStock,
-      ),
-      _StockStatusRow(
-        icon: Icons.cancel_outlined,
-        tintValue: 0xFFFEE2E2,
-        colorValue: 0xFFEF4444,
-        label: 'Out of Stock',
-        count: stats.outStock,
-      ),
-    ];
-
-    return _PanelCard(
-      title: context.l10n.t('Stock Status'),
+    return _StockStatusPanel(
+      title: context.l10n.t('Product Stock Status'),
+      total: stats.totalProducts,
       trailing: _ViewAllLink(
-        onTap: () => Navigator.of(context).push(
-          DashboardTableScreen.route(spec: DashboardTables.inStock),
-        ),
+        onTap: () => Navigator.of(
+          context,
+        ).push(DashboardTableScreen.route(spec: DashboardTables.inStock)),
       ),
+      rows: [
+        _StockStatusRow(
+          icon: Icons.check_circle_outline,
+          tintValue: 0xFFDCFCE7,
+          colorValue: 0xFF16A34A,
+          label: 'In Stock',
+          count: stats.inStock,
+        ),
+        _StockStatusRow(
+          icon: Icons.warning_amber_outlined,
+          tintValue: 0xFFFEF3C7,
+          colorValue: 0xFFF59E0B,
+          label: 'Low Stock',
+          count: stats.lowStock,
+        ),
+        _StockStatusRow(
+          icon: Icons.cancel_outlined,
+          tintValue: 0xFFFEE2E2,
+          colorValue: 0xFFEF4444,
+          label: 'Out of Stock',
+          count: stats.outStock,
+        ),
+      ],
+    );
+  }
+}
+
+/// Demo card for the inventory side of stock.
+///
+/// The dashboard API only reports product stock, so these figures stand in
+/// until inventory amounts are exposed. The shape is the same as the product
+/// card, so wiring real data in later only means replacing the rows.
+class _InventoryStockStatusCard extends StatelessWidget {
+  const _InventoryStockStatusCard();
+
+  static const _total = 120;
+  static const _inStock = 86;
+  static const _lowStock = 22;
+  static const _outStock = 12;
+
+  @override
+  Widget build(BuildContext context) {
+    return _StockStatusPanel(
+      title: context.l10n.t('Inventory Stock Status'),
+      total: _total,
+      rows: [
+        _StockStatusRow(
+          icon: Icons.inventory_2_outlined,
+          tintValue: 0xFFDCFCE7,
+          colorValue: 0xFF16A34A,
+          label: 'In Stock',
+          count: _inStock,
+        ),
+        _StockStatusRow(
+          icon: Icons.warning_amber_outlined,
+          tintValue: 0xFFFEF3C7,
+          colorValue: 0xFFF59E0B,
+          label: 'Low Stock',
+          count: _lowStock,
+        ),
+        _StockStatusRow(
+          icon: Icons.cancel_outlined,
+          tintValue: 0xFFFEE2E2,
+          colorValue: 0xFFEF4444,
+          label: 'Out of Stock',
+          count: _outStock,
+        ),
+      ],
+    );
+  }
+}
+
+class _StockStatusPanel extends StatelessWidget {
+  final String title;
+  final Widget? trailing;
+  final List<_StockStatusRow> rows;
+
+  /// The number the bars and percentages divide by.
+  final int total;
+
+  const _StockStatusPanel({
+    required this.title,
+    required this.rows,
+    required this.total,
+    this.trailing,
+  });
+
+  double _shareOf(int value) =>
+      total <= 0 ? 0 : (value / total).clamp(0.0, 1.0);
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return _PanelCard(
+      title: title,
+      trailing: trailing,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -1552,7 +1750,7 @@ class _StockStatusCard extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: _DistributionBar(
-                    fraction: stats.shareOf(rows[i].count),
+                    fraction: _shareOf(rows[i].count),
                     color: Color(rows[i].colorValue),
                     trackColor: p.chipBg,
                   ),
@@ -1575,7 +1773,7 @@ class _StockStatusCard extends StatelessWidget {
                 SizedBox(
                   width: 48,
                   child: Text(
-                    '${(stats.shareOf(rows[i].count) * 100).toStringAsFixed(1)}%',
+                    '${(_shareOf(rows[i].count) * 100).toStringAsFixed(1)}%',
                     textAlign: TextAlign.right,
                     maxLines: 1,
                     style: TextStyle(fontSize: 11.5, color: p.textSecondary),
@@ -1840,7 +2038,10 @@ class _PreviewTableCard extends StatelessWidget {
                           ),
                         ),
                         for (final column in columns)
-                          _flexCell(column, _value(context, p, column, rows[i])),
+                          _flexCell(
+                            column,
+                            _value(context, p, column, rows[i]),
+                          ),
                       ],
                     ),
                   ),
@@ -1862,10 +2063,7 @@ class _PreviewTableCard extends StatelessWidget {
   Widget _numberCell(BuildContext context, AppPalette p, Widget child) =>
       Expanded(
         flex: 30,
-        child: Padding(
-          padding: const EdgeInsets.only(right: 8),
-          child: child,
-        ),
+        child: Padding(padding: const EdgeInsets.only(right: 8), child: child),
       );
 
   Widget _flexCell(TableColumn column, Widget child) => Expanded(
@@ -2055,17 +2253,31 @@ class _MonthlySalesChart extends StatelessWidget {
   final List<MonthlySalesEntity> items;
   final AppPalette palette;
 
-  const _MonthlySalesChart({required this.items, required this.palette});
+  /// Grows with the card instead of holding a fixed height, so the chart can
+  /// fill a panel that was stretched to match the summary beside it. The usual
+  /// height stays as the floor.
+  final bool expand;
+
+  const _MonthlySalesChart({
+    required this.items,
+    required this.palette,
+    this.expand = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 280,
-      width: double.infinity,
-      child: CustomPaint(
-        painter: _MonthlySalesChartPainter(items, palette),
-      ),
+    final chart = CustomPaint(
+      painter: _MonthlySalesChartPainter(items, palette),
     );
+
+    if (expand) {
+      return ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 280),
+        child: SizedBox(width: double.infinity, child: chart),
+      );
+    }
+
+    return SizedBox(height: 280, width: double.infinity, child: chart);
   }
 }
 
@@ -2107,9 +2319,7 @@ class _MonthlySalesChartPainter extends CustomPainter {
     );
     if (plot.width <= 0 || plot.height <= 0) return;
 
-    final maxVal = sorted
-        .map((e) => e.total)
-        .reduce((a, b) => a > b ? a : b);
+    final maxVal = sorted.map((e) => e.total).reduce((a, b) => a > b ? a : b);
     final chartMax = maxVal <= 0 ? 1.0 : maxVal * 1.15;
 
     final gridPaint = Paint()
@@ -2159,8 +2369,7 @@ class _MonthlySalesChartPainter extends CustomPainter {
     final barPaint = Paint()..color = AppColors.brandPurple;
     for (final entry in sorted) {
       if (entry.month < 1 || entry.month > 12) continue;
-      final centreX =
-          plot.left + slotWidth * ((entry.month - 1) + 0.5);
+      final centreX = plot.left + slotWidth * ((entry.month - 1) + 0.5);
       final height = (entry.total / chartMax) * plot.height;
       final rect = Rect.fromLTWH(
         centreX - barWidth / 2,
@@ -2219,18 +2428,32 @@ class _HorizontalCategoryChart extends StatelessWidget {
   final List<CategoryQuantityEntity> items;
   final AppPalette palette;
 
-  const _HorizontalCategoryChart({required this.items, required this.palette});
+  /// Grows with the card instead of holding a fixed height, so the bars can
+  /// fill a panel stretched to match the allocation card beside it. The
+  /// computed height stays as the floor.
+  final bool expand;
+
+  const _HorizontalCategoryChart({
+    required this.items,
+    required this.palette,
+    this.expand = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final chartH = (items.length * 36.0 + 40.0).clamp(240.0, 520.0);
-    return SizedBox(
-      height: chartH,
-      width: double.infinity,
-      child: CustomPaint(
-        painter: _HorizontalCategoryChartPainter(items, palette),
-      ),
+    final chart = CustomPaint(
+      painter: _HorizontalCategoryChartPainter(items, palette),
     );
+
+    if (expand) {
+      return ConstrainedBox(
+        constraints: BoxConstraints(minHeight: chartH),
+        child: SizedBox(width: double.infinity, child: chart),
+      );
+    }
+
+    return SizedBox(height: chartH, width: double.infinity, child: chart);
   }
 }
 
@@ -2335,10 +2558,7 @@ class _HorizontalCategoryChartPainter extends CustomPainter {
         ),
         textDirection: TextDirection.ltr,
       )..layout();
-      final vx = (plot.left + barW + 6).clamp(
-        plot.left,
-        plot.right - vp.width,
-      );
+      final vx = (plot.left + barW + 6).clamp(plot.left, plot.right - vp.width);
       if (vx >= plot.left) {
         vp.paint(canvas, Offset(vx, cy - vp.height / 2));
       }

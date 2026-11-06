@@ -251,7 +251,7 @@ class _PackageScreenState extends State<PackageScreen> {
         GestureDetector(
           onTap: () {},
           child: Text(
-            context.l10n.t('Inventory'),
+             context.l10n.t('Store'),
             style: TextStyle(fontSize: 13, color: AppColors.brandPurpleDark),
           ),
         ),
@@ -259,7 +259,7 @@ class _PackageScreenState extends State<PackageScreen> {
         GestureDetector(
           onTap: () {},
           child: Text(
-            context.l10n.t('Self Inventory'),
+            context.l10n.t('Self Store'),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontSize: 13, color: AppColors.brandPurpleDark),

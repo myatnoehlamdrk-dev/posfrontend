@@ -215,6 +215,8 @@ const Map<String, String> myStrings = {
   'No products found.': 'ကုန်ပစ္စည်းများမတွေ့ပါ',
   'Self Inventory': 'ကိုယ်ပိုင်ရုံ',
   'Stock Status': 'stock အခြေအနေ',
+  'Product Stock Status': 'ကုန်ပစ္စည်း stock အခြေအနေ',
+  'Inventory Stock Status': 'ကုန်ပစ္စည်းစာရင်း stock အခြေအနေ',
   'Remove from package': 'package မှဖယ်ထုတ်ရန်',
   'Remove Product': 'ကုန်ပစ္စည်းဖယ်ထုတ်ရန်',
   'Remove': 'ဖယ်ထုတ်ရန်',
@@ -224,6 +226,9 @@ const Map<String, String> myStrings = {
       'လက်ရှိပုံကို ဖယ်ထုတ်ပစ်မည်။ နောက်မှ ပုံအသစ် ထပ်ရွေးနိုင်ပါသည်။',
   // Inventory
   'Inventory': 'ကုန်ပစ္စည်းစာရင်း',
+  'Shop': 'ဆိုင်',
+  'Inventory data will appear here.':
+      'ကုန်ပစ္စည်းစာရင်း အချက်အလက်များ ဤနေရာတွင် ပေါ်လာပါမည်။',
   'More': 'နောက်ထပ်',
   'Private': 'သီးသန့်',
   'Shared': 'မျှင်မှင်',
@@ -356,8 +361,7 @@ const Map<String, String> myStrings = {
   'USB Printer': 'USB ပရင်တာ',
   'No printer selected': 'ပရင်တာ မရွေးရသေးပါ',
   'No printer configured': 'ပရင်တာ မသတ်မှတ်ရသေးပါ',
-  'Plug in the printer, then choose':
-      'ပရင်တာ ချိတ်ပြီး ရွေးပါ',
+  'Plug in the printer, then choose': 'ပရင်တာ ချိတ်ပြီး ရွေးပါ',
   'Add a printer in Settings > Printers':
       'ဆက်တင် > ပရင်တာ ထဲတွင် ပရင်တာ ထည့်ပါ',
   'Choose': 'ရွေးရန်',
@@ -501,6 +505,8 @@ const Map<String, String> myStrings = {
   '+ Add': '+ ထည့်ရန်',
   '+ Add Variant': '+ အမျိုးအစားထည့်ရန်',
   'Add products to your cart': 'ခရက်လွှာထဲကုန်ပစ္စည်းများထည့်ပါ',
+  'View the products saved in your cart and pick up where you left off.':
+      'သင့်ခရက်လွှာထဲတွင် သိမ်းထားသော ကုန်ပစ္စည်းများကို ကြည့်ပြီး ရပ်ထားသည့်နေရာမှ ဆက်လုပ်ပါ။',
   'Audit Information': 'စစ်ဆေးခြင်းအချက်အလက်',
   'Choose how you want to add a product': 'ကုန်ပစ္စည်းထည့်နည်းရွေးပါ',
   'Color': 'အရောင်',

@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/theme/app_dimens.dart';
 import 'package:posfrontend/shared/theme/app_typography.dart';
@@ -12,6 +11,7 @@ import 'package:posfrontend/features/sale/presentation/screens/sale_items_screen
 import 'package:posfrontend/features/sale/presentation/screens/quick_sale_screen.dart';
 import 'package:posfrontend/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:posfrontend/features/inventory/presentation/screens/inventory_screen.dart';
+import 'package:posfrontend/features/inventory/presentation/screens/inventory_overview_screen.dart';
 import 'package:posfrontend/features/purchase/presentation/screens/purchase_items_screen.dart';
 import 'package:posfrontend/features/settings/presentation/screens/settings_screen.dart';
 import 'package:posfrontend/features/sale_analysis/presentation/screens/sale_analysis_screen.dart';
@@ -22,7 +22,6 @@ import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
-import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
 
 /// Stable identity for a drawer destination.
 ///
@@ -50,23 +49,52 @@ enum DrawerDestination {
   /// Sell from the shelf: a category-filtered product grid with the cart
   /// beside it, where a tap is a line and the sale is made in place. The
   /// history of those sales is [saleItem]; this is where they are created.
-  quickSale(label: 'Quick Sale', icon: Icons.point_of_sale_outlined),
+  quickSale(label: 'Sale', icon: Icons.point_of_sale_outlined),
   product(label: 'Product', icon: Icons.category_outlined),
   addProduct(label: 'Add Product', icon: Icons.add_circle_outline),
-  addToCart(label: 'Add to Cart', icon: Icons.shopping_cart_outlined),
-  inventory(label: 'Inventory', icon: Icons.inventory_2_outlined),
+
+  /// The old Inventory destination, now named Shop: choose which shop
+  /// inventory (private or shared) to work in.
+  inventory(label: 'Shop', icon: Icons.storefront_outlined),
+
+  /// Stock overview for the shop. The screen itself is still a placeholder;
+  /// the destination exists so the sidebar has its own Inventory entry,
+  /// separate from Shop.
+  inventoryOverview(label: 'Inventory', icon: Icons.inventory_2_outlined),
+
+  /// Reached from the Add Product options screen rather than the drawer, since
+  /// it is part of that flow. It stays a destination so its own screen can
+  /// still mark the matching entry active and route tracking can pop back to
+  /// it; [showInDrawer] keeps it out of the sidebar list.
+  addToCart(
+    label: 'Add to Cart',
+    icon: Icons.shopping_cart_outlined,
+    showInDrawer: false,
+  ),
   saleItem(label: 'Sale Item', icon: Icons.receipt_long_outlined),
   purchaseItem(label: 'Purchase Item', icon: Icons.local_shipping_outlined),
   saleAnalysis(label: 'Sale Analysis', icon: Icons.analytics_outlined),
   setting(label: 'Setting', icon: Icons.settings_outlined);
 
-  const DrawerDestination({required this.label, required this.icon});
+  const DrawerDestination({
+    required this.label,
+    required this.icon,
+    this.showInDrawer = true,
+  });
 
   /// English source text. Looked up in the translation store; never compared
   /// for equality.
   final String label;
 
   final IconData icon;
+
+  /// Whether this destination appears in the drawer's navigation list.
+  ///
+  /// Some destinations are only reachable from another screen — Add to Cart
+  /// lives under Add Product — and would otherwise duplicate a parent entry in
+  /// the sidebar. They remain valid destinations for route tracking and the
+  /// active-item highlight; they are just not listed.
+  final bool showInDrawer;
 
   /// The route name this destination's screen is pushed under, so a live copy
   /// can be found again later. The enum's own name — stable, unique, and not
@@ -78,6 +106,7 @@ enum DrawerDestination {
   Widget get screen => switch (this) {
     DrawerDestination.dashboard => const DashboardScreen(),
     DrawerDestination.inventory => const InventoryScreen(),
+    DrawerDestination.inventoryOverview => const InventoryOverviewScreen(),
     DrawerDestination.product => const ProductsCatalogScreen(),
     DrawerDestination.addProduct => const AddProductOptionsScreen(),
     DrawerDestination.saleItem => const SaleItemScreen(),
@@ -96,12 +125,6 @@ class AppDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user = AuthScope.userOf(context);
-    final userName = user?.fullName.trim().isNotEmpty == true
-        ? user!.fullName
-        : 'John Doe';
-    final email = user?.email ?? '';
-    final initials = _initials(userName);
     final p = context.palette;
 
     return Drawer(
@@ -126,60 +149,49 @@ class AppDrawer extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  ValueListenableBuilder<String>(
-                    valueListenable: ProfileImageNotifier.instance,
-                    builder: (context, imageUrl, _) {
-                      return CircleAvatar(
-                        radius: 28,
-                        backgroundColor: Colors.white.withValues(alpha: 0.25),
-                        backgroundImage: imageUrl.isNotEmpty
-                            ? CachedNetworkImageProvider(imageUrl, maxWidth: 280)
-                            : null,
-                        // No `onBackgroundImageError` handler on purpose -- see
-                        // the note in app_screen_top_bar. Erasing the shared URL
-                        // here blanked the avatar app-wide after one failed
-                        // load, and nothing else refetches it.
-                        child: imageUrl.isEmpty
-                            ? Text(
-                                initials,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: AppTypography.titleSmallSize,
-                                ),
-                              )
-                            : null,
-                      );
-                    },
-                  ),
-                  const SizedBox(width: AppSpacing.s16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          userName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: AppTypography.titleSmallSize,
-                            fontWeight: FontWeight.w700,
-                          ),
+                  const Icon(Icons.storefront_rounded, color: Colors.white, size: 42),
+                  const SizedBox(width: 8),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'smart',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'pos',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const TextSpan(
+                              text: '.',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: AppSpacing.s4),
-                        Text(
-                          email,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: AppTypography.labelMediumSize,
-                          ),
+                        style: const TextStyle(
+                          fontSize: 24,
+                          letterSpacing: -1,
+                          height: 1,
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        active.label,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -193,7 +205,8 @@ class AppDrawer extends StatelessWidget {
                 child: Column(
                   children: [
                     for (final destination in DrawerDestination.values)
-                      _navItem(context, destination),
+                      if (destination.showInDrawer)
+                        _navItem(context, destination),
                   ],
                 ),
               ),
@@ -205,13 +218,6 @@ class AppDrawer extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _initials(String name) {
-    final parts = name.trim().split(RegExp(r'\s+'));
-    if (parts.isEmpty || parts[0].isEmpty) return '?';
-    if (parts.length == 1) return parts[0][0].toUpperCase();
-    return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 
   Widget _navItem(BuildContext context, DrawerDestination destination) {

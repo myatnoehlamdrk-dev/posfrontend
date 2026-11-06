@@ -168,6 +168,8 @@ const Map<String, String> thaiStrings = {
   'No products found.': 'ไม่พบสินค้า',
   'Self Inventory': 'สินค้าส่วนตัว',
   'Stock Status': 'สถานะสต็อก',
+  'Product Stock Status': 'สถานะสต็อกสินค้า',
+  'Inventory Stock Status': 'สถานะสต็อกสินค้าคงคลัง',
   'Remove from package': 'ลบออกจากแพ็คเกจ',
   'Remove Product': 'ลบสินค้า',
   'Remove': 'ลบ',
@@ -177,6 +179,8 @@ const Map<String, String> thaiStrings = {
 
   // Inventory
   'Inventory': 'สินค้าคงคลัง',
+  'Shop': 'ร้านค้า',
+  'Inventory data will appear here.': 'ข้อมูลสินค้าคงคลังจะแสดงที่นี่',
   'Private': 'ส่วนตัว',
   'Shared': 'ใช้ร่วมกัน',
   'Open': 'เปิด',
@@ -308,8 +312,7 @@ const Map<String, String> thaiStrings = {
   'USB Printer': 'เครื่องพิมพ์ USB',
   'No printer selected': 'ยังไม่ได้เลือกเครื่องพิมพ์',
   'No printer configured': 'ยังไม่ได้ตั้งค่าเครื่องพิมพ์',
-  'Plug in the printer, then choose':
-      'เสียบเครื่องพิมพ์ แล้วเลือก',
+  'Plug in the printer, then choose': 'เสียบเครื่องพิมพ์ แล้วเลือก',
   'Add a printer in Settings > Printers':
       'เพิ่มเครื่องพิมพ์ในการตั้งค่า > เครื่องพิมพ์',
   'Choose': 'เลือก',
@@ -451,6 +454,8 @@ const Map<String, String> thaiStrings = {
   '+ Add': '+ เพิ่ม',
   '+ Add Variant': '+ เพิ่มตัวเลือก',
   'Add products to your cart': 'เพิ่มสินค้าลงรถเข็น',
+  'View the products saved in your cart and pick up where you left off.':
+      'ดูสินค้าที่บันทึกไว้ในรถเข็นและดำเนินการต่อจากจุดที่ค้างไว้',
   'Audit Information': 'ข้อมูลการตรวจสอบ',
   'Choose how you want to add a product': 'เลือกวิธีการเพิ่มสินค้า',
   'Color': 'สี',

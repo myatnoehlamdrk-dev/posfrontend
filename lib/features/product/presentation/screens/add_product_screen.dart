@@ -299,13 +299,13 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   static const Map<String, String> _inventoryLabels = {
-    'self': 'Self Inventory',
-    'public': 'Public Inventory',
+    'self': 'Self Store',
+    'public': 'Public Store',
   };
 
   Widget _inventoryTypeDropdown() {
     return _dropdown(
-      'Inventory Type',
+      'Store Type',
       _inventoryLabels[_vm.inventoryType] ?? _inventoryLabels['self'],
       _inventoryLabels.values.toList(),
       (v) {

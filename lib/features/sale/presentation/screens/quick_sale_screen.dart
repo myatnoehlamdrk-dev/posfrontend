@@ -214,7 +214,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
       child: Column(
         children: [
           AppScreenTopBar(
-            title: context.l10n.t('Quick Sale'),
+            title: context.l10n.t('Sale'),
             showMenuButton: !isWide,
             onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
           ),

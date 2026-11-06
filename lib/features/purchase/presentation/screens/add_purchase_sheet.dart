@@ -107,7 +107,7 @@ class _AddPurchaseSheetState extends State<AddPurchaseSheet> {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.teal,
+                        color: AppColors.brandPurple,
                       ),
                     ),
                   ),
@@ -237,7 +237,7 @@ class _AddPurchaseSheetState extends State<AddPurchaseSheet> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.teal,
+                    backgroundColor: AppColors.brandPurple,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -293,7 +293,7 @@ class _AddPurchaseSheetState extends State<AddPurchaseSheet> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.teal, width: 1.5),
+              borderSide: const BorderSide(color: AppColors.brandPurple, width: 1.5),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
