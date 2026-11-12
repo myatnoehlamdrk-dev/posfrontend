@@ -154,6 +154,7 @@ const Map<String, String> myStrings = {
   'Supplier is optional.': 'ပေးသွင်းသးဖြစ်နိုင်ပါသည်။',
   'Search Purchase Item': 'ပေးသွင်းခြင်း ရှာဖွေရန်',
   'Purchase Item': 'ဝယ်ယူထားသည့် မှတ်တမ်း',
+  'Finance': 'ဘဏ္ဍာရေး',
   'Purchase item copied into the form': 'ပေးသွင်းခြင်းကိုပုံစံထဲကူးယူပါပြီ',
   'Add New Supplier': 'ပေးသွင်းသူအသစ်',
   'Basic Info': 'အခြေခံအချက်အလက်',

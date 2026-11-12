@@ -73,7 +73,7 @@ enum DrawerDestination {
   ),
   saleItem(label: 'Sale Item', icon: Icons.receipt_long_outlined),
   purchaseItem(label: 'Purchase Item', icon: Icons.local_shipping_outlined),
-  saleAnalysis(label: 'Sale Analysis', icon: Icons.analytics_outlined),
+  saleAnalysis(label: 'Finance', icon: Icons.analytics_outlined),
   setting(label: 'Setting', icon: Icons.settings_outlined);
 
   const DrawerDestination({

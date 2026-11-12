@@ -1,70 +1,48 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
+import 'package:posfrontend/features/sale_analysis/presentation/money_flow/cash_flow_trend_chart.dart';
+import 'package:posfrontend/features/sale_analysis/presentation/money_flow/money_flow_data.dart';
+import 'package:posfrontend/features/sale_analysis/presentation/operation_fee/operation_fee_style.dart';
+import 'package:posfrontend/features/sale_analysis/presentation/operation_fee/widgets/summary_card.dart';
+import 'package:posfrontend/features/sale_analysis/presentation/widgets/month_filter_button.dart';
+import 'package:posfrontend/features/sale_analysis/presentation/widgets/trend_delta.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/app_shell.dart';
 
+/// Money Flow dashboard for the Finance section.
+///
+/// One month at a time (chosen from a calendar), four figures — inflow,
+/// outflow, the operation-fee share of that outflow, and net cash flow — plus
+/// the monthly trend for the selected year.
 class MoneyFlowAnalysisScreen extends StatefulWidget {
   final bool embedded;
   const MoneyFlowAnalysisScreen({super.key, this.embedded = false});
 
   @override
-  State<MoneyFlowAnalysisScreen> createState() => _MoneyFlowAnalysisScreenState();
+  State<MoneyFlowAnalysisScreen> createState() =>
+      _MoneyFlowAnalysisScreenState();
 }
 
-class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen>
-    with SingleTickerProviderStateMixin {
+class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  late final TabController _tab;
 
-  String _period = 'Weekly';
+  /// The demo anchors on November 2026, so that is the month the page opens on.
+  DateTime _month = DateTime(2026, 11);
 
-  @override
-  void initState() {
-    super.initState();
-    _tab = TabController(length: 5, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tab.dispose();
-    super.dispose();
-  }
+  static final DateTime _firstMonth = DateTime(2026, 1, 1);
+  static final DateTime _lastMonth = DateTime(2026, 12, 31);
 
   @override
   Widget build(BuildContext context) {
+    final content = _buildContent(context);
+    if (widget.embedded) return content;
+
     final p = context.palette;
-    final body = Column(
-      children: [
-        TabBar(
-          controller: _tab,
-          isScrollable: true,
-              tabs: const [
-                Tab(text: 'Overview'),
-                Tab(text: 'Payments'),
-                Tab(text: 'Receivables'),
-                Tab(text: 'Payables'),
-                Tab(text: 'Profit vs Cash'),
-              ],
-        ),
-        Expanded(
-          child: TabBarView(
-            controller: _tab,
-            children: [
-              _overview(),
-              _payments(),
-              _receivables(),
-              _payables(),
-              _profitVsCash(),
-            ],
-          ),
-        ),
-      ],
-    );
-    if (widget.embedded) {
-      return body;
-    }
     return AppShell(
       active: DrawerDestination.saleAnalysis,
       scaffoldKey: _scaffoldKey,
@@ -78,378 +56,401 @@ class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen>
               showMenuButton: !isWide,
               onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
             ),
-            Expanded(child: body),
+            Expanded(child: content),
           ],
         ),
       ),
     );
   }
 
-  // ---------- Overview (Phase 1) ----------
-  Widget _overview() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
+  Widget _buildContent(BuildContext context) {
+    final p = context.palette;
+    final month = moneyFlowMonthFor(_month);
+    final previous = moneyFlowMonthFor(previousMonthOf(_month));
+    final yearMonths = moneyFlowYear(_month.year);
+    final selectedIndex = _month.month - 1;
+
+    return Container(
+      color: p.scaffoldBg,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth;
+          final isDesktop = width >= 1100;
+          final isTablet = width >= 700;
+          final pagePadding = isDesktop
+              ? 32.0
+              : isTablet
+                  ? 24.0
+                  : 16.0;
+          final columns = isDesktop
+              ? 4
+              : isTablet
+                  ? 2
+                  : 1;
+
+          return SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(
+              pagePadding,
+              pagePadding,
+              pagePadding,
+              pagePadding + 8,
+            ),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1450),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _heading(isDesktop: isDesktop, isTablet: isTablet),
+                    const SizedBox(height: 20),
+                    if (month == null)
+                      _emptyMonth(p)
+                    else ...[
+                      _cards(
+                        month: month,
+                        previous: previous,
+                        yearMonths: yearMonths,
+                        selectedIndex: selectedIndex,
+                        columns: columns,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Illustrative figures only. All amounts in MMK.',
+                        style: ofText(size: 11, color: p.textMuted),
+                      ),
+                      const SizedBox(height: 20),
+                      _trend(
+                        p: p,
+                        yearMonths: yearMonths,
+                        selectedIndex: selectedIndex,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _heading({required bool isDesktop, required bool isTablet}) {
+    final p = context.palette;
+    final titleBlock = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Money flow',
+          style: ofText(
+            size: 27,
+            weight: FontWeight.w700,
+            color: p.textPrimary,
+            height: 1.15,
+          ),
+        ),
+        const SizedBox(height: 5),
+        Text(
+          'See what came in, what went out, and what was left.',
+          style: ofText(size: 13, color: p.textSecondary),
+        ),
+      ],
+    );
+
+    final monthButton = MonthFilterButton(
+      month: _month,
+      onPressed: _pickMonth,
+    );
+
+    if (isDesktop) {
+      return Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              _card('Total Inflow', '8.0M', 'Money received', Colors.green),
-              _card('Total Outflow', '5.5M', 'Money spent', Colors.red),
-              _card('Net Cash Flow', '+2.5M', 'Inflow − Outflow', Colors.green),
-              _card('Closing Balance', '7.5M', 'Opening + Net', Colors.grey),
-            ],
-          ),
-          const SizedBox(height: 8),
-          const Text('Illustrative figures only. Amounts in MMK.',
-              style: TextStyle(fontSize: 11, color: Colors.grey)),
-          const SizedBox(height: 16),
-          Text('Cash Flow Trend',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          const Text('Compare money received and spent over time.',
-              style: TextStyle(fontSize: 11, color: Colors.grey)),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              for (final v in ['Daily', 'Weekly', 'Monthly', 'Yearly'])
-                Padding(
-                  padding: const EdgeInsets.only(right: 4),
-                  child: ChoiceChip(
-                    label: Text(v, style: const TextStyle(fontSize: 11)),
-                    selected: _period == v,
-                    onSelected: (_) => setState(() => _period = v),
+          Expanded(child: titleBlock),
+          const SizedBox(width: 16),
+          monthButton,
+        ],
+      );
+    }
+
+    if (isTablet) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(child: titleBlock),
+          const SizedBox(width: 16),
+          monthButton,
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        titleBlock,
+        const SizedBox(height: 16),
+        monthButton,
+      ],
+    );
+  }
+
+  Widget _cards({
+    required MoneyFlowMonth month,
+    required MoneyFlowMonth? previous,
+    required List<MoneyFlowMonth> yearMonths,
+    required int selectedIndex,
+    required int columns,
+  }) {
+    final p = context.palette;
+    final inflowDelta = trendDelta(
+      month.inflow,
+      previous?.inflow,
+      higherIsBetter: true,
+    );
+    final outflowDelta = trendDelta(
+      month.outflow,
+      previous?.outflow,
+      higherIsBetter: false,
+    );
+    final feeDelta = trendDelta(
+      month.operationFee,
+      previous?.operationFee,
+      higherIsBetter: false,
+    );
+    final netDelta = trendDelta(
+      month.net,
+      previous?.net,
+      higherIsBetter: true,
+    );
+    final feeShare =
+        month.outflow == 0 ? 0.0 : month.operationFee / month.outflow * 100;
+
+    const gap = 16.0;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = (constraints.maxWidth - gap * (columns - 1)) / columns;
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children: [
+            OfSummaryCard(
+              width: width,
+              label: 'Total inflow',
+              value: month.inflow,
+              format: (v) => ofMoney(v, digits: 0),
+              badgeText: inflowDelta.text,
+              badgeUp: inflowDelta.up,
+              badgeTone: inflowDelta.tone,
+              supporting: previous == null
+                  ? 'No earlier month on record'
+                  : 'vs. ${ofMoney(previous.inflow, digits: 0)} last month',
+              footer: Align(
+                alignment: Alignment.centerRight,
+                child: OfSparkBars(
+                  color: AppColors.green,
+                  values: _sparkValues(
+                    yearMonths,
+                    selectedIndex,
+                    (m) => m.inflow,
                   ),
                 ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          SizedBox(height: 220, child: _trendChart()),
-          const SizedBox(height: 16),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _breakdown('Money Inflow', '8.0M', [
-                  ('Sales payments', 0.55),
-                  ('Customer debt collection', 0.25),
-                  ('Other income', 0.20),
-                ], Colors.green),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _breakdown('Money Outflow', '5.5M', [
-                  ('Inventory payments', 0.50),
-                  ('Operating expenses', 0.25),
-                  ('Salary payments', 0.15),
-                  ('Customer refunds', 0.10),
-                ], Colors.red),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text('Recent Financial Transactions',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          _txn('Customer Payment', 'Sales · Cash', '+250,000', Colors.green),
-          _txn('Inventory Purchase', 'Purchase · Bank', '-500,000', Colors.red),
-          _txn('Electricity Bill', 'Expense · Cash', '-80,000', Colors.red),
-        ],
-      ),
-    );
-  }
-
-  // ---------- Payments (Phase 2) ----------
-  Widget _payments() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Payment Method Distribution',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          SizedBox(height: 220, child: _donutChart()),
-          const SizedBox(height: 12),
-          _simpleTable(
-            headers: const ['Method', 'Amount', 'Share'],
-            rows: const [
-              ['Cash', '3.6M', '45%'],
-              ['Bank', '2.4M', '30%'],
-              ['Wallet', '2.0M', '25%'],
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ---------- Receivables (Phase 2) ----------
-  Widget _receivables() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              _card('Outstanding', '1.2M', 'Pending collection', Colors.orange),
-              _card('Collected', '6.8M', 'Received', Colors.green),
-              _card('Overdue', '0.3M', 'Past due', Colors.red),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text('Receivable Details',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          _simpleTable(
-            headers: const ['Customer', 'Amount', 'Due Date', 'Status'],
-            rows: const [
-              ['Customer A', '250,000', 'Nov 10', 'Pending'],
-              ['Customer B', '180,000', 'Nov 05', 'Overdue'],
-              ['Customer C', '350,000', 'Nov 15', 'Pending'],
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ---------- Payables (Phase 2) ----------
-  Widget _payables() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              _card('Outstanding', '0.9M', 'To pay', Colors.orange),
-              _card('Paid', '4.6M', 'Paid', Colors.green),
-              _card('Overdue', '0.1M', 'Past due', Colors.red),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text('Payable Details',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          _simpleTable(
-            headers: const ['Supplier', 'Amount', 'Due Date', 'Status'],
-            rows: const [
-              ['Supplier A', '500,000', 'Nov 12', 'Pending'],
-              ['Supplier B', '300,000', 'Nov 08', 'Overdue'],
-              ['Supplier C', '100,000', 'Nov 20', 'Pending'],
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ---------- Profit vs Cash (Phase 2) ----------
-  Widget _profitVsCash() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Profit vs Cash Flow',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          const Text(
-              'Explains why accounting profit and actual cash movement differ.',
-              style: TextStyle(fontSize: 11, color: Colors.grey)),
-          const SizedBox(height: 8),
-          SizedBox(height: 220, child: _profitCashChart()),
-          const SizedBox(height: 12),
-          _simpleTable(
-            headers: const ['Metric', 'Amount'],
-            rows: const [
-              ['Gross Profit', '13.2M'],
-              ['Net Cash Flow', '2.5M'],
-              ['Difference', '10.7M'],
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ---------- Forecast (Phase 3) ----------
-  // ---------- Charts ----------
-  Widget _trendChart() {
-    final inflow = const [0.7, 1.0, 0.9, 1.4];
-    final outflow = const [0.5, 0.6, 0.55, 0.8];
-    final labels = const ['W1', 'W2', 'W3', 'W4'];
-    return BarChart(
-      BarChartData(
-        barGroups: inflow.asMap().entries.map((e) {
-          return BarChartGroupData(
-            x: e.key,
-            barRods: [
-              BarChartRodData(toY: e.value, color: Colors.green, width: 8),
-              BarChartRodData(toY: outflow[e.key], color: Colors.red, width: 8),
-            ],
-          );
-        }).toList(),
-        titlesData: FlTitlesData(
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              getTitlesWidget: (v, _) {
-                final i = v.toInt();
-                if (i < 0 || i >= labels.length) return const SizedBox();
-                return Text(labels[i], style: const TextStyle(fontSize: 9));
-              },
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _donutChart() {
-    return PieChart(
-      PieChartData(
-        sections: [
-          PieChartSectionData(value: 45, color: Colors.blue, title: '45%'),
-          PieChartSectionData(value: 30, color: Colors.green, title: '30%'),
-          PieChartSectionData(value: 25, color: Colors.orange, title: '25%'),
-        ],
-        centerSpaceRadius: 40,
-      ),
-    );
-  }
-
-  Widget _profitCashChart() {
-    final profit = const [1.0, 1.2, 1.1, 1.3];
-    final cash = const [0.7, 0.9, 0.8, 1.0];
-    final labels = const ['W1', 'W2', 'W3', 'W4'];
-    return LineChart(
-      LineChartData(
-        lineBarsData: [
-          LineChartBarData(
-            spots: profit.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
-            isCurved: true,
-            color: Colors.blue,
-            barWidth: 3,
-          ),
-          LineChartBarData(
-            spots: cash.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
-            isCurved: true,
-            color: Colors.green,
-            barWidth: 3,
-          ),
-        ],
-        titlesData: FlTitlesData(
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              getTitlesWidget: (v, _) {
-                final i = v.toInt();
-                if (i < 0 || i >= labels.length) return const SizedBox();
-                return Text(labels[i], style: const TextStyle(fontSize: 9));
-              },
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ---------- Helpers ----------
-  Widget _card(String label, String value, String sub, Color color) {
-    return SizedBox(
-      width: 160,
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: const TextStyle(fontSize: 12)),
-              const SizedBox(height: 4),
-              Text(value,
-                  style: TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold, color: color)),
-              const SizedBox(height: 4),
-              Text(sub, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _breakdown(String title, String total, List<(String, double)> items, Color color) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 4),
-            Text(total, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
-            const SizedBox(height: 8),
-            ...items.map((it) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: Row(
-                    children: [
-                      Expanded(child: Text(it.$1, style: const TextStyle(fontSize: 11))),
-                      Text('${(it.$2 * 100).toStringAsFixed(0)}%',
-                          style: const TextStyle(fontSize: 11)),
-                    ],
+            OfSummaryCard(
+              width: width,
+              label: 'Total outflow',
+              value: month.outflow,
+              format: (v) => ofMoney(v, digits: 0),
+              badgeText: outflowDelta.text,
+              badgeUp: outflowDelta.up,
+              badgeTone: outflowDelta.tone,
+              supporting: previous == null
+                  ? 'No earlier month on record'
+                  : 'vs. ${ofMoney(previous.outflow, digits: 0)} last month',
+              footer: Align(
+                alignment: Alignment.centerRight,
+                child: OfSparkBars(
+                  color: AppColors.red,
+                  values: _sparkValues(
+                    yearMonths,
+                    selectedIndex,
+                    (m) => m.outflow,
                   ),
-                )),
+                ),
+              ),
+            ),
+            OfSummaryCard(
+              width: width,
+              label: 'Operation fee',
+              value: month.operationFee,
+              format: (v) => ofMoney(v, digits: 0),
+              badgeText: feeDelta.text,
+              badgeUp: feeDelta.up,
+              badgeTone: feeDelta.tone,
+              supporting: '${feeShare.toStringAsFixed(1)}% of outflow',
+              footer: ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: (feeShare / 100).clamp(0.0, 1.0),
+                  minHeight: 5,
+                  backgroundColor: p.chipBg,
+                  color: p.primary,
+                ),
+              ),
+            ),
+            OfSummaryCard(
+              width: width,
+              highlight: true,
+              label: 'Net cash flow',
+              value: month.net,
+              format: (v) => ofMoney(v, digits: 0),
+              badgeText: netDelta.text,
+              badgeUp: netDelta.up,
+              badgeTone: netDelta.tone,
+              supporting: 'Inflow minus outflow',
+              footer: Row(
+                children: [
+                  _MiniStat(
+                    label: 'Inflow',
+                    value: moneyFlowCompact(month.inflow),
+                  ),
+                  const SizedBox(width: 14),
+                  _MiniStat(
+                    label: 'Outflow',
+                    value: moneyFlowCompact(month.outflow),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _trend({
+    required AppPalette p,
+    required List<MoneyFlowMonth> yearMonths,
+    required int selectedIndex,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Cash flow trend',
+          style: ofText(
+            size: 16,
+            weight: FontWeight.w700,
+            color: p.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Inflow vs outflow by month · ${_month.year}',
+          style: ofText(size: 11.5, color: p.textMuted),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            _legendDot(p, AppColors.green, 'Inflow'),
+            const SizedBox(width: 16),
+            _legendDot(p, AppColors.red, 'Outflow'),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _txn(String title, String sub, String amount, Color color) {
-    return Card(
-      child: ListTile(
-        title: Text(title, style: const TextStyle(fontSize: 13)),
-        subtitle: Text(sub, style: const TextStyle(fontSize: 11)),
-        trailing: Text(amount,
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: color)),
-      ),
-    );
-  }
-
-  Widget _simpleTable({required List<String> headers, required List<List<String>> rows}) {
-    return Table(
-      border: TableBorder.all(color: Colors.grey.shade300),
-      children: [
-        TableRow(
-          decoration: BoxDecoration(color: Colors.grey.shade200),
-          children: headers
-              .map((h) => Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Text(h, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                  ))
-              .toList(),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 260,
+          child: CashFlowTrendChart(
+            months: yearMonths,
+            highlightIndex: selectedIndex,
+          ),
         ),
-        ...rows.map((r) => TableRow(
-              children: r
-                  .map((c) => Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: Text(c, style: const TextStyle(fontSize: 12)),
-                      ))
-                  .toList(),
-            )),
+      ],
+    );
+  }
+
+  Widget _emptyMonth(AppPalette p) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: ofCardDecoration(context),
+      child: Text(
+        'No money flow data for ${moneyFlowMonthLabel(_month)}.',
+        style: ofText(size: 13, color: p.textMuted),
+      ),
+    );
+  }
+
+  Widget _legendDot(AppPalette p, Color color, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 5),
+        Text(label, style: ofText(size: 11, color: p.textSecondary)),
+      ],
+    );
+  }
+
+  List<double> _sparkValues(
+    List<MoneyFlowMonth> yearMonths,
+    int selectedIndex,
+    double Function(MoneyFlowMonth) pick,
+  ) {
+    final start = math.max(0, selectedIndex - 6);
+    final window = yearMonths.sublist(start, selectedIndex + 1);
+    final max = window.fold<double>(0, (m, x) => math.max(m, pick(x)));
+    if (max <= 0) return List<double>.filled(window.length, 0.12);
+    return [
+      for (final m in window)
+        (pick(m) / max).clamp(0.08, 1.0).toDouble(),
+    ];
+  }
+
+  Future<void> _pickMonth() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _month,
+      firstDate: _firstMonth,
+      lastDate: _lastMonth,
+      helpText: 'Select a month',
+    );
+    if (picked != null && mounted) {
+      setState(() => _month = DateTime(picked.year, picked.month));
+    }
+  }
+}
+
+class _MiniStat extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _MiniStat({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          style: ofText(
+            size: 10.5,
+            color: Colors.white.withValues(alpha: 0.7),
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          value,
+          style: ofText(
+            size: 11,
+            weight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
       ],
     );
   }

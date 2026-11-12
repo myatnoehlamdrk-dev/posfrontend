@@ -15,11 +15,13 @@ import 'package:posfrontend/features/dashboard/presentation/viewmodels/dashboard
 import 'package:posfrontend/features/dashboard/presentation/widgets/dashboard_skeleton.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_text.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/app_shell.dart';
 import 'package:posfrontend/shared/widgets/cached_product_image.dart';
+import 'package:posfrontend/shared/widgets/count_up_text.dart';
 import 'package:posfrontend/shared/widgets/error_retry_view.dart';
 import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
@@ -217,9 +219,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       children: [
         Text(
           heading,
-          style: TextStyle(
-            fontSize: 26,
-            fontWeight: FontWeight.w700,
+          style: appText(
+            size: 26,
+            weight: FontWeight.w700,
             color: p.textPrimary,
             letterSpacing: -0.3,
           ),
@@ -227,7 +229,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         const SizedBox(height: 4),
         Text(
           context.l10n.t("Here's what's happening with your store today."),
-          style: TextStyle(fontSize: 13, color: p.textSecondary),
+          style: appText(size: 13, color: p.textSecondary),
         ),
       ],
     );
@@ -285,9 +287,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 child: Text(
                   context.l10n.t(_tabLabels[tab]!),
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+                  style: appText(
+                    size: 13,
+                    weight: FontWeight.w600,
                     color: _tab == tab ? Colors.white : p.textSecondary,
                   ),
                 ),
@@ -935,8 +937,8 @@ class _KpiCard extends StatelessWidget {
                           context.l10n.t(metric.label),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 12.5,
+                          style: appText(
+                            size: 12,
                             color: p.textSecondary,
                           ),
                         ),
@@ -956,14 +958,14 @@ class _KpiCard extends StatelessWidget {
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
                           alignment: Alignment.centerLeft,
-                          child: Text(
-                            metric.value,
+                          child: CountUpString(
+                            value: metric.value,
                             maxLines: 1,
-                            style: TextStyle(
-                              fontSize: 21,
-                              fontWeight: FontWeight.w700,
+                            style: appText(
+                              size: 24,
+                              weight: FontWeight.w700,
                               color: p.textPrimary,
-                              letterSpacing: -0.4,
+                              height: 1.05,
                             ),
                           ),
                         ),
@@ -1054,9 +1056,9 @@ class _PanelCard extends StatelessWidget {
                         title!,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
+                        style: appText(
+                          size: 16,
+                          weight: FontWeight.w700,
                           color: p.textPrimary,
                           letterSpacing: -0.2,
                         ),
@@ -1097,9 +1099,9 @@ class _ViewAllLink extends StatelessWidget {
           children: [
             Text(
               context.l10n.t('View all'),
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+              style: appText(
+                size: 12,
+                weight: FontWeight.w600,
                 color: p.accentText,
               ),
             ),
@@ -1130,9 +1132,9 @@ class _TagChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(
-          fontSize: 11.5,
-          fontWeight: FontWeight.w600,
+        style: appText(
+          size: 11.5,
+          weight: FontWeight.w600,
           color: p.textSecondary,
         ),
       ),
@@ -1180,9 +1182,9 @@ class _SalesSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final valueStyle = TextStyle(
-      fontSize: 14,
-      fontWeight: FontWeight.w700,
+    final valueStyle = appText(
+      size: 14,
+      weight: FontWeight.w700,
       color: p.textPrimary,
     );
 
@@ -1259,7 +1261,7 @@ class _SalesSummaryCard extends StatelessWidget {
                     context.l10n.t(rows[i].label),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 13, color: p.textSecondary),
+                    style: appText(size: 12.5, color: p.textSecondary),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -1336,9 +1338,9 @@ class _TrendBadge extends StatelessWidget {
             const SizedBox(width: 3),
             Text(
               '${trend.percent!.abs().toStringAsFixed(1)}%',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
+              style: appText(
+                size: 11,
+                weight: FontWeight.w700,
                 color: color,
                 letterSpacing: -0.1,
               ),
@@ -1480,9 +1482,9 @@ class _CategoryDonut extends StatelessWidget {
                   total.withCommas(),
                   textAlign: TextAlign.center,
                   maxLines: 1,
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w700,
+                  style: appText(
+                    size: 26,
+                    weight: FontWeight.w700,
                     color: palette.textPrimary,
                     letterSpacing: -0.5,
                   ),
@@ -1492,7 +1494,7 @@ class _CategoryDonut extends StatelessWidget {
                   context.l10n.t('Products'),
                   textAlign: TextAlign.center,
                   maxLines: 1,
-                  style: TextStyle(fontSize: 11, color: palette.textSecondary),
+                  style: appText(size: 11, color: palette.textSecondary),
                 ),
               ],
             ),
@@ -1546,9 +1548,9 @@ class _CategoryLegend extends StatelessWidget {
                   items[i].category,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w500,
+                  style: appText(
+                    size: 12.5,
+                    weight: FontWeight.w500,
                     color: p.textPrimary,
                   ),
                 ),
@@ -1559,9 +1561,9 @@ class _CategoryLegend extends StatelessWidget {
                   items[i].productCount.withCommas(),
                   textAlign: TextAlign.right,
                   maxLines: 1,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
+                  style: appText(
+                    size: 12.5,
+                    weight: FontWeight.w600,
                     color: p.textPrimary,
                   ),
                 ),
@@ -1573,7 +1575,7 @@ class _CategoryLegend extends StatelessWidget {
                   '${percentOf(items[i]).toStringAsFixed(1)}%',
                   textAlign: TextAlign.right,
                   maxLines: 1,
-                  style: TextStyle(fontSize: 12, color: p.textSecondary),
+                  style: appText(size: 12, color: p.textSecondary),
                 ),
               ),
             ],
@@ -1740,9 +1742,9 @@ class _StockStatusPanel extends StatelessWidget {
                     context.l10n.t(rows[i].label),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
+                    style: appText(
+                      size: 12.5,
+                      weight: FontWeight.w600,
                       color: p.textPrimary,
                     ),
                   ),
@@ -1762,9 +1764,9 @@ class _StockStatusPanel extends StatelessWidget {
                     rows[i].count.withCommas(),
                     textAlign: TextAlign.right,
                     maxLines: 1,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
+                    style: appText(
+                      size: 13,
+                      weight: FontWeight.w700,
                       color: p.textPrimary,
                     ),
                   ),
@@ -1776,7 +1778,7 @@ class _StockStatusPanel extends StatelessWidget {
                     '${(_shareOf(rows[i].count) * 100).toStringAsFixed(1)}%',
                     textAlign: TextAlign.right,
                     maxLines: 1,
-                    style: TextStyle(fontSize: 11.5, color: p.textSecondary),
+                    style: appText(size: 11.5, color: p.textSecondary),
                   ),
                 ),
               ],
@@ -1825,9 +1827,9 @@ class _TrendTile extends StatelessWidget {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
+                  style: appText(
+                    size: 13,
+                    weight: FontWeight.w700,
                     color: titleColor,
                   ),
                 ),
@@ -1843,7 +1845,7 @@ class _TrendTile extends StatelessWidget {
           if (items.isEmpty)
             Text(
               context.l10n.t('Nothing to show'),
-              style: TextStyle(fontSize: 11.5, color: p.textSecondary),
+              style: appText(size: 11.5, color: p.textSecondary),
             ),
           for (final item in items)
             Padding(
@@ -1862,9 +1864,9 @@ class _TrendTile extends StatelessWidget {
                           item.name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w600,
+                          style: appText(
+                            size: 12.5,
+                            weight: FontWeight.w600,
                             color: p.textPrimary,
                           ),
                         ),
@@ -1873,10 +1875,7 @@ class _TrendTile extends StatelessWidget {
                           item.sold,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: p.textSecondary,
-                          ),
+                          style: appText(size: 11, color: p.textSecondary),
                         ),
                       ],
                     ),
@@ -1974,7 +1973,7 @@ class _PreviewTableCard extends StatelessWidget {
               child: Center(
                 child: Text(
                   context.l10n.t('Nothing to show'),
-                  style: TextStyle(fontSize: 13, color: p.textMuted),
+                  style: appText(size: 13, color: p.textMuted),
                 ),
               ),
             )
@@ -2031,8 +2030,8 @@ class _PreviewTableCard extends StatelessWidget {
                           Text(
                             (i + 1).toString(),
                             maxLines: 1,
-                            style: TextStyle(
-                              fontSize: 12.5,
+                            style: appText(
+                              size: 12.5,
                               color: p.textMuted,
                             ),
                           ),
@@ -2051,9 +2050,9 @@ class _PreviewTableCard extends StatelessWidget {
     );
   }
 
-  static TextStyle _headerStyle(AppPalette p) => TextStyle(
-    fontSize: 11.5,
-    fontWeight: FontWeight.w700,
+  static TextStyle _headerStyle(AppPalette p) => appText(
+    size: 11.5,
+    weight: FontWeight.w700,
     letterSpacing: 0.2,
     color: p.textSecondary,
   );
@@ -2090,9 +2089,9 @@ class _PreviewTableCard extends StatelessWidget {
     if (column.kind == TableValueKind.currency) {
       return PriceText(
         row.number(column.fieldKey),
-        style: TextStyle(
-          fontSize: 12.5,
-          fontWeight: FontWeight.w600,
+        style: appText(
+          size: 12.5,
+          weight: FontWeight.w600,
           color: p.textPrimary,
         ),
       );
@@ -2105,10 +2104,10 @@ class _PreviewTableCard extends StatelessWidget {
       textAlign: column.align == TableColumnAlign.right
           ? TextAlign.right
           : TextAlign.left,
-      style: TextStyle(
-        fontSize: 12.5,
+      style: appText(
+        size: 12.5,
         color: p.textPrimary,
-        fontWeight: column.kind == TableValueKind.text
+        weight: column.kind == TableValueKind.text
             ? FontWeight.w400
             : FontWeight.w600,
       ),
@@ -2187,13 +2186,13 @@ class _Footer extends StatelessWidget {
         children: [
           Text(
             '© ${DateTime.now().year} Simple POS. All rights reserved.',
-            style: TextStyle(fontSize: 12, color: p.textMuted),
+            style: appText(size: 12, color: p.textMuted),
           ),
           Text(
             context.l10n.t('Simple POS. Greater Business.'),
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+            style: appText(
+              size: 12,
+              weight: FontWeight.w600,
               color: p.textMuted,
             ),
           ),
@@ -2230,7 +2229,7 @@ class _YearDropdown extends StatelessWidget {
         child: DropdownButton<int>(
           value: years.contains(value) ? value : years.first,
           icon: const Icon(Icons.keyboard_arrow_down, size: 18),
-          style: TextStyle(fontSize: 13, color: p.textSecondary),
+          style: appText(size: 13, color: p.textSecondary),
           items: years
               .map((e) => DropdownMenuItem(value: e, child: Text('$e')))
               .toList(),
@@ -2337,7 +2336,7 @@ class _MonthlySalesChartPainter extends CustomPainter {
       final tp = TextPainter(
         text: TextSpan(
           text: label,
-          style: TextStyle(fontSize: 10, color: palette.textSecondary),
+          style: appText(size: 10, color: palette.textSecondary),
         ),
         textDirection: TextDirection.ltr,
       )..layout();
@@ -2353,7 +2352,7 @@ class _MonthlySalesChartPainter extends CustomPainter {
       final tp = TextPainter(
         text: TextSpan(
           text: _monthLabels[m],
-          style: TextStyle(fontSize: 10.5, color: palette.textSecondary),
+          style: appText(size: 10.5, color: palette.textSecondary),
         ),
         textDirection: TextDirection.ltr,
       )..layout();
@@ -2391,9 +2390,9 @@ class _MonthlySalesChartPainter extends CustomPainter {
       final vp = TextPainter(
         text: TextSpan(
           text: _formatValue(entry.total.toDouble()),
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
+          style: appText(
+            size: 10,
+            weight: FontWeight.w700,
             color: palette.textPrimary,
           ),
         ),
@@ -2478,7 +2477,7 @@ class _HorizontalCategoryChartPainter extends CustomPainter {
       final tp = TextPainter(
         text: TextSpan(
           text: e.category,
-          style: TextStyle(fontSize: 11, color: palette.textSecondary),
+          style: appText(size: 11, color: palette.textSecondary),
         ),
         textDirection: TextDirection.ltr,
       )..layout();
@@ -2510,7 +2509,7 @@ class _HorizontalCategoryChartPainter extends CustomPainter {
       final tp = TextPainter(
         text: TextSpan(
           text: _formatQuantity(value),
-          style: TextStyle(fontSize: 10, color: palette.textSecondary),
+          style: appText(size: 10, color: palette.textSecondary),
         ),
         textDirection: TextDirection.ltr,
       )..layout();
@@ -2530,7 +2529,7 @@ class _HorizontalCategoryChartPainter extends CustomPainter {
       final lp = TextPainter(
         text: TextSpan(
           text: e.category,
-          style: TextStyle(fontSize: 11, color: palette.textSecondary),
+          style: appText(size: 11, color: palette.textSecondary),
         ),
         maxLines: 1,
         ellipsis: '…',
@@ -2550,9 +2549,9 @@ class _HorizontalCategoryChartPainter extends CustomPainter {
       final vp = TextPainter(
         text: TextSpan(
           text: _formatQuantity(e.totalQuantity.toDouble()),
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w600,
+          style: appText(
+            size: 10,
+            weight: FontWeight.w600,
             color: palette.textPrimary,
           ),
         ),
