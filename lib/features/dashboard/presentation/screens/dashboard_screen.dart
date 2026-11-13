@@ -20,7 +20,6 @@ import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/app_shell.dart';
-import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 import 'package:posfrontend/shared/widgets/count_up_text.dart';
 import 'package:posfrontend/shared/widgets/error_retry_view.dart';
 import 'package:posfrontend/core/network/media_url.dart';
@@ -210,9 +209,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // never blank. Reading it through the scope also means the heading
     // repaints itself the moment the shop arrives — no manual refresh.
     final shopName = ShopScope.shopOf(context)?.name.trim() ?? '';
-    final heading = shopName.isEmpty
-        ? context.l10n.t('Dashboard')
-        : shopName;
+    final heading = shopName.isEmpty ? context.l10n.t('Dashboard') : shopName;
     final titleBlock = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -372,7 +369,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       children: [
         _StockStatusCard(stats: d.stats),
         const SizedBox(height: 24),
-        const _InventoryStockStatusCard(),
+        _PackageStockStatusCard(stats: d.stats),
       ],
     );
     if (showSales && showInventory) {
@@ -937,10 +934,7 @@ class _KpiCard extends StatelessWidget {
                           context.l10n.t(metric.label),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: appText(
-                            size: 12,
-                            color: p.textSecondary,
-                          ),
+                          style: appText(size: 12, color: p.textSecondary),
                         ),
                       ),
                       if (metric.tableKey != null)
@@ -1218,7 +1212,7 @@ class _SalesSummaryCard extends StatelessWidget {
         bgValue: 0xFFDCFCE7,
         fgValue: 0xFF16A34A,
         label: 'Items Sold',
-        value: Text(stats.itemsSold.withCommas(), style: valueStyle),
+        value: Text(stats.totalItemsSold.withCommas(), style: valueStyle),
         trend: trends?.itemsSold,
       ),
     ];
@@ -1646,45 +1640,42 @@ class _StockStatusCard extends StatelessWidget {
   }
 }
 
-/// Demo card for the inventory side of stock.
+/// Package-level stock, read from the dashboard API.
 ///
-/// The dashboard API only reports product stock, so these figures stand in
-/// until inventory amounts are exposed. The shape is the same as the product
-/// card, so wiring real data in later only means replacing the rows.
-class _InventoryStockStatusCard extends StatelessWidget {
-  const _InventoryStockStatusCard();
+/// Each active package's stock is the summed available stock of the products
+/// assigned to it. The API buckets them into in-stock / low / out, so the rows
+/// here are real figures — nothing is generated on the client.
+class _PackageStockStatusCard extends StatelessWidget {
+  final DashboardStatsEntity stats;
 
-  static const _total = 120;
-  static const _inStock = 86;
-  static const _lowStock = 22;
-  static const _outStock = 12;
+  const _PackageStockStatusCard({required this.stats});
 
   @override
   Widget build(BuildContext context) {
     return _StockStatusPanel(
-      title: context.l10n.t('Inventory Stock Status'),
-      total: _total,
+      title: context.l10n.t('Package Stock Status'),
+      total: stats.totalPackages,
       rows: [
         _StockStatusRow(
-          icon: Icons.inventory_2_outlined,
+          icon: Icons.check_circle_outline,
           tintValue: 0xFFDCFCE7,
           colorValue: 0xFF16A34A,
           label: 'In Stock',
-          count: _inStock,
+          count: stats.packagesInStock,
         ),
         _StockStatusRow(
           icon: Icons.warning_amber_outlined,
           tintValue: 0xFFFEF3C7,
           colorValue: 0xFFF59E0B,
           label: 'Low Stock',
-          count: _lowStock,
+          count: stats.packagesLowStock,
         ),
         _StockStatusRow(
           icon: Icons.cancel_outlined,
           tintValue: 0xFFFEE2E2,
           colorValue: 0xFFEF4444,
           label: 'Out of Stock',
-          count: _outStock,
+          count: stats.packagesOutStock,
         ),
       ],
     );
@@ -1907,12 +1898,13 @@ class _ProductThumb extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: item.image.isNotEmpty
-          ? CachedProductImage(
-              url: item.image,
+          ? Image.network(
+              item.image,
+              key: ValueKey(item.image),
               width: size,
               height: size,
-              memCacheWidth: (size * 3).round(),
-              errorWidget: Icon(
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => Icon(
                 item.icon,
                 size: size * 0.5,
                 color: p.textSecondary,
@@ -2030,10 +2022,7 @@ class _PreviewTableCard extends StatelessWidget {
                           Text(
                             (i + 1).toString(),
                             maxLines: 1,
-                            style: appText(
-                              size: 12.5,
-                              color: p.textMuted,
-                            ),
+                            style: appText(size: 12.5, color: p.textMuted),
                           ),
                         ),
                         for (final column in columns)

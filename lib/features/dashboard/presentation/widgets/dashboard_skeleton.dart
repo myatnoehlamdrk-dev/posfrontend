@@ -46,12 +46,7 @@ class DashboardSkeleton extends StatelessWidget {
 
 /// Two cards side by side on a wide window, stacked on a narrow one — the
 /// same 900px switch and the same flex ratio `DashboardScreen._pair` uses.
-Widget _pair(
-  Widget left,
-  Widget right, {
-  int leftFlex = 1,
-  int rightFlex = 1,
-}) {
+Widget _pair(Widget left, Widget right, {int leftFlex = 1, int rightFlex = 1}) {
   return LayoutBuilder(
     builder: (context, constraints) {
       if (constraints.maxWidth < 900) {
@@ -121,7 +116,11 @@ class _KpiGridSkeleton extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final columns = width >= 1080 ? 4 : width >= 620 ? 2 : 1;
+        final columns = width >= 1080
+            ? 4
+            : width >= 620
+            ? 2
+            : 1;
 
         final rows = <Widget>[];
         for (var i = 0; i < 4; i += columns) {
@@ -198,9 +197,7 @@ class _MonthlyRowSkeleton extends StatelessWidget {
           children: [
             Row(
               children: [
-                Expanded(
-                  child: SkeletonBox(height: 16, width: 110, radius: 6),
-                ),
+                Expanded(child: SkeletonBox(height: 16, width: 110, radius: 6)),
                 SizedBox(width: 12),
                 SkeletonBox(width: 84, height: 32, radius: 10),
               ],
@@ -244,10 +241,7 @@ class _SummaryRowSkeleton extends StatelessWidget {
       children: [
         SkeletonBox(width: 34, height: 34, radius: 10),
         SizedBox(width: 10),
-        Expanded(
-          flex: 3,
-          child: SkeletonBox(height: 12, width: 96, radius: 6),
-        ),
+        Expanded(flex: 3, child: SkeletonBox(height: 12, width: 96, radius: 6)),
         SizedBox(width: 8),
         Flexible(
           flex: 2,
@@ -617,10 +611,7 @@ class _TableSkeleton extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         row(10),
-        for (var i = 0; i < 5; i++) ...[
-          const SizedBox(height: 16),
-          row(12),
-        ],
+        for (var i = 0; i < 5; i++) ...[const SizedBox(height: 16), row(12)],
       ],
     );
   }

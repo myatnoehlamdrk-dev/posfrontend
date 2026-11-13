@@ -282,7 +282,7 @@ class _SplashScreenState extends State<SplashScreen>
                   curve: const Interval(0.35, 1.0, curve: Curves.easeOut),
                 ),
                 child: Text(
-                  context.l10n.t('MDRK POS'),
+                  context.l10n.t('SMART POS'),
                   style: TextStyle(
                     fontSize: 40,
                     fontWeight: FontWeight.w800,

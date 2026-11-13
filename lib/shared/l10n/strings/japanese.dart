@@ -168,6 +168,7 @@ const Map<String, String> japaneseStrings = {
   'Self Inventory': '自己在庫',
   'Stock Status': '在庫状況',
   'Product Stock Status': '商品在庫状況',
+  'Package Stock Status': 'パッケージ在庫状況',
   'Inventory Stock Status': '在庫状況',
   'Remove from package': 'パッケージから削除',
   'Remove Product': '商品を削除',

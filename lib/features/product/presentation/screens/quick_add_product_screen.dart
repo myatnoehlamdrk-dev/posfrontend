@@ -19,6 +19,7 @@ import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/shared/widgets/premium_image_upload.dart';
+import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
 class QuickAddProductScreen extends StatefulWidget {
@@ -32,6 +33,9 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
   final TextEditingController _name = TextEditingController();
   final TextEditingController _stock = TextEditingController();
   final TextEditingController _price = TextEditingController();
+
+  /// Original buying price per unit, used to calculate profit.
+  final TextEditingController _cost = TextEditingController();
   final ProductCreateRepositoryImpl _repository = ProductCreateRepositoryImpl();
 
   File? _imageFile;
@@ -54,10 +58,23 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
   Key _imageKey = UniqueKey();
 
   @override
+  void initState() {
+    super.initState();
+    // Drives the live profit preview under the price fields.
+    _price.addListener(_refreshProfit);
+    _cost.addListener(_refreshProfit);
+  }
+
+  void _refreshProfit() {
+    if (mounted) setState(() {});
+  }
+
+  @override
   void dispose() {
     _name.dispose();
     _stock.dispose();
     _price.dispose();
+    _cost.dispose();
     super.dispose();
   }
 
@@ -121,7 +138,7 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
           context,
           status.isPermanentlyDenied
               ? 'Camera permission is denied. Allow camera access in your '
-                  'device settings to take a photo.'
+                    'device settings to take a photo.'
               : 'Camera permission is required to take a photo.',
         );
         return;
@@ -231,6 +248,12 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
       showErrorMessage(context, context.l10n.t('Enter a valid price'));
       return;
     }
+    final costText = _cost.text.trim();
+    final cost = costText.isEmpty ? 0.0 : double.tryParse(costText);
+    if (cost == null || cost < 0) {
+      showErrorMessage(context, context.l10n.t('Enter a valid cost price'));
+      return;
+    }
 
     setState(() => _saving = true);
     try {
@@ -239,7 +262,14 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
           name: name,
           imageUrl: _imageUrl ?? '',
           stock: stock,
-          variants: [ProductCreateVariant(quantity: stock, price: price)],
+          costPrice: cost,
+          variants: [
+            ProductCreateVariant(
+              quantity: stock,
+              price: price,
+              costPrice: cost,
+            ),
+          ],
           imageDeleteUrl: _imageDeleteUrl ?? '',
         ),
       );
@@ -310,6 +340,18 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
                               req: true,
                               number: true,
                             ),
+                            const SizedBox(height: 16),
+                            _field(
+                              'Cost Price',
+                              _cost,
+                              'e.g. 18000',
+                              number: true,
+                              decimal: true,
+                            ),
+                            if (_profitPreview() != null) ...[
+                              const SizedBox(height: 10),
+                              _profitPreview()!,
+                            ],
                           ],
                         ),
                       ),
@@ -358,6 +400,40 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
     );
   }
 
+  /// Live profit line under the price fields; null until both numbers parse.
+  Widget? _profitPreview() {
+    final p = context.palette;
+    final price = double.tryParse(_price.text.trim()) ?? 0;
+    final cost = double.tryParse(_cost.text.trim()) ?? 0;
+    if (price <= 0 || cost <= 0) return null;
+    final profit = price - cost;
+    final margin = (profit / price) * 100;
+    final color = profit < 0 ? p.dangerFg : AppColors.green;
+    return Row(
+      children: [
+        Icon(Icons.trending_up, size: 14, color: color),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            context.l10n
+                .t('Profit per unit: {v1}')
+                .replaceAll(
+                  '{v1}',
+                  '${formatPrice(profit)} (${margin.toStringAsFixed(1)}%)',
+                ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _field(
     String label,
     TextEditingController c,
@@ -380,7 +456,8 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
                 color: p.textPrimary,
               ),
             ),
-            if (req) Text(' *', style: TextStyle(color: p.dangerFg, fontSize: 14)),
+            if (req)
+              Text(' *', style: TextStyle(color: p.dangerFg, fontSize: 14)),
           ],
         ),
         const SizedBox(height: 8),

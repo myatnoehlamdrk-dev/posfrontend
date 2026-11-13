@@ -8,6 +8,7 @@ import 'package:posfrontend/features/dashboard/domain/entities/dashboard_tables.
 class DashboardApiModel {
   final List<MetricEntity> metrics;
   final DashboardStatsEntity stats;
+  final MonthSummaryEntity monthSummary;
   final List<CategoryDistributionEntity> categoryDistribution;
   final List<CategoryQuantityEntity> categoryQuantity;
   final List<ProductItemEntity> mostBought;
@@ -17,6 +18,7 @@ class DashboardApiModel {
   const DashboardApiModel({
     required this.metrics,
     required this.stats,
+    this.monthSummary = MonthSummaryEntity.empty,
     required this.categoryDistribution,
     required this.categoryQuantity,
     required this.mostBought,
@@ -24,31 +26,31 @@ class DashboardApiModel {
     required this.noBought,
   });
 
-/// One colour per category, assigned in order, and used by the product
+  /// One colour per category, assigned in order, and used by the product
   /// distribution pie chart.
-///
-/// Sixteen entries rather than eight, and spaced so no two neighbours are close
+  ///
+  /// Sixteen entries rather than eight, and spaced so no two neighbours are close
   /// enough to read as the same slice. The brand purple is deliberately not
   /// here: this chart is categorical, and a second brand-purple slice sitting
   /// beside another purple is exactly the confusion it is meant to avoid.
-static const List<int> _categoryColors = [
-  0xFF6D28D9, // violet
-  0xFF14B8A6, // teal
-  0xFFE53935, // red
-  0xFFFB8C00, // orange
-  0xFF43A047, // green
-  0xFF3B82F6, // blue
-  0xFFD97706, // amber
-  0xFFDB2777, // pink
-  0xFF8B5CF6, // light violet
-  0xFF0891B2, // cyan
-  0xFF65A30D, // lime
-  0xFF9333EA, // fuchsia
-  0xFF0EA5E9, // sky
-  0xFFB45309, // brown
-  0xFF64748B, // slate
-  0xFFBE185D, // rose
-];
+  static const List<int> _categoryColors = [
+    0xFF6D28D9, // violet
+    0xFF14B8A6, // teal
+    0xFFE53935, // red
+    0xFFFB8C00, // orange
+    0xFF43A047, // green
+    0xFF3B82F6, // blue
+    0xFFD97706, // amber
+    0xFFDB2777, // pink
+    0xFF8B5CF6, // light violet
+    0xFF0891B2, // cyan
+    0xFF65A30D, // lime
+    0xFF9333EA, // fuchsia
+    0xFF0EA5E9, // sky
+    0xFFB45309, // brown
+    0xFF64748B, // slate
+    0xFFBE185D, // rose
+  ];
 
   factory DashboardApiModel.fromJson(Map<String, dynamic> json) {
     final statsJson = json['stats'] as Map<String, dynamic>? ?? {};
@@ -59,13 +61,50 @@ static const List<int> _categoryColors = [
     final noBoughtRes = json['no_bought_products'] as List<dynamic>? ?? [];
 
     final totalProducts = statsJson.integer('total_products');
+    final totalPackages = statsJson.integer('total_packages');
+    final packagesInStock = statsJson.integer('packages_in_stock');
+    final packagesLowStock = statsJson.integer('packages_low_stock');
+    final packagesOutStock = statsJson.integer('packages_out_stock');
     final inStock = statsJson.integer('in_stock');
     final lowStock = statsJson.integer('low_stock_count');
     final totalSales = statsJson.integer('total_sales');
+    final totalItemsSold = statsJson.integer('total_items_sold');
     final outStock = statsJson.integer('out_stock_count');
     final stockUnits = statsJson.integer('stock_units');
     final salesCount = statsJson.integer('sales_count');
     final avgOrderValue = statsJson.integer('avg_sale_last10');
+
+    // This month's figures and last month's, computed by the API. The cards
+    // read from here rather than from the all-time stats: a "Total Revenue"
+    // that never resets has no month to compare against.
+    final monthJson =
+        json['month_summary'] as Map<String, dynamic>? ?? const {};
+
+    MonthFigureEntity monthFigure(String key) {
+      final raw = monthJson[key];
+      final map = raw is Map<String, dynamic> ? raw : const <String, dynamic>{};
+      final series = (map['series'] as List<dynamic>? ?? const [])
+          .map(
+            (e) => e is num
+                ? e.toDouble()
+                : double.tryParse(e?.toString() ?? '') ?? 0,
+          )
+          .toList();
+      return MonthFigureEntity(
+        current: map.decimal('current'),
+        previous: map.decimal('previous'),
+        series: series,
+      );
+    }
+
+    final monthSummary = MonthSummaryEntity(
+      revenue: monthFigure('revenue'),
+      orders: monthFigure('orders'),
+      avgOrderValue: monthFigure('avg_order_value'),
+      itemsSold: monthFigure('items_sold'),
+      products: monthFigure('products'),
+      lowStock: monthFigure('low_stock'),
+    );
 
     final categoryQuantity = catQtyRes.map<CategoryQuantityEntity>((e) {
       final item = e as Map<String, dynamic>;
@@ -86,6 +125,11 @@ static const List<int> _categoryColors = [
     final dashboardStats = DashboardStatsEntity(
       totalSales: totalSales,
       totalProducts: totalProducts,
+      totalItemsSold: totalItemsSold,
+      totalPackages: totalPackages,
+      packagesInStock: packagesInStock,
+      packagesLowStock: packagesLowStock,
+      packagesOutStock: packagesOutStock,
       inStock: inStock,
       lowStock: lowStock,
       outStock: outStock,
@@ -125,7 +169,7 @@ static const List<int> _categoryColors = [
         tableKey: DashboardTableKey.sales,
         trendKey: MetricTrendKey.itemsSold,
         label: 'Total Items Sold',
-        value: itemsSold.withCommas(),
+        value: totalItemsSold.withCommas(),
       ),
       MetricEntity(
         icon: Icons.warning_amber_outlined,
@@ -151,9 +195,9 @@ static const List<int> _categoryColors = [
           // every row in the response, including the ones dropped just above for
           // having no products, so two slices could land on the same entry of
           // the palette — which is how Food and Home came out the same colour.
-          colorValue: _categoryColors[
-            categoryDistribution.length % _categoryColors.length
-          ],
+          colorValue:
+              _categoryColors[categoryDistribution.length %
+                  _categoryColors.length],
         ),
       );
     }
@@ -199,6 +243,7 @@ static const List<int> _categoryColors = [
     return DashboardApiModel(
       metrics: metrics,
       stats: dashboardStats,
+      monthSummary: monthSummary,
       categoryDistribution: categoryDistribution,
       categoryQuantity: categoryQuantity,
       mostBought: mostBought,
@@ -211,6 +256,7 @@ static const List<int> _categoryColors = [
     return DashboardEntity(
       metrics: metrics,
       stats: stats,
+      monthSummary: monthSummary,
       categoryDistribution: categoryDistribution,
       categoryQuantity: categoryQuantity,
       mostBought: mostBought,

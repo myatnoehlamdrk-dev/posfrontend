@@ -31,6 +31,10 @@ class DashboardRepositoryImpl implements DashboardRepository {
           return MonthlySalesEntity(
             month: (item['month'] as num?)?.toInt() ?? 0,
             total: (item['total'] as num?)?.toInt() ?? 0,
+            cogs: (item['cogs'] as num?)?.toInt() ?? 0,
+            units: (item['units'] as num?)?.toInt() ?? 0,
+            transactions: (item['transactions'] as num?)?.toInt() ?? 0,
+            purchases: (item['purchases'] as num?)?.toInt() ?? 0,
           );
         })
         .where((e) => e.month >= 1 && e.month <= 12)
@@ -39,9 +43,7 @@ class DashboardRepositoryImpl implements DashboardRepository {
   }
 
   @override
-  Future<List<SalesChartPointEntity>> getSalesChart({
-    required int days,
-  }) async {
+  Future<List<SalesChartPointEntity>> getSalesChart({required int days}) async {
     final rows = await _remoteDataSource.getSalesChart(days: days);
     return rows.whereType<Map<String, dynamic>>().map((row) {
       // The column is `DATE(created_at)`, so it parses as a date-only

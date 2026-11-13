@@ -170,11 +170,18 @@ class _StockAddScreenState extends State<StockAddScreen> {
           final String s => double.tryParse(s) ?? 0,
           _ => 0.0,
         };
+        final rawCost = v['costPrice'];
+        final costPrice = switch (rawCost) {
+          final num n => n.toDouble(),
+          final String s => double.tryParse(s) ?? 0,
+          _ => 0.0,
+        };
         return ProductCreateVariant(
           size: (v['size'] ?? '').toString(),
           color: (v['color'] ?? '').toString(),
           quantity: quantity,
           price: price,
+          costPrice: costPrice,
         );
       }).toList(),
     );

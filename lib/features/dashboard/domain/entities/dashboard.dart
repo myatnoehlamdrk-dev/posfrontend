@@ -5,6 +5,10 @@ import 'package:posfrontend/features/dashboard/domain/entities/dashboard_tables.
 class DashboardEntity extends Equatable {
   final List<MetricEntity> metrics;
   final DashboardStatsEntity stats;
+
+  /// This calendar month's headline figures and last month's, from the API.
+  final MonthSummaryEntity monthSummary;
+
   final List<CategoryDistributionEntity> categoryDistribution;
   final List<CategoryQuantityEntity> categoryQuantity;
   final List<ProductItemEntity> mostBought;
@@ -14,6 +18,7 @@ class DashboardEntity extends Equatable {
   const DashboardEntity({
     required this.metrics,
     required this.stats,
+    this.monthSummary = MonthSummaryEntity.empty,
     required this.categoryDistribution,
     required this.categoryQuantity,
     required this.mostBought,
@@ -25,6 +30,7 @@ class DashboardEntity extends Equatable {
   List<Object?> get props => [
     metrics,
     stats,
+    monthSummary,
     categoryDistribution,
     categoryQuantity,
     mostBought,
@@ -46,8 +52,18 @@ class DashboardStatsEntity extends Equatable {
 
   final int totalProducts;
 
-  /// Products with stock above zero. Includes the low-stock ones, which is
-  /// why [lowStock] is a subset of this rather than a sibling.
+  /// Units sold across every sale, all time — the "Total Items Sold" figure.
+  final int totalItemsSold;
+
+  /// Active packages in this shop, and how many of them hold stock in each
+  /// tier. Package stock is the summed available stock of its products.
+  final int totalPackages;
+  final int packagesInStock;
+  final int packagesLowStock;
+  final int packagesOutStock;
+
+  /// Products with stock above the low-stock threshold. The three tiers are
+  /// exclusive: [inStock] + [lowStock] + [outStock] equals [totalProducts].
   final int inStock;
 
   /// Products with stock between one and the low-stock threshold.
@@ -72,6 +88,11 @@ class DashboardStatsEntity extends Equatable {
   const DashboardStatsEntity({
     required this.totalSales,
     required this.totalProducts,
+    this.totalItemsSold = 0,
+    this.totalPackages = 0,
+    this.packagesInStock = 0,
+    this.packagesLowStock = 0,
+    this.packagesOutStock = 0,
     required this.inStock,
     required this.lowStock,
     required this.outStock,
@@ -92,6 +113,11 @@ class DashboardStatsEntity extends Equatable {
   List<Object?> get props => [
     totalSales,
     totalProducts,
+    totalItemsSold,
+    totalPackages,
+    packagesInStock,
+    packagesLowStock,
+    packagesOutStock,
     inStock,
     lowStock,
     outStock,
@@ -102,12 +128,79 @@ class DashboardStatsEntity extends Equatable {
   ];
 }
 
+/// One headline figure measured over this calendar month and the whole month
+/// before it, with the month-by-month line the tile draws.
+class MonthFigureEntity extends Equatable {
+  final double current;
+  final double previous;
+
+  /// One point per calendar month for the last year, oldest first, ending at
+  /// [current]. The tile's trend line is this series.
+  final List<double> series;
+
+  const MonthFigureEntity({
+    required this.current,
+    required this.previous,
+    this.series = const [],
+  });
+
+  /// The month-over-month change, ready for a trend badge.
+  TrendEntity trend({bool inverted = false}) => TrendEntity.compare(
+    current: current,
+    previous: previous,
+    inverted: inverted,
+  );
+
+  @override
+  List<Object?> get props => [current, previous, series];
+}
+
+/// The calendar-month figures behind the Sales Summary card and the KPI tiles.
+///
+/// The cards still print all-time totals; "current", "previous" and "series"
+/// are only what the arrow and the trend line read.
+class MonthSummaryEntity extends Equatable {
+  final MonthFigureEntity revenue;
+  final MonthFigureEntity orders;
+  final MonthFigureEntity avgOrderValue;
+  final MonthFigureEntity itemsSold;
+  final MonthFigureEntity products;
+  final MonthFigureEntity lowStock;
+
+  const MonthSummaryEntity({
+    required this.revenue,
+    required this.orders,
+    required this.avgOrderValue,
+    required this.itemsSold,
+    required this.products,
+    required this.lowStock,
+  });
+
+  static const empty = MonthSummaryEntity(
+    revenue: MonthFigureEntity(current: 0, previous: 0),
+    orders: MonthFigureEntity(current: 0, previous: 0),
+    avgOrderValue: MonthFigureEntity(current: 0, previous: 0),
+    itemsSold: MonthFigureEntity(current: 0, previous: 0),
+    products: MonthFigureEntity(current: 0, previous: 0),
+    lowStock: MonthFigureEntity(current: 0, previous: 0),
+  );
+
+  @override
+  List<Object?> get props => [
+    revenue,
+    orders,
+    avgOrderValue,
+    itemsSold,
+    products,
+    lowStock,
+  ];
+}
+
 /// Which windowed comparison a KPI tile draws under its figure.
 ///
 /// The tiles are fixed copy written in the API model, so the key travels with
 /// the tile and the screen resolves it against the trends the view model
-/// fetched — the tile never holds a trend of its own, and a tile whose
-/// history the API does not keep simply stays [none].
+/// built from the API's calendar-month figures.
 enum MetricTrendKey { none, revenue, itemsSold, products, lowStock }
 
 class MetricEntity extends Equatable {
@@ -179,11 +272,22 @@ class CategoryQuantityEntity extends Equatable {
 class MonthlySalesEntity extends Equatable {
   final int month;
   final int total;
+  final int cogs;
+  final int units;
+  final int transactions;
+  final int purchases;
 
-  const MonthlySalesEntity({required this.month, required this.total});
+  const MonthlySalesEntity({
+    required this.month,
+    required this.total,
+    this.cogs = 0,
+    this.units = 0,
+    this.transactions = 0,
+    this.purchases = 0,
+  });
 
   @override
-  List<Object?> get props => [month, total];
+  List<Object?> get props => [month, total, cogs, units, transactions, purchases];
 }
 
 /// One day of the sales chart: how many orders landed and what they summed to.
@@ -269,7 +373,8 @@ class TrendEntity extends Equatable {
   }
 
   bool get isBullish =>
-      (direction == TrendDirection.up) != inverted && direction != TrendDirection.flat;
+      (direction == TrendDirection.up) != inverted &&
+      direction != TrendDirection.flat;
   bool get isBearish => isBullish == false && direction != TrendDirection.flat;
 
   @override
@@ -284,9 +389,8 @@ class SummaryTrendsEntity extends Equatable {
   final TrendEntity avgOrderValue;
   final TrendEntity itemsSold;
 
-  /// Product count and low-stock count have no history in the API, so these
-  /// two are demo figures — they exist so every tile carries the sign the
-  /// design shows rather than leaving two of four blank.
+  /// Product count and low-stock count, both compared with the end of last
+  /// month. Low stock is inverted: more of it is worse.
   final TrendEntity products;
   final TrendEntity lowStock;
 

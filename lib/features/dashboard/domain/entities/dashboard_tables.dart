@@ -73,7 +73,7 @@ class DashboardTables {
   static const inStock = DashboardTableSpec(
     title: 'In Stock',
     endpoint: '/dashboard/tables/stock',
-    note: 'One row per variant.',
+    note: 'One row per variant. In stock means more than 5 left.',
     columns: _variantColumns,
   );
 
@@ -305,9 +305,7 @@ class DashboardTablePreviews {
   /// The requests behind [tablePreviews] on the view model, keyed the way the
   /// screen looks them up. `low: 1` is the same flag the Low Stock "View all"
   /// link sends, so the preview and the screen behind it show the same rows.
-  static const List<
-    ({String key, String endpoint, Map<String, dynamic> query})
-  >
+  static const List<({String key, String endpoint, Map<String, dynamic> query})>
   requests = [
     (
       key: 'lowStockItems',

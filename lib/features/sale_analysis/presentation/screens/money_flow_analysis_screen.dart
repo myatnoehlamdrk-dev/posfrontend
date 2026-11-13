@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:posfrontend/features/sale_analysis/presentation/money_flow/cash_flow_trend_chart.dart';
 import 'package:posfrontend/features/sale_analysis/presentation/money_flow/money_flow_data.dart';
+import 'package:posfrontend/features/dashboard/data/repositories/dashboard_repository_impl.dart';
+import 'package:posfrontend/features/sale_analysis/presentation/viewmodels/finance_view_model.dart';
 import 'package:posfrontend/features/sale_analysis/presentation/operation_fee/operation_fee_style.dart';
 import 'package:posfrontend/features/sale_analysis/presentation/operation_fee/widgets/summary_card.dart';
 import 'package:posfrontend/features/sale_analysis/presentation/widgets/month_filter_button.dart';
@@ -31,43 +33,69 @@ class MoneyFlowAnalysisScreen extends StatefulWidget {
 class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
+  late final FinanceViewModel _vm;
+
   /// The demo anchors on November 2026, so that is the month the page opens on.
   DateTime _month = DateTime(2026, 11);
+
+  /// Year shown in the cash-flow trend chart (independent of the month filter).
+  int _chartYear = DateTime.now().year;
 
   static final DateTime _firstMonth = DateTime(2026, 1, 1);
   static final DateTime _lastMonth = DateTime(2026, 12, 31);
 
   @override
-  Widget build(BuildContext context) {
-    final content = _buildContent(context);
-    if (widget.embedded) return content;
+  void initState() {
+    super.initState();
+    _vm = FinanceViewModel(repository: DashboardRepositoryImpl());
+    _vm.load(year: _month.year);
+  }
 
-    final p = context.palette;
-    return AppShell(
-      active: DrawerDestination.saleAnalysis,
-      scaffoldKey: _scaffoldKey,
-      backgroundColor: p.scaffoldBg,
-      wrap: (_, shell) => shell,
-      body: (context, isWide) => SafeArea(
-        child: Column(
-          children: [
-            AppScreenTopBar(
-              title: 'Money Flow Analysis',
-              showMenuButton: !isWide,
-              onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+  @override
+  void dispose() {
+    _vm.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: _vm,
+      builder: (context, _) {
+        final content = _buildContent(context);
+        if (widget.embedded) return content;
+
+        final p = context.palette;
+        return AppShell(
+          active: DrawerDestination.saleAnalysis,
+          scaffoldKey: _scaffoldKey,
+          backgroundColor: p.scaffoldBg,
+          wrap: (_, shell) => shell,
+          body: (context, isWide) => SafeArea(
+            child: Column(
+              children: [
+                AppScreenTopBar(
+                  title: 'Money Flow Analysis',
+                  showMenuButton: !isWide,
+                  onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+                ),
+                Expanded(child: content),
+              ],
             ),
-            Expanded(child: content),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
   Widget _buildContent(BuildContext context) {
     final p = context.palette;
-    final month = moneyFlowMonthFor(_month);
-    final previous = moneyFlowMonthFor(previousMonthOf(_month));
-    final yearMonths = moneyFlowYear(_month.year);
+    // Prefer real revenue from the API; fall back to demo data while loading.
+    final realMonth = _vm.monthFor(_month);
+    final month = realMonth ?? moneyFlowMonthFor(_month);
+    final previous = _vm.previousMonthOf(_month) ?? moneyFlowMonthFor(previousMonthOf(_month));
+    // Trend chart uses real data only (no demo fallback).
+    final chartMonths = _vm.yearMonths(_chartYear);
     final selectedIndex = _month.month - 1;
 
     return Container(
@@ -109,19 +137,55 @@ class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen> {
                       _cards(
                         month: month,
                         previous: previous,
-                        yearMonths: yearMonths,
+                        yearMonths: chartMonths,
                         selectedIndex: selectedIndex,
                         columns: columns,
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Illustrative figures only. All amounts in MMK.',
+                        'Revenue from real sales data. Outflow, fee and net are illustrative until wired up.',
                         style: ofText(size: 11, color: p.textMuted),
                       ),
                       const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Text(
+                            'Cash flow trend',
+                            style: ofText(
+                              size: 16,
+                              weight: FontWeight.w700,
+                              color: p.textPrimary,
+                            ),
+                          ),
+                          const Spacer(),
+                          DropdownButton<int>(
+                            value: _chartYear,
+                            items: _vm.years.isNotEmpty
+                                ? _vm.years
+                                    .map((y) => DropdownMenuItem(
+                                          value: y,
+                                          child: Text('$y'),
+                                        ))
+                                    .toList()
+                                : [
+                                    DropdownMenuItem(
+                                      value: _chartYear,
+                                      child: Text('$_chartYear'),
+                                    )
+                                  ],
+                            onChanged: (y) {
+                              if (y != null && y != _chartYear) {
+                                setState(() => _chartYear = y);
+                                _vm.load(year: y);
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
                       _trend(
                         p: p,
-                        yearMonths: yearMonths,
+                        yearMonths: chartMonths,
                         selectedIndex: selectedIndex,
                       ),
                     ],
@@ -337,16 +401,7 @@ class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Cash flow trend',
-          style: ofText(
-            size: 16,
-            weight: FontWeight.w700,
-            color: p.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Inflow vs outflow by month · ${_month.year}',
+          'Inflow vs outflow by month · $_chartYear',
           style: ofText(size: 11.5, color: p.textMuted),
         ),
         const SizedBox(height: 8),
@@ -419,7 +474,11 @@ class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen> {
       helpText: 'Select a month',
     );
     if (picked != null && mounted) {
-      setState(() => _month = DateTime(picked.year, picked.month));
+      final newMonth = DateTime(picked.year, picked.month);
+      setState(() => _month = newMonth);
+      if (newMonth.year != _vm.selectedYear) {
+        _vm.load(year: newMonth.year);
+      }
     }
   }
 }

@@ -20,6 +20,10 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
   final TextEditingController name = TextEditingController();
   final TextEditingController brand = TextEditingController();
   final TextEditingController sku = TextEditingController();
+
+  /// Original cost price per unit for the whole product. Variants may override
+  /// it with their own cost; profit is selling price minus cost.
+  final TextEditingController costPrice = TextEditingController();
   final FocusNode imageFocus = FocusNode();
 
   bool _isSet = false;
@@ -152,6 +156,11 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
     name.text = p.name;
     brand.text = p.brand;
     sku.text = p.sku;
+    final variantCost = p.variants.isNotEmpty
+        ? p.variants.first.costPrice
+        : 0.0;
+    final cost = p.costPrice > 0 ? p.costPrice : variantCost;
+    costPrice.text = cost > 0 ? _numberText(cost) : '';
     _selectedSupplierId = (p.supplierId == '—' || p.supplierId.isEmpty)
         ? null
         : p.supplierId;
@@ -171,6 +180,7 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
           color: v.color,
           quantity: v.quantity,
           price: v.price,
+          costPrice: v.costPrice,
         ),
       );
     }
@@ -280,10 +290,15 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
     if (_variants.isEmpty) {
       _variants.add(ProductCreateVariant(size: 'Small', color: 'Black'));
     }
+    // A purchase item's unit price is what the shop paid for the unit, so it
+    // seeds both the variant cost and the product fallback.
+    final unitCost = order.unitPrice.toDouble();
     _variants[0] = _variants.first.copyWith(
       quantity: order.quantity,
       price: order.unitPrice.toDouble(),
+      costPrice: unitCost,
     );
+    if (unitCost > 0) costPrice.text = _numberText(unitCost);
 
     if (order.supplierId.isNotEmpty) {
       final match = _suppliers
@@ -457,6 +472,11 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
       setError('Add at least one variant with a size, quantity and price');
       return false;
     }
+    final productCost = double.tryParse(costPrice.text.trim()) ?? 0.0;
+    if (productCost < 0) {
+      setError('Cost price cannot be negative');
+      return false;
+    }
     // Placement is required when creating, but only conditionally on update:
     // the payload carries the category nowhere (only packageId, which the
     // backend reads through package -> category), so a category selection
@@ -490,6 +510,7 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
       // replacing them with an empty list and zeroing the stock.
       preserveStockAndVariants: isUpdate && valid.isEmpty,
       sku: sku.text.trim(),
+      costPrice: productCost,
       supplierId: _selectedSupplierId ?? '',
       supplierName: _suppliers
           .firstWhere(
@@ -525,7 +546,14 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
     name.dispose();
     brand.dispose();
     sku.dispose();
+    costPrice.dispose();
     imageFocus.dispose();
     super.dispose();
   }
 }
+
+/// Trims a whole number's trailing `.0`, so an edited back value shows `25000`
+/// rather than `25000.0`.
+String _numberText(double value) => value == value.roundToDouble()
+    ? value.toInt().toString()
+    : value.toString();

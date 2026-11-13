@@ -7,6 +7,7 @@ class ProductEntity extends Equatable {
   final String brand;
   final String sku;
   final double price;
+  final double costPrice;
   final int stock;
   final bool isSet;
   final String category;
@@ -21,6 +22,7 @@ class ProductEntity extends Equatable {
     this.brand = '',
     this.sku = '',
     this.price = 0,
+    this.costPrice = 0,
     this.stock = 0,
     this.isSet = false,
     this.category = '',
@@ -43,6 +45,7 @@ class ProductEntity extends Equatable {
     brand,
     sku,
     price,
+    costPrice,
     stock,
     category,
     variants,

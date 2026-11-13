@@ -9,6 +9,8 @@ import 'package:posfrontend/features/sale_analysis/presentation/overview/profit_
 import 'package:posfrontend/features/sale_analysis/presentation/screens/money_flow_analysis_screen.dart';
 import 'package:posfrontend/features/sale_analysis/presentation/widgets/month_filter_button.dart';
 import 'package:posfrontend/features/sale_analysis/presentation/widgets/trend_delta.dart';
+import 'package:posfrontend/features/dashboard/data/repositories/dashboard_repository_impl.dart';
+import 'package:posfrontend/features/sale_analysis/presentation/viewmodels/finance_view_model.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
@@ -27,6 +29,7 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
     with SingleTickerProviderStateMixin {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late final TabController _tabController;
+  late final FinanceViewModel _vm;
 
   /// The demo anchors on November 2026, the same month Money Flow opens on.
   DateTime _overviewMonth = DateTime(2026, 11);
@@ -38,51 +41,59 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _vm = FinanceViewModel(repository: DashboardRepositoryImpl());
+    _vm.load(year: _overviewMonth.year);
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _vm.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final p = context.palette;
-    return AppShell(
-      active: DrawerDestination.saleAnalysis,
-      scaffoldKey: _scaffoldKey,
-      backgroundColor: p.scaffoldBg,
-      wrap: (_, shell) => shell,
-      body: (context, isWide) => SafeArea(
-        child: Column(
-          children: [
-            AppScreenTopBar(
-              title: 'Finance (Demo)',
-              showMenuButton: !isWide,
-              onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
-            ),
-            TabBar(
-              controller: _tabController,
-              tabs: const [
-                Tab(text: 'Overview'),
-                Tab(text: 'Money Flow'),
-                Tab(text: 'Operation Fee'),
+    return ListenableBuilder(
+      listenable: _vm,
+      builder: (context, _) {
+        final p = context.palette;
+        return AppShell(
+          active: DrawerDestination.saleAnalysis,
+          scaffoldKey: _scaffoldKey,
+          backgroundColor: p.scaffoldBg,
+          wrap: (_, shell) => shell,
+          body: (context, isWide) => SafeArea(
+            child: Column(
+              children: [
+                AppScreenTopBar(
+                  title: 'Finance (Demo)',
+                  showMenuButton: !isWide,
+                  onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+                ),
+                TabBar(
+                  controller: _tabController,
+                  tabs: const [
+                    Tab(text: 'Overview'),
+                    Tab(text: 'Money Flow'),
+                    Tab(text: 'Operation Fee'),
+                  ],
+                ),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildOverview(),
+                      const MoneyFlowAnalysisScreen(embedded: true),
+                      const OperationFeeControllerPage(),
+                    ],
+                  ),
+                ),
               ],
             ),
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildOverview(),
-                  const MoneyFlowAnalysisScreen(embedded: true),
-                  const OperationFeeControllerPage(),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -90,10 +101,37 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
 
   Widget _buildOverview() {
     final p = context.palette;
-    final data = overviewMonthFor(_overviewMonth);
-    final previous = overviewMonthFor(
+    final demoData = overviewMonthFor(_overviewMonth);
+    // Use real revenue from the API when available.
+    final realMonth = _vm.monthFor(_overviewMonth);
+    final realCogs = _vm.cogsFor(_overviewMonth.month);
+    final realUnits = _vm.unitsFor(_overviewMonth.month);
+    final realTxns = _vm.txnsFor(_overviewMonth.month);
+    final hasReal = realMonth != null;
+    final data = demoData != null && hasReal
+        ? OverviewMonth(
+            month: demoData.month,
+            revenue: realMonth.inflow,
+            cogsValue: realCogs.toDouble(),
+            operationFee: demoData.operationFee,
+            unitsSold: realUnits,
+            transactions: realTxns,
+          )
+        : demoData;
+    final previousDemo = overviewMonthFor(
       DateTime(_overviewMonth.year, _overviewMonth.month - 1),
     );
+    final previousReal = _vm.previousMonthOf(_overviewMonth);
+    final previous = previousDemo != null && previousReal != null
+        ? OverviewMonth(
+            month: previousDemo.month,
+            revenue: previousReal.inflow,
+            cogsValue: _vm.cogsFor(previousReal.month.month).toDouble(),
+            operationFee: previousDemo.operationFee,
+            unitsSold: _vm.unitsFor(previousReal.month.month),
+            transactions: _vm.txnsFor(previousReal.month.month),
+          )
+        : previousDemo;
 
     return Container(
       color: p.scaffoldBg,
@@ -533,7 +571,11 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
       helpText: 'Select a month',
     );
     if (picked != null && mounted) {
-      setState(() => _overviewMonth = DateTime(picked.year, picked.month));
+      final newMonth = DateTime(picked.year, picked.month);
+      setState(() => _overviewMonth = newMonth);
+      if (newMonth.year != _vm.selectedYear) {
+        _vm.load(year: newMonth.year);
+      }
     }
   }
 }

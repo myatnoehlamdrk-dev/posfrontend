@@ -652,7 +652,10 @@ class _MonthSheetState extends State<_MonthSheet> {
             icon: Icon(Icons.clear_all, size: 16, color: p.accentText),
             label: Text(
               context.l10n.t('All time'),
-              style: TextStyle(color: p.accentText, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                color: p.accentText,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],

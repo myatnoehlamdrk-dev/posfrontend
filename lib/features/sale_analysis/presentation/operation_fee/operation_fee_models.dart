@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 
 /// How a fee turns its rate into a monthly amount.
-enum FeeCalculation { fixedPerMonth, percentageOfRevenue, perOrder }
+enum FeeCalculation { fixedPerMonth, percentageOfRevenue, perOrder, oneTime }
 
 extension FeeCalculationX on FeeCalculation {
   String get label => switch (this) {
         FeeCalculation.fixedPerMonth => 'Fixed / month',
         FeeCalculation.percentageOfRevenue => '% of revenue',
         FeeCalculation.perOrder => 'Per order',
+        FeeCalculation.oneTime => 'One-time',
       };
 
   bool get isPercentage => this == FeeCalculation.percentageOfRevenue;
@@ -58,6 +59,7 @@ class OperationFee {
   final bool isActive;
   final FeeIcon icon;
   final FeeTint tint;
+  final DateTime? createdAt;
 
   const OperationFee({
     required this.id,
@@ -68,6 +70,7 @@ class OperationFee {
     required this.isActive,
     required this.icon,
     required this.tint,
+    this.createdAt,
   });
 
   OperationFee copyWith({
@@ -78,6 +81,7 @@ class OperationFee {
     bool? isActive,
     FeeIcon? icon,
     FeeTint? tint,
+    DateTime? createdAt,
   }) {
     return OperationFee(
       id: id,
@@ -88,16 +92,18 @@ class OperationFee {
       isActive: isActive ?? this.isActive,
       icon: icon ?? this.icon,
       tint: tint ?? this.tint,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 
   /// Inactive rules cost nothing.
-  double monthlyCost({required double revenue, required int orders}) {
+  double monthlyCost({required double revenue, required int orders, int? month, int? year}) {
     if (!isActive) return 0;
     return switch (calculation) {
       FeeCalculation.fixedPerMonth => rate,
       FeeCalculation.percentageOfRevenue => revenue * rate / 100,
       FeeCalculation.perOrder => orders * rate,
+      FeeCalculation.oneTime => (month != null && month == createdAt?.month && (year ?? DateTime.now().year) == createdAt?.year) ? rate : 0,
     };
   }
 }

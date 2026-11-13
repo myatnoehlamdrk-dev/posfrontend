@@ -414,6 +414,20 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         _card([
           _row(Icons.qr_code, 'SKU', d.sku),
           _row(Icons.layers, 'Is Set / Bundle', d.isBundle),
+          if (d.costPrice > 0) ...[
+            _row(
+              Icons.payments_outlined,
+              'Cost Price',
+              formatPrice(d.costPrice),
+            ),
+            if (d.price > 0)
+              _row(
+                Icons.trending_up,
+                'Profit / Unit',
+                '${formatPrice(d.price - d.costPrice)} '
+                    '(${(((d.price - d.costPrice) / d.price) * 100).toStringAsFixed(1)}%)',
+              ),
+          ],
         ]),
         const SizedBox(height: 24),
         Text(
@@ -1324,6 +1338,7 @@ class _RestockDialogState extends State<_RestockDialog> {
         color: v.color,
         quantity: v.quantity + added,
         price: v.price,
+        costPrice: v.costPrice,
       );
     }).toList();
     return ProductCreateRequest(name: _product.name, variants: variants);

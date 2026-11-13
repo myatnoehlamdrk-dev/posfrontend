@@ -13,6 +13,8 @@ class FeeRulesCard extends StatelessWidget {
   final double total;
   final double revenue;
   final int orders;
+  final int? month;
+  final int? year;
   final VoidCallback onAddFee;
   final void Function(OperationFee fee, bool active) onActiveChanged;
   final void Function(OperationFee fee, FeeCalculation method)
@@ -29,6 +31,8 @@ class FeeRulesCard extends StatelessWidget {
     required this.total,
     required this.revenue,
     required this.orders,
+    this.month,
+    this.year,
     required this.onAddFee,
     required this.onActiveChanged,
     required this.onCalculationChanged,
@@ -101,11 +105,13 @@ class FeeRulesCard extends StatelessWidget {
           ),
           if (useTable) ...[
             const _TableHeader(),
-            for (final fee in fees) _FeeRuleRow(
+            for (final fee in fees)             _FeeRuleRow(
               fee: fee,
               rateController: rateControllers[fee.id],
               revenue: revenue,
               orders: orders,
+              month: month,
+              year: year,
               onActiveChanged: onActiveChanged,
               onCalculationChanged: onCalculationChanged,
               onRateChanged: onRateChanged,
@@ -122,6 +128,7 @@ class FeeRulesCard extends StatelessWidget {
                       rateController: rateControllers[fee.id],
                       revenue: revenue,
                       orders: orders,
+                      month: month,
                       onActiveChanged: onActiveChanged,
                       onCalculationChanged: onCalculationChanged,
                       onRateChanged: onRateChanged,
@@ -182,6 +189,8 @@ class _FeeRuleRow extends StatelessWidget {
   final TextEditingController? rateController;
   final double revenue;
   final int orders;
+  final int? month;
+  final int? year;
   final void Function(OperationFee fee, bool active) onActiveChanged;
   final void Function(OperationFee fee, FeeCalculation method)
       onCalculationChanged;
@@ -193,6 +202,8 @@ class _FeeRuleRow extends StatelessWidget {
     required this.rateController,
     required this.revenue,
     required this.orders,
+    this.month,
+    this.year,
     required this.onActiveChanged,
     required this.onCalculationChanged,
     required this.onRateChanged,
@@ -202,7 +213,7 @@ class _FeeRuleRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final cost = fee.monthlyCost(revenue: revenue, orders: orders);
+    final cost = fee.monthlyCost(revenue: revenue, orders: orders, month: month, year: year);
     final tint = feeTintFor(context, fee.tint);
     return Container(
       decoration: BoxDecoration(
@@ -315,6 +326,8 @@ class FeeRuleMobileCard extends StatelessWidget {
   final TextEditingController? rateController;
   final double revenue;
   final int orders;
+  final int? month;
+  final int? year;
   final void Function(OperationFee fee, bool active) onActiveChanged;
   final void Function(OperationFee fee, FeeCalculation method)
       onCalculationChanged;
@@ -327,6 +340,8 @@ class FeeRuleMobileCard extends StatelessWidget {
     required this.rateController,
     required this.revenue,
     required this.orders,
+    this.month,
+    this.year,
     required this.onActiveChanged,
     required this.onCalculationChanged,
     required this.onRateChanged,
@@ -336,7 +351,7 @@ class FeeRuleMobileCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final cost = fee.monthlyCost(revenue: revenue, orders: orders);
+    final cost = fee.monthlyCost(revenue: revenue, orders: orders, month: month, year: year);
     final tint = feeTintFor(context, fee.tint);
     return Container(
       margin: const EdgeInsets.only(top: 10),

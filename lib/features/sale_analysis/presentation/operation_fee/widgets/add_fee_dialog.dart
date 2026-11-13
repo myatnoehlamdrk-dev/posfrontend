@@ -58,6 +58,7 @@ class _AddFeeDialogState extends State<AddFeeDialog> {
       isActive: true,
       icon: FeeIcon.other,
       tint: FeeTint.gray,
+      createdAt: DateTime.now(),
     );
     Navigator.of(context).pop(fee);
   }

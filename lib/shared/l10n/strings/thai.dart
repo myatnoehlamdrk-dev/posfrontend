@@ -169,6 +169,7 @@ const Map<String, String> thaiStrings = {
   'Self Inventory': 'สินค้าส่วนตัว',
   'Stock Status': 'สถานะสต็อก',
   'Product Stock Status': 'สถานะสต็อกสินค้า',
+  'Package Stock Status': 'สถานะสต็อกแพ็กเกจ',
   'Inventory Stock Status': 'สถานะสต็อกสินค้าคงคลัง',
   'Remove from package': 'ลบออกจากแพ็คเกจ',
   'Remove Product': 'ลบสินค้า',

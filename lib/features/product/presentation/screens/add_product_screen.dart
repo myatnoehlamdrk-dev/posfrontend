@@ -17,6 +17,7 @@ import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/shared/widgets/premium_image_upload.dart';
+import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/responsive_scaffold.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
@@ -43,11 +44,19 @@ class _AddProductScreenState extends State<AddProductScreen> {
   void initState() {
     super.initState();
     _vm = AddProductViewModel();
+    // The product cost price feeds the per-variant profit preview, and it is a
+    // plain controller (the view model is not notified on typing).
+    _vm.costPrice.addListener(_onCostChanged);
     _vm.loadInitialData(existingProduct: widget.existingProduct);
+  }
+
+  void _onCostChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
+    _vm.costPrice.removeListener(_onCostChanged);
     _vm.dispose();
     super.dispose();
   }
@@ -282,7 +291,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
           FormCard(
             label: context.l10n.t('Variants, Stock & Price'),
             helper: context.l10n.t(
-              'Split total stock into sizes and colors. Each variant has its own quantity and price.',
+              'Split total stock into sizes and colors. Each variant has its own quantity, cost and price.',
             ),
             child: _variantsSection(),
           ),
@@ -320,7 +329,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
     final bytes = _vm.imageBytes;
     final file = _vm.imageFile;
     final url = _vm.imageUrl;
-    final hasPreview = bytes != null || file != null || (url?.isNotEmpty ?? false);
+    final hasPreview =
+        bytes != null || file != null || (url?.isNotEmpty ?? false);
 
     final upload = PremiumImageUpload(
       isBusy: _vm.uploading,
@@ -400,10 +410,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     AppStrings.of(context).photoNotOptimized,
                   );
                 } else {
-                  showSuccessMessage(
-                    context,
-                    context.l10n.t('Image uploaded'),
-                  );
+                  showSuccessMessage(context, context.l10n.t('Image uploaded'));
                 }
               } else {
                 _showError();
@@ -503,6 +510,16 @@ class _AddProductScreenState extends State<AddProductScreen> {
         const SizedBox(height: 16),
         _field('SKU', _vm.sku, 'e.g. SM-WHP-001'),
         const SizedBox(height: 16),
+        _field(
+          'Original Cost Price',
+          _vm.costPrice,
+          'e.g. 18000',
+          kt: const TextInputType.numberWithOptions(decimal: true),
+          helper: context.l10n.t(
+            'What you paid per unit. Used to calculate profit; a variant can override it with its own cost.',
+          ),
+        ),
+        const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -577,6 +594,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
             key: ValueKey('variant_$i'),
             index: i,
             variant: v,
+            fallbackCost: double.tryParse(_vm.costPrice.text.trim()) ?? 0,
             sizeOptions: AddProductViewModel.sizeOptions,
             colorOptions: AddProductViewModel.colorOptions,
             onChanged: (nv) => _vm.onVariantChanged(i, nv),
@@ -873,7 +891,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
     String hint, {
     bool req = false,
     TextInputType? kt,
+    String? helper,
   }) {
+    final p = context.palette;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -884,6 +904,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
           keyboardType: kt,
           decoration: _decoration(hint),
         ),
+        if (helper != null) ...[
+          const SizedBox(height: 6),
+          Text(helper, style: TextStyle(fontSize: 12, color: p.textSecondary)),
+        ],
       ],
     );
   }
@@ -1031,6 +1055,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
 class _VariantTile extends StatefulWidget {
   final int index;
   final ProductCreateVariant variant;
+
+  /// Product-level cost used when this variant has no cost of its own.
+  final double fallbackCost;
   final List<String> sizeOptions;
   final List<ProductColorOption> colorOptions;
   final ValueChanged<ProductCreateVariant> onChanged;
@@ -1043,6 +1070,7 @@ class _VariantTile extends StatefulWidget {
     required this.sizeOptions,
     required this.colorOptions,
     required this.onChanged,
+    this.fallbackCost = 0,
     this.onRemove,
   });
 
@@ -1054,6 +1082,7 @@ class _VariantTileState extends State<_VariantTile> {
   late String _size;
   late String _color;
   late final TextEditingController _qty;
+  late final TextEditingController _cost;
   late final TextEditingController _price;
 
   @override
@@ -1062,6 +1091,11 @@ class _VariantTileState extends State<_VariantTile> {
     _size = widget.variant.size;
     _color = widget.variant.color;
     _qty = TextEditingController(text: widget.variant.quantity.toString());
+    _cost = TextEditingController(
+      text: widget.variant.costPrice > 0
+          ? _variantNumberText(widget.variant.costPrice)
+          : '',
+    );
     _price = TextEditingController(text: widget.variant.price.toString());
   }
 
@@ -1072,8 +1106,12 @@ class _VariantTileState extends State<_VariantTile> {
       _size = widget.variant.size;
       _color = widget.variant.color;
       final nextQty = widget.variant.quantity.toString();
+      final nextCost = widget.variant.costPrice > 0
+          ? _variantNumberText(widget.variant.costPrice)
+          : '';
       final nextPrice = widget.variant.price.toString();
       if (_qty.text != nextQty) _qty.text = nextQty;
+      if (_cost.text != nextCost) _cost.text = nextCost;
       if (_price.text != nextPrice) _price.text = nextPrice;
     }
   }
@@ -1081,6 +1119,7 @@ class _VariantTileState extends State<_VariantTile> {
   @override
   void dispose() {
     _qty.dispose();
+    _cost.dispose();
     _price.dispose();
     super.dispose();
   }
@@ -1092,9 +1131,15 @@ class _VariantTileState extends State<_VariantTile> {
         color: _color,
         quantity: int.tryParse(_qty.text) ?? 0,
         price: double.tryParse(_price.text) ?? 0.0,
+        costPrice: double.tryParse(_cost.text) ?? 0.0,
       ),
     );
   }
+
+  /// Cost used for this row: its own, or the product-level fallback.
+  double get _effectiveCost => widget.variant.costPrice > 0
+      ? widget.variant.costPrice
+      : widget.fallbackCost;
 
   @override
   Widget build(BuildContext context) {
@@ -1150,12 +1195,62 @@ class _VariantTileState extends State<_VariantTile> {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: _miniField('Price', _price, TextInputType.number, _emit),
+                child: _miniField(
+                  'Cost',
+                  _cost,
+                  const TextInputType.numberWithOptions(decimal: true),
+                  _emit,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _miniField(
+                  'Price',
+                  _price,
+                  const TextInputType.numberWithOptions(decimal: true),
+                  _emit,
+                ),
               ),
             ],
           ),
+          if (widget.variant.price > 0 && _effectiveCost > 0) ...[
+            const SizedBox(height: 8),
+            _profitLine(context),
+          ],
         ],
       ),
+    );
+  }
+
+  Widget _profitLine(BuildContext context) {
+    final p = context.palette;
+    final profit = widget.variant.price - _effectiveCost;
+    final margin = widget.variant.price == 0
+        ? 0.0
+        : (profit / widget.variant.price) * 100;
+    final color = profit < 0 ? p.dangerFg : AppColors.green;
+    return Row(
+      children: [
+        Icon(Icons.trending_up, size: 14, color: color),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            context.l10n
+                .t('Profit per unit: {v1}')
+                .replaceAll(
+                  '{v1}',
+                  '${formatPrice(profit)} (${margin.toStringAsFixed(1)}%)',
+                ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -1263,3 +1358,8 @@ class _VariantTileState extends State<_VariantTile> {
     );
   }
 }
+
+/// Trims a whole number's trailing `.0` from an input field value.
+String _variantNumberText(double value) => value == value.roundToDouble()
+    ? value.toInt().toString()
+    : value.toString();

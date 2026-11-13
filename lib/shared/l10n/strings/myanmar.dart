@@ -217,6 +217,7 @@ const Map<String, String> myStrings = {
   'Self Inventory': 'ကိုယ်ပိုင်ရုံ',
   'Stock Status': 'stock အခြေအနေ',
   'Product Stock Status': 'ကုန်ပစ္စည်း stock အခြေအနေ',
+  'Package Stock Status': 'ပက်ကေ့ဂျ် stock အခြေအနေ',
   'Inventory Stock Status': 'ကုန်ပစ္စည်းစာရင်း stock အခြေအနေ',
   'Remove from package': 'package မှဖယ်ထုတ်ရန်',
   'Remove Product': 'ကုန်ပစ္စည်းဖယ်ထုတ်ရန်',
