@@ -6,7 +6,10 @@ import 'package:posfrontend/shared/theme/palette_x.dart';
 import '../operation_fee/operation_fee_style.dart';
 import 'overview_data.dart';
 
-/// Month-by-month gross vs net profit across the full demo series.
+/// Gross vs net profit across every month that recorded sales.
+///
+/// Only a few evenly spaced month labels are drawn (four when the series is
+/// long enough) so the axis stays readable instead of repeating every month.
 class ProfitTrendChart extends StatelessWidget {
   final List<OverviewMonth> months;
 
@@ -32,10 +35,10 @@ class ProfitTrendChart extends StatelessWidget {
         ),
       );
     }
+    final labels = _labelIndices(n);
 
     return LineChart(
       LineChartData(
-        minY: 0,
         lineBarsData: [
           LineChartBarData(
             spots: [
@@ -101,12 +104,20 @@ class ProfitTrendChart extends StatelessWidget {
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
+              interval: 1,
+              reservedSize: 28,
               getTitlesWidget: (v, _) {
-                final i = v.toInt();
-                if (i < 0 || i >= n) return const SizedBox();
-                return Text(
-                  overviewMonthAbbr[months[i].month.month - 1],
-                  style: ofText(size: 9.5, color: p.textMuted),
+                final i = v.round();
+                if (i < 0 || i >= n || !labels.contains(i)) {
+                  return const SizedBox();
+                }
+                final month = months[i].month;
+                return Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    '${month.year}/${overviewMonthAbbr[month.month - 1]}',
+                    style: ofText(size: 9.5, color: p.textMuted),
+                  ),
                 );
               },
             ),
@@ -114,6 +125,19 @@ class ProfitTrendChart extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// At most four labels, evenly spaced across the series, always including
+  /// the first and last month. Small series show every point.
+  Set<int> _labelIndices(int n) {
+    if (n <= 4) return {for (var i = 0; i < n; i++) i};
+    final last = n - 1;
+    return {
+      0,
+      (last / 3).round(),
+      (last * 2 / 3).round(),
+      last,
+    };
   }
 
   String _axis(double value) {

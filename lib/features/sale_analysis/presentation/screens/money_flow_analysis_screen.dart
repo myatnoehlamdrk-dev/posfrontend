@@ -19,11 +19,20 @@ import 'package:posfrontend/shared/widgets/app_shell.dart';
 /// Money Flow dashboard for the Finance section.
 ///
 /// One month at a time (chosen from a calendar), four figures — inflow,
-/// outflow, the operation-fee share of that outflow, and net cash flow — plus
-/// the monthly trend for the selected year.
+/// purchases outflow, the operation-fee cost from the shop's rules, and net
+/// cash flow after both — plus the monthly trend for the selected year.
 class MoneyFlowAnalysisScreen extends StatefulWidget {
   final bool embedded;
-  const MoneyFlowAnalysisScreen({super.key, this.embedded = false});
+
+  /// Changes whenever the parent knows fee rules may have changed; the screen
+  /// then refetches its monthly figures.
+  final int refreshToken;
+
+  const MoneyFlowAnalysisScreen({
+    super.key,
+    this.embedded = false,
+    this.refreshToken = 0,
+  });
 
   @override
   State<MoneyFlowAnalysisScreen> createState() =>
@@ -49,6 +58,14 @@ class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen> {
     super.initState();
     _vm = FinanceViewModel(repository: DashboardRepositoryImpl());
     _vm.load(year: _month.year);
+  }
+
+  @override
+  void didUpdateWidget(covariant MoneyFlowAnalysisScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.refreshToken != oldWidget.refreshToken) {
+      _vm.load(year: _month.year);
+    }
   }
 
   @override
@@ -287,7 +304,7 @@ class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen> {
       higherIsBetter: true,
     );
     final feeShare =
-        month.outflow == 0 ? 0.0 : month.operationFee / month.outflow * 100;
+        month.inflow == 0 ? 0.0 : month.operationFee / month.inflow * 100;
 
     const gap = 16.0;
     return LayoutBuilder(
@@ -351,7 +368,7 @@ class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen> {
               badgeText: feeDelta.text,
               badgeUp: feeDelta.up,
               badgeTone: feeDelta.tone,
-              supporting: '${feeShare.toStringAsFixed(1)}% of outflow',
+              supporting: '${feeShare.toStringAsFixed(1)}% of inflow',
               footer: ClipRRect(
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
@@ -371,7 +388,7 @@ class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen> {
               badgeText: netDelta.text,
               badgeUp: netDelta.up,
               badgeTone: netDelta.tone,
-              supporting: 'Inflow minus outflow',
+              supporting: 'Inflow minus outflow and fees',
               footer: Row(
                 children: [
                   _MiniStat(
@@ -382,6 +399,11 @@ class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen> {
                   _MiniStat(
                     label: 'Outflow',
                     value: moneyFlowCompact(month.outflow),
+                  ),
+                  const SizedBox(width: 14),
+                  _MiniStat(
+                    label: 'Fees',
+                    value: moneyFlowCompact(month.operationFee),
                   ),
                 ],
               ),

@@ -4,10 +4,9 @@ import 'package:posfrontend/features/sale_analysis/presentation/money_flow/money
 
 /// View model for the Finance / Money Flow screen.
 ///
-/// Fetches real monthly revenue from the backend and exposes it as
-/// [MoneyFlowMonth] objects so the UI can render real inflow figures.
-/// Outflow, operation fee and net still use demo values until those
-/// data sources are wired up.
+/// Fetches real monthly figures from the backend — revenue, purchases (outflow),
+/// cost of goods, units and the operation-fee cost computed from the shop's
+/// fee rules — and exposes them as [MoneyFlowMonth] objects.
 class FinanceViewModel extends BaseViewModel {
   final DashboardRepository _repository;
 
@@ -79,13 +78,9 @@ class FinanceViewModel extends BaseViewModel {
       final result = await _repository.getMonthlySales(year: _selectedYear);
       _years = result.years;
       if (_years.isEmpty) _years = [_selectedYear];
-      // Build MoneyFlowMonth list from real revenue and outflow.
-      // Operation fee stays demo (user-configured rules).
-      final demoByMonth = <int, MoneyFlowMonth>{
-        for (final m in moneyFlowMonths) m.month.month: m,
-      };
+      // Build MoneyFlowMonth list from real revenue, outflow and the
+      // operation-fee cost computed from the shop-wide rules.
       _months = result.months.map((ms) {
-        final demo = demoByMonth[ms.month];
         _cogsByMonth[ms.month] = ms.cogs;
         _unitsByMonth[ms.month] = ms.units;
         _txnsByMonth[ms.month] = ms.transactions;
@@ -94,7 +89,7 @@ class FinanceViewModel extends BaseViewModel {
           month: DateTime(_selectedYear, ms.month),
           inflow: ms.total.toDouble(),
           outflow: ms.purchases.toDouble(),
-          operationFee: demo?.operationFee ?? 0,
+          operationFee: ms.operationFee,
         );
       }).toList();
     }, errorPrefix: 'Failed to load finance data');

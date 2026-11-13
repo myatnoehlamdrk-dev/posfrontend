@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/features/sale_analysis/data/repositories/operation_fee_repository.dart';
 import 'package:posfrontend/features/sale_analysis/presentation/operation_fee/operation_fee_models.dart';
@@ -17,17 +19,9 @@ class OperationFeeViewModel extends BaseViewModel {
   bool _saved = false;
   bool get saved => _saved;
 
-  int _selectedYear = DateTime.now().year;
-  int get selectedYear => _selectedYear;
-
-  int _selectedMonth = DateTime.now().month;
-  int get selectedMonth => _selectedMonth;
-
-  Future<void> load({int? year, int? month}) async {
-    if (year != null) _selectedYear = year;
-    if (month != null) _selectedMonth = month;
+  Future<void> load() async {
     await runAsync((token) async {
-      final data = await _repository.list(year: _selectedYear, month: _selectedMonth);
+      final data = await _repository.list();
       final feeList = data['fees'] as List<dynamic>? ?? [];
       _fees = feeList.map((e) => _fromApi(e as Map<String, dynamic>)).toList();
       final settings = data['settings'] as Map<String, dynamic>? ?? {};
@@ -35,8 +29,8 @@ class OperationFeeViewModel extends BaseViewModel {
     }, errorPrefix: 'Failed to load operation fees');
   }
 
-  Future<void> addFee(OperationFee fee) async {
-    await runAsync((token) async {
+  Future<OperationFee?> addFee(OperationFee fee) async {
+    return runAsync((token) async {
       final data = await _repository.create({
         'name': fee.name,
         'category': fee.category.name,
@@ -45,9 +39,10 @@ class OperationFeeViewModel extends BaseViewModel {
         'isActive': fee.isActive,
         'icon': fee.icon.name,
         'tint': fee.tint.name,
-      }, year: _selectedYear, month: _selectedMonth);
+      });
       final created = _fromApi(data);
       _fees = [..._fees, created];
+      return created;
     }, errorPrefix: 'Failed to add fee');
   }
 
@@ -84,6 +79,17 @@ class OperationFeeViewModel extends BaseViewModel {
     }, errorPrefix: 'Failed to save settings');
   }
 
+  /// Fetches the one-month operation-fee report as CSV bytes.
+  Future<Uint8List?> downloadReport({
+    required int year,
+    required int month,
+  }) {
+    return runAsync(
+      (token) => _repository.downloadReport(year: year, month: month),
+      errorPrefix: 'Failed to download operation fee report',
+    );
+  }
+
   void setSaved(bool value) {
     _saved = value;
     notifyListeners();
@@ -95,7 +101,7 @@ class OperationFeeViewModel extends BaseViewModel {
       name: json['name']?.toString() ?? '',
       category: _parseCategory(json['category']?.toString()),
       calculation: _parseCalculation(json['calculation']?.toString()),
-      rate: (json['rate'] as num?)?.toDouble() ?? 0,
+      rate: double.tryParse(json['rate']?.toString() ?? '') ?? 0,
       isActive: json['is_active'] == true || json['isActive'] == true,
       icon: _parseIcon(json['icon']?.toString()),
       tint: _parseTint(json['tint']?.toString()),

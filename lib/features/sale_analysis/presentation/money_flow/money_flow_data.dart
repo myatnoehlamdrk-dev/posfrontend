@@ -2,9 +2,9 @@ import 'package:intl/intl.dart';
 
 /// One month of cash movement behind the Money Flow dashboard.
 ///
-/// [operationFee] is the share of [outflow] that comes from the operation-fee
-/// rules (rent, staff, utilities, processing), not an additional outflow — so
-/// `net = inflow - outflow` never double-counts a fee.
+/// [operationFee] is the operation-fee cost computed from the shop's rules for
+/// the month. It is a cash outflow of its own (purchases are tracked
+/// separately), so `net = inflow - outflow - operationFee`.
 class MoneyFlowMonth {
   const MoneyFlowMonth({
     required this.month,
@@ -19,7 +19,7 @@ class MoneyFlowMonth {
   final double outflow;
   final double operationFee;
 
-  double get net => inflow - outflow;
+  double get net => inflow - outflow - operationFee;
 }
 
 const List<String> moneyFlowMonthAbbr = [

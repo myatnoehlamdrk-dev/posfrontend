@@ -37,16 +37,30 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
   static final DateTime _firstMonth = DateTime(2026, 1, 1);
   static final DateTime _lastMonth = DateTime(2026, 12, 31);
 
+  /// Bumped whenever fee rules may have changed (e.g. tab switch back from
+  /// Operation Fee) so the embedded screens refetch their figures.
+  int _dataRevision = 0;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(_onTabChanged);
     _vm = FinanceViewModel(repository: DashboardRepositoryImpl());
+    _vm.load(year: _overviewMonth.year);
+  }
+
+  void _onTabChanged() {
+    if (_tabController.indexIsChanging) return;
+    // Rules can be edited in the Operation Fee tab, so reload when the user
+    // comes back to Overview or Money Flow.
+    setState(() => _dataRevision++);
     _vm.load(year: _overviewMonth.year);
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(_onTabChanged);
     _tabController.dispose();
     _vm.dispose();
     super.dispose();
@@ -67,7 +81,7 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
             child: Column(
               children: [
                 AppScreenTopBar(
-                  title: 'Finance (Demo)',
+                  title: 'Finance',
                   showMenuButton: !isWide,
                   onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
                 ),
@@ -84,7 +98,10 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
                     controller: _tabController,
                     children: [
                       _buildOverview(),
-                      const MoneyFlowAnalysisScreen(embedded: true),
+                      MoneyFlowAnalysisScreen(
+                        embedded: true,
+                        refreshToken: _dataRevision,
+                      ),
                       const OperationFeeControllerPage(),
                     ],
                   ),
@@ -108,30 +125,38 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
     final realUnits = _vm.unitsFor(_overviewMonth.month);
     final realTxns = _vm.txnsFor(_overviewMonth.month);
     final hasReal = realMonth != null;
-    final data = demoData != null && hasReal
-        ? OverviewMonth(
+    // Keep the designed figures while the API responds, but never invent an
+    // operation fee: the fee is either the server's computed amount or zero.
+    final data = demoData == null
+        ? null
+        : OverviewMonth(
             month: demoData.month,
-            revenue: realMonth.inflow,
-            cogsValue: realCogs.toDouble(),
-            operationFee: demoData.operationFee,
-            unitsSold: realUnits,
-            transactions: realTxns,
-          )
-        : demoData;
+            revenue: realMonth?.inflow ?? demoData.revenue,
+            cogsValue: hasReal ? realCogs.toDouble() : demoData.cogsValue,
+            operationFee: realMonth?.operationFee ?? 0,
+            unitsSold: hasReal ? realUnits : demoData.unitsSold,
+            transactions: hasReal ? realTxns : demoData.transactions,
+          );
     final previousDemo = overviewMonthFor(
       DateTime(_overviewMonth.year, _overviewMonth.month - 1),
     );
     final previousReal = _vm.previousMonthOf(_overviewMonth);
-    final previous = previousDemo != null && previousReal != null
-        ? OverviewMonth(
+    final previous = previousDemo == null
+        ? null
+        : OverviewMonth(
             month: previousDemo.month,
-            revenue: previousReal.inflow,
-            cogsValue: _vm.cogsFor(previousReal.month.month).toDouble(),
-            operationFee: previousDemo.operationFee,
-            unitsSold: _vm.unitsFor(previousReal.month.month),
-            transactions: _vm.txnsFor(previousReal.month.month),
-          )
-        : previousDemo;
+            revenue: previousReal?.inflow ?? previousDemo.revenue,
+            cogsValue: previousReal == null
+                ? previousDemo.cogsValue
+                : _vm.cogsFor(previousReal.month.month).toDouble(),
+            operationFee: previousReal?.operationFee ?? 0,
+            unitsSold: previousReal == null
+                ? previousDemo.unitsSold
+                : _vm.unitsFor(previousReal.month.month),
+            transactions: previousReal == null
+                ? previousDemo.transactions
+                : _vm.txnsFor(previousReal.month.month),
+          );
 
     return Container(
       color: p.scaffoldBg,
@@ -179,7 +204,7 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Illustrative figures only. All amounts in MMK.',
+                        'All amounts in MMK.',
                         style: ofText(size: 11, color: p.textMuted),
                       ),
                       const SizedBox(height: 20),
@@ -454,6 +479,7 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
 
   Widget _profitTrendCard(OverviewMonth data) {
     final p = context.palette;
+    final series = _profitSeries();
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: ofCardDecoration(context),
@@ -470,7 +496,7 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
           ),
           const SizedBox(height: 4),
           Text(
-            'Gross vs net profit by month · ${data.month.year}',
+            'Gross vs net profit · all time',
             style: ofText(size: 11.5, color: p.textMuted),
           ),
           const SizedBox(height: 8),
@@ -486,8 +512,8 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
           SizedBox(
             height: 240,
             child: ProfitTrendChart(
-              months: overviewMonths,
-              highlightIndex: overviewMonths.indexWhere(
+              months: series,
+              highlightIndex: series.indexWhere(
                 (m) =>
                     m.month.year == data.month.year &&
                     m.month.month == data.month.month,
@@ -527,13 +553,14 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
 
   /// Sparkline values for the six months ending at the selected month.
   List<double> _spark(double Function(OverviewMonth) pick) {
-    final index = overviewMonths.indexWhere(
+    final series = _overviewSeries();
+    final index = series.indexWhere(
       (m) => m.month.year == _overviewMonth.year &&
           m.month.month == _overviewMonth.month,
     );
     if (index < 0) return List<double>.filled(7, 0.12);
     final start = math.max(0, index - 6);
-    final window = overviewMonths.sublist(start, index + 1);
+    final window = series.sublist(start, index + 1);
     final max = window.fold<double>(0, (m, x) => math.max(m, pick(x)));
     if (max <= 0) return List<double>.filled(window.length, 0.12);
     return [
@@ -541,7 +568,47 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
     ];
   }
 
-  /// `MMK 8.0M` for millions, `MMK 6,329` below that.
+  /// The selected year with real revenue, COGS, units, transactions and the
+  /// operation fee computed from the shop's rules. Falls back to the designed
+  /// demo series only while the API response is still in flight.
+  List<OverviewMonth> _overviewSeries() {
+    if (_vm.months.isEmpty) {
+      return overviewMonths
+          .map(
+            (m) => OverviewMonth(
+              month: m.month,
+              revenue: m.revenue,
+              cogsValue: m.cogsValue,
+              operationFee: 0,
+              unitsSold: m.unitsSold,
+              transactions: m.transactions,
+            ),
+          )
+          .toList();
+    }
+
+    return _vm.yearMonths(_overviewMonth.year).map((m) {
+      final month = m.month.month;
+      return OverviewMonth(
+        month: m.month,
+        revenue: m.inflow,
+        cogsValue: _vm.cogsFor(month).toDouble(),
+        operationFee: m.operationFee,
+        unitsSold: _vm.unitsFor(month),
+        transactions: _vm.txnsFor(month),
+      );
+    }).toList();
+  }
+
+  /// Months that actually sold something, oldest first. Empty months are
+  /// dropped so the profit trend starts at the first real month instead of
+  /// drawing a flat line across months with no profit.
+  List<OverviewMonth> _profitSeries() {
+    if (_vm.months.isEmpty) return const [];
+    return _overviewSeries()
+        .where((m) => m.revenue > 0 && m.transactions > 0)
+        .toList();
+  }
   String _money(num value) {
     final abs = value.abs();
     if (abs >= 1000000) {

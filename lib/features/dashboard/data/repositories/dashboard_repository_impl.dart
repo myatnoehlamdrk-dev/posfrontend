@@ -35,6 +35,7 @@ class DashboardRepositoryImpl implements DashboardRepository {
             units: (item['units'] as num?)?.toInt() ?? 0,
             transactions: (item['transactions'] as num?)?.toInt() ?? 0,
             purchases: (item['purchases'] as num?)?.toInt() ?? 0,
+            operationFee: (item['operation_fee'] as num?)?.toDouble() ?? 0,
           );
         })
         .where((e) => e.month >= 1 && e.month <= 12)

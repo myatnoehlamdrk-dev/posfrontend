@@ -277,6 +277,9 @@ class MonthlySalesEntity extends Equatable {
   final int transactions;
   final int purchases;
 
+  /// Operation-fee cost computed from the shop's fee rules for this month.
+  final double operationFee;
+
   const MonthlySalesEntity({
     required this.month,
     required this.total,
@@ -284,10 +287,12 @@ class MonthlySalesEntity extends Equatable {
     this.units = 0,
     this.transactions = 0,
     this.purchases = 0,
+    this.operationFee = 0,
   });
 
   @override
-  List<Object?> get props => [month, total, cogs, units, transactions, purchases];
+  List<Object?> get props =>
+      [month, total, cogs, units, transactions, purchases, operationFee];
 }
 
 /// One day of the sales chart: how many orders landed and what they summed to.

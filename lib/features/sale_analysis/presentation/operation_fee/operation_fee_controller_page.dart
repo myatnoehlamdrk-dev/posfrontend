@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:posfrontend/features/sale_analysis/presentation/operation_fee/operation_fee_models.dart';
 import 'package:posfrontend/features/sale_analysis/presentation/operation_fee/operation_fee_style.dart';
@@ -12,6 +14,7 @@ import 'package:posfrontend/features/dashboard/data/repositories/dashboard_repos
 import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/features/sale_analysis/presentation/widgets/month_filter_button.dart';
+import 'package:posfrontend/shared/services/report_download.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
 class OperationFeeControllerPage extends StatefulWidget {
@@ -31,6 +34,7 @@ class _OperationFeeControllerPageState
 
   late List<OperationFee> _fees;
   final Map<String, TextEditingController> _rateControllers = {};
+  final Map<String, Timer> _saveTimers = {};
 
   AllocationMethod _allocation = AllocationMethod.revenue;
 
@@ -44,7 +48,7 @@ class _OperationFeeControllerPageState
     _feeVm = OperationFeeViewModel();
     _financeVm = FinanceViewModel(repository: DashboardRepositoryImpl());
     _fees = [];
-    _feeVm.load(year: _month.year, month: _month.month);
+    _feeVm.load();
     _financeVm.load(year: _month.year);
   }
 
@@ -52,6 +56,9 @@ class _OperationFeeControllerPageState
   void dispose() {
     for (final controller in _rateControllers.values) {
       controller.dispose();
+    }
+    for (final timer in _saveTimers.values) {
+      timer.cancel();
     }
     _feeVm.dispose();
     _financeVm.dispose();
@@ -81,18 +88,55 @@ class _OperationFeeControllerPageState
 
   void _onActiveChanged(OperationFee fee, bool active) {
     _replaceFee(fee.copyWith(isActive: active));
+    _persistFee(fee.copyWith(isActive: active), revertTo: fee);
   }
 
   void _onCalculationChanged(OperationFee fee, FeeCalculation method) {
     _replaceFee(fee.copyWith(calculation: method));
+    _persistFee(fee.copyWith(calculation: method), revertTo: fee);
   }
 
   void _onRateChanged(OperationFee fee, String text) {
     final parsed = double.tryParse(text.replaceAll(',', '')) ?? 0;
-    _replaceFee(fee.copyWith(rate: parsed));
+    final updated = fee.copyWith(rate: parsed);
+    _replaceFee(updated);
+
+    // Typing a rate fires per keystroke; only save once the user pauses.
+    _saveTimers[fee.id]?.cancel();
+    _saveTimers[fee.id] = Timer(const Duration(milliseconds: 700), () {
+      if (!mounted) return;
+      _persistFee(updated, revertTo: fee);
+    });
+  }
+
+  /// Saves an edited rule to the backend so active/inactive and rate changes
+  /// survive a reload. Reverts the local edit if the request fails.
+  Future<void> _persistFee(
+    OperationFee fee, {
+    required OperationFee revertTo,
+  }) async {
+    await _feeVm.updateFee(fee);
+    if (!mounted) return;
+    if (_feeVm.hasError) {
+      _replaceFee(revertTo);
+      showErrorMessage(
+        context,
+        _feeVm.errorMessage ?? 'Failed to update operation fee',
+      );
+      return;
+    }
+
+    // The page keeps its own copy, so mirror the server's saved values.
+    for (final saved in _feeVm.fees) {
+      if (saved.id == fee.id) {
+        _replaceFee(saved);
+        break;
+      }
+    }
   }
 
   void _deleteFee(OperationFee fee) {
+    _saveTimers.remove(fee.id)?.cancel();
     final controller = _rateControllers.remove(fee.id);
     setState(() => _fees.removeWhere((f) => f.id == fee.id));
     _feeVm.deleteFee(fee.id);
@@ -113,7 +157,6 @@ class _OperationFeeControllerPageState
     if (picked != null && mounted) {
       final newMonth = DateTime(picked.year, picked.month);
       setState(() => _month = newMonth);
-      _feeVm.load(year: newMonth.year, month: newMonth.month);
       if (newMonth.year != _financeVm.selectedYear) {
         _financeVm.load(year: newMonth.year);
       }
@@ -150,16 +193,63 @@ class _OperationFeeControllerPageState
     }
 
     if (created == null || !mounted) return;
-    final OperationFee fee = created;
-    _rateControllers[fee.id] =
-        TextEditingController(text: ofRate(fee.rate));
-    setState(() => _fees.add(fee));
-    _feeVm.addFee(fee);
+    final saved = await _feeVm.addFee(created);
+    if (!mounted) return;
+    if (saved == null) {
+      showErrorMessage(
+        context,
+        _feeVm.errorMessage ?? 'Failed to add operation fee',
+      );
+      return;
+    }
+    _rateControllers[saved.id] =
+        TextEditingController(text: ofRate(saved.rate));
+    setState(() => _fees.add(saved));
     showSuccessMessage(context, 'Operation fee added');
   }
 
+  bool _isDownloading = false;
+
   Future<void> _downloadReport(BuildContext context) async {
-    showSuccessMessage(context, 'Downloading report for ${_month.month}/${_month.year}...');
+    if (_isDownloading) return;
+
+    final year = _month.year;
+    final month = _month.month;
+
+    setState(() => _isDownloading = true);
+    try {
+      final bytes = await _feeVm.downloadReport(year: year, month: month);
+      if (!context.mounted) return;
+
+      if (bytes == null) {
+        showErrorMessage(
+          context,
+          _feeVm.errorMessage ?? 'Failed to download operation fee report',
+        );
+        return;
+      }
+
+      final filename =
+          'operation_fee_report_${year}_${month.toString().padLeft(2, '0')}.csv';
+      final started = await ReportDownload.save(
+        bytes,
+        filename: filename,
+        mimeType: 'text/csv',
+      );
+      if (!context.mounted) return;
+
+      if (!started) {
+        showErrorMessage(
+          context,
+          'The download could not be started. Try again.',
+        );
+        return;
+      }
+
+      showSuccessMessage(context, 'Report for $month/$year downloaded');
+    } finally {
+      if (mounted) setState(() => _isDownloading = false);
+    }
   }
 
   // ---------------------------------------------------------------- build
@@ -218,6 +308,13 @@ class _OperationFeeControllerPageState
                           isDesktop: isDesktop,
                           isTablet: isTablet,
                         ),
+                        if (_feeVm.hasError) ...[
+                          const SizedBox(height: 16),
+                          _FeeLoadError(
+                            message: _feeVm.errorMessage!,
+                            onRetry: _feeVm.load,
+                          ),
+                        ],
                         const SizedBox(height: 20),
                         SummaryCardsGrid(
                           columns: summaryColumns,
@@ -305,6 +402,7 @@ class _OperationFeeControllerPageState
 
     final downloadButton = _DownloadButton(
       onPressed: () => _downloadReport(context),
+      isLoading: _isDownloading,
     );
 
     if (isDesktop) {
@@ -375,28 +473,89 @@ class _OperationFeeControllerPageState
   }
 }
 
+class _FeeLoadError extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _FeeLoadError({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: p.dangerBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: p.dangerFg.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, size: 18, color: p.dangerFg),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: ofText(size: 12, color: p.dangerFg),
+            ),
+          ),
+          const SizedBox(width: 10),
+          TextButton(
+            onPressed: onRetry,
+            style: TextButton.styleFrom(
+              foregroundColor: p.dangerFg,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              minimumSize: const Size(0, 32),
+            ),
+            child: Text(
+              'Retry',
+              style: ofText(
+                size: 12,
+                weight: FontWeight.w600,
+                color: p.dangerFg,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _DownloadButton extends StatelessWidget {
   final VoidCallback onPressed;
+  final bool isLoading;
 
-  const _DownloadButton({required this.onPressed});
+  const _DownloadButton({required this.onPressed, this.isLoading = false});
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
     return FilledButton.icon(
-      onPressed: onPressed,
+      onPressed: isLoading ? null : onPressed,
       style: FilledButton.styleFrom(
         backgroundColor: p.primary,
         foregroundColor: Colors.white,
+        disabledBackgroundColor: p.primary.withValues(alpha: 0.6),
+        disabledForegroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
         minimumSize: const Size(0, 44),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
         ),
       ),
-      icon: const Icon(Icons.download, size: 16),
+      icon: isLoading
+          ? const SizedBox(
+              width: 15,
+              height: 15,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            )
+          : const Icon(Icons.download, size: 16),
       label: Text(
-        'Download',
+        isLoading ? 'Downloading…' : 'Download',
         style: ofText(
           size: 12.5,
           weight: FontWeight.w600,
