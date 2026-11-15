@@ -5,6 +5,7 @@ import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/features/profile/presentation/screens/profile_screen.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
+import 'package:posfrontend/shared/widgets/app_page_transitions.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 import 'package:posfrontend/shared/widgets/notification_bell.dart';
@@ -78,6 +79,7 @@ class AppScreenTopBar extends StatelessWidget {
             Builder(
               builder: (ctx) => IconButton(
                 onPressed: onMenuTap ?? () => Scaffold.of(ctx).openDrawer(),
+                tooltip: 'Menu',
                 icon: const GradientIcon(icon: Icons.menu),
               ),
             ),
@@ -101,11 +103,14 @@ class AppScreenTopBar extends StatelessWidget {
           // the FCM listener feeds.
           if (showNotificationsButton) const NotificationBell(),
           const SizedBox(width: AppSpacing.s4),
-          GestureDetector(
+          Semantics(
+            button: true,
+            label: 'Open profile',
+            child: GestureDetector(
             onTap: () {
               Navigator.of(
                 context,
-              ).push(MaterialPageRoute(builder: (_) => const ProfileScreen()));
+              ).push(AppPageTransitions.fadeSlide<void>(const ProfileScreen()));
             },
             child: ValueListenableBuilder<String>(
               valueListenable: ProfileImageNotifier.instance,
@@ -144,6 +149,7 @@ class AppScreenTopBar extends StatelessWidget {
                       : null,
                 );
               },
+            ),
             ),
           ),
           const SizedBox(width: AppSpacing.s8),

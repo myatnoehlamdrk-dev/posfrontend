@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/features/customer/domain/entities/customer.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
+import 'package:posfrontend/shared/widgets/app_empty_state.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class CustomersTab extends StatefulWidget {
@@ -47,6 +49,7 @@ class _CustomersTabState extends State<CustomersTab> {
               suffixIcon: _searchQuery.isNotEmpty
                   ? IconButton(
                       icon: Icon(Icons.clear, color: p.textSecondary),
+                      tooltip: 'Clear search',
                       onPressed: () {
                         _searchController.clear();
                         setState(() => _searchQuery = '');
@@ -78,11 +81,9 @@ class _CustomersTabState extends State<CustomersTab> {
         const SizedBox(height: 12),
         if (widget.analytics.customerSummary.isEmpty)
           Expanded(
-            child: Center(
-              child: Text(
-                context.l10n.t('No customer data yet.'),
-                style: TextStyle(color: p.textSecondary, fontSize: 14),
-              ),
+            child: AppEmptyState(
+              title: context.l10n.t('No customer data yet.'),
+              icon: Icons.people_outline,
             ),
           )
         else
@@ -113,7 +114,7 @@ class _CustomersTabState extends State<CustomersTab> {
           child: Text(
             c.name.isNotEmpty ? c.name[0].toUpperCase() : '?',
             style: const TextStyle(
-              fontSize: 16,
+              fontSize: AppTypography.bodyLargeSize,
               fontWeight: FontWeight.w700,
               color: AppColors.brandPurpleDark,
             ),
@@ -123,7 +124,7 @@ class _CustomersTabState extends State<CustomersTab> {
       title: Text(
         c.name,
         style: TextStyle(
-          fontSize: 14,
+          fontSize: AppTypography.bodySmallSize,
           fontWeight: FontWeight.w600,
           color: p.textPrimary,
         ),
@@ -133,7 +134,7 @@ class _CustomersTabState extends State<CustomersTab> {
             .t('{v1} orders · MMK {v2}')
             .replaceAll('{v1}', (c.totalOrders).toString())
             .replaceAll('{v2}', (c.totalSpending).toString()),
-        style: TextStyle(fontSize: 12, color: p.textSecondary),
+        style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.textSecondary),
       ),
       children: [
         Container(
@@ -156,7 +157,7 @@ class _CustomersTabState extends State<CustomersTab> {
                   child: Text(
                     context.l10n.t('Top Products'),
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: AppTypography.labelSmallSize,
                       fontWeight: FontWeight.w600,
                       color: p.textPrimary,
                     ),
@@ -178,7 +179,7 @@ class _CustomersTabState extends State<CustomersTab> {
                           child: Text(
                             item.name,
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: AppTypography.labelSmallSize,
                               color: p.textPrimary,
                             ),
                           ),
@@ -188,7 +189,7 @@ class _CustomersTabState extends State<CustomersTab> {
                               .t('x{v1}')
                               .replaceAll('{v1}', (item.count).toString()),
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: AppTypography.labelSmallSize,
                             color: p.textSecondary,
                           ),
                         ),
@@ -210,12 +211,12 @@ class _CustomersTabState extends State<CustomersTab> {
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
         children: [
-          Text(label, style: TextStyle(fontSize: 12, color: p.textSecondary)),
+          Text(label, style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.textSecondary)),
           const Spacer(),
           Text(
             value,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: AppTypography.labelSmallSize,
               fontWeight: FontWeight.w500,
               color: p.textPrimary,
             ),

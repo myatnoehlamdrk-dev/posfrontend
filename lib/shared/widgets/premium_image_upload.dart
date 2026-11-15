@@ -173,12 +173,12 @@ class PremiumImageUpload extends StatelessWidget {
                     children: [
                       if (hasImage) _buildImage(context),
                       if (hasImage)
-                        const DecoratedBox(
+                        DecoratedBox(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
-                              colors: [Color(0x00000000), Color(0x59000000)],
+                              colors: [Colors.transparent, Colors.black.withValues(alpha: 0.35)],
                             ),
                           ),
                         )
@@ -271,7 +271,7 @@ class UploadProgressOverlay extends StatelessWidget {
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 13,
+                        fontSize: AppTypography.labelMediumSize,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.2,
                       ),

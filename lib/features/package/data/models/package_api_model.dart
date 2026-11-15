@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/features/package/domain/entities/package.dart';
 
@@ -142,32 +141,6 @@ String stockStatusToString(StockStatus status) {
       return 'Low Stock';
     case StockStatus.outOfStock:
       return 'Out of Stock';
-  }
-}
-
-Color stockBg(StockStatus s) {
-  switch (s) {
-    case StockStatus.highStock:
-      return const Color(0xFFDCFCE7);
-    case StockStatus.midStock:
-      return const Color(0xFFDBEAFE);
-    case StockStatus.lowStock:
-      return const Color(0xFFFEF3C7);
-    case StockStatus.outOfStock:
-      return const Color(0xFFFEE2E2);
-  }
-}
-
-Color stockFg(StockStatus s) {
-  switch (s) {
-    case StockStatus.highStock:
-      return const Color(0xFF16A34A);
-    case StockStatus.midStock:
-      return const Color(0xFF2563EB);
-    case StockStatus.lowStock:
-      return const Color(0xFFD97706);
-    case StockStatus.outOfStock:
-      return const Color(0xFFDC2626);
   }
 }
 

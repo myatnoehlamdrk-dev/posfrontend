@@ -3,6 +3,7 @@ import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/shared/services/bluetooth_printer_candidate.dart';
 import 'package:posfrontend/shared/services/thermal_printer_transport.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 
 /// The Bluetooth half of Print Settings: printers the OS already knows,
@@ -58,7 +59,7 @@ class _BluetoothPrinterPickerState extends State<BluetoothPrinterPicker> {
               Text(
                 context.l10n.t('Choose Bluetooth Printer'),
                 style: TextStyle(
-                  fontSize: 17,
+                  fontSize: AppTypography.titleSmallSize,
                   fontWeight: FontWeight.w600,
                   color: _p.textPrimary,
                 ),
@@ -123,7 +124,7 @@ class _BluetoothPrinterPickerState extends State<BluetoothPrinterPicker> {
                         title: Text(
                           printer.name,
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: AppTypography.bodySmallSize,
                             fontWeight: FontWeight.w600,
                             color: _p.textPrimary,
                           ),
@@ -131,7 +132,7 @@ class _BluetoothPrinterPickerState extends State<BluetoothPrinterPicker> {
                         subtitle: Text(
                           printer.address,
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: AppTypography.labelSmallSize,
                             color: _p.textSecondary,
                           ),
                         ),
@@ -170,14 +171,14 @@ class _BluetoothPrinterPickerState extends State<BluetoothPrinterPicker> {
           Text(
             title,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: _p.textSecondary),
+            style: TextStyle(fontSize: AppTypography.labelMediumSize, color: _p.textSecondary),
           ),
           if (detail != null) ...[
             const SizedBox(height: 4),
             Text(
               detail,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: _p.textMuted),
+              style: TextStyle(fontSize: AppTypography.labelSmallSize, color: _p.textMuted),
             ),
           ],
           if (actionLabel != null && onAction != null) ...[
@@ -189,7 +190,7 @@ class _BluetoothPrinterPickerState extends State<BluetoothPrinterPicker> {
                 style: TextStyle(
                   color: _p.accentText,
                   fontWeight: FontWeight.w600,
-                  fontSize: 13,
+                  fontSize: AppTypography.labelMediumSize,
                 ),
               ),
             ),

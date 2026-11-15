@@ -3,6 +3,8 @@ import 'package:posfrontend/features/settings/domain/entities/printer_profile.da
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/shared/services/printer_connection_result.dart';
 import 'package:posfrontend/shared/services/printer_connection_tester.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/gradient_button.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
@@ -58,8 +60,8 @@ class _PrinterFormSheet extends StatefulWidget {
 
 class _PrinterFormSheetState extends State<_PrinterFormSheet> {
   // Same mid-tone brand accent the settings screen's rows resolve to.
-  static const Color orange = Color(0xFFF97316);
-  static const Color red = Color(0xFFEF4444);
+  static const Color orange = AppColors.orangeBright;
+  static const Color red = AppColors.red;
 
   late final TextEditingController _nameController;
   late final TextEditingController _hostController;
@@ -140,7 +142,7 @@ class _PrinterFormSheetState extends State<_PrinterFormSheet> {
                   Text(
                     title,
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: AppTypography.titleSmallSize,
                       fontWeight: FontWeight.w600,
                       color: p.textPrimary,
                     ),
@@ -275,7 +277,7 @@ class _PrinterFormSheetState extends State<_PrinterFormSheet> {
                     child: Text(
                       context.l10n.t('Set as Default'),
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: AppTypography.bodySmallSize,
                         fontWeight: FontWeight.w500,
                         color: p.textPrimary,
                       ),
@@ -326,7 +328,7 @@ class _PrinterFormSheetState extends State<_PrinterFormSheet> {
                 const SizedBox(height: 10),
                 Text(
                   _validationError!,
-                  style: const TextStyle(color: red, fontSize: 12),
+                  style: const TextStyle(color: red, fontSize: AppTypography.labelSmallSize),
                 ),
               ],
               const SizedBox(height: 20),
@@ -369,7 +371,7 @@ class _PrinterFormSheetState extends State<_PrinterFormSheet> {
     return Text(
       text,
       style: TextStyle(
-        fontSize: 13,
+        fontSize: AppTypography.labelMediumSize,
         fontWeight: FontWeight.w500,
         color: color,
       ),
@@ -407,7 +409,7 @@ class _PrinterFormSheetState extends State<_PrinterFormSheet> {
             Text(
               label,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: AppTypography.labelMediumSize,
                 fontWeight: FontWeight.w500,
                 color: selected ? orange : p.textPrimary,
               ),
@@ -438,7 +440,7 @@ class _PrinterFormSheetState extends State<_PrinterFormSheet> {
                 ? context.l10n.t('Printer reachable')
                 : '${context.l10n.t('Could not reach the printer.')} '
                       '${_testResult!.detail}',
-            style: TextStyle(fontSize: 12, color: color),
+            style: TextStyle(fontSize: AppTypography.labelSmallSize, color: color),
           ),
         ),
       ],

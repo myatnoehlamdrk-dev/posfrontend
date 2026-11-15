@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
 
 class ProductVariant {
   final String size;
@@ -63,14 +64,14 @@ class CatalogProductView {
       variants.map((v) => v.color).where((c) => c.isNotEmpty).toSet().toList();
 
   static const List<Color> _palette = [
-    Color(0xFF7952DB),
-    Color(0xFF0EA5E9),
-    Color(0xFF16A34A),
-    Color(0xFFEA580C),
-    Color(0xFFE11D48),
-    Color(0xFF7C3AED),
-    Color(0xFF0891B2),
-    Color(0xFFCA8A04),
+    AppColors.brandPurple,
+    AppColors.blue,
+    AppColors.green,
+    AppColors.orange,
+    AppColors.red,
+    AppColors.violet400,
+    AppColors.tealDark,
+    AppColors.orange,
   ];
 
   static Color colorFor(String key) {

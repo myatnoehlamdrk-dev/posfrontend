@@ -15,8 +15,10 @@ import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/app_empty_state.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/app_shell.dart';
+import 'package:posfrontend/shared/widgets/skeleton.dart';
 
 class SaleAnalysisScreen extends StatefulWidget {
   const SaleAnalysisScreen({super.key});
@@ -31,15 +33,36 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
   late final TabController _tabController;
   late final FinanceViewModel _vm;
 
-  /// The demo anchors on November 2026, the same month Money Flow opens on.
-  DateTime _overviewMonth = DateTime(2026, 11);
+  /// The month on screen. Opens on the current month rather than a date that
+  /// was frozen into the source when the screen was written.
+  DateTime _overviewMonth = _nowMonth();
 
-  static final DateTime _firstMonth = DateTime(2026, 1, 1);
-  static final DateTime _lastMonth = DateTime(2026, 12, 31);
+  static DateTime _nowMonth() {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month);
+  }
+
+  /// Earliest month the picker can reach: January of the first year the
+  /// account has data for, falling back to the selected year while the
+  /// finance data is still loading.
+  DateTime get _firstMonth {
+    var year = _overviewMonth.year;
+    for (final y in _vm.years) {
+      if (y < year) year = y;
+    }
+    return DateTime(year, 1);
+  }
+
+  /// Latest month the picker can reach: there is no data for future months.
+  DateTime get _lastMonth => _nowMonth();
 
   /// Bumped whenever fee rules may have changed (e.g. tab switch back from
   /// Operation Fee) so the embedded screens refetch their figures.
   int _dataRevision = 0;
+
+  /// The Overview card carrying the theme highlight. Tapping another card
+  /// moves it; it starts on Net profit, the headline figure.
+  int _overviewHighlightedCard = 9;
 
   @override
   void initState() {
@@ -118,44 +141,30 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
 
   Widget _buildOverview() {
     final p = context.palette;
-    final demoData = overviewMonthFor(_overviewMonth);
-    // Use real revenue from the API when available.
+    // Real figures only: the month exists on screen if the API returned it.
     final realMonth = _vm.monthFor(_overviewMonth);
-    final realCogs = _vm.cogsFor(_overviewMonth.month);
-    final realUnits = _vm.unitsFor(_overviewMonth.month);
-    final realTxns = _vm.txnsFor(_overviewMonth.month);
-    final hasReal = realMonth != null;
-    // Keep the designed figures while the API responds, but never invent an
-    // operation fee: the fee is either the server's computed amount or zero.
-    final data = demoData == null
+    final data = realMonth == null
         ? null
         : OverviewMonth(
-            month: demoData.month,
-            revenue: realMonth?.inflow ?? demoData.revenue,
-            cogsValue: hasReal ? realCogs.toDouble() : demoData.cogsValue,
-            operationFee: realMonth?.operationFee ?? 0,
-            unitsSold: hasReal ? realUnits : demoData.unitsSold,
-            transactions: hasReal ? realTxns : demoData.transactions,
+            month: _overviewMonth,
+            revenue: realMonth.inflow,
+            cogsValue: _vm.cogsFor(_overviewMonth.month).toDouble(),
+            operationFee: realMonth.operationFee,
+            unitsSold: _vm.unitsFor(_overviewMonth.month),
+            transactions: _vm.txnsFor(_overviewMonth.month),
           );
-    final previousDemo = overviewMonthFor(
-      DateTime(_overviewMonth.year, _overviewMonth.month - 1),
-    );
     final previousReal = _vm.previousMonthOf(_overviewMonth);
-    final previous = previousDemo == null
+    final previous = previousReal == null
         ? null
         : OverviewMonth(
-            month: previousDemo.month,
-            revenue: previousReal?.inflow ?? previousDemo.revenue,
-            cogsValue: previousReal == null
-                ? previousDemo.cogsValue
-                : _vm.cogsFor(previousReal.month.month).toDouble(),
-            operationFee: previousReal?.operationFee ?? 0,
-            unitsSold: previousReal == null
-                ? previousDemo.unitsSold
-                : _vm.unitsFor(previousReal.month.month),
-            transactions: previousReal == null
-                ? previousDemo.transactions
-                : _vm.txnsFor(previousReal.month.month),
+            month: previousReal.month,
+            revenue: previousReal.inflow,
+            cogsValue: _vm
+                .cogsFor(previousReal.month.month)
+                .toDouble(),
+            operationFee: previousReal.operationFee,
+            unitsSold: _vm.unitsFor(previousReal.month.month),
+            transactions: _vm.txnsFor(previousReal.month.month),
           );
 
     return Container(
@@ -168,13 +177,13 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
           final pagePadding = isDesktop
               ? 32.0
               : isTablet
-                  ? 24.0
-                  : 16.0;
+              ? 24.0
+              : 16.0;
           final columns = isDesktop
               ? 5
               : isTablet
-                  ? 2
-                  : 1;
+              ? 2
+              : 1;
 
           return SingleChildScrollView(
             padding: EdgeInsets.fromLTRB(
@@ -189,13 +198,12 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _overviewHeading(
-                      isDesktop: isDesktop,
-                      isTablet: isTablet,
-                    ),
+                    _overviewHeading(isDesktop: isDesktop, isTablet: isTablet),
                     const SizedBox(height: 20),
                     if (data == null)
-                      _emptyOverview(p)
+                      _vm.isLoading
+                          ? _OverviewSkeleton(columns: columns)
+                          : _emptyOverview(p)
                     else ...[
                       _overviewCards(
                         data: data,
@@ -262,11 +270,7 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        titleBlock,
-        const SizedBox(height: 16),
-        monthButton,
-      ],
+      children: [titleBlock, const SizedBox(height: 16), monthButton],
     );
   }
 
@@ -276,8 +280,9 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
     required int columns,
   }) {
     final p = context.palette;
-    final feeShare =
-        data.revenue == 0 ? 0.0 : data.operationFee / data.revenue * 100;
+    final feeShare = data.revenue == 0
+        ? 0.0
+        : data.operationFee / data.revenue * 100;
 
     const gap = 16.0;
     return LayoutBuilder(
@@ -285,6 +290,7 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
         final width = (constraints.maxWidth - gap * (columns - 1)) / columns;
 
         Widget card({
+          required int index,
           required String label,
           required num value,
           required String Function(num value) format,
@@ -292,12 +298,13 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
           required String supporting,
           required List<double> spark,
           required Color sparkColor,
-          bool highlight = false,
           Widget? footer,
         }) {
+          final highlighted = _overviewHighlightedCard == index;
           return OfSummaryCard(
             width: width,
-            highlight: highlight,
+            highlight: highlighted,
+            onTap: () => setState(() => _overviewHighlightedCard = index),
             label: label,
             value: value,
             format: format,
@@ -305,10 +312,16 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
             badgeUp: delta.up,
             badgeTone: delta.tone,
             supporting: supporting,
-            footer: footer ??
+            footer:
+                footer ??
                 Align(
                   alignment: Alignment.centerRight,
-                  child: OfSparkBars(color: sparkColor, values: spark),
+                  child: OfSparkBars(
+                    color: highlighted
+                        ? Colors.white.withValues(alpha: 0.85)
+                        : sparkColor,
+                    values: spark,
+                  ),
                 ),
           );
         }
@@ -318,6 +331,7 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
           runSpacing: gap,
           children: [
             card(
+              index: 0,
               label: 'Revenue',
               value: data.revenue,
               format: _moneyCounter(data.revenue),
@@ -333,6 +347,7 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
               sparkColor: AppColors.green,
             ),
             card(
+              index: 1,
               label: 'Cost of goods',
               value: data.cogs,
               format: _moneyCounter(data.cogs),
@@ -348,6 +363,7 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
               sparkColor: AppColors.red,
             ),
             card(
+              index: 2,
               label: 'Gross profit',
               value: data.grossProfit,
               format: _moneyCounter(data.grossProfit),
@@ -361,6 +377,7 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
               sparkColor: p.primary,
             ),
             card(
+              index: 3,
               label: 'Gross margin',
               value: data.marginPct,
               format: (v) => '${v.toStringAsFixed(1)}%',
@@ -377,12 +394,17 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
                 child: LinearProgressIndicator(
                   value: (data.marginPct / 100).clamp(0.0, 1.0),
                   minHeight: 5,
-                  backgroundColor: p.chipBg,
-                  color: p.primary,
+                  backgroundColor: _overviewHighlightedCard == 3
+                      ? Colors.white.withValues(alpha: 0.28)
+                      : p.chipBg,
+                  color: _overviewHighlightedCard == 3
+                      ? Colors.white
+                      : p.primary,
                 ),
               ),
             ),
             card(
+              index: 4,
               label: 'Units sold',
               value: data.unitsSold,
               format: (v) => ofCount(v),
@@ -391,12 +413,12 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
                 previous?.unitsSold,
                 higherIsBetter: true,
               ),
-              supporting:
-                  '${data.avgUnits.toStringAsFixed(1)} per transaction',
+              supporting: '${data.avgUnits.toStringAsFixed(1)} per transaction',
               spark: _spark((m) => m.unitsSold.toDouble()),
               sparkColor: AppColors.blue,
             ),
             card(
+              index: 5,
               label: 'Transactions',
               value: data.transactions,
               format: (v) => ofCount(v),
@@ -410,19 +432,17 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
               sparkColor: AppColors.blueBright,
             ),
             card(
+              index: 6,
               label: 'Average order value',
               value: data.aov,
               format: _moneyCounter(data.aov),
-              delta: trendDelta(
-                data.aov,
-                previous?.aov,
-                higherIsBetter: true,
-              ),
+              delta: trendDelta(data.aov, previous?.aov, higherIsBetter: true),
               supporting: 'Revenue per transaction',
               spark: _spark((m) => m.aov),
               sparkColor: AppColors.teal,
             ),
             card(
+              index: 7,
               label: 'Avg units / transaction',
               value: data.avgUnits,
               format: (v) => v.toStringAsFixed(2),
@@ -436,6 +456,7 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
               sparkColor: p.accentText,
             ),
             card(
+              index: 8,
               label: 'Operation fee',
               value: data.operationFee,
               format: _moneyCounter(data.operationFee),
@@ -452,12 +473,17 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
                 child: LinearProgressIndicator(
                   value: (feeShare / 100).clamp(0.0, 1.0),
                   minHeight: 5,
-                  backgroundColor: p.chipBg,
-                  color: AppColors.orange,
+                  backgroundColor: _overviewHighlightedCard == 8
+                      ? Colors.white.withValues(alpha: 0.28)
+                      : p.chipBg,
+                  color: _overviewHighlightedCard == 8
+                      ? Colors.white
+                      : AppColors.orange,
                 ),
               ),
             ),
             card(
+              index: 9,
               label: 'Net profit',
               value: data.netProfit,
               format: _moneyCounter(data.netProfit),
@@ -468,8 +494,7 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
               ),
               supporting: 'After cost of goods and fees',
               spark: _spark((m) => m.netProfit),
-              sparkColor: Colors.white,
-              highlight: true,
+              sparkColor: p.accentText,
             ),
           ],
         );
@@ -541,13 +566,12 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
   }
 
   Widget _emptyOverview(AppPalette p) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: ofCardDecoration(context),
-      child: Text(
-        'No sales data for that month.',
-        style: ofText(size: 13, color: p.textMuted),
-      ),
+    final name =
+        '${overviewMonthAbbr[_overviewMonth.month - 1]} ${_overviewMonth.year}';
+    return AppEmptyState(
+      title: 'No sales recorded in $name',
+      subtitle: 'Try a different month or check your filters.',
+      icon: Icons.receipt_long_outlined,
     );
   }
 
@@ -555,7 +579,8 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
   List<double> _spark(double Function(OverviewMonth) pick) {
     final series = _overviewSeries();
     final index = series.indexWhere(
-      (m) => m.month.year == _overviewMonth.year &&
+      (m) =>
+          m.month.year == _overviewMonth.year &&
           m.month.month == _overviewMonth.month,
     );
     if (index < 0) return List<double>.filled(7, 0.12);
@@ -569,23 +594,13 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
   }
 
   /// The selected year with real revenue, COGS, units, transactions and the
-  /// operation fee computed from the shop's rules. Falls back to the designed
-  /// demo series only while the API response is still in flight.
+  /// operation fee computed from the shop's rules.
+  ///
+  /// Before the API responds there is no series at all — the cards show a
+  /// skeleton and the chart draws nothing, rather than a designed year of
+  /// numbers the shop never made.
   List<OverviewMonth> _overviewSeries() {
-    if (_vm.months.isEmpty) {
-      return overviewMonths
-          .map(
-            (m) => OverviewMonth(
-              month: m.month,
-              revenue: m.revenue,
-              cogsValue: m.cogsValue,
-              operationFee: 0,
-              unitsSold: m.unitsSold,
-              transactions: m.transactions,
-            ),
-          )
-          .toList();
-    }
+    if (_vm.months.isEmpty) return const [];
 
     return _vm.yearMonths(_overviewMonth.year).map((m) {
       final month = m.month.month;
@@ -609,6 +624,7 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
         .where((m) => m.revenue > 0 && m.transactions > 0)
         .toList();
   }
+
   String _money(num value) {
     final abs = value.abs();
     if (abs >= 1000000) {
@@ -644,5 +660,49 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
         _vm.load(year: newMonth.year);
       }
     }
+  }
+}
+
+/// Placeholder for the Overview cards while the first response is in flight.
+///
+/// The grid has ten cards; the skeleton draws ten so the layout does not jump
+/// when the real figures land.
+class _OverviewSkeleton extends StatelessWidget {
+  final int columns;
+  const _OverviewSkeleton({required this.columns});
+
+  @override
+  Widget build(BuildContext context) {
+    const gap = 16.0;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = (constraints.maxWidth - gap * (columns - 1)) / columns;
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children: [
+            for (var i = 0; i < 10; i++)
+              SizedBox(
+                width: width,
+                child: const SkeletonCard(
+                  radius: 12,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SkeletonBox(width: 96, height: 12, radius: 4),
+                      SizedBox(height: 12),
+                      SkeletonBox(width: 140, height: 26, radius: 6),
+                      SizedBox(height: 10),
+                      SkeletonBox(width: 120, height: 11, radius: 4),
+                      SizedBox(height: 24),
+                      SkeletonBox(width: 72, height: 18, radius: 4),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
   }
 }

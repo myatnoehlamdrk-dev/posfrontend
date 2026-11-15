@@ -8,6 +8,7 @@ import 'package:posfrontend/core/network/app_exceptions.dart';
 import 'package:posfrontend/features/product/data/models/product_create_models.dart';
 import 'package:posfrontend/features/product/data/repositories/product_create_repository_impl.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/cached_product_image.dart';
@@ -261,7 +262,7 @@ class _StockAddScreenState extends State<StockAddScreen> {
       onChanged: _onSearchChanged,
       decoration: InputDecoration(
         hintText: context.l10n.t('Search products...'),
-        hintStyle: TextStyle(color: p.textSecondary, fontSize: 14),
+        hintStyle: TextStyle(color: p.textSecondary, fontSize: AppTypography.bodySmallSize),
         prefixIcon: Icon(Icons.search, color: p.textSecondary),
         filled: true,
         fillColor: p.surface,
@@ -319,7 +320,7 @@ class _StockAddScreenState extends State<StockAddScreen> {
                   Text(
                     p.name,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: AppTypography.bodySmallSize,
                       fontWeight: FontWeight.w600,
                       color: palette.textPrimary,
                     ),
@@ -329,7 +330,7 @@ class _StockAddScreenState extends State<StockAddScreen> {
                     Text(
                       p.brand,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: AppTypography.labelSmallSize,
                         color: palette.textSecondary,
                       ),
                       overflow: TextOverflow.ellipsis,
@@ -339,7 +340,7 @@ class _StockAddScreenState extends State<StockAddScreen> {
                         ? 'Stock: ${p.stock}'
                         : 'Stock: ${p.stock} · ${p.variants.length} variants',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: AppTypography.labelSmallSize,
                       color: palette.textSecondary,
                     ),
                   ),
@@ -407,7 +408,7 @@ class _StockAddScreenState extends State<StockAddScreen> {
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: AppTypography.bodySmallSize,
                   fontWeight: FontWeight.w500,
                   color: p.textPrimary,
                 ),
@@ -415,7 +416,7 @@ class _StockAddScreenState extends State<StockAddScreen> {
               const SizedBox(height: 4),
               Text(
                 current,
-                style: TextStyle(fontSize: 12, color: p.textSecondary),
+                style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.textSecondary),
               ),
             ],
           ),
@@ -427,7 +428,7 @@ class _StockAddScreenState extends State<StockAddScreen> {
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
               hintText: context.l10n.t('Add'),
-              hintStyle: TextStyle(color: p.textSecondary, fontSize: 14),
+              hintStyle: TextStyle(color: p.textSecondary, fontSize: AppTypography.bodySmallSize),
               filled: true,
               fillColor: p.surface,
               contentPadding: const EdgeInsets.symmetric(
@@ -500,7 +501,7 @@ class _StockAddScreenState extends State<StockAddScreen> {
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
-                        fontSize: 16,
+                        fontSize: AppTypography.bodyLargeSize,
                       ),
                     ),
             ),

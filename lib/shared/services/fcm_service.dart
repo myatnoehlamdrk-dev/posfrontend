@@ -266,7 +266,7 @@ class FcmService {
         data: {
           'type': 'out_of_stock',
           'product_name': productName,
-          if (sku != null) 'sku': sku,
+          'sku': ?sku,
           'current_stock': currentStock.toString(),
         },
       ),
@@ -293,7 +293,7 @@ class FcmService {
         data: {
           'type': 'low_stock',
           'product_name': productName,
-          if (sku != null) 'sku': sku,
+          'sku': ?sku,
           'current_stock': currentStock.toString(),
           'threshold': threshold.toString(),
         },
@@ -319,7 +319,7 @@ class FcmService {
         data: {
           'type': 'stock_restored',
           'product_name': productName,
-          if (sku != null) 'sku': sku,
+          'sku': ?sku,
           'new_stock': newStock.toString(),
         },
       ),

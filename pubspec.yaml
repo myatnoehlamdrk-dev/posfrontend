@@ -118,6 +118,11 @@ flutter:
     - assets/shop.png
     - assets/shop_rotated.png
     - assets/launcher.png
+    - assets/login1.png
+    - assets/login2.png
+    - assets/register.png
+    - assets/shopc.png
+    - assets/forgot.png
 
   # Poppins carries no Burmese, Thai or CJK glyphs, so text in those languages
   # would render as tofu boxes. These are applied as a per-glyph fallback

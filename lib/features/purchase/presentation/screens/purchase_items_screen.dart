@@ -8,11 +8,13 @@ import 'package:posfrontend/features/purchase/presentation/viewmodels/purchase_i
 import 'package:posfrontend/features/purchase/domain/entities/purchase.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/app_page_transitions.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/app_shell.dart';
 import 'package:posfrontend/shared/widgets/error_retry_view.dart';
 import 'package:posfrontend/shared/widgets/filter_tabs.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class PurchaseItemsScreen extends StatefulWidget {
@@ -107,7 +109,7 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
               const SizedBox(height: 12),
               Text(
                 context.l10n.t('Manage purchase orders from your suppliers'),
-                style: TextStyle(fontSize: 13, color: p.textSecondary),
+                style: TextStyle(fontSize: AppTypography.labelMediumSize, color: p.textSecondary),
               ),
               const SizedBox(height: 16),
               FilterTabs(
@@ -146,7 +148,7 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                   child: Center(
                     child: Text(
                       context.l10n.t('No more items'),
-                      style: TextStyle(color: p.textSecondary, fontSize: 13),
+                      style: TextStyle(color: p.textSecondary, fontSize: AppTypography.labelMediumSize),
                     ),
                   ),
                 ),
@@ -173,7 +175,7 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
     final isCompleted = order.status == PurchaseStatus.completed;
     return GestureDetector(
       onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => PurchaseDetailScreen(order: order)),
+        AppPageTransitions.fadeSlide<void>(PurchaseDetailScreen(order: order)),
       ),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
@@ -217,7 +219,7 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                             .t('Order #{v1}')
                             .replaceAll('{v1}', (order.orderId).toString()),
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: AppTypography.labelSmallSize,
                           color: p.textSecondary,
                           fontWeight: FontWeight.w500,
                         ),
@@ -226,7 +228,7 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                       Text(
                         order.productName,
                         style: TextStyle(
-                          fontSize: 15,
+                          fontSize: AppTypography.bodyMediumSize,
                           fontWeight: FontWeight.w600,
                           color: p.textPrimary,
                         ),
@@ -248,7 +250,7 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                             ? context.l10n.t('Shop')
                             : context.l10n.t('Inventory'),
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: AppTypography.labelSmallSize,
                       fontWeight: FontWeight.w600,
                       color: isCompleted ? p.successFg : p.warningFg,
                     ),
@@ -267,7 +269,7 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                       .t('by {v1}')
                       .replaceAll('{v1}', (order.createdBy).toString()),
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: AppTypography.labelSmallSize,
                     color: p.textSecondary,
                     fontStyle: FontStyle.italic,
                   ),
@@ -277,17 +279,23 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
               children: [
                 Icon(Icons.business_outlined, size: 14, color: p.textSecondary),
                 const SizedBox(width: 4),
-                Text(
-                  order.supplierName,
-                  style: TextStyle(fontSize: 12, color: p.textSecondary),
+                Expanded(
+                  child: Text(
+                    order.supplierName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontSize: AppTypography.labelSmallSize,
+                        color: p.textSecondary),
+                  ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 Text(
                   context.l10n
                       .t('x{v1}')
                       .replaceAll('{v1}', (order.quantity).toString()),
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: AppTypography.labelSmallSize,
                     color: p.textSecondary,
                     fontWeight: FontWeight.w500,
                   ),
@@ -295,12 +303,12 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                 const SizedBox(width: 4),
                 Text(
                   '@',
-                  style: TextStyle(fontSize: 12, color: p.textSecondary),
+                  style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.textSecondary),
                 ),
                 const SizedBox(width: 4),
                 PriceText(
                   order.unitPrice.toDouble(),
-                  style: TextStyle(fontSize: 12, color: p.textSecondary),
+                  style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.textSecondary),
                 ),
               ],
             ),
@@ -313,11 +321,17 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                   color: p.textSecondary,
                 ),
                 const SizedBox(width: 4),
-                Text(
-                  order.date,
-                  style: TextStyle(fontSize: 11, color: p.textSecondary),
+                Expanded(
+                  child: Text(
+                    order.date,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontSize: AppTypography.labelSmallSize,
+                        color: p.textSecondary),
+                  ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 if (!isCompleted)
                   GestureDetector(
                     onTap: () =>
@@ -334,7 +348,7 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                       child: Text(
                          context.l10n.t('Mark as Shop'),
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: AppTypography.labelSmallSize,
                           fontWeight: FontWeight.w600,
                           color: p.successFg,
                         ),
@@ -345,7 +359,7 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen> {
                 PriceText(
                   order.totalAmount.toDouble(),
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: AppTypography.bodyLargeSize,
                     fontWeight: FontWeight.w700,
                     color: AppColors.brandPurple,
                   ),

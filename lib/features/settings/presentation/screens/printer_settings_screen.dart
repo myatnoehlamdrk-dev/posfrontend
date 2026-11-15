@@ -3,6 +3,8 @@ import 'package:posfrontend/features/settings/data/printer_profile_store.dart';
 import 'package:posfrontend/features/settings/domain/entities/printer_profile.dart';
 import 'package:posfrontend/features/settings/presentation/widgets/printer_form_sheet.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
@@ -25,7 +27,7 @@ class PrinterSettingsScreen extends StatefulWidget {
 }
 
 class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
-  static const Color orange = Color(0xFFF97316);
+  static const Color orange = AppColors.orangeBright;
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final PrinterProfileStore _store = PrinterProfileStore();
@@ -124,7 +126,7 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
             Text(
               context.l10n.t('No printers saved yet.'),
               style: TextStyle(
-                fontSize: 15,
+                fontSize: AppTypography.bodyMediumSize,
                 fontWeight: FontWeight.w500,
                 color: p.textSecondary,
               ),
@@ -133,7 +135,7 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
             Text(
               context.l10n.t('Add your WiFi thermal printer to get started.'),
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: p.textMuted),
+              style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.textMuted),
             ),
           ],
         ),
@@ -194,7 +196,7 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 15,
+                          fontSize: AppTypography.bodyMediumSize,
                           fontWeight: FontWeight.w600,
                           color: p.textPrimary,
                         ),
@@ -205,7 +207,7 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 12.5,
+                          fontSize: AppTypography.labelMediumSize,
                           color: p.textSecondary,
                         ),
                       ),
@@ -273,7 +275,7 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
           Text(
             context.l10n.t('Default'),
             style: const TextStyle(
-              fontSize: 11.5,
+              fontSize: AppTypography.labelSmallSize,
               fontWeight: FontWeight.w600,
               color: orange,
             ),
@@ -294,7 +296,7 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
       child: Text(
         paperSize,
         style: TextStyle(
-          fontSize: 12,
+          fontSize: AppTypography.labelSmallSize,
           fontWeight: FontWeight.w600,
           color: p.textSecondary,
         ),
@@ -329,7 +331,7 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
                 'print dialog fallback uses the printer your system already '
                 'knows.',
               ),
-              style: TextStyle(fontSize: 12, color: p.textSecondary),
+              style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.textSecondary),
             ),
           ),
         ],
@@ -385,7 +387,7 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, true),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFEF4444),
+                backgroundColor: AppColors.red,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),

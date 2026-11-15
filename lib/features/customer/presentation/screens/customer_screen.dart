@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/features/customer/presentation/viewmodels/customer_view_model.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/error_retry_view.dart';
@@ -93,11 +94,11 @@ class _CustomerScreenState extends State<CustomerScreen>
                   ),
                   indicatorSize: TabBarIndicatorSize.tab,
                   labelStyle: const TextStyle(
-                    fontSize: 13,
+                    fontSize: AppTypography.labelMediumSize,
                     fontWeight: FontWeight.w600,
                   ),
                   unselectedLabelStyle: const TextStyle(
-                    fontSize: 13,
+                    fontSize: AppTypography.labelMediumSize,
                     fontWeight: FontWeight.w500,
                   ),
                   tabs: const [

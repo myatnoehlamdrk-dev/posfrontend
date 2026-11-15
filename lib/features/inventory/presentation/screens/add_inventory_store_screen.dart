@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_message.dart';
 
@@ -93,7 +94,7 @@ class _AddInventoryStoreScreenState extends State<AddInventoryStoreScreen> {
         child: Text(
           title.toUpperCase(),
           style: TextStyle(
-            fontSize: 9,
+            fontSize: AppTypography.labelSmallSize,
             fontWeight: FontWeight.w700,
             letterSpacing: 1,
             color: p.textSecondary,
@@ -204,7 +205,7 @@ class _AddInventoryStoreScreenState extends State<AddInventoryStoreScreen> {
                     : Text(
                         context.l10n.t('Save'),
                         style: const TextStyle(
-                          fontSize: 11,
+                          fontSize: AppTypography.labelSmallSize,
                           fontWeight: FontWeight.w700,
                         ),
                       ),

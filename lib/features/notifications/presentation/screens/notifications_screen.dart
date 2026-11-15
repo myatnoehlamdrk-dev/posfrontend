@@ -116,11 +116,11 @@ class _NotificationsScreenState extends State<NotificationsScreen>
         ),
         indicatorSize: TabBarIndicatorSize.tab,
         labelStyle: const TextStyle(
-          fontSize: 13,
+          fontSize: AppTypography.labelMediumSize,
           fontWeight: FontWeight.w600,
         ),
         unselectedLabelStyle: const TextStyle(
-          fontSize: 13,
+          fontSize: AppTypography.labelMediumSize,
           fontWeight: FontWeight.w500,
         ),
         tabs: [
@@ -279,83 +279,53 @@ class _NotificationTile extends StatelessWidget {
 
   const _NotificationTile({required this.notification});
 
-  ({IconData icon, Color background, Color foreground}) get _style {
+  ({IconData icon}) get _style {
     switch (notification.type) {
       case 'stock_out':
       case 'out_of_stock':
-        return (
-          icon: Icons.remove_shopping_cart_outlined,
-          background: const Color(0xFFFEE2E2),
-          foreground: const Color(0xFFB91C1C),
-        );
+        return (icon: Icons.remove_shopping_cart_outlined);
       case 'low_stock':
-        return (
-          icon: Icons.warning_amber_rounded,
-          background: const Color(0xFFFEF3C7),
-          foreground: const Color(0xFFB45309),
-        );
+        return (icon: Icons.warning_amber_rounded);
       case 'stock_restored':
-        return (
-          icon: Icons.add_shopping_cart_outlined,
-          background: const Color(0xFFDCFCE7),
-          foreground: const Color(0xFF15803D),
-        );
+        return (icon: Icons.add_shopping_cart_outlined);
       case 'package_out':
-        return (
-          icon: Icons.inventory_2_outlined,
-          background: const Color(0xFFFEE2E2),
-          foreground: const Color(0xFFB91C1C),
-        );
+        return (icon: Icons.inventory_2_outlined);
       case 'stock_report':
-        return (
-          icon: Icons.assignment_outlined,
-          background: const Color(0xFFDBEAFE),
-          foreground: const Color(0xFF1D4ED8),
-        );
+        return (icon: Icons.assignment_outlined);
       case 'feedback_thanks':
-        return (
-          icon: Icons.favorite_outline,
-          background: const Color(0xFFEDE9FE),
-          foreground: const Color(0xFF6D28D9),
-        );
+        return (icon: Icons.favorite_outline);
       default:
-        return (
-          icon: Icons.notifications_none_outlined,
-          background: const Color(0xFFF3F4F6),
-          foreground: const Color(0xFF5A6373),
-        );
+        return (icon: Icons.notifications_none_outlined);
     }
   }
 
-  /// The status pairs are constant-accent on purpose (same reasoning as
-  /// `AppPalette.primary`): they carry the alert kind, not the theme, and
-  /// the dark palette's softer variants would wash out against a dark card.
-  ({Color background, Color foreground}) _statusColors(bool isDark) {
-    if (!isDark) return (background: _style.background, foreground: _style.foreground);
+  /// Status tint pair for the notification's icon chip. Reads from the active
+  /// palette so the chip stays legible in both light and dark mode without a
+  /// hand-maintained brightness branch.
+  ({Color background, Color foreground}) _statusColors(BuildContext context) {
+    final p = context.palette;
     switch (notification.type) {
       case 'stock_out':
       case 'out_of_stock':
-        return (background: const Color(0xFF35191B), foreground: const Color(0xFFFCA5A5));
-      case 'low_stock':
-        return (background: const Color(0xFF302710), foreground: const Color(0xFFFCD34D));
-      case 'stock_restored':
-        return (background: const Color(0xFF13301F), foreground: const Color(0xFF6EE7A8));
       case 'package_out':
-        return (background: const Color(0xFF35191B), foreground: const Color(0xFFFCA5A5));
+        return (background: p.dangerBg, foreground: p.dangerFg);
+      case 'low_stock':
+        return (background: p.warningBg, foreground: p.warningFg);
+      case 'stock_restored':
+        return (background: p.successBg, foreground: p.successFg);
       case 'stock_report':
-        return (background: const Color(0xFF17233A), foreground: const Color(0xFF93C5FD));
+        return (background: p.infoBg, foreground: p.infoFg);
       case 'feedback_thanks':
-        return (background: const Color(0xFF2A2140), foreground: const Color(0xFFC4B5FD));
+        return (background: p.selectionTint, foreground: p.accentText);
       default:
-        return (background: const Color(0xFF354253), foreground: const Color(0xFFA2AAB8));
+        return (background: p.chipBg, foreground: p.textSecondary);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final status = _statusColors(isDark);
+    final status = _statusColors(context);
     final n = notification;
     return Material(
       color: p.surface,
@@ -404,7 +374,7 @@ class _NotificationTile extends StatelessWidget {
                             width: 8,
                             height: 8,
                             decoration: const BoxDecoration(
-                              color: Color(0xFFDC2626),
+                              color: AppColors.red,
                               shape: BoxShape.circle,
                             ),
                           ),

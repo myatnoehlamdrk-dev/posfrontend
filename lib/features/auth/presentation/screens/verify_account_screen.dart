@@ -5,8 +5,10 @@ import 'package:posfrontend/features/auth/domain/usecases/verify_account.dart';
 import 'package:posfrontend/features/auth/presentation/viewmodels/verify_account_view_model.dart';
 import 'package:posfrontend/features/auth/presentation/screens/login_screen.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_input_decoration.dart';
+import 'package:posfrontend/shared/widgets/app_page_transitions.dart';
 import 'package:posfrontend/shared/widgets/gradient_button.dart';
 import 'package:posfrontend/shared/widgets/required_label.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
@@ -66,7 +68,7 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
       showSuccessSnackBar(context, 'Email verified! You can now login.');
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        AppPageTransitions.fade<void>(const LoginScreen()),
         (route) => false,
       );
     }
@@ -102,14 +104,17 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
                     context.l10n.t('Verify Your Email'),
                     style: TextStyle(
                       color: p.textPrimary,
-                      fontSize: 26,
+                      fontSize: AppTypography.displaySmallSize,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     context.l10n.t('We sent a 6-digit verification code to'),
-                    style: TextStyle(color: p.textMuted, fontSize: 14),
+                    style: TextStyle(
+                      color: p.textMuted,
+                      fontSize: AppTypography.bodySmallSize,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 4),
@@ -117,7 +122,7 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
                     widget.email,
                     style: const TextStyle(
                       color: AppColors.primary,
-                      fontSize: 14,
+                      fontSize: AppTypography.bodySmallSize,
                       fontWeight: FontWeight.w600,
                     ),
                     textAlign: TextAlign.center,
@@ -147,7 +152,7 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
                       context.l10n.t('Resend Code'),
                       style: TextStyle(
                         color: AppColors.primary,
-                        fontSize: 13,
+                        fontSize: AppTypography.labelMediumSize,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -163,18 +168,28 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
                       padding: const EdgeInsets.only(top: 12),
                       child: Text(
                         _viewModel.errorMessage!,
-                        style: const TextStyle(color: Colors.red, fontSize: 13),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontSize: AppTypography.labelMediumSize,
+                        ),
                       ),
                     ),
                   const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  // Wrap rather than Row: translated prompts run long and
+                  // would overflow on a phone instead of wrapping.
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 6,
+                    runSpacing: 2,
                     children: [
                       Text(
                         context.l10n.t('Already verified?'),
-                        style: TextStyle(color: p.textMuted, fontSize: 14),
+                        style: TextStyle(
+                          color: p.textMuted,
+                          fontSize: AppTypography.bodySmallSize,
+                        ),
                       ),
-                      const SizedBox(width: 6),
                       GestureDetector(
                         onTap: () => Navigator.pushReplacement(
                           context,
@@ -186,7 +201,7 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
                           context.l10n.t('Back to Login'),
                           style: TextStyle(
                             color: AppColors.primary,
-                            fontSize: 14,
+                            fontSize: AppTypography.bodySmallSize,
                             fontWeight: FontWeight.w600,
                           ),
                         ),

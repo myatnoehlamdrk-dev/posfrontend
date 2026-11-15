@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:posfrontend/core/base/base_view_model.dart';
+import 'package:posfrontend/core/utils/error_handler.dart';
 import 'package:posfrontend/features/sale_analysis/data/repositories/operation_fee_repository.dart';
 import 'package:posfrontend/features/sale_analysis/presentation/operation_fee/operation_fee_models.dart';
 
@@ -8,7 +9,7 @@ class OperationFeeViewModel extends BaseViewModel {
   final OperationFeeRepository _repository;
 
   OperationFeeViewModel({OperationFeeRepository? repository})
-      : _repository = repository ?? OperationFeeRepository();
+    : _repository = repository ?? OperationFeeRepository();
 
   List<OperationFee> _fees = [];
   List<OperationFee> get fees => _fees;
@@ -18,6 +19,24 @@ class OperationFeeViewModel extends BaseViewModel {
 
   bool _saved = false;
   bool get saved => _saved;
+
+  OperationFeeProductImpact? _productImpact;
+  OperationFeeProductImpact? get productImpact => _productImpact;
+
+  bool _impactLoading = false;
+  bool get impactLoading => _impactLoading;
+
+  String? _impactError;
+  String? get impactError => _impactError;
+
+  int _impactRequest = 0;
+  bool _disposed = false;
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
 
   Future<void> load() async {
     await runAsync((token) async {
@@ -79,11 +98,70 @@ class OperationFeeViewModel extends BaseViewModel {
     }, errorPrefix: 'Failed to save settings');
   }
 
-  /// Fetches the one-month operation-fee report as CSV bytes.
-  Future<Uint8List?> downloadReport({
+  /// Loads the real product impacted by the month's fees.
+  ///
+  /// This deliberately bypasses [runAsync]: its shared error state drives the
+  /// page-level fee banner, and a preview failure should stay inside the
+  /// preview card instead of looking like the fee rules failed to load.
+  Future<void> loadProductImpact({
     required int year,
     required int month,
-  }) {
+    required String allocationMethod,
+    int? productId,
+  }) async {
+    final request = ++_impactRequest;
+    _impactLoading = true;
+    _impactError = null;
+    _productImpact = null;
+    notifyListeners();
+
+    try {
+      final data = await _repository.productImpact(
+        year: year,
+        month: month,
+        allocationMethod: allocationMethod,
+        productId: productId,
+        cancelToken: cancelToken,
+      );
+
+      // A newer month/method selection may have landed while this was in
+      // flight; only the latest request is allowed to publish.
+      if (_disposed || request != _impactRequest) return;
+
+      final product = data['product'];
+      _productImpact = product is Map<String, dynamic>
+          ? OperationFeeProductImpact.fromJson(product)
+          : null;
+    } catch (e) {
+      if (_disposed || request != _impactRequest) return;
+      _productImpact = null;
+      _impactError = formatApiError(e);
+    } finally {
+      if (!_disposed && request == _impactRequest) {
+        _impactLoading = false;
+        notifyListeners();
+      }
+    }
+  }
+
+  /// Searches the shop's products for the impact-preview picker.
+  ///
+  /// A failed search leaves the list empty; the picker shows its own empty
+  /// state rather than pulling the page-level fee error banner into view.
+  Future<List<OperationFeeProductOption>> searchProducts(String query) async {
+    try {
+      final data = await _repository.searchProducts(
+        query,
+        cancelToken: cancelToken,
+      );
+      return data.map(OperationFeeProductOption.fromJson).toList();
+    } catch (_) {
+      return const <OperationFeeProductOption>[];
+    }
+  }
+
+  /// Fetches the one-month operation-fee report as CSV bytes.
+  Future<Uint8List?> downloadReport({required int year, required int month}) {
     return runAsync(
       (token) => _repository.downloadReport(year: year, month: month),
       errorPrefix: 'Failed to download operation fee report',

@@ -4,8 +4,10 @@ import 'package:posfrontend/features/product/presentation/screens/add_product_sc
 import 'package:posfrontend/features/product/presentation/screens/quick_add_product_screen.dart';
 import 'package:posfrontend/features/product/presentation/screens/stock_add_screen.dart';
 import 'package:posfrontend/features/cart/presentation/screens/add_to_cart_screen.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/app_page_transitions.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/app_shell.dart';
 
@@ -45,13 +47,13 @@ class _AddProductOptionsScreenState extends State<AddProductOptionsScreen> {
                   children: [
                     Text(
                       context.l10n.t('Choose how you want to add a product'),
-                      style: TextStyle(color: p.textSecondary, fontSize: 14),
+                      style: TextStyle(color: p.textSecondary, fontSize: AppTypography.bodySmallSize),
                     ),
                     const SizedBox(height: 32),
                     _OptionCard(
                       icon: Icons.flash_on_rounded,
-                      iconBgColor: const Color(0xFFFFF7ED),
-                      iconColor: const Color(0xFFEA580C),
+                      iconBgColor: p.warningBg,
+                      iconColor: p.warningFg,
                       title: context.l10n.t('Express Item'),
                       subtitle: context.l10n.t(
                         'Add a product with minimal details — name, price, and stock only.',
@@ -61,8 +63,8 @@ class _AddProductOptionsScreenState extends State<AddProductOptionsScreen> {
                     const SizedBox(height: 16),
                     _OptionCard(
                       icon: Icons.inventory_2_outlined,
-                      iconBgColor: const Color(0xFFF0FDF4),
-                      iconColor: const Color(0xFF16A34A),
+                      iconBgColor: p.successBg,
+                      iconColor: p.successFg,
                       title: context.l10n.t('Update Stock'),
                       subtitle: context.l10n.t(
                         'Add stock to an existing product or create with detailed inventory tracking.',
@@ -73,7 +75,7 @@ class _AddProductOptionsScreenState extends State<AddProductOptionsScreen> {
                     _OptionCard(
                       icon: Icons.edit_note_rounded,
                       iconBgColor: p.selectionTint,
-                      iconColor: const Color(0xFF7C3AED),
+                      iconColor: p.accentText,
                       title: context.l10n.t('New Product'),
                       subtitle: context.l10n.t(
                         'Full product creation with all details — image, variants, categories, and supply chain.',
@@ -83,8 +85,8 @@ class _AddProductOptionsScreenState extends State<AddProductOptionsScreen> {
                     const SizedBox(height: 16),
                     _OptionCard(
                       icon: Icons.shopping_cart_outlined,
-                      iconBgColor: const Color(0xFFEFF6FF),
-                      iconColor: const Color(0xFF2563EB),
+                      iconBgColor: p.infoBg,
+                      iconColor: p.infoFg,
                       title: context.l10n.t('Add to Cart'),
                       subtitle: context.l10n.t(
                         'View the products saved in your cart and pick up where you left off.',
@@ -108,7 +110,7 @@ class _AddProductOptionsScreenState extends State<AddProductOptionsScreen> {
       'cart' => const AddToCartScreen(),
       _ => const AddProductScreen(),
     };
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+    Navigator.of(context).push(AppPageTransitions.fadeSlide<void>(screen));
   }
 }
 
@@ -164,7 +166,7 @@ class _OptionCard extends StatelessWidget {
                       title,
                       style: TextStyle(
                         color: p.textPrimary,
-                        fontSize: 16,
+                        fontSize: AppTypography.bodyLargeSize,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -173,7 +175,7 @@ class _OptionCard extends StatelessWidget {
                       subtitle,
                       style: TextStyle(
                         color: p.textSecondary,
-                        fontSize: 13,
+                        fontSize: AppTypography.labelMediumSize,
                         height: 1.4,
                       ),
                     ),

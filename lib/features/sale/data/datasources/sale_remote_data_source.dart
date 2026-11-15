@@ -50,7 +50,7 @@ class SaleRemoteDataSource {
       'payMethod': payMethod,
       'items': itemsData,
       'grandTotal': grandTotal,
-      if (discount != null) 'discount': discount,
+      'discount': ?discount,
       if (notes != null && notes.isNotEmpty) 'notes': notes,
     };
 
@@ -138,7 +138,7 @@ class SaleRemoteDataSource {
       'payMethod': payMethod,
       'items': itemsData,
       'grandTotal': grandTotal,
-      if (discount != null) 'discount': discount,
+      'discount': ?discount,
       if (notes != null && notes.isNotEmpty) 'notes': notes,
       'status': status,
     };
@@ -233,7 +233,7 @@ class SaleRemoteDataSource {
       'payMethod': payMethod,
       'items': itemsData,
       'grandTotal': grandTotal,
-      if (discount != null) 'discount': discount,
+      'discount': ?discount,
       if (notes != null && notes.isNotEmpty) 'notes': notes,
     };
 
@@ -325,11 +325,12 @@ class SaleRemoteDataSource {
       );
       final data = response.data;
       if (data is Map<String, dynamic>) return data;
-      if (data is List)
+      if (data is List) {
         return {
           'data': data,
           'meta': {'current_page': page, 'last_page': 1, 'total': data.length},
         };
+      }
       return {
         'data': [],
         'meta': {'current_page': 1, 'last_page': 1, 'total': 0},
@@ -350,11 +351,12 @@ class SaleRemoteDataSource {
       );
       final data = response.data;
       if (data is Map<String, dynamic>) return data;
-      if (data is List)
+      if (data is List) {
         return {
           'data': data,
           'meta': {'current_page': page, 'last_page': 1, 'total': data.length},
         };
+      }
       return {
         'data': [],
         'meta': {'current_page': 1, 'last_page': 1, 'total': 0},

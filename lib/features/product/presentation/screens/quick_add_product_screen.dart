@@ -15,6 +15,7 @@ import 'package:posfrontend/features/product/data/models/product_create_models.d
 import 'package:posfrontend/features/product/data/repositories/product_create_repository_impl.dart';
 import 'package:posfrontend/shared/repositories/imgbb_repository_impl.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
@@ -220,7 +221,7 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
     final p = ctx.palette;
     return ListTile(
       leading: Icon(icon, color: AppColors.brandPurple),
-      title: Text(label, style: TextStyle(fontSize: 15, color: p.textPrimary)),
+      title: Text(label, style: TextStyle(fontSize: AppTypography.bodyMediumSize, color: p.textPrimary)),
       onTap: () => Navigator.pop(ctx, source),
     );
   }
@@ -424,7 +425,7 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: AppTypography.labelSmallSize,
               fontWeight: FontWeight.w600,
               color: color,
             ),
@@ -451,13 +452,13 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
             Text(
               context.l10n.t(label),
               style: TextStyle(
-                fontSize: 14,
+                fontSize: AppTypography.bodySmallSize,
                 fontWeight: FontWeight.w500,
                 color: p.textPrimary,
               ),
             ),
             if (req)
-              Text(' *', style: TextStyle(color: p.dangerFg, fontSize: 14)),
+              Text(' *', style: TextStyle(color: p.dangerFg, fontSize: AppTypography.bodySmallSize)),
           ],
         ),
         const SizedBox(height: 8),
@@ -470,7 +471,7 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
               : TextInputType.text,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: p.textSecondary, fontSize: 14),
+            hintStyle: TextStyle(color: p.textSecondary, fontSize: AppTypography.bodySmallSize),
             filled: true,
             fillColor: p.surface,
             contentPadding: const EdgeInsets.symmetric(
@@ -542,7 +543,7 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
-                        fontSize: 16,
+                        fontSize: AppTypography.bodyLargeSize,
                       ),
                     ),
             ),

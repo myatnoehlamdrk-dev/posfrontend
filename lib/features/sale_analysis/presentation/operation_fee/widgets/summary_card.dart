@@ -35,6 +35,10 @@ class OfSummaryCard extends StatelessWidget {
   /// Dark brand card used for the headline figure.
   final bool highlight;
 
+  /// Makes the whole card tappable, used to move the theme highlight between
+  /// the cards in a finance grid.
+  final VoidCallback? onTap;
+
   final double height;
 
   const OfSummaryCard({
@@ -49,71 +53,87 @@ class OfSummaryCard extends StatelessWidget {
     required this.supporting,
     required this.footer,
     this.highlight = false,
+    this.onTap,
     this.height = 150,
   });
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final labelColor =
-        highlight ? Colors.white.withValues(alpha: 0.8) : p.textSecondary;
+    final labelColor = highlight
+        ? Colors.white.withValues(alpha: 0.8)
+        : p.textSecondary;
     final valueColor = highlight ? Colors.white : p.textPrimary;
-    final supportingColor =
-        highlight ? Colors.white.withValues(alpha: 0.7) : p.textMuted;
+    final supportingColor = highlight
+        ? Colors.white.withValues(alpha: 0.7)
+        : p.textMuted;
 
-    return Container(
-      width: width,
-      height: height,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: highlight ? p.primary : p.surface,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: highlight ? p.primary : p.border),
-        boxShadow: p.cardElevation,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: ofText(size: 12, color: labelColor)),
-          const SizedBox(height: 8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Flexible(
-                child: CountUpText(
-                  value: value,
-                  format: format ?? (v) => ofMoney(v),
+        child: Ink(
+          width: width,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: highlight ? p.primary : p.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: highlight ? p.primary : p.border),
+            boxShadow: p.cardElevation,
+          ),
+          child: ConstrainedBox(
+            // A fixed 150dp box overflows the moment the OS text scale passes
+            // ~1.4x. Keep 150 as the floor so a row of cards still lines up,
+            // but let accessibility text grow the card instead of clipping it.
+            constraints: BoxConstraints(minHeight: height - 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: ofText(size: 12, color: labelColor)),
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: CountUpText(
+                        value: value,
+                        format: format ?? (v) => ofMoney(v),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: ofText(
+                          size: 24,
+                          weight: FontWeight.w700,
+                          color: valueColor,
+                          height: 1.05,
+                        ),
+                      ),
+                    ),
+                    if (badgeText != null) ...[
+                      const SizedBox(width: 8),
+                      _Badge(
+                        text: badgeText!,
+                        up: badgeUp,
+                        tone: badgeTone,
+                        onHighlight: highlight,
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  supporting,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: ofText(
-                    size: 24,
-                    weight: FontWeight.w700,
-                    color: valueColor,
-                    height: 1.05,
-                  ),
+                  style: ofText(size: 11.5, color: supportingColor),
                 ),
-              ),
-              if (badgeText != null) ...[
-                const SizedBox(width: 8),
-                _Badge(
-                  text: badgeText!,
-                  up: badgeUp,
-                  tone: badgeTone,
-                  onHighlight: highlight,
-                ),
+                const SizedBox(height: 12),
+                footer,
               ],
-            ],
+            ),
           ),
-          const SizedBox(height: 5),
-          Text(
-            supporting,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: ofText(size: 11.5, color: supportingColor),
-          ),
-          const Spacer(),
-          footer,
-        ],
+        ),
       ),
     );
   }

@@ -21,6 +21,7 @@ import 'package:posfrontend/shared/l10n/app_strings.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
+import 'package:posfrontend/shared/widgets/app_page_transitions.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 
 /// Stable identity for a drawer destination.
@@ -57,10 +58,19 @@ enum DrawerDestination {
   /// inventory (private or shared) to work in.
   inventory(label: 'Shop', icon: Icons.storefront_outlined),
 
-  /// Stock overview for the shop. The screen itself is still a placeholder;
-  /// the destination exists so the sidebar has its own Inventory entry,
-  /// separate from Shop.
-  inventoryOverview(label: 'Inventory', icon: Icons.inventory_2_outlined),
+  /// Stock overview for the shop, and the entry point to the inventory screens
+  /// below it (add/edit store, adjust stock, inventory products).
+  ///
+  /// Intentionally not listed in the drawer: this inventory management area is
+  /// disconnected from drawer navigation. The destination is kept only so
+  /// `InventoryOverviewScreen` still has an identity to pass to [AppShell];
+  /// nothing navigates to it, so the whole subtree is unreachable from the UI.
+  /// The Shop destination above remains in the drawer.
+  inventoryOverview(
+    label: 'Inventory',
+    icon: Icons.inventory_2_outlined,
+    showInDrawer: false,
+  ),
 
   /// Reached from the Add Product options screen rather than the drawer, since
   /// it is part of that flow. It stays a destination so its own screen can
@@ -178,7 +188,7 @@ class AppDrawer extends StatelessWidget {
                           ],
                         ),
                         style: const TextStyle(
-                          fontSize: 24,
+                          fontSize: AppTypography.titleLargeSize,
                           letterSpacing: -1,
                           height: 1,
                         ),
@@ -188,7 +198,7 @@ class AppDrawer extends StatelessWidget {
                         active.label,
                         style: const TextStyle(
                           color: Colors.white70,
-                          fontSize: 12,
+                          fontSize: AppTypography.labelSmallSize,
                         ),
                       ),
                     ],
@@ -446,7 +456,7 @@ class _LogoutTile extends StatefulWidget {
 class _LogoutTileState extends State<_LogoutTile> {
   bool _isLoading = false;
 
-  static const Color red = Color(0xFFEF4444);
+  static const Color red = AppColors.red;
 
   Future<void> _handleLogout() async {
     setState(() => _isLoading = true);
@@ -461,7 +471,7 @@ class _LogoutTileState extends State<_LogoutTile> {
     if (mounted) {
       AuthScope.updateUserOf(context, null);
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        AppPageTransitions.fade<void>(const LoginScreen()),
         (route) => false,
       );
     }

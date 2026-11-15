@@ -8,6 +8,7 @@ import 'package:posfrontend/features/purchase/domain/entities/purchase.dart';
 import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class PurchaseDetailScreen extends StatefulWidget {
@@ -112,7 +113,7 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
                               Text(
                                 context.l10n.t('Total Amount'),
                                 style: TextStyle(
-                                  fontSize: 13,
+                                  fontSize: AppTypography.labelMediumSize,
                                   color: p.textSecondary,
                                 ),
                               ),
@@ -121,7 +122,7 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
                                 child: PriceText(
                                   _order.totalAmount.toDouble(),
                                   style: TextStyle(
-                                    fontSize: 13,
+                                    fontSize: AppTypography.labelMediumSize,
                                     fontWeight: FontWeight.w500,
                                     color: p.textPrimary,
                                   ),
@@ -136,7 +137,7 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
                             Text(
                               _order.notes,
                               style: TextStyle(
-                                fontSize: 13,
+                                fontSize: AppTypography.labelMediumSize,
                                 color: p.textPrimary,
                               ),
                             ),
@@ -188,7 +189,7 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
                 context.l10n.t('Purchase Detail'),
                 style: TextStyle(
                   color: p.textPrimary,
-                  fontSize: 18,
+                  fontSize: AppTypography.titleSmallSize,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -226,7 +227,7 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
                       .t('Order #{v1}')
                       .replaceAll('{v1}', (_order.orderId).toString()),
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: AppTypography.bodyLargeSize,
                     fontWeight: FontWeight.w700,
                     color: p.textPrimary,
                   ),
@@ -244,7 +245,7 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
                 child: Text(
                   isCompleted ? 'Completed' : 'Pending',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: AppTypography.labelSmallSize,
                     fontWeight: FontWeight.w600,
                     color: isCompleted ? p.successFg : p.warningFg,
                   ),
@@ -256,7 +257,7 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
           Text(
             _order.productName,
             style: TextStyle(
-              fontSize: 18,
+              fontSize: AppTypography.titleSmallSize,
               fontWeight: FontWeight.w600,
               color: p.textPrimary,
             ),
@@ -275,7 +276,7 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
               Expanded(
                 child: Text(
                   _formatDate(_order.date),
-                  style: TextStyle(fontSize: 13, color: p.textSecondary),
+                  style: TextStyle(fontSize: AppTypography.labelMediumSize, color: p.textSecondary),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -285,7 +286,7 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
                 child: PriceText(
                   _order.totalAmount.toDouble(),
                   style: const TextStyle(
-                    fontSize: 15,
+                    fontSize: AppTypography.bodyMediumSize,
                     fontWeight: FontWeight.w700,
                     color: AppColors.teal,
                   ),
@@ -324,7 +325,7 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
           Text(
             context.l10n.t(title),
             style: TextStyle(
-              fontSize: 15,
+              fontSize: AppTypography.bodyMediumSize,
               fontWeight: FontWeight.w600,
               color: p.textPrimary,
             ),
@@ -345,14 +346,14 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
         children: [
           Text(
             context.l10n.t(label),
-            style: TextStyle(fontSize: 13, color: p.textSecondary),
+            style: TextStyle(fontSize: AppTypography.labelMediumSize, color: p.textSecondary),
           ),
           const SizedBox(width: 12),
           Flexible(
             child: Text(
               value,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: AppTypography.labelMediumSize,
                 fontWeight: FontWeight.w500,
                 color: p.textPrimary,
               ),

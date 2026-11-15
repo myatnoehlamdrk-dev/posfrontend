@@ -11,6 +11,7 @@ import 'package:posfrontend/features/product/presentation/widgets/purchase_item_
 import 'package:posfrontend/features/purchase/data/repositories/purchase_repository_impl.dart';
 import 'package:posfrontend/features/purchase/domain/entities/purchase.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
@@ -79,24 +80,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
         // the same navigation.
         return WideDrawerDock(
           active: DrawerDestination.addProduct,
-          child: LayoutBuilder(
-            builder: (ctx, constraints) {
-              final isWide = constraints.maxWidth >= 768;
-              final body = _content();
-              final bottomBar = _addMode == 0 ? _createButton() : null;
-              final scaffold = isWide
-                  ? Scaffold(
-                      backgroundColor: p.scaffoldBg,
-                      body: body,
-                      bottomNavigationBar: bottomBar,
-                    )
-                  : Scaffold(
-                      backgroundColor: p.scaffoldBg,
-                      body: body,
-                      bottomNavigationBar: bottomBar,
-                    );
-              return scaffold;
-            },
+          child: Scaffold(
+            backgroundColor: p.scaffoldBg,
+            body: _content(),
+            bottomNavigationBar: _addMode == 0 ? _createButton() : null,
           ),
         );
       },
@@ -190,7 +177,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 13.5,
+                    fontSize: AppTypography.labelMediumSize,
                     fontWeight: FontWeight.w600,
                     color: active ? AppColors.brandPurple : p.textSecondary,
                   ),
@@ -212,7 +199,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
           Text(
             context.l10n.t('Search Purchase Item'),
             style: TextStyle(
-              fontSize: 16,
+              fontSize: AppTypography.bodyLargeSize,
               fontWeight: FontWeight.w600,
               color: context.palette.textPrimary,
             ),
@@ -223,7 +210,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
               'Pick a pending purchase item to copy its name, stock, price and supplier into the form. It is marked completed once the product is created.',
             ),
             style: TextStyle(
-              fontSize: 13,
+              fontSize: AppTypography.labelMediumSize,
               color: context.palette.textSecondary,
             ),
           ),
@@ -440,7 +427,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
             padding: const EdgeInsets.only(top: 10),
             child: Text(
               url!,
-              style: TextStyle(fontSize: 12, color: p.textSecondary),
+              style: TextStyle(
+                fontSize: AppTypography.labelSmallSize,
+                color: p.textSecondary,
+              ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -526,7 +516,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
             Text(
               context.l10n.t('Is Set / Bundle'),
               style: TextStyle(
-                fontSize: 14,
+                fontSize: AppTypography.bodySmallSize,
                 fontWeight: FontWeight.w500,
                 color: p.textPrimary,
               ),
@@ -535,7 +525,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
               value: _vm.isSet,
               onChanged: _vm.setIsSet,
               activeThumbColor: AppColors.brandPurple,
-              activeTrackColor: const Color(0xFFC4B5FD),
+              activeTrackColor: AppColors.lavender,
             ),
           ],
         ),
@@ -622,7 +612,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 style: TextStyle(
                   color: AppColors.brandPurple,
                   fontWeight: FontWeight.w600,
-                  fontSize: 14,
+                  fontSize: AppTypography.bodySmallSize,
                 ),
               ),
             ),
@@ -640,7 +630,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
               Text(
                 context.l10n.t('Total Stock'),
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: AppTypography.bodySmallSize,
                   fontWeight: FontWeight.w600,
                   color: AppColors.brandPurple,
                 ),
@@ -651,7 +641,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     .t('{v1}')
                     .replaceAll('{v1}', (_totalStock).toString()),
                 style: const TextStyle(
-                  fontSize: 16,
+                  fontSize: AppTypography.bodyLargeSize,
                   fontWeight: FontWeight.bold,
                   color: AppColors.brandPurple,
                 ),
@@ -681,7 +671,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       value: _vm.selectedSupplierId,
                       hint: Text(
                         context.l10n.t('Select a supplier...'),
-                        style: TextStyle(color: p.textSecondary, fontSize: 14),
+                        style: TextStyle(
+                          color: p.textSecondary,
+                          fontSize: AppTypography.bodySmallSize,
+                        ),
                       ),
                       items: _vm.suppliers
                           .map(
@@ -689,7 +682,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               value: s.id,
                               child: Text(
                                 s.name,
-                                style: const TextStyle(fontSize: 14),
+                                style: const TextStyle(
+                                  fontSize: AppTypography.bodySmallSize,
+                                ),
                               ),
                             ),
                           )
@@ -719,7 +714,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
-                      fontSize: 13,
+                      fontSize: AppTypography.labelMediumSize,
                     ),
                   ),
                 ),
@@ -776,7 +771,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                           Text(
                             context.l10n.t('Add New Supplier'),
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: AppTypography.titleSmallSize,
                               fontWeight: FontWeight.w600,
                               color: p.textPrimary,
                             ),
@@ -844,10 +839,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                         showErrorMessage(ctx, e.message);
                                       }
                                     } finally {
-                                      if (ctx.mounted)
+                                      if (ctx.mounted) {
                                         setSheetState(
                                           () => savingSupplier = false,
                                         );
+                                      }
                                     }
                                   }
                                 },
@@ -906,7 +902,13 @@ class _AddProductScreenState extends State<AddProductScreen> {
         ),
         if (helper != null) ...[
           const SizedBox(height: 6),
-          Text(helper, style: TextStyle(fontSize: 12, color: p.textSecondary)),
+          Text(
+            helper,
+            style: TextStyle(
+              fontSize: AppTypography.labelSmallSize,
+              color: p.textSecondary,
+            ),
+          ),
         ],
       ],
     );
@@ -940,12 +942,19 @@ class _AddProductScreenState extends State<AddProductScreen> {
         Text(
           context.l10n.t(text),
           style: TextStyle(
-            fontSize: 14,
+            fontSize: AppTypography.bodySmallSize,
             fontWeight: FontWeight.w500,
             color: p.textPrimary,
           ),
         ),
-        if (req) Text(' *', style: TextStyle(color: p.dangerFg, fontSize: 14)),
+        if (req)
+          Text(
+            ' *',
+            style: TextStyle(
+              color: p.dangerFg,
+              fontSize: AppTypography.bodySmallSize,
+            ),
+          ),
       ],
     );
   }
@@ -954,7 +963,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
     final p = context.palette;
     return InputDecoration(
       hintText: hint,
-      hintStyle: TextStyle(color: p.textSecondary, fontSize: 14),
+      hintStyle: TextStyle(
+        color: p.textSecondary,
+        fontSize: AppTypography.bodySmallSize,
+      ),
       filled: true,
       fillColor: p.surface,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -1041,7 +1053,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
-                        fontSize: 16,
+                        fontSize: AppTypography.bodyLargeSize,
                       ),
                     ),
             ),
@@ -1161,7 +1173,7 @@ class _VariantTileState extends State<_VariantTile> {
                     .t('Variant {v1}')
                     .replaceAll('{v1}', (widget.index + 1).toString()),
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: AppTypography.labelMediumSize,
                   fontWeight: FontWeight.w600,
                   color: p.textPrimary,
                 ),
@@ -1244,7 +1256,7 @@ class _VariantTileState extends State<_VariantTile> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: AppTypography.labelSmallSize,
               fontWeight: FontWeight.w600,
               color: color,
             ),
@@ -1264,7 +1276,13 @@ class _VariantTileState extends State<_VariantTile> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: 12, color: p.textSecondary)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: AppTypography.labelSmallSize,
+            color: p.textSecondary,
+          ),
+        ),
         const SizedBox(height: 4),
         DropdownField(
           value: value.isEmpty ? null : value,
@@ -1291,7 +1309,10 @@ class _VariantTileState extends State<_VariantTile> {
           children: [
             Text(
               context.l10n.t('Color'),
-              style: TextStyle(fontSize: 12, color: p.textSecondary),
+              style: TextStyle(
+                fontSize: AppTypography.labelSmallSize,
+                color: p.textSecondary,
+              ),
             ),
             const SizedBox(width: 6),
             Container(
@@ -1329,7 +1350,13 @@ class _VariantTileState extends State<_VariantTile> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: 12, color: p.textSecondary)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: AppTypography.labelSmallSize,
+            color: p.textSecondary,
+          ),
+        ),
         const SizedBox(height: 4),
         TextField(
           controller: c,
@@ -1337,7 +1364,10 @@ class _VariantTileState extends State<_VariantTile> {
           onChanged: (_) => onChanged(),
           decoration: InputDecoration(
             hintText: '0',
-            hintStyle: TextStyle(color: p.textSecondary, fontSize: 13),
+            hintStyle: TextStyle(
+              color: p.textSecondary,
+              fontSize: AppTypography.labelMediumSize,
+            ),
             filled: true,
             fillColor: p.surface,
             contentPadding: const EdgeInsets.symmetric(

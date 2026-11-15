@@ -25,6 +25,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.cardShadow,
     required this.successBg,
     required this.successFg,
+    required this.infoBg,
+    required this.infoFg,
     required this.warningBg,
     required this.warningFg,
     required this.dangerBg,
@@ -88,6 +90,12 @@ class AppPalette extends ThemeExtension<AppPalette> {
   // Status pairs
   final Color successBg;
   final Color successFg;
+
+  /// Neutral "for information" pair — the blue badge used for mid-level stock
+  /// and informational chips. Kept apart from [success] so a status that means
+  /// "fine" and one that means "note this" do not share a colour.
+  final Color infoBg;
+  final Color infoFg;
   final Color warningBg;
   final Color warningFg;
   final Color dangerBg;
@@ -134,6 +142,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
     cardShadow: Color(0x0D000000),
     successBg: Color(0xFFDCFCE7),
     successFg: Color(0xFF15803D),
+    infoBg: Color(0xFFDBEAFE),
+    infoFg: Color(0xFF1D4ED8),
     warningBg: Color(0xFFFEF3C7),
     warningFg: Color(0xFFB45309),
     dangerBg: Color(0xFFFEE2E2),
@@ -169,6 +179,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
     cardShadow: Color(0x00000000),
     successBg: Color(0xFF13301F),
     successFg: Color(0xFF6EE7A8),
+    infoBg: Color(0xFF16233F),
+    infoFg: Color(0xFF93C5FD),
     warningBg: Color(0xFF302710),
     warningFg: Color(0xFFFCD34D),
     dangerBg: Color(0xFF35191B),
@@ -198,6 +210,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
     Color? cardShadow,
     Color? successBg,
     Color? successFg,
+    Color? infoBg,
+    Color? infoFg,
     Color? warningBg,
     Color? warningFg,
     Color? dangerBg,
@@ -220,6 +234,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
       cardShadow: cardShadow ?? this.cardShadow,
       successBg: successBg ?? this.successBg,
       successFg: successFg ?? this.successFg,
+      infoBg: infoBg ?? this.infoBg,
+      infoFg: infoFg ?? this.infoFg,
       warningBg: warningBg ?? this.warningBg,
       warningFg: warningFg ?? this.warningFg,
       dangerBg: dangerBg ?? this.dangerBg,
@@ -248,6 +264,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
       cardShadow: c(cardShadow, other.cardShadow),
       successBg: c(successBg, other.successBg),
       successFg: c(successFg, other.successFg),
+      infoBg: c(infoBg, other.infoBg),
+      infoFg: c(infoFg, other.infoFg),
       warningBg: c(warningBg, other.warningBg),
       warningFg: c(warningFg, other.warningFg),
       dangerBg: c(dangerBg, other.dangerBg),

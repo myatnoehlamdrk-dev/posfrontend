@@ -3,7 +3,9 @@ import 'package:posfrontend/core/extensions/number_extensions.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/features/inventory/domain/entities/inventory_store_item.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_message.dart';
 
@@ -58,17 +60,17 @@ class _AdjustStockScreenState extends State<AdjustStockScreen> {
                         Text(
                           context.l10n.t('INVENTORY ADJUSTMENT'),
                           style: const TextStyle(
-                            fontSize: 8,
+                            fontSize: AppTypography.labelSmallSize,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 1,
-                            color: Color(0xFF008F85),
+                            color: AppColors.teal,
                           ),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           context.l10n.t('Update stock'),
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: AppTypography.bodyLargeSize,
                             fontWeight: FontWeight.w700,
                             color: p.textPrimary,
                           ),
@@ -130,7 +132,7 @@ class _AdjustStockScreenState extends State<AdjustStockScreen> {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    fontSize: 11,
+                                    fontSize: AppTypography.labelSmallSize,
                                     fontWeight: FontWeight.w700,
                                     color: p.textPrimary,
                                   ),
@@ -138,7 +140,7 @@ class _AdjustStockScreenState extends State<AdjustStockScreen> {
                                 Text(
                                   widget.item.sku,
                                   style: TextStyle(
-                                    fontSize: 8,
+                                    fontSize: AppTypography.labelSmallSize,
                                     color: p.textSecondary,
                                   ),
                                 ),
@@ -150,21 +152,21 @@ class _AdjustStockScreenState extends State<AdjustStockScreen> {
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 6),
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFFE5F7EF),
+                                        color: p.successBg,
                                         borderRadius:
                                             BorderRadius.circular(20),
                                       ),
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
-                                        children: const [
+                                        children: [
                                           SizedBox(width: 5, height: 5),
                                           SizedBox(width: 3),
                                           Text(
                                             'In stock',
                                             style: TextStyle(
-                                              fontSize: 8,
+                                              fontSize: AppTypography.labelSmallSize,
                                               fontWeight: FontWeight.w600,
-                                              color: Color(0xFF087A50),
+                                              color: p.successFg,
                                             ),
                                           ),
                                         ],
@@ -174,7 +176,7 @@ class _AdjustStockScreenState extends State<AdjustStockScreen> {
                                     Text(
                                       '${_current.withCommas()} units',
                                       style: TextStyle(
-                                        fontSize: 9,
+                                        fontSize: AppTypography.labelSmallSize,
                                         fontWeight: FontWeight.w600,
                                         color: p.textPrimary,
                                       ),
@@ -192,7 +194,7 @@ class _AdjustStockScreenState extends State<AdjustStockScreen> {
                     Text(
                       context.l10n.t('Adjustment type'),
                       style: TextStyle(
-                        fontSize: 9,
+                        fontSize: AppTypography.labelSmallSize,
                         fontWeight: FontWeight.w600,
                         color: p.textPrimary,
                       ),
@@ -207,9 +209,9 @@ class _AdjustStockScreenState extends State<AdjustStockScreen> {
                             icon: Icons.arrow_upward,
                             selected: _add,
                             onTap: () => setState(() => _add = true),
-                            selectedBg: const Color(0xFFE8F7F0),
-                            selectedBorder: const Color(0xFF15966B),
-                            selectedFg: const Color(0xFF087A50),
+                            selectedBg: p.successBg,
+                            selectedBorder: p.successFg,
+                            selectedFg: p.successFg,
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -219,9 +221,9 @@ class _AdjustStockScreenState extends State<AdjustStockScreen> {
                             label: context.l10n.t('Remove stock'),
                             icon: Icons.arrow_downward,
                             selected: !_add,
-                            selectedBg: const Color(0xFFFCE8E5),
-                            selectedBorder: const Color(0xFFD94B3D),
-                            selectedFg: const Color(0xFFC43F35),
+                            selectedBg: p.dangerBg,
+                            selectedBorder: p.dangerFg,
+                            selectedFg: p.dangerFg,
                             onTap: () => setState(() => _add = false),
                           ),
                         ),
@@ -232,7 +234,7 @@ class _AdjustStockScreenState extends State<AdjustStockScreen> {
                     Text(
                       context.l10n.t('Quantity'),
                       style: TextStyle(
-                        fontSize: 9,
+                        fontSize: AppTypography.labelSmallSize,
                         fontWeight: FontWeight.w600,
                         color: p.textPrimary,
                       ),
@@ -244,7 +246,7 @@ class _AdjustStockScreenState extends State<AdjustStockScreen> {
                       decoration: BoxDecoration(
                         color: p.surface,
                         borderRadius: BorderRadius.circular(13),
-                        border: Border.all(color: const Color(0xFFD7E1DB)),
+                        border: Border.all(color: p.border),
                       ),
                       child: Row(
                         children: [
@@ -261,7 +263,7 @@ class _AdjustStockScreenState extends State<AdjustStockScreen> {
                               child: Text(
                                 '$_qty',
                                 style: TextStyle(
-                                  fontSize: 14,
+                                  fontSize: AppTypography.bodySmallSize,
                                   fontWeight: FontWeight.w700,
                                   color: p.textPrimary,
                                 ),
@@ -269,9 +271,9 @@ class _AdjustStockScreenState extends State<AdjustStockScreen> {
                             ),
                           ),
                           _qtyBtn(
-                            bg: const Color(0xFFE8F7F0),
+                            bg: p.successBg,
                             icon: Icons.add,
-                            color: const Color(0xFF15966B),
+                            color: p.successFg,
                             onTap: () => setState(() => _qty++),
                           ),
                         ],
@@ -284,7 +286,7 @@ class _AdjustStockScreenState extends State<AdjustStockScreen> {
                       decoration: BoxDecoration(
                         color: p.surface,
                         borderRadius: BorderRadius.circular(13),
-                        border: Border.all(color: const Color(0xFFDDE5E1)),
+                        border: Border.all(color: p.border),
                       ),
                       child: Column(
                         children: [
@@ -294,14 +296,14 @@ class _AdjustStockScreenState extends State<AdjustStockScreen> {
                               Text(
                                 context.l10n.t('Current stock'),
                                 style: TextStyle(
-                                  fontSize: 9,
+                                  fontSize: AppTypography.labelSmallSize,
                                   color: p.textSecondary,
                                 ),
                               ),
                               Text(
                                 _current.withCommas(),
                                 style: TextStyle(
-                                  fontSize: 9,
+                                  fontSize: AppTypography.labelSmallSize,
                                   color: p.textSecondary,
                                 ),
                               ),
@@ -314,7 +316,7 @@ class _AdjustStockScreenState extends State<AdjustStockScreen> {
                               Text(
                                 context.l10n.t('New stock level'),
                                 style: TextStyle(
-                                  fontSize: 9,
+                                  fontSize: AppTypography.labelSmallSize,
                                   fontWeight: FontWeight.w700,
                                   color: p.textPrimary,
                                 ),
@@ -322,7 +324,7 @@ class _AdjustStockScreenState extends State<AdjustStockScreen> {
                               Text(
                                 '${_newStock.withCommas()} units',
                                 style: TextStyle(
-                                  fontSize: 9,
+                                  fontSize: AppTypography.labelSmallSize,
                                   fontWeight: FontWeight.w700,
                                   color: p.textPrimary,
                                 ),
@@ -339,7 +341,7 @@ class _AdjustStockScreenState extends State<AdjustStockScreen> {
                         Text(
                           context.l10n.t('Reason or note'),
                           style: TextStyle(
-                            fontSize: 9,
+                            fontSize: AppTypography.labelSmallSize,
                             fontWeight: FontWeight.w600,
                             color: p.textPrimary,
                           ),
@@ -347,7 +349,7 @@ class _AdjustStockScreenState extends State<AdjustStockScreen> {
                         Text(
                           ' (optional)',
                           style: TextStyle(
-                            fontSize: 9,
+                            fontSize: AppTypography.labelSmallSize,
                             fontWeight: FontWeight.w400,
                             color: p.textSecondary,
                           ),
@@ -361,17 +363,17 @@ class _AdjustStockScreenState extends State<AdjustStockScreen> {
                       decoration: BoxDecoration(
                         color: p.surface,
                         borderRadius: BorderRadius.circular(13),
-                        border: Border.all(color: const Color(0xFFD7E1DB)),
+                        border: Border.all(color: p.border),
                       ),
                       child: TextField(
                         controller: _noteCtrl,
                         maxLines: 3,
-                        style: TextStyle(fontSize: 9, color: p.textPrimary),
+                        style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.textPrimary),
                         decoration: InputDecoration(
                           border: InputBorder.none,
                           hintText: context.l10n.t('e.g. Cycle count correction'),
                           hintStyle: TextStyle(
-                            fontSize: 9,
+                            fontSize: AppTypography.labelSmallSize,
                             color: p.textSecondary,
                           ),
                         ),
@@ -388,7 +390,7 @@ class _AdjustStockScreenState extends State<AdjustStockScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
               decoration: BoxDecoration(
                 color: p.surface,
-                border: Border(top: BorderSide(color: const Color(0xFFE5EBE7))),
+                border: Border(top: BorderSide(color: p.border)),
               ),
               child: SizedBox(
                 width: double.infinity,
@@ -408,11 +410,11 @@ class _AdjustStockScreenState extends State<AdjustStockScreen> {
                                   'note': _noteCtrl.text.trim(),
                               },
                             );
-                            if (!mounted) return;
+                            if (!context.mounted) return;
                             showSuccessMessage(context, msg);
                             navigator.pop(true);
                           } catch (e) {
-                            if (mounted) showErrorMessage(context, e);
+                            if (context.mounted) showErrorMessage(context, e);
                           }
                         }
                       : null,
@@ -420,12 +422,12 @@ class _AdjustStockScreenState extends State<AdjustStockScreen> {
                   label: Text(
                     context.l10n.t('Save adjustment'),
                     style: const TextStyle(
-                      fontSize: 10,
+                      fontSize: AppTypography.labelSmallSize,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF14241E),
+                    backgroundColor: AppColors.tealDark,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -451,7 +453,7 @@ class _AdjustStockScreenState extends State<AdjustStockScreen> {
     required Color selectedFg,
   }) {
     final bg = selected ? selectedBg : p.surface;
-    final border = selected ? selectedBorder : const Color(0xFFDDE5E1);
+    final border = selected ? selectedBorder : p.border;
     final fg = selected ? selectedFg : p.textPrimary;
     return GestureDetector(
       onTap: onTap,
@@ -470,7 +472,7 @@ class _AdjustStockScreenState extends State<AdjustStockScreen> {
             Text(
               label,
               style: TextStyle(
-                fontSize: 9,
+                fontSize: AppTypography.labelSmallSize,
                 fontWeight: FontWeight.w600,
                 color: fg,
               ),

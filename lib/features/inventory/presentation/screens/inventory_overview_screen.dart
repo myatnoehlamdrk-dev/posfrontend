@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:posfrontend/core/extensions/number_extensions.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/features/inventory/domain/entities/inventory_store_item.dart';
@@ -7,17 +6,21 @@ import 'package:posfrontend/shared/widgets/app_message.dart';
 import 'package:posfrontend/features/inventory/presentation/screens/add_inventory_store_screen.dart';
 import 'package:posfrontend/features/inventory/presentation/screens/adjust_stock_screen.dart';
 import 'package:posfrontend/features/inventory/presentation/screens/edit_inventory_store_screen.dart';
-import 'package:posfrontend/features/inventory/presentation/screens/inventory_product_placeholder_screen.dart';
 import 'package:posfrontend/features/inventory/presentation/viewmodels/inventory_overview_view_model.dart';
+import 'package:posfrontend/features/product/presentation/screens/product_detail_screen.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/app_empty_state.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/app_shell.dart';
 import 'package:posfrontend/shared/widgets/error_retry_view.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
+import 'package:posfrontend/shared/widgets/skeleton.dart';
 
 /// Stock Overview — the sidebar's Inventory destination.
 class InventoryOverviewScreen extends StatefulWidget {
@@ -123,7 +126,7 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
             Text(
               context.l10n.t('INVENTORY MANAGEMENT'),
               style: TextStyle(
-                fontSize: 9,
+                fontSize: AppTypography.labelSmallSize,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.1,
                 color: const Color.fromARGB(255, 90, 61, 164),
@@ -133,7 +136,7 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
             Text(
               context.l10n.t('Inventory overview'),
               style: TextStyle(
-                fontSize: 28,
+                fontSize: AppTypography.displaySmallSize,
                 fontWeight: FontWeight.w700,
                 color: p.textPrimary,
                 letterSpacing: -0.8,
@@ -144,7 +147,7 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
               context.l10n.t(
                   "Track quantities, update stock levels, and manage your product catalog."),
               style: TextStyle(
-                fontSize: 11.5,
+                fontSize: AppTypography.labelSmallSize,
                 fontWeight: FontWeight.w400,
                 color: p.textSecondary,
               ),
@@ -203,10 +206,10 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
       child: OutlinedButton.icon(
         onPressed: onTap,
         icon: Icon(icon, size: 14),
-        label: Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
+        label: Text(label, style: TextStyle(fontSize: AppTypography.labelSmallSize, fontWeight: FontWeight.w600)),
         style: OutlinedButton.styleFrom(
           foregroundColor: p.textPrimary,
-          side: BorderSide(color: Color(0xFFDFE7E2)),
+          side: BorderSide(color: p.border),
           backgroundColor: p.surface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -226,7 +229,7 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
       child: ElevatedButton.icon(
         onPressed: onTap,
         icon: Icon(icon, size: 14),
-        label: Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
+        label: Text(label, style: TextStyle(fontSize: AppTypography.labelSmallSize, fontWeight: FontWeight.w600)),
         style: ElevatedButton.styleFrom(
           backgroundColor: p.primary,
           foregroundColor: p.surface,
@@ -251,8 +254,8 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
       _kpiCard(
         p: p,
         icon: Icons.inventory_2_outlined,
-        iconBg: const Color(0xFFE8F0FF),
-        iconColor: const Color(0xFF4779D9),
+        iconBg: p.infoBg,
+        iconColor: p.infoFg,
         label: context.l10n.t('Total products'),
         value: totalProducts.withCommas(),
         support: context.l10n.t('Across all categories'),
@@ -261,8 +264,8 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
       _kpiCard(
         p: p,
         icon: Icons.all_inbox_outlined,
-        iconBg: const Color(0xFFE1F6ED),
-        iconColor: const Color(0xFF15966B),
+        iconBg: p.successBg,
+        iconColor: p.successFg,
         label: context.l10n.t('Units in stock'),
         value: unitsInStock.withCommas(),
         support: context.l10n.t('Across all items'),
@@ -271,8 +274,8 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
       _kpiCard(
         p: p,
         icon: Icons.warning_amber_rounded,
-        iconBg: const Color(0xFFFFF0DB),
-        iconColor: const Color(0xFFD97706),
+        iconBg: p.warningBg,
+        iconColor: p.warningFg,
         label: context.l10n.t('Low stock'),
         value: lowStock.withCommas(),
         support: context.l10n.t('Needs attention'),
@@ -281,8 +284,8 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
       _kpiCard(
         p: p,
         icon: Icons.store_outlined,
-        iconBg: const Color(0xFFFCE8E5),
-        iconColor: const Color(0xFFD94B3D),
+        iconBg: p.dangerBg,
+        iconColor: p.dangerFg,
         label: context.l10n.t('Out of stock'),
         value: outStock.withCommas(),
         support: context.l10n.t('Needs restock'),
@@ -352,7 +355,7 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
                   child: Icon(icon, size: 18, color: iconColor),
                 ),
                 const Spacer(),
-                Icon(Icons.more_horiz, size: 16, color: const Color(0xFF87938E)),
+                Icon(Icons.more_horiz, size: 16, color: p.textMuted),
               ],
             ),
             const SizedBox(height: 8),
@@ -360,13 +363,13 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                    fontSize: 9.5, fontWeight: FontWeight.w400, color: p.textSecondary)),
+                    fontSize: AppTypography.labelSmallSize, fontWeight: FontWeight.w400, color: p.textSecondary)),
             const SizedBox(height: 2),
             Text(value,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                    fontSize: 20,
+                    fontSize: AppTypography.titleMediumSize,
                     fontWeight: FontWeight.w700,
                     color: p.textPrimary)),
             const Spacer(),
@@ -374,7 +377,7 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                    fontSize: 8, fontWeight: FontWeight.w400, color: p.textSecondary)),
+                    fontSize: AppTypography.labelSmallSize, fontWeight: FontWeight.w400, color: p.textSecondary)),
           ],
         ),
       ),
@@ -385,15 +388,7 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
 
   Widget _buildTableContainer(BuildContext context, AppPalette p) {
     if (_vm.isLoading && _vm.rows.isEmpty) {
-      return Container(
-        height: 200,
-        decoration: BoxDecoration(
-          color: p.surface,
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: p.border),
-        ),
-        child: const Center(child: CircularProgressIndicator()),
-      );
+      return const SkeletonBox(height: 200, radius: 15);
     }
     if (_vm.hasError && _vm.rows.isEmpty) {
       return ErrorRetryView(
@@ -427,12 +422,9 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
                       _buildHeaderRow(context, p, scale),
                       for (final r in _vm.filteredRows) _buildRow(context, p, r, scale),
                       if (_vm.filteredRows.isEmpty && !_vm.isLoading)
-                        Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Center(
-                            child: Text(context.l10n.t('No products found.'),
-                                style: TextStyle(color: p.textSecondary)),
-                          ),
+                        AppEmptyState(
+                          title: context.l10n.t('No products found.'),
+                          icon: Icons.inventory_2_outlined,
                         ),
                     ],
                   ),
@@ -451,6 +443,72 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
   }
 
   Widget _buildToolbar(BuildContext context, AppPalette p) {
+    final search = Container(
+      height: 32,
+      decoration: BoxDecoration(
+        color: p.chipBg,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: TextField(
+        controller: _searchCtrl,
+        onChanged: _vm.setSearch,
+        style: TextStyle(fontSize: AppTypography.labelSmallSize),
+        decoration: InputDecoration(
+          hintText: context.l10n.t('Search product, SKU, supplier...'),
+          hintStyle: TextStyle(
+              fontSize: AppTypography.labelSmallSize, color: p.textSecondary),
+          prefixIcon: Icon(Icons.search, size: 16, color: p.textSecondary),
+          border: InputBorder.none,
+          isDense: true,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        ),
+      ),
+    );
+
+    final filter = Container(
+      height: 32,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: p.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: p.border),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _vm.statusFilter,
+          isExpanded: true,
+          icon: const Icon(Icons.keyboard_arrow_down, size: 16),
+          style: TextStyle(
+              fontSize: AppTypography.labelSmallSize, color: p.textPrimary),
+          items: [
+            DropdownMenuItem(
+                value: 'all', child: Text(context.l10n.t('All'))),
+            DropdownMenuItem(
+                value: 'in', child: Text(context.l10n.t('In stock'))),
+            DropdownMenuItem(
+                value: 'low', child: Text(context.l10n.t('Low stock'))),
+            DropdownMenuItem(
+                value: 'out', child: Text(context.l10n.t('Out of stock'))),
+          ],
+          onChanged: (v) {
+            if (v != null) _vm.setStatusFilter(v);
+          },
+        ),
+      ),
+    );
+
+    final tune = Container(
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(
+        color: p.surface,
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(color: p.border),
+      ),
+      child: Icon(Icons.tune, size: 16, color: p.textSecondary),
+    );
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -464,106 +522,48 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
             children: [
               Text(context.l10n.t('All inventory'),
                   style: TextStyle(
-                      fontSize: 14.5,
+                      fontSize: AppTypography.bodySmallSize,
                       fontWeight: FontWeight.w700,
                       color: p.textPrimary)),
               Text(
                 context.l10n
                     .t('{v1} products shown')
                     .replaceAll('{v1}', _vm.filteredRows.length.toString()),
-                style: TextStyle(fontSize: 9, color: p.textSecondary),
-              ),
-            ],
-          );
-          final right = Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                width: 216,
-                height: 32,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: p.chipBg,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: TextField(
-                    controller: _searchCtrl,
-                    onChanged: _vm.setSearch,
-                    style: TextStyle(fontSize: 10),
-                    decoration: InputDecoration(
-                      hintText: context.l10n.t('Search product, SKU, supplier...'),
-                      hintStyle: TextStyle(
-                          fontSize: 10, color: p.textSecondary),
-                      prefixIcon: Icon(Icons.search,
-                          size: 16, color: p.textSecondary),
-                      border: InputBorder.none,
-                      isDense: true,
-                      contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                width: 114,
-                height: 32,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                decoration: BoxDecoration(
-                  color: p.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: p.border),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _vm.statusFilter,
-                    isExpanded: true,
-                    icon: const Icon(Icons.keyboard_arrow_down, size: 16),
-                    style: TextStyle(
-                        fontSize: 10, color: p.textPrimary),
-                    items: [
-                      DropdownMenuItem(
-                          value: 'all',
-                          child: Text(context.l10n.t('All'))),
-                      DropdownMenuItem(
-                          value: 'in',
-                          child: Text(context.l10n.t('In stock'))),
-                      DropdownMenuItem(
-                          value: 'low',
-                          child: Text(context.l10n.t('Low stock'))),
-                      DropdownMenuItem(
-                          value: 'out',
-                          child: Text(context.l10n.t('Out of stock'))),
-                    ],
-                    onChanged: (v) {
-                      if (v != null) _vm.setStatusFilter(v);
-                    },
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: p.surface,
-                  borderRadius: BorderRadius.circular(11),
-                  border: Border.all(color: p.border),
-                ),
-                child: Icon(Icons.tune, size: 16, color: p.textSecondary),
+                style: TextStyle(
+                    fontSize: AppTypography.labelSmallSize,
+                    color: p.textSecondary),
               ),
             ],
           );
           if (narrow) {
+            // The desktop cluster is 378dp wide; on a phone it has to become
+            // a full-width search line with the filter and tune button below,
+            // or it overflows the row by tens of pixels.
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [left, const SizedBox(height: 8), right],
+              children: [
+                left,
+                const SizedBox(height: 8),
+                SizedBox(width: double.infinity, child: search),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(child: filter),
+                    const SizedBox(width: 8),
+                    tune,
+                  ],
+                ),
+              ],
             );
           }
           return Row(
             children: [
               Expanded(child: left),
-              right,
+              SizedBox(width: 216, child: search),
+              const SizedBox(width: 8),
+              SizedBox(width: 114, child: filter),
+              const SizedBox(width: 8),
+              tune,
             ],
           );
         },
@@ -628,7 +628,7 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                                fontSize: 10,
+                                fontSize: AppTypography.labelSmallSize,
                                 fontWeight: FontWeight.w700,
                                 color: p.textPrimary)),
                         Text(
@@ -636,7 +636,7 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                              fontSize: 7.5, color: p.textSecondary),
+                              fontSize: AppTypography.labelSmallSize, color: p.textSecondary),
                         ),
                       ],
                     ),
@@ -652,7 +652,7 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                    fontSize: 9.5, color: p.textPrimary),
+                    fontSize: AppTypography.labelSmallSize, color: p.textPrimary),
               ),
             ),
             // Status
@@ -675,7 +675,7 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                    fontSize: 9.5,
+                    fontSize: AppTypography.labelSmallSize,
                     fontWeight: FontWeight.w700,
                     color: p.textPrimary),
               ),
@@ -688,7 +688,7 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                    fontSize: 8.5, color: p.textSecondary),
+                    fontSize: AppTypography.labelSmallSize, color: p.textSecondary),
               ),
             ),
             // Actions
@@ -696,8 +696,8 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
               width: w[6],
               child: Center(
                 child: PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_horiz,
-                      size: 15, color: Color(0xFF5A6373)),
+                  icon: Icon(Icons.more_horiz,
+                      size: 15, color: p.textSecondary),
                   itemBuilder: (_) => [
                     PopupMenuItem(
                         value: 'view',
@@ -714,9 +714,21 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
                   ],
                   onSelected: (v) async {
                     if (v == 'view') {
-                      Navigator.of(context).push(MaterialPageRoute(
-                          builder: (_) => InventoryProductPlaceholderScreen(
-                              productId: item.id)));
+                      final productId = item.productId;
+                      if (productId == null) {
+                        showWarningMessage(
+                          context,
+                          context.l10n
+                              .t('This inventory entry has no linked product.'),
+                        );
+                      } else {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                ProductDetailScreen(productId: productId),
+                          ),
+                        );
+                      }
                     } else if (v == 'edit') {
                       final ok = await Navigator.of(context).push<bool>(
                         MaterialPageRoute(
@@ -732,7 +744,7 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
                         );
                         if (mounted) _vm.refresh();
                       } catch (e) {
-                        if (mounted) showErrorMessage(context, e);
+                        if (context.mounted) showErrorMessage(context, e);
                       }
                     } else if (v == 'adjust') {
                       final ok = await showGeneralDialog<bool>(
@@ -753,7 +765,10 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
                         pageBuilder: (ctx, _, secondary) => Align(
                           alignment: Alignment.centerRight,
                           child: SizedBox(
-                            width: MediaQuery.of(ctx).size.width * 0.425,
+                            // 42.5% of a phone is 153dp, which cannot hold the
+                            // form; floor it at 320 and cap it on desktop.
+                            width: (MediaQuery.of(ctx).size.width * 0.425)
+                                .clamp(320.0, 520.0),
                             child: AdjustStockScreen(item: item),
                           ),
                         ),
@@ -807,7 +822,7 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
                     ? context.l10n.t('Low stock')
                     : context.l10n.t('Out of stock'),
             style: TextStyle(
-                fontSize: 8, fontWeight: FontWeight.w600, color: fg),
+                fontSize: AppTypography.labelSmallSize, fontWeight: FontWeight.w600, color: fg),
           ),
         ],
       ),
@@ -819,11 +834,11 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
     final frac = (item.quantityOnHand / capacity).clamp(0.0, 1.0);
     Color fill;
     if (item.quantityOnHand <= 0) {
-      fill = const Color(0xFFE05B50);
+      fill = AppColors.red;
     } else if (item.quantityOnHand <= InventoryStoreItem.lowStockThreshold) {
-      fill = const Color(0xFFF4A340);
+      fill = AppColors.orange;
     } else {
-      fill = const Color(0xFF35C98A);
+      fill = AppColors.green;
     }
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -834,7 +849,7 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
           children: [
             Text(item.quantityOnHand.withCommas(),
                 style: TextStyle(
-                    fontSize: 11,
+                    fontSize: AppTypography.labelSmallSize,
                     fontWeight: FontWeight.w700,
                     color: p.textPrimary)),
             const SizedBox(width: 8),
@@ -864,7 +879,7 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
           context.l10n
               .t('At {v1}')
               .replaceAll('{v1}', InventoryStoreItem.lowStockThreshold.toString()),
-          style: TextStyle(fontSize: 7, color: p.textSecondary),
+          style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.textSecondary),
         ),
       ],
     );
@@ -909,7 +924,7 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
                 children: [
                   Text(context.l10n.t('Select shop'),
                       style: TextStyle(
-                          fontSize: 9,
+                          fontSize: AppTypography.labelSmallSize,
                           fontWeight: FontWeight.w600,
                           color: p.textPrimary)),
                   const SizedBox(height: 6),
@@ -942,7 +957,7 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
                   const SizedBox(height: 12),
                   Text(context.l10n.t('Type'),
                       style: TextStyle(
-                          fontSize: 9,
+                          fontSize: AppTypography.labelSmallSize,
                           fontWeight: FontWeight.w600,
                           color: p.textPrimary)),
                   const SizedBox(height: 6),
@@ -956,22 +971,22 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
                               color: selectedType == 'Self'
-                                  ? const Color(0xFFE8F7F0)
+                                  ? p.successBg
                                   : p.surface,
                               borderRadius: BorderRadius.circular(13),
                               border: Border.all(
                                 color: selectedType == 'Self'
-                                    ? const Color(0xFF15966B)
+                                    ? p.successFg
                                     : p.border,
                               ),
                             ),
                             child: Text(
                               context.l10n.t('Self'),
                               style: TextStyle(
-                                fontSize: 9,
+                                fontSize: AppTypography.labelSmallSize,
                                 fontWeight: FontWeight.w600,
                                 color: selectedType == 'Self'
-                                    ? const Color(0xFF087A50)
+                                    ? p.successFg
                                     : p.textPrimary,
                               ),
                             ),
@@ -987,22 +1002,22 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
                               color: selectedType == 'Public'
-                                  ? const Color(0xFFE8F7F0)
+                                  ? p.successBg
                                   : p.surface,
                               borderRadius: BorderRadius.circular(13),
                               border: Border.all(
                                 color: selectedType == 'Public'
-                                    ? const Color(0xFF15966B)
+                                    ? p.successFg
                                     : p.border,
                               ),
                             ),
                             child: Text(
                               context.l10n.t('Public'),
                               style: TextStyle(
-                                fontSize: 9,
+                                fontSize: AppTypography.labelSmallSize,
                                 fontWeight: FontWeight.w600,
                                 color: selectedType == 'Public'
-                                    ? const Color(0xFF087A50)
+                                    ? p.successFg
                                     : p.textPrimary,
                               ),
                             ),
@@ -1034,7 +1049,7 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
                           );
                         },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF14241E),
+                    backgroundColor: AppColors.tealDark,
                     foregroundColor: Colors.white,
                   ),
                   child: Text(context.l10n.t('Export')),
@@ -1054,12 +1069,13 @@ class _H extends StatelessWidget {
   const _H(this.text);
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return Text(
       text.toUpperCase(),
       style: TextStyle(
-        fontSize: 8,
+        fontSize: AppTypography.labelSmallSize,
         fontWeight: FontWeight.w500,
-        color: const Color(0xFF788681),
+        color: p.textMuted,
         letterSpacing: 0.7,
       ),
     );

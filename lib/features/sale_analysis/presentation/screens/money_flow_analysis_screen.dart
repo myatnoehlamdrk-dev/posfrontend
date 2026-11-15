@@ -13,8 +13,10 @@ import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/app_empty_state.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/app_shell.dart';
+import 'package:posfrontend/shared/widgets/skeleton.dart';
 
 /// Money Flow dashboard for the Finance section.
 ///
@@ -44,14 +46,35 @@ class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen> {
 
   late final FinanceViewModel _vm;
 
-  /// The demo anchors on November 2026, so that is the month the page opens on.
-  DateTime _month = DateTime(2026, 11);
+  /// The month on screen. Opens on the current month rather than a date that
+  /// was frozen into the source when the screen was written.
+  DateTime _month = _nowMonth();
+
+  static DateTime _nowMonth() {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month);
+  }
+
+  /// The card carrying the theme highlight. Tapping another card moves it.
+  /// Starts on Net cash flow, the headline figure.
+  int _highlightedCard = 3;
 
   /// Year shown in the cash-flow trend chart (independent of the month filter).
   int _chartYear = DateTime.now().year;
 
-  static final DateTime _firstMonth = DateTime(2026, 1, 1);
-  static final DateTime _lastMonth = DateTime(2026, 12, 31);
+  /// Earliest month the picker can reach: January of the first year the
+  /// account has data for, falling back to the selected year while the
+  /// finance data is still loading.
+  DateTime get _firstMonth {
+    var year = _month.year;
+    for (final y in _vm.years) {
+      if (y < year) year = y;
+    }
+    return DateTime(year, 1);
+  }
+
+  /// Latest month the picker can reach: there is no data for future months.
+  DateTime get _lastMonth => _nowMonth();
 
   @override
   void initState() {
@@ -107,10 +130,9 @@ class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen> {
 
   Widget _buildContent(BuildContext context) {
     final p = context.palette;
-    // Prefer real revenue from the API; fall back to demo data while loading.
-    final realMonth = _vm.monthFor(_month);
-    final month = realMonth ?? moneyFlowMonthFor(_month);
-    final previous = _vm.previousMonthOf(_month) ?? moneyFlowMonthFor(previousMonthOf(_month));
+    // Real figures only: the month exists on screen if the API returned it.
+    final month = _vm.monthFor(_month);
+    final previous = _vm.previousMonthOf(_month);
     // Trend chart uses real data only (no demo fallback).
     final chartMonths = _vm.yearMonths(_chartYear);
     final selectedIndex = _month.month - 1;
@@ -125,13 +147,13 @@ class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen> {
           final pagePadding = isDesktop
               ? 32.0
               : isTablet
-                  ? 24.0
-                  : 16.0;
+              ? 24.0
+              : 16.0;
           final columns = isDesktop
               ? 4
               : isTablet
-                  ? 2
-                  : 1;
+              ? 2
+              : 1;
 
           return SingleChildScrollView(
             padding: EdgeInsets.fromLTRB(
@@ -149,7 +171,9 @@ class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen> {
                     _heading(isDesktop: isDesktop, isTablet: isTablet),
                     const SizedBox(height: 20),
                     if (month == null)
-                      _emptyMonth(p)
+                      _vm.isLoading
+                          ? _MoneyFlowSkeleton(columns: columns)
+                          : _emptyMonth(p)
                     else ...[
                       _cards(
                         month: month,
@@ -160,7 +184,7 @@ class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Revenue from real sales data. Outflow, fee and net are illustrative until wired up.',
+                        'All amounts in MMK.',
                         style: ofText(size: 11, color: p.textMuted),
                       ),
                       const SizedBox(height: 20),
@@ -179,16 +203,18 @@ class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen> {
                             value: _chartYear,
                             items: _vm.years.isNotEmpty
                                 ? _vm.years
-                                    .map((y) => DropdownMenuItem(
+                                      .map(
+                                        (y) => DropdownMenuItem(
                                           value: y,
                                           child: Text('$y'),
-                                        ))
-                                    .toList()
+                                        ),
+                                      )
+                                      .toList()
                                 : [
                                     DropdownMenuItem(
                                       value: _chartYear,
                                       child: Text('$_chartYear'),
-                                    )
+                                    ),
                                   ],
                             onChanged: (y) {
                               if (y != null && y != _chartYear) {
@@ -238,10 +264,7 @@ class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen> {
       ],
     );
 
-    final monthButton = MonthFilterButton(
-      month: _month,
-      onPressed: _pickMonth,
-    );
+    final monthButton = MonthFilterButton(month: _month, onPressed: _pickMonth);
 
     if (isDesktop) {
       return Row(
@@ -267,11 +290,7 @@ class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen> {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        titleBlock,
-        const SizedBox(height: 16),
-        monthButton,
-      ],
+      children: [titleBlock, const SizedBox(height: 16), monthButton],
     );
   }
 
@@ -298,13 +317,10 @@ class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen> {
       previous?.operationFee,
       higherIsBetter: false,
     );
-    final netDelta = trendDelta(
-      month.net,
-      previous?.net,
-      higherIsBetter: true,
-    );
-    final feeShare =
-        month.inflow == 0 ? 0.0 : month.operationFee / month.inflow * 100;
+    final netDelta = trendDelta(month.net, previous?.net, higherIsBetter: true);
+    final feeShare = month.inflow == 0
+        ? 0.0
+        : month.operationFee / month.inflow * 100;
 
     const gap = 16.0;
     return LayoutBuilder(
@@ -316,6 +332,8 @@ class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen> {
           children: [
             OfSummaryCard(
               width: width,
+              highlight: _highlightedCard == 0,
+              onTap: () => setState(() => _highlightedCard = 0),
               label: 'Total inflow',
               value: month.inflow,
               format: (v) => ofMoney(v, digits: 0),
@@ -328,7 +346,9 @@ class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen> {
               footer: Align(
                 alignment: Alignment.centerRight,
                 child: OfSparkBars(
-                  color: AppColors.green,
+                  color: _highlightedCard == 0
+                      ? Colors.white.withValues(alpha: 0.85)
+                      : AppColors.green,
                   values: _sparkValues(
                     yearMonths,
                     selectedIndex,
@@ -339,6 +359,8 @@ class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen> {
             ),
             OfSummaryCard(
               width: width,
+              highlight: _highlightedCard == 1,
+              onTap: () => setState(() => _highlightedCard = 1),
               label: 'Total outflow',
               value: month.outflow,
               format: (v) => ofMoney(v, digits: 0),
@@ -351,7 +373,9 @@ class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen> {
               footer: Align(
                 alignment: Alignment.centerRight,
                 child: OfSparkBars(
-                  color: AppColors.red,
+                  color: _highlightedCard == 1
+                      ? Colors.white.withValues(alpha: 0.85)
+                      : AppColors.red,
                   values: _sparkValues(
                     yearMonths,
                     selectedIndex,
@@ -362,6 +386,8 @@ class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen> {
             ),
             OfSummaryCard(
               width: width,
+              highlight: _highlightedCard == 2,
+              onTap: () => setState(() => _highlightedCard = 2),
               label: 'Operation fee',
               value: month.operationFee,
               format: (v) => ofMoney(v, digits: 0),
@@ -374,14 +400,17 @@ class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen> {
                 child: LinearProgressIndicator(
                   value: (feeShare / 100).clamp(0.0, 1.0),
                   minHeight: 5,
-                  backgroundColor: p.chipBg,
-                  color: p.primary,
+                  backgroundColor: _highlightedCard == 2
+                      ? Colors.white.withValues(alpha: 0.28)
+                      : p.chipBg,
+                  color: _highlightedCard == 2 ? Colors.white : p.primary,
                 ),
               ),
             ),
             OfSummaryCard(
               width: width,
-              highlight: true,
+              highlight: _highlightedCard == 3,
+              onTap: () => setState(() => _highlightedCard = 3),
               label: 'Net cash flow',
               value: month.net,
               format: (v) => ofMoney(v, digits: 0),
@@ -389,21 +418,24 @@ class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen> {
               badgeUp: netDelta.up,
               badgeTone: netDelta.tone,
               supporting: 'Inflow minus outflow and fees',
-              footer: Row(
+              footer: Wrap(
+                spacing: 14,
+                runSpacing: 4,
                 children: [
                   _MiniStat(
                     label: 'Inflow',
                     value: moneyFlowCompact(month.inflow),
+                    onHighlight: _highlightedCard == 3,
                   ),
-                  const SizedBox(width: 14),
                   _MiniStat(
                     label: 'Outflow',
                     value: moneyFlowCompact(month.outflow),
+                    onHighlight: _highlightedCard == 3,
                   ),
-                  const SizedBox(width: 14),
                   _MiniStat(
                     label: 'Fees',
                     value: moneyFlowCompact(month.operationFee),
+                    onHighlight: _highlightedCard == 3,
                   ),
                 ],
               ),
@@ -447,13 +479,10 @@ class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen> {
   }
 
   Widget _emptyMonth(AppPalette p) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: ofCardDecoration(context),
-      child: Text(
-        'No money flow data for ${moneyFlowMonthLabel(_month)}.',
-        style: ofText(size: 13, color: p.textMuted),
-      ),
+    return AppEmptyState(
+      title: 'No money flow data for ${moneyFlowMonthLabel(_month)}',
+      subtitle: 'Try a different month.',
+      icon: Icons.account_balance_wallet_outlined,
     );
   }
 
@@ -482,8 +511,7 @@ class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen> {
     final max = window.fold<double>(0, (m, x) => math.max(m, pick(x)));
     if (max <= 0) return List<double>.filled(window.length, 0.12);
     return [
-      for (final m in window)
-        (pick(m) / max).clamp(0.08, 1.0).toDouble(),
+      for (final m in window) (pick(m) / max).clamp(0.08, 1.0).toDouble(),
     ];
   }
 
@@ -508,11 +536,17 @@ class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen> {
 class _MiniStat extends StatelessWidget {
   final String label;
   final String value;
+  final bool onHighlight;
 
-  const _MiniStat({required this.label, required this.value});
+  const _MiniStat({
+    required this.label,
+    required this.value,
+    this.onHighlight = false,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -520,7 +554,9 @@ class _MiniStat extends StatelessWidget {
           label,
           style: ofText(
             size: 10.5,
-            color: Colors.white.withValues(alpha: 0.7),
+            color: onHighlight
+                ? Colors.white.withValues(alpha: 0.7)
+                : p.textMuted,
           ),
         ),
         const SizedBox(width: 4),
@@ -529,10 +565,54 @@ class _MiniStat extends StatelessWidget {
           style: ofText(
             size: 11,
             weight: FontWeight.w600,
-            color: Colors.white,
+            color: onHighlight ? Colors.white : p.textPrimary,
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Placeholder for the Money Flow cards while the first response is in flight.
+///
+/// Four cards, the same four the real grid draws, so the layout does not jump
+/// when the figures land.
+class _MoneyFlowSkeleton extends StatelessWidget {
+  final int columns;
+  const _MoneyFlowSkeleton({required this.columns});
+
+  @override
+  Widget build(BuildContext context) {
+    const gap = 16.0;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = (constraints.maxWidth - gap * (columns - 1)) / columns;
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children: [
+            for (var i = 0; i < 4; i++)
+              SizedBox(
+                width: width,
+                child: const SkeletonCard(
+                  radius: 12,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SkeletonBox(width: 84, height: 12, radius: 4),
+                      SizedBox(height: 12),
+                      SkeletonBox(width: 150, height: 26, radius: 6),
+                      SizedBox(height: 10),
+                      SkeletonBox(width: 130, height: 11, radius: 4),
+                      SizedBox(height: 24),
+                      SkeletonBox(width: 72, height: 18, radius: 4),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }

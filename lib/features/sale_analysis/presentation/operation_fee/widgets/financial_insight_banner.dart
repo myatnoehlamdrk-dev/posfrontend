@@ -4,13 +4,39 @@ import 'package:posfrontend/shared/theme/palette_x.dart';
 import '../operation_fee_style.dart';
 
 /// Wide insight strip under the dashboard.
+///
+/// Every figure in the sentence comes from the same month the cards above it
+/// describe — it used to claim a fixed "MMK 193 per month" saving that no
+/// calculation in the app ever produced.
 class FinancialInsightBanner extends StatelessWidget {
   final bool compact;
-  const FinancialInsightBanner({super.key, this.compact = false});
+
+  /// Real month figures behind the sentence.
+  final double totalCosts;
+  final double revenue;
+  final double costPerOrder;
+  final int orders;
+
+  const FinancialInsightBanner({
+    super.key,
+    this.compact = false,
+    required this.totalCosts,
+    required this.revenue,
+    required this.costPerOrder,
+    required this.orders,
+  });
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final share = revenue == 0 ? 0.0 : totalCosts / revenue * 100;
+    final body = revenue == 0
+        ? 'No sales recorded this month, so the operation fees below are '
+              'the whole cost of running the shop right now.'
+        : 'Operation fees total ${ofMoney(totalCosts)} this month — '
+              '${share.toStringAsFixed(1)}% of revenue, or '
+              '${ofMoney(costPerOrder)} per order across '
+              '${ofCount(orders)} orders.';
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: compact ? 14 : 18,
@@ -47,7 +73,7 @@ class FinancialInsightBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Small change, meaningful impact',
+                  'What this month costs',
                   style: ofText(
                     size: 13.5,
                     weight: FontWeight.w700,
@@ -56,8 +82,7 @@ class FinancialInsightBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  'Reducing payment processing by 0.4% could save '
-                  'approximately MMK 193 per month.',
+                  body,
                   style: ofText(
                     size: 11.5,
                     color: p.textSecondary,
@@ -67,35 +92,6 @@ class FinancialInsightBanner extends StatelessWidget {
               ],
             ),
           ),
-          if (!compact) ...[
-            const SizedBox(width: 12),
-            TextButton(
-              onPressed: () {},
-              style: TextButton.styleFrom(
-                foregroundColor: p.successFg,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 8,
-                ),
-                minimumSize: const Size(0, 40),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'View insights',
-                    style: ofText(
-                      size: 12,
-                      weight: FontWeight.w600,
-                      color: p.successFg,
-                    ),
-                  ),
-                  const SizedBox(width: 2),
-                  const Icon(Icons.chevron_right, size: 16),
-                ],
-              ),
-            ),
-          ],
         ],
       ),
     );

@@ -7,7 +7,9 @@ import 'package:posfrontend/features/sale_analysis/presentation/operation_fee/wi
 import 'package:posfrontend/features/sale_analysis/presentation/operation_fee/widgets/cost_allocation_card.dart';
 import 'package:posfrontend/features/sale_analysis/presentation/operation_fee/widgets/fee_rules_card.dart';
 import 'package:posfrontend/features/sale_analysis/presentation/operation_fee/widgets/financial_insight_banner.dart';
+import 'package:posfrontend/features/sale_analysis/presentation/operation_fee/widgets/product_picker_dialog.dart';
 import 'package:posfrontend/features/sale_analysis/presentation/operation_fee/widgets/summary_cards.dart';
+import 'package:posfrontend/features/sale_analysis/presentation/money_flow/money_flow_data.dart';
 import 'package:posfrontend/features/sale_analysis/presentation/viewmodels/finance_view_model.dart';
 import 'package:posfrontend/features/sale_analysis/presentation/viewmodels/operation_fee_view_model.dart';
 import 'package:posfrontend/features/dashboard/data/repositories/dashboard_repository_impl.dart';
@@ -27,8 +29,6 @@ class OperationFeeControllerPage extends StatefulWidget {
 
 class _OperationFeeControllerPageState
     extends State<OperationFeeControllerPage> {
-  static const double _marginBeforeFees = 39.8;
-
   late final OperationFeeViewModel _feeVm;
   late final FinanceViewModel _financeVm;
 
@@ -38,9 +38,33 @@ class _OperationFeeControllerPageState
 
   AllocationMethod _allocation = AllocationMethod.revenue;
 
-  DateTime _month = DateTime(2026, 11);
-  static final DateTime _firstMonth = DateTime(2026, 1, 1);
-  static final DateTime _lastMonth = DateTime(2026, 12, 31);
+  /// Null means the preview follows the month's highest-revenue product.
+  int? _selectedProductId;
+
+  /// The month on screen. Opens on the current month so the controller is
+  /// never anchored to a date that was hard-coded when the screen was built.
+  DateTime _month = _nowMonth();
+
+  /// `DateTime.now()` truncated to the first of its month.
+  static DateTime _nowMonth() {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month);
+  }
+
+  /// Earliest month the picker can reach: January of the first year the
+  /// account has data for, falling back to the selected year while the
+  /// finance data is still loading.
+  DateTime get _firstMonth {
+    var year = _month.year;
+    for (final y in _financeVm.years) {
+      if (y < year) year = y;
+    }
+    return DateTime(year, 1);
+  }
+
+  /// Latest month the picker can reach: no month can be selected beyond the
+  /// one currently in progress, since there is no data for future months.
+  DateTime get _lastMonth => _nowMonth();
 
   @override
   void initState() {
@@ -48,8 +72,53 @@ class _OperationFeeControllerPageState
     _feeVm = OperationFeeViewModel();
     _financeVm = FinanceViewModel(repository: DashboardRepositoryImpl());
     _fees = [];
-    _feeVm.load();
+    _feeVm.load().then((_) {
+      if (!mounted) return;
+      setState(() {
+        _allocation = allocationMethodFromName(_feeVm.allocationMethod);
+      });
+      _loadProductImpact();
+    });
     _financeVm.load(year: _month.year);
+  }
+
+  void _loadProductImpact() {
+    _feeVm.loadProductImpact(
+      year: _month.year,
+      month: _month.month,
+      allocationMethod: _allocation.name,
+      productId: _selectedProductId,
+    );
+  }
+
+  Future<void> _chooseProduct() async {
+    final chosen = await showDialog<OperationFeeProductOption>(
+      context: context,
+      barrierColor: Colors.black54,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(24),
+        child: ProductPickerDialog(
+          search: _feeVm.searchProducts,
+          selectedProductId: _selectedProductId?.toString(),
+        ),
+      ),
+    );
+
+    if (chosen == null || !mounted) return;
+
+    final id = int.tryParse(chosen.id);
+    if (id == null) return;
+
+    setState(() => _selectedProductId = id);
+    _loadProductImpact();
+  }
+
+  void _onAllocationChanged(AllocationMethod method) {
+    if (method == _allocation) return;
+    setState(() => _allocation = method);
+    _feeVm.saveSettings(method.name);
+    _loadProductImpact();
   }
 
   @override
@@ -67,17 +136,93 @@ class _OperationFeeControllerPageState
 
   double get _monthlyRevenue => _financeVm.monthFor(_month)?.inflow ?? 0;
   int get _totalOrders => _financeVm.txnsFor(_month.month);
-  double get _operatingCosts => _fees.fold(
-        0,
-        (sum, fee) => sum +
-            fee.monthlyCost(revenue: _monthlyRevenue, orders: _totalOrders, month: _month.month, year: _month.year),
-      );
-  double get _operatingRatio =>
-      _monthlyRevenue == 0 ? 0 : _operatingCosts / _monthlyRevenue * 100;
+
+  /// The operation-fee cost of an arbitrary month under the current rules.
+  /// Taking a month as an argument is what lets the previous-month
+  /// comparison use exactly the same maths as the headline figure.
+  double _operatingCostsFor(DateTime month) {
+    final revenue = _financeVm.monthFor(month)?.inflow ?? 0;
+    final orders = _financeVm.txnsFor(month.month);
+    return _fees.fold(
+      0,
+      (sum, fee) =>
+          sum +
+          fee.monthlyCost(
+            revenue: revenue,
+            orders: orders,
+            month: month.month,
+            year: month.year,
+          ),
+    );
+  }
+
+  double get _operatingCosts => _operatingCostsFor(_month);
+
+  /// Costs as a share of revenue for an arbitrary month.
+  double _operatingRatioFor(DateTime month) {
+    final revenue = _financeVm.monthFor(month)?.inflow ?? 0;
+    if (revenue == 0) return 0;
+    return _operatingCostsFor(month) / revenue * 100;
+  }
+
+  double get _operatingRatio => _operatingRatioFor(_month);
   double get _costPerOrder =>
       _totalOrders == 0 ? 0 : _operatingCosts / _totalOrders;
+
+  /// Gross margin before any operation fee: `(revenue - COGS) / revenue`.
+  /// COGS is the real per-variant cost the finance view model already loads —
+  /// this used to be a hard-coded 39.8%.
+  double _marginBeforeFeesFor(double revenue, int month) {
+    if (revenue == 0) return 0;
+    final cogs = _financeVm.cogsFor(month).toDouble();
+    return (revenue - cogs) / revenue * 100;
+  }
+
+  double get _marginBeforeFees =>
+      _marginBeforeFeesFor(_monthlyRevenue, _month.month);
   double get _trueMargin => _marginBeforeFees - _operatingRatio;
   int get _activeCount => _fees.where((f) => f.isActive).length;
+
+  // ---------------------------------------------------------- previous month
+
+  MoneyFlowMonth? get _prevMonth => _financeVm.previousMonthOf(_month);
+
+  double? get _prevRevenue => _prevMonth?.inflow;
+
+  double? get _prevOperatingCosts {
+    final m = _prevMonth;
+    return m == null ? null : _operatingCostsFor(m.month);
+  }
+
+  double? get _prevTrueMargin {
+    final m = _prevMonth;
+    if (m == null) return null;
+    return _marginBeforeFeesFor(m.inflow, m.month.month) -
+        _operatingRatioFor(m.month);
+  }
+
+  // ---------------------------------------------------------------- sparks
+
+  /// Up to the seven months ending on the selected one, scaled to 0..1 for
+  /// the card sparkbars. An all-zero series draws a flat baseline rather
+  /// than nothing.
+  List<double> _sparkFor(double Function(DateTime month) pick) {
+    final start = _month.month > 6 ? _month.month - 6 : 1;
+    final values = <double>[
+      for (var m = start; m <= _month.month; m++)
+        pick(DateTime(_month.year, m)),
+    ];
+    var max = 0.0;
+    for (final v in values) {
+      if (v > max) max = v;
+    }
+    if (max <= 0) return [for (final _ in values) 0.08];
+    return [for (final v in values) (v / max).clamp(0.08, 1.0).toDouble()];
+  }
+
+  List<double> get _revenueSpark =>
+      _sparkFor((m) => _financeVm.monthFor(m)?.inflow ?? 0);
+  List<double> get _costSpark => _sparkFor(_operatingCostsFor);
 
   void _replaceFee(OperationFee updated) {
     setState(() {
@@ -157,6 +302,7 @@ class _OperationFeeControllerPageState
     if (picked != null && mounted) {
       final newMonth = DateTime(picked.year, picked.month);
       setState(() => _month = newMonth);
+      _loadProductImpact();
       if (newMonth.year != _financeVm.selectedYear) {
         _financeVm.load(year: newMonth.year);
       }
@@ -174,10 +320,7 @@ class _OperationFeeControllerPageState
           padding: EdgeInsets.only(
             bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
           ),
-          child: const SafeArea(
-            top: false,
-            child: AddFeeDialog(asSheet: true),
-          ),
+          child: const SafeArea(top: false, child: AddFeeDialog(asSheet: true)),
         ),
       );
     } else {
@@ -202,8 +345,9 @@ class _OperationFeeControllerPageState
       );
       return;
     }
-    _rateControllers[saved.id] =
-        TextEditingController(text: ofRate(saved.rate));
+    _rateControllers[saved.id] = TextEditingController(
+      text: ofRate(saved.rate),
+    );
     setState(() => _fees.add(saved));
     showSuccessMessage(context, 'Operation fee added');
   }
@@ -282,13 +426,13 @@ class _OperationFeeControllerPageState
               final pagePadding = isDesktop
                   ? 32.0
                   : isTablet
-                      ? 24.0
-                      : 16.0;
+                  ? 24.0
+                  : 16.0;
               final summaryColumns = isDesktop
                   ? 4
                   : isTablet
-                      ? 2
-                      : 1;
+                  ? 2
+                  : 1;
 
               return SingleChildScrollView(
                 padding: EdgeInsets.fromLTRB(
@@ -325,20 +469,31 @@ class _OperationFeeControllerPageState
                           totalOrders: _totalOrders,
                           marginBeforeFees: _marginBeforeFees,
                           trueMargin: _trueMargin,
+                          prevRevenue: _prevRevenue,
+                          prevOperatingCosts: _prevOperatingCosts,
+                          prevTrueMargin: _prevTrueMargin,
+                          revenueSpark: _revenueSpark,
+                          costSpark: _costSpark,
                         ),
                         const SizedBox(height: 16),
                         if (isDesktop)
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(flex: 7, child: _feeRulesCard(useTable: true)),
+                              Expanded(
+                                flex: 7,
+                                child: _feeRulesCard(useTable: true),
+                              ),
                               const SizedBox(width: 16),
                               Expanded(
                                 flex: 3,
                                 child: CostAllocationCard(
                                   selected: _allocation,
-                                  onChanged: (method) =>
-                                      setState(() => _allocation = method),
+                                  impact: _feeVm.productImpact,
+                                  impactLoading: _feeVm.impactLoading,
+                                  impactError: _feeVm.impactError,
+                                  onChanged: _onAllocationChanged,
+                                  onChooseProduct: _chooseProduct,
                                 ),
                               ),
                             ],
@@ -351,13 +506,22 @@ class _OperationFeeControllerPageState
                               const SizedBox(height: 16),
                               CostAllocationCard(
                                 selected: _allocation,
-                                onChanged: (method) =>
-                                    setState(() => _allocation = method),
+                                impact: _feeVm.productImpact,
+                                impactLoading: _feeVm.impactLoading,
+                                impactError: _feeVm.impactError,
+                                onChanged: _onAllocationChanged,
+                                onChooseProduct: _chooseProduct,
                               ),
                             ],
                           ),
                         const SizedBox(height: 16),
-                        FinancialInsightBanner(compact: !isTablet),
+                        FinancialInsightBanner(
+                          compact: !isTablet,
+                          totalCosts: _operatingCosts,
+                          revenue: _monthlyRevenue,
+                          costPerOrder: _costPerOrder,
+                          orders: _totalOrders,
+                        ),
                       ],
                     ),
                   ),
@@ -395,10 +559,7 @@ class _OperationFeeControllerPageState
       ],
     );
 
-    final monthButton = MonthFilterButton(
-      month: _month,
-      onPressed: _pickMonth,
-    );
+    final monthButton = MonthFilterButton(month: _month, onPressed: _pickMonth);
 
     final downloadButton = _DownloadButton(
       onPressed: () => _downloadReport(context),
@@ -413,11 +574,7 @@ class _OperationFeeControllerPageState
           const SizedBox(width: 16),
           Row(
             mainAxisSize: MainAxisSize.min,
-            children: [
-              monthButton,
-              const SizedBox(width: 10),
-              downloadButton,
-            ],
+            children: [monthButton, const SizedBox(width: 10), downloadButton],
           ),
         ],
       );
@@ -431,11 +588,7 @@ class _OperationFeeControllerPageState
           const SizedBox(width: 16),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              monthButton,
-              const SizedBox(height: 8),
-              downloadButton,
-            ],
+            children: [monthButton, const SizedBox(height: 8), downloadButton],
           ),
         ],
       );
@@ -494,10 +647,7 @@ class _FeeLoadError extends StatelessWidget {
           Icon(Icons.error_outline, size: 18, color: p.dangerFg),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(
-              message,
-              style: ofText(size: 12, color: p.dangerFg),
-            ),
+            child: Text(message, style: ofText(size: 12, color: p.dangerFg)),
           ),
           const SizedBox(width: 10),
           TextButton(
@@ -540,9 +690,7 @@ class _DownloadButton extends StatelessWidget {
         disabledForegroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
         minimumSize: const Size(0, 44),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
       icon: isLoading
           ? const SizedBox(
@@ -556,11 +704,7 @@ class _DownloadButton extends StatelessWidget {
           : const Icon(Icons.download, size: 16),
       label: Text(
         isLoading ? 'Downloading…' : 'Download',
-        style: ofText(
-          size: 12.5,
-          weight: FontWeight.w600,
-          color: Colors.white,
-        ),
+        style: ofText(size: 12.5, weight: FontWeight.w600, color: Colors.white),
       ),
     );
   }

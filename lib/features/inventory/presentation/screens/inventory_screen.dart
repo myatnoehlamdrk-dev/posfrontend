@@ -5,6 +5,7 @@ import 'package:posfrontend/features/inventory/presentation/viewmodels/inventory
 import 'package:posfrontend/features/inventory/data/repositories/inventory_repository_impl.dart';
 import 'package:posfrontend/features/category/presentation/screens/category_screen.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
@@ -123,7 +124,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
         Text(
           context.l10n.t('Shop'),
           style: TextStyle(
-            fontSize: 14,
+            fontSize: AppTypography.bodySmallSize,
             fontWeight: FontWeight.w500,
             color: colors.breadcrumbCurrent,
           ),
@@ -201,7 +202,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
               Text(
                 context.l10n.t("What's the difference?"),
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: AppTypography.bodyMediumSize,
                   fontWeight: FontWeight.w600,
                   color: colors.title,
                 ),
@@ -229,11 +230,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('•  ', style: TextStyle(fontSize: 13, color: colors.muted)),
+        Text('•  ', style: TextStyle(fontSize: AppTypography.labelMediumSize, color: colors.muted)),
         Expanded(
           child: Text(
             text,
-            style: TextStyle(fontSize: 13, color: colors.muted, height: 1.6),
+            style: TextStyle(fontSize: AppTypography.labelMediumSize, color: colors.muted, height: 1.6),
           ),
         ),
       ],
@@ -317,7 +318,7 @@ class _InventoryOptionCardState extends State<_InventoryOptionCard> {
                   context.l10n.t(widget.option.title),
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 17,
+                    fontSize: AppTypography.titleSmallSize,
                     fontWeight: FontWeight.w600,
                     color: c.title,
                   ),
@@ -326,7 +327,7 @@ class _InventoryOptionCardState extends State<_InventoryOptionCard> {
                 Text(
                   context.l10n.t(widget.option.description),
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 13, color: c.muted, height: 1.6),
+                  style: TextStyle(fontSize: AppTypography.labelMediumSize, color: c.muted, height: 1.6),
                 ),
                 const SizedBox(height: 24),
                 _OpenButton(
@@ -381,7 +382,7 @@ class _Badge extends StatelessWidget {
       child: Text(
         label.toUpperCase(),
         style: TextStyle(
-          fontSize: 10,
+          fontSize: AppTypography.labelSmallSize,
           fontWeight: FontWeight.w600,
           letterSpacing: 1.1,
           color: colors.badgeText,
@@ -441,7 +442,7 @@ class _OpenButtonState extends State<_OpenButton> {
                 widget.label,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 14,
+                  fontSize: AppTypography.bodySmallSize,
                   fontWeight: FontWeight.w500,
                 ),
               ),

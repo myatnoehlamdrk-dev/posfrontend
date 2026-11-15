@@ -1,6 +1,10 @@
 /// A row of the new `inventory_stores` table.
 class InventoryStoreItem {
   final String id;
+
+  /// The catalog product this inventory row tracks, when one is linked.
+  /// Null for a manually created inventory entry.
+  final String? productId;
   final String name;
   final String sku;
   final String brand;
@@ -16,6 +20,7 @@ class InventoryStoreItem {
 
   const InventoryStoreItem({
     required this.id,
+    this.productId,
     required this.name,
     required this.sku,
     required this.brand,
@@ -49,8 +54,11 @@ class InventoryStoreItem {
         updated = DateTime.parse(raw).toLocal();
       } catch (_) {}
     }
+    final productId =
+        (json['productId'] ?? json['product_id'])?.toString();
     return InventoryStoreItem(
       id: json['id']?.toString() ?? '',
+      productId: (productId?.isEmpty ?? true) ? null : productId,
       name: (json['name'] ?? '').toString(),
       sku: (json['sku'] ?? '').toString(),
       brand: (json['brand'] ?? '').toString(),

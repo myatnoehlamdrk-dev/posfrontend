@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/features/purchase/presentation/viewmodels/purchase_item_view_model.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class AddPurchaseSheet extends StatefulWidget {
@@ -74,7 +75,7 @@ class _AddPurchaseSheetState extends State<AddPurchaseSheet> {
                   Text(
                     context.l10n.t('New Purchase Order'),
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: AppTypography.titleSmallSize,
                       fontWeight: FontWeight.w600,
                       color: p.textPrimary,
                     ),
@@ -91,7 +92,7 @@ class _AddPurchaseSheetState extends State<AddPurchaseSheet> {
                   Text(
                     context.l10n.t('Supplier'),
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: AppTypography.labelMediumSize,
                       fontWeight: FontWeight.w500,
                       color: p.textPrimary,
                     ),
@@ -105,7 +106,7 @@ class _AddPurchaseSheetState extends State<AddPurchaseSheet> {
                     child: Text(
                       context.l10n.t('+ Add Supplier'),
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: AppTypography.labelMediumSize,
                         fontWeight: FontWeight.w600,
                         color: AppColors.brandPurple,
                       ),
@@ -126,7 +127,7 @@ class _AddPurchaseSheetState extends State<AddPurchaseSheet> {
                     value: _selectedSupplierId,
                     hint: Text(
                       context.l10n.t('Select a supplier...'),
-                      style: TextStyle(color: p.textSecondary, fontSize: 14),
+                      style: TextStyle(color: p.textSecondary, fontSize: AppTypography.bodySmallSize),
                     ),
                     items: widget.viewModel.suppliers
                         .map(
@@ -134,7 +135,7 @@ class _AddPurchaseSheetState extends State<AddPurchaseSheet> {
                             value: s.id,
                             child: Text(
                               s.name,
-                              style: const TextStyle(fontSize: 14),
+                              style: const TextStyle(fontSize: AppTypography.bodySmallSize),
                             ),
                           ),
                         )
@@ -271,7 +272,7 @@ class _AddPurchaseSheetState extends State<AddPurchaseSheet> {
         Text(
           label,
           style: TextStyle(
-            fontSize: 13,
+            fontSize: AppTypography.labelMediumSize,
             fontWeight: FontWeight.w500,
             color: p.textPrimary,
           ),
@@ -282,7 +283,7 @@ class _AddPurchaseSheetState extends State<AddPurchaseSheet> {
           keyboardType: isNumber ? TextInputType.number : TextInputType.text,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: p.textSecondary, fontSize: 14),
+            hintStyle: TextStyle(color: p.textSecondary, fontSize: AppTypography.bodySmallSize),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: p.border),

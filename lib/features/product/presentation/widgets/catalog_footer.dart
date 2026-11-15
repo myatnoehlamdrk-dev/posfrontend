@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/shared/l10n/locale_notifier.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 
 /// The catalog page's footer.
@@ -130,7 +131,7 @@ class _FooterTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: AppTypography.labelMediumSize,
                     fontWeight: FontWeight.w600,
                     color: p.textPrimary,
                   ),
@@ -139,7 +140,7 @@ class _FooterTile extends StatelessWidget {
                   caption,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 10.5, color: p.textMuted),
+                  style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.textMuted),
                 ),
               ],
             ),

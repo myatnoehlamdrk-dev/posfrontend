@@ -27,3 +27,24 @@ TrendDelta trendDelta(
     tone: up == higherIsBetter ? OfBadgeTone.success : OfBadgeTone.danger,
   );
 }
+
+/// Month-over-month movement of a figure that is *already* a percentage —
+/// a margin or a ratio — expressed in percentage points.
+///
+/// A margin moving from 39.8% to 37.2% is "2.6 pts", not "6.5%": the ratio of
+/// two ratios reads as a change in the wrong quantity.
+TrendDelta trendDeltaPoints(num current, num? previous) {
+  if (previous == null || previous == 0) {
+    return (text: '—', up: true, tone: OfBadgeTone.neutral);
+  }
+  final points = current - previous;
+  if (points.abs() < 0.05) {
+    return (text: '0.0 pts', up: true, tone: OfBadgeTone.neutral);
+  }
+  final up = points >= 0;
+  return (
+    text: '${points.abs().toStringAsFixed(1)} pts',
+    up: up,
+    tone: up ? OfBadgeTone.success : OfBadgeTone.danger,
+  );
+}

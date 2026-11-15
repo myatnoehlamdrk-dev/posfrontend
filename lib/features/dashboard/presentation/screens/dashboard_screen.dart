@@ -13,11 +13,15 @@ import 'package:posfrontend/features/dashboard/domain/entities/dashboard_tables.
 import 'package:posfrontend/features/dashboard/presentation/screens/dashboard_table_screen.dart';
 import 'package:posfrontend/features/dashboard/presentation/viewmodels/dashboard_view_model.dart';
 import 'package:posfrontend/features/dashboard/presentation/widgets/dashboard_skeleton.dart';
+import 'package:posfrontend/shared/theme/app_dimens.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_text.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/app_card.dart';
+import 'package:posfrontend/shared/widgets/app_empty_state.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/app_shell.dart';
 import 'package:posfrontend/shared/widgets/count_up_text.dart';
@@ -217,7 +221,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Text(
           heading,
           style: appText(
-            size: 26,
+            size: AppTypography.displaySmallSize,
             weight: FontWeight.w700,
             color: p.textPrimary,
             letterSpacing: -0.3,
@@ -226,7 +230,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         const SizedBox(height: 4),
         Text(
           context.l10n.t("Here's what's happening with your store today."),
-          style: appText(size: 13, color: p.textSecondary),
+          style: appText(size: AppTypography.labelMediumSize, color: p.textSecondary),
         ),
       ],
     );
@@ -285,7 +289,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: Text(
                   context.l10n.t(_tabLabels[tab]!),
                   style: appText(
-                    size: 13,
+                    size: AppTypography.labelMediumSize,
                     weight: FontWeight.w600,
                     color: _tab == tab ? Colors.white : p.textSecondary,
                   ),
@@ -480,7 +484,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           : _viewModel.monthlySales.isEmpty
           ? SizedBox(
               height: 260,
-              child: Center(child: Text(context.l10n.t('No sales data'))),
+              child: AppEmptyState(
+                title: context.l10n.t('No sales data'),
+                icon: Icons.bar_chart_outlined,
+              ),
             )
           : _MonthlySalesChart(
               items: _viewModel.monthlySales,
@@ -568,7 +575,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: items.isEmpty
           ? SizedBox(
               height: 200,
-              child: Center(child: Text(context.l10n.t('No category data'))),
+              child: AppEmptyState(
+                title: context.l10n.t('No category data'),
+                icon: Icons.pie_chart_outline,
+              ),
             )
           : bodyWidth != null
           ? _allocationBody(p, items, total, bodyWidth)
@@ -631,7 +641,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: items.isEmpty
           ? SizedBox(
               height: 240,
-              child: Center(child: Text(context.l10n.t('No sales data'))),
+              child: AppEmptyState(
+                title: context.l10n.t('No sales data'),
+                icon: Icons.bar_chart_outlined,
+              ),
             )
           : _HorizontalCategoryChart(items: items, palette: p, expand: fill),
     );
@@ -896,15 +909,9 @@ class _KpiCard extends StatelessWidget {
       onTap: metric.tableKey == null
           ? null
           : () => onOpenTable(metric.tableKey),
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: p.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: p.border),
-          boxShadow: p.cardElevation,
-        ),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: AppCard(
+        padding: const EdgeInsets.all(AppSpacing.s16),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -934,7 +941,7 @@ class _KpiCard extends StatelessWidget {
                           context.l10n.t(metric.label),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: appText(size: 12, color: p.textSecondary),
+                          style: appText(size: AppTypography.labelSmallSize, color: p.textSecondary),
                         ),
                       ),
                       if (metric.tableKey != null)
@@ -1026,14 +1033,10 @@ class _PanelCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    return Container(
+    return AppCard(
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: p.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: p.border),
-        boxShadow: p.cardElevation,
-      ),
+      padding: EdgeInsets.zero,
+      radius: AppRadius.lg,
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1094,7 +1097,7 @@ class _ViewAllLink extends StatelessWidget {
             Text(
               context.l10n.t('View all'),
               style: appText(
-                size: 12,
+                size: AppTypography.labelSmallSize,
                 weight: FontWeight.w600,
                 color: p.accentText,
               ),
@@ -1127,7 +1130,7 @@ class _TagChip extends StatelessWidget {
       child: Text(
         label,
         style: appText(
-          size: 11.5,
+          size: AppTypography.labelSmallSize,
           weight: FontWeight.w600,
           color: p.textSecondary,
         ),
@@ -1255,7 +1258,7 @@ class _SalesSummaryCard extends StatelessWidget {
                     context.l10n.t(rows[i].label),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: appText(size: 12.5, color: p.textSecondary),
+                    style: appText(size: AppTypography.labelMediumSize, color: p.textSecondary),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -1333,7 +1336,7 @@ class _TrendBadge extends StatelessWidget {
             Text(
               '${trend.percent!.abs().toStringAsFixed(1)}%',
               style: appText(
-                size: 11,
+                size: AppTypography.labelSmallSize,
                 weight: FontWeight.w700,
                 color: color,
                 letterSpacing: -0.1,
@@ -1488,7 +1491,7 @@ class _CategoryDonut extends StatelessWidget {
                   context.l10n.t('Products'),
                   textAlign: TextAlign.center,
                   maxLines: 1,
-                  style: appText(size: 11, color: palette.textSecondary),
+                  style: appText(size: AppTypography.labelSmallSize, color: palette.textSecondary),
                 ),
               ],
             ),
@@ -1543,7 +1546,7 @@ class _CategoryLegend extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: appText(
-                    size: 12.5,
+                    size: AppTypography.labelMediumSize,
                     weight: FontWeight.w500,
                     color: p.textPrimary,
                   ),
@@ -1556,7 +1559,7 @@ class _CategoryLegend extends StatelessWidget {
                   textAlign: TextAlign.right,
                   maxLines: 1,
                   style: appText(
-                    size: 12.5,
+                    size: AppTypography.labelMediumSize,
                     weight: FontWeight.w600,
                     color: p.textPrimary,
                   ),
@@ -1569,7 +1572,7 @@ class _CategoryLegend extends StatelessWidget {
                   '${percentOf(items[i]).toStringAsFixed(1)}%',
                   textAlign: TextAlign.right,
                   maxLines: 1,
-                  style: appText(size: 12, color: p.textSecondary),
+                  style: appText(size: AppTypography.labelSmallSize, color: p.textSecondary),
                 ),
               ),
             ],
@@ -1734,7 +1737,7 @@ class _StockStatusPanel extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: appText(
-                      size: 12.5,
+                      size: AppTypography.labelMediumSize,
                       weight: FontWeight.w600,
                       color: p.textPrimary,
                     ),
@@ -1756,7 +1759,7 @@ class _StockStatusPanel extends StatelessWidget {
                     textAlign: TextAlign.right,
                     maxLines: 1,
                     style: appText(
-                      size: 13,
+                      size: AppTypography.labelMediumSize,
                       weight: FontWeight.w700,
                       color: p.textPrimary,
                     ),
@@ -1769,7 +1772,7 @@ class _StockStatusPanel extends StatelessWidget {
                     '${(_shareOf(rows[i].count) * 100).toStringAsFixed(1)}%',
                     textAlign: TextAlign.right,
                     maxLines: 1,
-                    style: appText(size: 11.5, color: p.textSecondary),
+                    style: appText(size: AppTypography.labelSmallSize, color: p.textSecondary),
                   ),
                 ),
               ],
@@ -1819,7 +1822,7 @@ class _TrendTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: appText(
-                    size: 13,
+                    size: AppTypography.labelMediumSize,
                     weight: FontWeight.w700,
                     color: titleColor,
                   ),
@@ -1836,7 +1839,7 @@ class _TrendTile extends StatelessWidget {
           if (items.isEmpty)
             Text(
               context.l10n.t('Nothing to show'),
-              style: appText(size: 11.5, color: p.textSecondary),
+              style: appText(size: AppTypography.labelSmallSize, color: p.textSecondary),
             ),
           for (final item in items)
             Padding(
@@ -1856,7 +1859,7 @@ class _TrendTile extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: appText(
-                            size: 12.5,
+                            size: AppTypography.labelMediumSize,
                             weight: FontWeight.w600,
                             color: p.textPrimary,
                           ),
@@ -1866,7 +1869,7 @@ class _TrendTile extends StatelessWidget {
                           item.sold,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: appText(size: 11, color: p.textSecondary),
+                          style: appText(size: AppTypography.labelSmallSize, color: p.textSecondary),
                         ),
                       ],
                     ),
@@ -1965,7 +1968,7 @@ class _PreviewTableCard extends StatelessWidget {
               child: Center(
                 child: Text(
                   context.l10n.t('Nothing to show'),
-                  style: appText(size: 13, color: p.textMuted),
+                  style: appText(size: AppTypography.labelMediumSize, color: p.textMuted),
                 ),
               ),
             )
@@ -2022,7 +2025,7 @@ class _PreviewTableCard extends StatelessWidget {
                           Text(
                             (i + 1).toString(),
                             maxLines: 1,
-                            style: appText(size: 12.5, color: p.textMuted),
+                            style: appText(size: AppTypography.labelMediumSize, color: p.textMuted),
                           ),
                         ),
                         for (final column in columns)
@@ -2040,7 +2043,7 @@ class _PreviewTableCard extends StatelessWidget {
   }
 
   static TextStyle _headerStyle(AppPalette p) => appText(
-    size: 11.5,
+    size: AppTypography.labelSmallSize,
     weight: FontWeight.w700,
     letterSpacing: 0.2,
     color: p.textSecondary,
@@ -2079,7 +2082,7 @@ class _PreviewTableCard extends StatelessWidget {
       return PriceText(
         row.number(column.fieldKey),
         style: appText(
-          size: 12.5,
+          size: AppTypography.labelMediumSize,
           weight: FontWeight.w600,
           color: p.textPrimary,
         ),
@@ -2094,7 +2097,7 @@ class _PreviewTableCard extends StatelessWidget {
           ? TextAlign.right
           : TextAlign.left,
       style: appText(
-        size: 12.5,
+        size: AppTypography.labelMediumSize,
         color: p.textPrimary,
         weight: column.kind == TableValueKind.text
             ? FontWeight.w400
@@ -2175,12 +2178,12 @@ class _Footer extends StatelessWidget {
         children: [
           Text(
             '© ${DateTime.now().year} Simple POS. All rights reserved.',
-            style: appText(size: 12, color: p.textMuted),
+            style: appText(size: AppTypography.labelSmallSize, color: p.textMuted),
           ),
           Text(
             context.l10n.t('Simple POS. Greater Business.'),
             style: appText(
-              size: 12,
+              size: AppTypography.labelSmallSize,
               weight: FontWeight.w600,
               color: p.textMuted,
             ),
@@ -2218,7 +2221,7 @@ class _YearDropdown extends StatelessWidget {
         child: DropdownButton<int>(
           value: years.contains(value) ? value : years.first,
           icon: const Icon(Icons.keyboard_arrow_down, size: 18),
-          style: appText(size: 13, color: p.textSecondary),
+          style: appText(size: AppTypography.labelMediumSize, color: p.textSecondary),
           items: years
               .map((e) => DropdownMenuItem(value: e, child: Text('$e')))
               .toList(),
@@ -2325,7 +2328,7 @@ class _MonthlySalesChartPainter extends CustomPainter {
       final tp = TextPainter(
         text: TextSpan(
           text: label,
-          style: appText(size: 10, color: palette.textSecondary),
+          style: appText(size: AppTypography.labelSmallSize, color: palette.textSecondary),
         ),
         textDirection: TextDirection.ltr,
       )..layout();
@@ -2341,7 +2344,7 @@ class _MonthlySalesChartPainter extends CustomPainter {
       final tp = TextPainter(
         text: TextSpan(
           text: _monthLabels[m],
-          style: appText(size: 10.5, color: palette.textSecondary),
+          style: appText(size: AppTypography.labelSmallSize, color: palette.textSecondary),
         ),
         textDirection: TextDirection.ltr,
       )..layout();
@@ -2380,7 +2383,7 @@ class _MonthlySalesChartPainter extends CustomPainter {
         text: TextSpan(
           text: _formatValue(entry.total.toDouble()),
           style: appText(
-            size: 10,
+            size: AppTypography.labelSmallSize,
             weight: FontWeight.w700,
             color: palette.textPrimary,
           ),
@@ -2466,7 +2469,7 @@ class _HorizontalCategoryChartPainter extends CustomPainter {
       final tp = TextPainter(
         text: TextSpan(
           text: e.category,
-          style: appText(size: 11, color: palette.textSecondary),
+          style: appText(size: AppTypography.labelSmallSize, color: palette.textSecondary),
         ),
         textDirection: TextDirection.ltr,
       )..layout();
@@ -2498,7 +2501,7 @@ class _HorizontalCategoryChartPainter extends CustomPainter {
       final tp = TextPainter(
         text: TextSpan(
           text: _formatQuantity(value),
-          style: appText(size: 10, color: palette.textSecondary),
+          style: appText(size: AppTypography.labelSmallSize, color: palette.textSecondary),
         ),
         textDirection: TextDirection.ltr,
       )..layout();
@@ -2518,7 +2521,7 @@ class _HorizontalCategoryChartPainter extends CustomPainter {
       final lp = TextPainter(
         text: TextSpan(
           text: e.category,
-          style: appText(size: 11, color: palette.textSecondary),
+          style: appText(size: AppTypography.labelSmallSize, color: palette.textSecondary),
         ),
         maxLines: 1,
         ellipsis: '…',
@@ -2539,7 +2542,7 @@ class _HorizontalCategoryChartPainter extends CustomPainter {
         text: TextSpan(
           text: _formatQuantity(e.totalQuantity.toDouble()),
           style: appText(
-            size: 10,
+            size: AppTypography.labelSmallSize,
             weight: FontWeight.w600,
             color: palette.textPrimary,
           ),

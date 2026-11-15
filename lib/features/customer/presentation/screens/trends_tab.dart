@@ -3,6 +3,7 @@ import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:posfrontend/features/customer/domain/entities/customer.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class TrendsTab extends StatelessWidget {
@@ -10,7 +11,7 @@ class TrendsTab extends StatelessWidget {
 
   const TrendsTab({super.key, required this.analytics});
 
-  static const Color teal = Color(0xFF4FD1D9);
+  static const Color teal = AppColors.teal;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +25,7 @@ class TrendsTab extends StatelessWidget {
             Text(
               context.l10n.t('Sales Trend'),
               style: TextStyle(
-                fontSize: 16,
+                fontSize: AppTypography.bodyLargeSize,
                 fontWeight: FontWeight.w600,
                 color: p.textPrimary,
               ),
@@ -37,7 +38,7 @@ class TrendsTab extends StatelessWidget {
             Text(
               context.l10n.t('Orders & Customers'),
               style: TextStyle(
-                fontSize: 16,
+                fontSize: AppTypography.bodyLargeSize,
                 fontWeight: FontWeight.w600,
                 color: p.textPrimary,
               ),
@@ -50,7 +51,7 @@ class TrendsTab extends StatelessWidget {
             Text(
               context.l10n.t('Sales by Location'),
               style: TextStyle(
-                fontSize: 16,
+                fontSize: AppTypography.bodyLargeSize,
                 fontWeight: FontWeight.w600,
                 color: p.textPrimary,
               ),
@@ -93,7 +94,7 @@ class TrendsTab extends StatelessWidget {
                   if (idx >= 0 && idx < trends.length) {
                     return Text(
                       trends[idx].month,
-                      style: TextStyle(fontSize: 10, color: p.textSecondary),
+                      style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.textSecondary),
                     );
                   }
                   return Text('');
@@ -105,7 +106,7 @@ class TrendsTab extends StatelessWidget {
                 showTitles: true,
                 reservedSize: 50,
                 getTitlesWidget: (value, meta) {
-                  if (value >= 1000000)
+                  if (value >= 1000000) {
                     return Text(
                       context.l10n
                           .t('{v1}M')
@@ -113,9 +114,10 @@ class TrendsTab extends StatelessWidget {
                             '{v1}',
                             ((value / 1000000).toStringAsFixed(1)).toString(),
                           ),
-                      style: TextStyle(fontSize: 10, color: p.textSecondary),
+                      style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.textSecondary),
                     );
-                  if (value >= 1000)
+                  }
+                  if (value >= 1000) {
                     return Text(
                       context.l10n
                           .t('{v1}K')
@@ -123,13 +125,14 @@ class TrendsTab extends StatelessWidget {
                             '{v1}',
                             ((value / 1000).toStringAsFixed(0)).toString(),
                           ),
-                      style: TextStyle(fontSize: 10, color: p.textSecondary),
+                      style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.textSecondary),
                     );
+                  }
                   return Text(
                     context.l10n
                         .t('{v1}')
                         .replaceAll('{v1}', (value.toInt()).toString()),
-                    style: TextStyle(fontSize: 10, color: p.textSecondary),
+                    style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.textSecondary),
                   );
                 },
               ),
@@ -200,7 +203,7 @@ class TrendsTab extends StatelessWidget {
                   if (idx >= 0 && idx < trends.length) {
                     return Text(
                       trends[idx].month,
-                      style: TextStyle(fontSize: 10, color: p.textSecondary),
+                      style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.textSecondary),
                     );
                   }
                   return Text('');
@@ -215,7 +218,7 @@ class TrendsTab extends StatelessWidget {
                   context.l10n
                       .t('{v1}')
                       .replaceAll('{v1}', (value.toInt()).toString()),
-                  style: TextStyle(fontSize: 10, color: p.textSecondary),
+                  style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.textSecondary),
                 ),
               ),
             ),
@@ -297,7 +300,7 @@ class TrendsTab extends StatelessWidget {
                       child: Text(
                         loc.location,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: AppTypography.labelMediumSize,
                           fontWeight: FontWeight.w500,
                           color: p.textPrimary,
                         ),
@@ -308,7 +311,7 @@ class TrendsTab extends StatelessWidget {
                           .t('MMK {v1}')
                           .replaceAll('{v1}', (loc.totalSales).toString()),
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: AppTypography.labelSmallSize,
                         fontWeight: FontWeight.w600,
                         color: AppColors.brandPurpleDark,
                       ),
@@ -318,7 +321,7 @@ class TrendsTab extends StatelessWidget {
                       context.l10n
                           .t('{v1}%')
                           .replaceAll('{v1}', (loc.percentage).toString()),
-                      style: TextStyle(fontSize: 12, color: p.textSecondary),
+                      style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.textSecondary),
                     ),
                   ],
                 ),

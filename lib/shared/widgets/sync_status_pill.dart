@@ -4,7 +4,8 @@ import 'package:posfrontend/core/local/sync_manager.dart';
 import 'package:posfrontend/core/network/connectivity.dart';
 import 'package:posfrontend/core/offline/offline_writes_flag.dart';
 import 'package:posfrontend/core/offline/outbox_queue.dart';
-import 'package:posfrontend/shared/l10n/l10n_x.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 
 /// A small floating pill showing sync status in the top-right corner.
 ///
@@ -111,7 +112,7 @@ class _SyncStatusPillState extends State<SyncStatusPill> {
           const SizedBox(width: 8),
           Text(
             mainLabel,
-            style: TextStyle(color: mainColor, fontWeight: FontWeight.w600, fontSize: 13),
+            style: TextStyle(color: mainColor, fontWeight: FontWeight.w600, fontSize: AppTypography.labelMediumSize),
           ),
         ],
       ),
@@ -128,7 +129,7 @@ class _SyncStatusPillState extends State<SyncStatusPill> {
             const SizedBox(width: 8),
             Text(
               'Last synced: ${DateFormat.Hm().format(lastSynced.toLocal())}',
-              style: const TextStyle(color: Colors.white70, fontSize: 12),
+              style: const TextStyle(color: Colors.white70, fontSize: AppTypography.labelSmallSize),
             ),
           ],
         ),
@@ -146,7 +147,7 @@ class _SyncStatusPillState extends State<SyncStatusPill> {
             const SizedBox(width: 8),
             Text(
               '$pending sale${pending > 1 ? 's' : ''} queued',
-              style: const TextStyle(color: Colors.amber, fontSize: 12),
+              style: const TextStyle(color: Colors.amber, fontSize: AppTypography.labelSmallSize),
             ),
           ],
         ),
@@ -164,7 +165,7 @@ class _SyncStatusPillState extends State<SyncStatusPill> {
             const SizedBox(width: 8),
             Text(
               '$failed failed',
-              style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+              style: const TextStyle(color: Colors.redAccent, fontSize: AppTypography.labelSmallSize),
             ),
           ],
         ),
@@ -235,7 +236,7 @@ class _SyncStatusPillState extends State<SyncStatusPill> {
                     label,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 11,
+                      fontSize: AppTypography.labelSmallSize,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -262,7 +263,7 @@ class _SyncStatusPillState extends State<SyncStatusPill> {
     int failed,
   ) {
     if (!online) {
-      return ('Offline', Icons.cloud_off, const Color(0xFFB26A00));
+      return ('Offline', Icons.cloud_off, AppColors.orange);
     }
     if (syncState == SyncState.syncing) {
       return ('Syncing', Icons.sync, Colors.blueAccent);

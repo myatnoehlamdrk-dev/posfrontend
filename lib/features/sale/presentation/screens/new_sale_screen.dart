@@ -24,9 +24,11 @@ import 'package:posfrontend/shared/services/usb_setup_download.dart';
 import 'package:posfrontend/features/sale/presentation/screens/sale_items_screen.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/totals_panel.dart';
+import 'package:posfrontend/shared/widgets/app_page_transitions.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart'
     show navigateToDashboard;
@@ -278,7 +280,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       child: Text(
         context.l10n.t('Cancel'),
         style: TextStyle(
-          fontSize: 15,
+          fontSize: AppTypography.bodyMediumSize,
           fontWeight: FontWeight.w600,
           color: _titleColor,
         ),
@@ -413,7 +415,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                     Text(
                       dateStr,
                       style: TextStyle(
-                        fontSize: 15,
+                        fontSize: AppTypography.bodyMediumSize,
                         fontWeight: FontWeight.w600,
                         color: _titleColor,
                       ),
@@ -428,7 +430,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                     Text(
                       timeStr,
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: AppTypography.bodySmallSize,
                         fontWeight: FontWeight.w500,
                         color: _mutedColor,
                       ),
@@ -457,7 +459,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             Text(
               context.l10n.t('Items'),
               style: TextStyle(
-                fontSize: 16,
+                fontSize: AppTypography.bodyLargeSize,
                 fontWeight: FontWeight.w600,
                 color: _titleColor,
               ),
@@ -472,7 +474,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
               padding: EdgeInsets.symmetric(vertical: 32),
               child: Text(
                 context.l10n.t('No items added yet.'),
-                style: TextStyle(color: _mutedColor, fontSize: 14),
+                style: TextStyle(color: _mutedColor, fontSize: AppTypography.bodySmallSize),
               ),
             ),
           )
@@ -543,7 +545,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        fontSize: 13,
+                        fontSize: AppTypography.labelMediumSize,
                         color: _titleColor,
                       ),
                     ),
@@ -553,7 +555,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                         item.category,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 11, color: _mutedColor),
+                        style: TextStyle(fontSize: AppTypography.labelSmallSize, color: _mutedColor),
                       ),
                     ],
                     if (item.size != null ||
@@ -567,7 +569,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                         ].where((e) => e != null && e.isNotEmpty).join(' | '),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 11, color: _mutedColor),
+                        style: TextStyle(fontSize: AppTypography.labelSmallSize, color: _mutedColor),
                       ),
                     ],
                   ],
@@ -581,7 +583,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                     PriceText(
                       item.unitPrice,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: AppTypography.labelSmallSize,
                         fontWeight: FontWeight.w600,
                         color: _titleColor,
                       ),
@@ -599,14 +601,14 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
               const Spacer(),
               Text(
                 context.l10n.t('Total:'),
-                style: TextStyle(fontSize: 11, color: _mutedColor),
+                style: TextStyle(fontSize: AppTypography.labelSmallSize, color: _mutedColor),
               ),
               const SizedBox(width: 4),
               Flexible(
                 child: PriceText(
                   item.subtotal,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: AppTypography.labelMediumSize,
                     fontWeight: FontWeight.w600,
                     color: _titleColor,
                   ),
@@ -632,12 +634,12 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
         children: [
           Text(
             context.l10n.t('Qty: '),
-            style: TextStyle(fontSize: 13, color: _mutedColor),
+            style: TextStyle(fontSize: AppTypography.labelMediumSize, color: _mutedColor),
           ),
           Text(
             context.l10n.t('{v1}').replaceAll('{v1}', (qty).toString()),
             style: TextStyle(
-              fontSize: 14,
+              fontSize: AppTypography.bodySmallSize,
               fontWeight: FontWeight.w600,
               color: _titleColor,
             ),
@@ -667,7 +669,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
               _viewModel.setDiscountPercent(double.tryParse(v) ?? 0),
           textAlign: TextAlign.right,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: AppTypography.bodySmallSize,
             fontWeight: FontWeight.w500,
             color: _titleColor,
           ),
@@ -686,7 +688,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
               borderSide: BorderSide(color: _borderColor),
             ),
             suffixText: '%',
-            suffixStyle: TextStyle(fontSize: 12, color: _mutedColor),
+            suffixStyle: TextStyle(fontSize: AppTypography.labelSmallSize, color: _mutedColor),
           ),
         ),
       ),
@@ -702,7 +704,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
               Expanded(
                 child: Text(
                   context.l10n.t('Payment Method'),
-                  style: TextStyle(fontSize: 14, color: _mutedColor),
+                  style: TextStyle(fontSize: AppTypography.bodySmallSize, color: _mutedColor),
                 ),
               ),
               Expanded(
@@ -753,13 +755,13 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             children: [
               Text(
                 context.l10n.t('Notes'),
-                style: TextStyle(fontSize: 14, color: _mutedColor),
+                style: TextStyle(fontSize: AppTypography.bodySmallSize, color: _mutedColor),
               ),
               const SizedBox(height: 8),
               TextField(
                 controller: _notesCtrl,
                 maxLines: 3,
-                style: TextStyle(fontSize: 14, color: _titleColor),
+                style: TextStyle(fontSize: AppTypography.bodySmallSize, color: _titleColor),
                 onChanged: (v) => _viewModel.setNotes(v),
                 decoration: InputDecoration(
                   hintText: context.l10n.t('Enter notes...'),
@@ -881,7 +883,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
-                      fontSize: 13,
+                      fontSize: AppTypography.labelMediumSize,
                     ),
                   ),
                 ],
@@ -929,7 +931,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
               style: TextStyle(
                 color: loading ? _mutedColor : AppColors.brandPurple,
                 fontWeight: FontWeight.w600,
-                fontSize: 13,
+                fontSize: AppTypography.labelMediumSize,
               ),
             ),
           ],
@@ -1028,7 +1030,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                           Text(
                             context.l10n.t('Print Settings'),
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: AppTypography.titleSmallSize,
                               fontWeight: FontWeight.w600,
                               color: _titleColor,
                             ),
@@ -1093,7 +1095,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                           context.l10n.t(
                             'Thermal printing is not available here',
                           ),
-                          style: TextStyle(fontSize: 12, color: _mutedColor),
+                          style: TextStyle(fontSize: AppTypography.labelSmallSize, color: _mutedColor),
                         ),
                       ],
                       if (_output == SalePrintSettings.outputUsb)
@@ -1119,7 +1121,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   Widget _sectionTitle(String key) => Text(
     context.l10n.t(key),
     style: TextStyle(
-      fontSize: 14,
+      fontSize: AppTypography.bodySmallSize,
       fontWeight: FontWeight.w600,
       color: _titleColor,
     ),
@@ -1169,7 +1171,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                     Text(
                       title,
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: AppTypography.bodySmallSize,
                         fontWeight: FontWeight.w500,
                         color: isSelected ? _accentColor : _titleColor,
                       ),
@@ -1177,7 +1179,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: TextStyle(fontSize: 12, color: _mutedColor),
+                      style: TextStyle(fontSize: AppTypography.labelSmallSize, color: _mutedColor),
                     ),
                   ],
                 ),
@@ -1234,7 +1236,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                           ? _usbPrinter!.name
                           : context.l10n.t('No printer selected'),
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: AppTypography.bodySmallSize,
                         fontWeight: FontWeight.w600,
                         color: _titleColor,
                       ),
@@ -1244,7 +1246,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                       chosen
                           ? 'id:${_usbPrinter!.vendorId.toRadixString(16).padLeft(4, '0')}:${_usbPrinter!.productId.toRadixString(16).padLeft(4, '0')}'
                           : context.l10n.t('Plug in the printer, then choose'),
-                      style: TextStyle(fontSize: 12, color: _mutedColor),
+                      style: TextStyle(fontSize: AppTypography.labelSmallSize, color: _mutedColor),
                     ),
                   ],
                 ),
@@ -1256,7 +1258,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                   style: TextStyle(
                     color: _accentColor,
                     fontWeight: FontWeight.w600,
-                    fontSize: 13,
+                    fontSize: AppTypography.labelMediumSize,
                   ),
                 ),
               ),
@@ -1277,7 +1279,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                 style: TextStyle(
                   color: _accentColor,
                   fontWeight: FontWeight.w600,
-                  fontSize: 13,
+                  fontSize: AppTypography.labelMediumSize,
                 ),
               ),
             ),
@@ -1365,7 +1367,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                           ? _btPrinterName
                           : context.l10n.t('No printer selected'),
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: AppTypography.bodySmallSize,
                         fontWeight: FontWeight.w600,
                         color: _titleColor,
                       ),
@@ -1373,7 +1375,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                     const SizedBox(height: 2),
                     Text(
                       chosen ? _btPrinterAddress : '',
-                      style: TextStyle(fontSize: 12, color: _mutedColor),
+                      style: TextStyle(fontSize: AppTypography.labelSmallSize, color: _mutedColor),
                     ),
                   ],
                 ),
@@ -1385,7 +1387,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                   style: TextStyle(
                     color: _accentColor,
                     fontWeight: FontWeight.w600,
-                    fontSize: 13,
+                    fontSize: AppTypography.labelMediumSize,
                   ),
                 ),
               ),
@@ -1439,7 +1441,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                           ? printer.name
                           : context.l10n.t('No printer configured'),
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: AppTypography.bodySmallSize,
                         fontWeight: FontWeight.w600,
                         color: _titleColor,
                       ),
@@ -1451,7 +1453,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                           : context.l10n.t(
                               'Add a printer in Settings > Printers',
                             ),
-                      style: TextStyle(fontSize: 12, color: _mutedColor),
+                      style: TextStyle(fontSize: AppTypography.labelSmallSize, color: _mutedColor),
                     ),
                   ],
                 ),
@@ -1556,7 +1558,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             Text(
               label,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: AppTypography.bodySmallSize,
                 fontWeight: FontWeight.w500,
                 color: isSelected ? _accentColor : _titleColor,
               ),
@@ -1592,7 +1594,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             // sale being written here. A drill-down gets its own route.
             Navigator.of(
               context,
-            ).push(MaterialPageRoute(builder: (_) => SaleItemScreen()));
+            ).push(AppPageTransitions.fadeSlide<void>(SaleItemScreen()));
           },
           child: _footerBtn(Icons.history, 'Recent Sales'),
         ),
@@ -1605,7 +1607,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       children: [
         Icon(icon, color: _mutedColor, size: 18),
         const SizedBox(width: 6),
-        Text(label, style: TextStyle(fontSize: 13, color: _mutedColor)),
+        Text(label, style: TextStyle(fontSize: AppTypography.labelMediumSize, color: _mutedColor)),
       ],
     );
   }

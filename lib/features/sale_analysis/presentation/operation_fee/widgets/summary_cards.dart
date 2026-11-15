@@ -2,11 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 
+import '../../widgets/trend_delta.dart';
 import '../operation_fee_style.dart';
 import 'summary_card.dart';
 
 /// Four-up KPI strip at the top of the Operation Fee Controller.
-class SummaryCardsGrid extends StatelessWidget {
+///
+/// Every figure on these cards is computed from the shop's real month data.
+/// The comparison pills come from the previous month; when the account has no
+/// earlier month to compare against the pill is dropped rather than filled
+/// with a plausible-looking number.
+class SummaryCardsGrid extends StatefulWidget {
   final int columns;
   final double revenue;
   final double operatingCosts;
@@ -15,6 +21,16 @@ class SummaryCardsGrid extends StatelessWidget {
   final int totalOrders;
   final double marginBeforeFees;
   final double trueMargin;
+
+  /// Previous month's figures, or null when there is no earlier month.
+  final double? prevRevenue;
+  final double? prevOperatingCosts;
+  final double? prevTrueMargin;
+
+  /// Recent months, oldest first, already normalised to 0..1 for the
+  /// sparkbars. Revenue and operating costs trend separately.
+  final List<double> revenueSpark;
+  final List<double> costSpark;
 
   const SummaryCardsGrid({
     super.key,
@@ -26,76 +42,129 @@ class SummaryCardsGrid extends StatelessWidget {
     required this.totalOrders,
     required this.marginBeforeFees,
     required this.trueMargin,
+    this.prevRevenue,
+    this.prevOperatingCosts,
+    this.prevTrueMargin,
+    this.revenueSpark = const [],
+    this.costSpark = const [],
   });
+
+  @override
+  State<SummaryCardsGrid> createState() => _SummaryCardsGridState();
+}
+
+class _SummaryCardsGridState extends State<SummaryCardsGrid> {
+  /// The card carrying the theme highlight. It starts on the headline card
+  /// (True profit margin) and moves to whichever card the user taps, so the
+  /// emphasis is chosen rather than baked into one static card.
+  int _highlighted = 3;
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
     const gap = 16.0;
+
+    // Local copies so the null checks below promote to non-null.
+    final prevRevenue = widget.prevRevenue;
+    final prevCosts = widget.prevOperatingCosts;
+    final prevMargin = widget.prevTrueMargin;
+    final revenueDelta = prevRevenue == null
+        ? null
+        : trendDelta(widget.revenue, prevRevenue, higherIsBetter: true);
+    final costsDelta = prevCosts == null
+        ? null
+        : trendDelta(
+            widget.operatingCosts,
+            prevCosts,
+            higherIsBetter: false,
+          );
+    final marginDelta = prevMargin == null
+        ? null
+        : trendDeltaPoints(widget.trueMargin, prevMargin);
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final width =
-            (constraints.maxWidth - gap * (columns - 1)) / columns;
+            (constraints.maxWidth - gap * (widget.columns - 1)) /
+            widget.columns;
         final cards = <Widget>[
           OfSummaryCard(
             width: width,
+            highlight: _highlighted == 0,
+            onTap: () => setState(() => _highlighted = 0),
             label: 'Monthly revenue',
-            value: revenue,
+            value: widget.revenue,
             format: (v) => ofMoney(v, digits: 0),
-            badgeText: '8.2%',
-            badgeUp: true,
-            supporting: 'vs. ${ofMoney(44580, digits: 0)} last month',
+            badgeText: revenueDelta?.text,
+            badgeUp: revenueDelta?.up ?? true,
+            badgeTone: revenueDelta?.tone ?? OfBadgeTone.neutral,
+            supporting: prevRevenue == null
+                ? 'No earlier month on record'
+                : 'vs. ${ofMoney(prevRevenue, digits: 0)} last month',
             footer: Align(
               alignment: Alignment.centerRight,
               child: OfSparkBars(
-                color: AppColors.blue,
-                values: const [0.25, 0.45, 0.3, 0.6, 0.4, 0.85, 0.55],
+                color: _highlighted == 0
+                    ? Colors.white.withValues(alpha: 0.85)
+                    : AppColors.blue,
+                values: widget.revenueSpark,
               ),
             ),
           ),
           OfSummaryCard(
             width: width,
+            highlight: _highlighted == 1,
+            onTap: () => setState(() => _highlighted = 1),
             label: 'Operating costs',
-            value: operatingCosts,
+            value: widget.operatingCosts,
             format: (v) => ofMoney(v),
-            badgeText: '2.1%',
-            badgeUp: false,
+            badgeText: costsDelta?.text,
+            badgeUp: costsDelta?.up ?? true,
+            badgeTone: costsDelta?.tone ?? OfBadgeTone.neutral,
             supporting:
-                '${operatingRatio.toStringAsFixed(1)}% of total revenue',
+                '${widget.operatingRatio.toStringAsFixed(1)}% of total revenue',
             footer: Align(
               alignment: Alignment.centerRight,
               child: OfSparkBars(
-                color: p.primary,
-                values: const [0.8, 0.6, 0.7, 0.45, 0.55, 0.35, 0.4],
+                color: _highlighted == 1
+                    ? Colors.white.withValues(alpha: 0.85)
+                    : p.primary,
+                values: widget.costSpark,
               ),
             ),
           ),
           OfSummaryCard(
             width: width,
+            highlight: _highlighted == 2,
+            onTap: () => setState(() => _highlighted = 2),
             label: 'Cost per order',
-            value: costPerOrder,
+            value: widget.costPerOrder,
             format: (v) => ofMoney(v),
-            badgeText: '${ofCount(totalOrders)} orders',
+            badgeText: '${ofCount(widget.totalOrders)} orders',
             badgeTone: OfBadgeTone.neutral,
             supporting: 'Across all active fees',
             footer: ClipRRect(
               borderRadius: BorderRadius.circular(4),
               child: LinearProgressIndicator(
-                value: (operatingRatio / 100).clamp(0.0, 1.0),
+                value: (widget.operatingRatio / 100).clamp(0.0, 1.0),
                 minHeight: 5,
-                backgroundColor: p.chipBg,
-                color: p.primary,
+                backgroundColor: _highlighted == 2
+                    ? Colors.white.withValues(alpha: 0.28)
+                    : p.chipBg,
+                color: _highlighted == 2 ? Colors.white : p.primary,
               ),
             ),
           ),
           OfSummaryCard(
             width: width,
-            highlight: true,
+            highlight: _highlighted == 3,
+            onTap: () => setState(() => _highlighted = 3),
             label: 'True profit margin',
-            value: trueMargin,
+            value: widget.trueMargin,
             format: (v) => '${v.toStringAsFixed(1)}%',
-            badgeText: '1.4%',
-            badgeUp: true,
+            badgeText: marginDelta?.text,
+            badgeUp: marginDelta?.up ?? true,
+            badgeTone: marginDelta?.tone ?? OfBadgeTone.neutral,
             supporting: 'After all operation fees',
             footer: Row(
               children: [
@@ -103,16 +172,18 @@ class SummaryCardsGrid extends StatelessWidget {
                   'Before fees',
                   style: ofText(
                     size: 10.5,
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: _highlighted == 3
+                        ? Colors.white.withValues(alpha: 0.7)
+                        : p.textMuted,
                   ),
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  '${marginBeforeFees.toStringAsFixed(1)}%',
+                  '${widget.marginBeforeFees.toStringAsFixed(1)}%',
                   style: ofText(
                     size: 11,
                     weight: FontWeight.w600,
-                    color: Colors.white,
+                    color: _highlighted == 3 ? Colors.white : p.textPrimary,
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -120,16 +191,18 @@ class SummaryCardsGrid extends StatelessWidget {
                   'After',
                   style: ofText(
                     size: 10.5,
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: _highlighted == 3
+                        ? Colors.white.withValues(alpha: 0.7)
+                        : p.textMuted,
                   ),
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  '${trueMargin.toStringAsFixed(1)}%',
+                  '${widget.trueMargin.toStringAsFixed(1)}%',
                   style: ofText(
                     size: 11,
                     weight: FontWeight.w600,
-                    color: Colors.white,
+                    color: _highlighted == 3 ? Colors.white : p.textPrimary,
                   ),
                 ),
               ],

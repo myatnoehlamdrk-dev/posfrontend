@@ -3,6 +3,7 @@ import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/features/inventory/domain/entities/inventory_store_item.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_message.dart';
 
@@ -119,7 +120,7 @@ class _EditInventoryStoreScreenState extends State<EditInventoryStoreScreen> {
         child: Text(
           title.toUpperCase(),
           style: TextStyle(
-            fontSize: 9,
+            fontSize: AppTypography.labelSmallSize,
             fontWeight: FontWeight.w700,
             letterSpacing: 1,
             color: p.textSecondary,
@@ -230,7 +231,7 @@ class _EditInventoryStoreScreenState extends State<EditInventoryStoreScreen> {
                     : Text(
                         context.l10n.t('Save'),
                         style: const TextStyle(
-                          fontSize: 11,
+                          fontSize: AppTypography.labelSmallSize,
                           fontWeight: FontWeight.w700,
                         ),
                       ),

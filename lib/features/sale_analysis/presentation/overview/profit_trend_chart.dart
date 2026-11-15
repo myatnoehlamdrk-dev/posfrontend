@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
+import 'package:posfrontend/shared/widgets/app_empty_state.dart';
 
 import '../operation_fee/operation_fee_style.dart';
 import 'overview_data.dart';
@@ -28,11 +29,9 @@ class ProfitTrendChart extends StatelessWidget {
     final p = context.palette;
     final n = months.length;
     if (n == 0) {
-      return Center(
-        child: Text(
-          'No profit data yet.',
-          style: ofText(size: 12, color: p.textMuted),
-        ),
+      return const AppEmptyState(
+        title: 'No profit data yet',
+        icon: Icons.show_chart,
       );
     }
     final labels = _labelIndices(n);

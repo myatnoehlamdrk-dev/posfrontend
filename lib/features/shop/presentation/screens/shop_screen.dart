@@ -11,8 +11,10 @@ import 'package:posfrontend/features/shop/domain/entities/shop_types.dart';
 import 'package:posfrontend/features/shop/data/repositories/shop_api_repository_impl.dart';
 import 'package:posfrontend/features/shop/data/repositories/shop_local_repository_impl.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_input_decoration.dart';
+import 'package:posfrontend/shared/widgets/app_page_transitions.dart';
 import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 import 'package:posfrontend/shared/widgets/gradient_button.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
@@ -183,7 +185,7 @@ class _ShopScreenState extends State<ShopScreen> {
       _resetForm();
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const RegisterScreen()),
+        AppPageTransitions.auth<void>(const RegisterScreen()),
       );
     }
   }
@@ -192,7 +194,13 @@ class _ShopScreenState extends State<ShopScreen> {
     final p = context.palette;
     return Padding(
       padding: const EdgeInsets.only(top: 6),
-      child: Text(text, style: TextStyle(color: p.textMuted, fontSize: 12)),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: p.textMuted,
+          fontSize: AppTypography.labelSmallSize,
+        ),
+      ),
     );
   }
 
@@ -203,7 +211,7 @@ class _ShopScreenState extends State<ShopScreen> {
         text,
         style: TextStyle(
           color: AppColors.primary,
-          fontSize: 16,
+          fontSize: AppTypography.bodyLargeSize,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -231,6 +239,179 @@ class _ShopScreenState extends State<ShopScreen> {
     );
   }
 
+  /// Brand pane for the wide layout: the shop artwork filling the panel,
+  /// with a left-edge gradient so the headline reads on every screen size.
+  Widget _buildArtPane() {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Image.asset(
+          'assets/shopc.png',
+          fit: BoxFit.cover,
+          alignment: Alignment.center,
+        ),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.centerRight,
+              end: Alignment.centerLeft,
+              colors: [
+                Colors.transparent,
+                Colors.black.withValues(alpha: 0.35),
+                Colors.black.withValues(alpha: 0.60),
+              ],
+              stops: const [0.0, 0.55, 1.0],
+            ),
+          ),
+        ),
+        // Bottom-anchored, but scrollable when the pane is short. On a
+        // landscape phone this pane is ~330dp tall while the copy below is
+        // ~400dp, and a bare `Positioned` would clip the lockup and the
+        // headline off the top with no way to reach them.
+        Positioned.fill(
+          child: LayoutBuilder(
+            builder: (context, c) {
+              const inset = 44.0;
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(inset),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: (c.maxHeight - inset * 2)
+                        .clamp(0.0, double.infinity)
+                        .toDouble(),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Image.asset(
+                            'assets/login1.png',
+                            width: 40,
+                            height: 40,
+                            fit: BoxFit.contain,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            context.l10n.t('Smart POS'),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: AppTypography.titleSmallSize,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      Text(
+                        context.l10n.t('Your shop starts\nwith you.'),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: AppTypography.displayMediumSize,
+                          height: 1.1,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        context.l10n.t(
+                          'Name your shop, tell us who runs it, and we will set up the till — sales, stock and staff all in one place.',
+                        ),
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.92),
+                          fontSize: AppTypography.bodyMediumSize,
+                          height: 1.45,
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      // Tinted rows with rules that fade in from the left and out to
+                      // the right. The tint and the rules share [_heroFade], so the
+                      // colour never starts hard at the edge and the lines on each row's
+                      // top and bottom stay exactly with it.
+                      SizedBox(
+                        width: double.infinity,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _heroHairline(),
+                            _heroRow(Icons.storefront_outlined, 'Shop setup'),
+                            _heroHairline(),
+                            _heroRow(Icons.inventory_2_outlined, 'Inventory'),
+                            _heroHairline(),
+                            _heroRow(Icons.receipt_long_outlined, 'Receipts'),
+                            _heroHairline(),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Divider colour for the art-pane list. Fixed white rather than
+  /// palette-driven because the list sits on the brand gradient.
+  static final Color _heroDivider = Colors.white.withValues(alpha: 0.20);
+
+  /// The fade profile shared by a row's tint and its rules, so the colour and
+  /// the top and bottom lines start and end together, and neither begins hard
+  /// at the left edge.
+  LinearGradient _heroFade(Color color) {
+    return LinearGradient(
+      begin: Alignment.centerLeft,
+      end: Alignment.centerRight,
+      colors: [
+        color.withValues(alpha: 0),
+        color,
+        color,
+        color.withValues(alpha: 0),
+      ],
+      stops: const [0.0, 0.10, 0.55, 1.0],
+    );
+  }
+
+  /// A horizontal rule that matches the tint of the row it bounds.
+  Widget _heroHairline() {
+    return Container(
+      height: 1,
+      decoration: BoxDecoration(gradient: _heroFade(_heroDivider)),
+    );
+  }
+
+  /// One row in the art-pane list: icon and label on a faint glass tint.
+  Widget _heroRow(IconData icon, String key) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        gradient: _heroFade(Colors.white.withValues(alpha: 0.10)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.white, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              context.l10n.t(key),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: AppTypography.labelMediumSize,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _refresh() {
     if (_viewModel.mode == 'existing') {
       final query = _searchedQuery;
@@ -245,7 +426,6 @@ class _ShopScreenState extends State<ShopScreen> {
       listenable: _viewModel,
       builder: (context, _) {
         final p = context.palette;
-        final errors = _viewModel.fieldErrors;
         return PopScope(
           canPop: true,
           onPopInvokedWithResult: (didPop, _) {
@@ -265,85 +445,7 @@ class _ShopScreenState extends State<ShopScreen> {
                   return Column(
                     children: [
                       _buildHeader(),
-                      Expanded(
-                        child: RefreshableBody(
-                          onRefresh: _refresh,
-                          child: Center(
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(
-                                maxWidth: _ShopLayout.contentMaxWidth,
-                              ),
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: gutter,
-                                  vertical: 20,
-                                ),
-                                child: Form(
-                                  key: _formKey,
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Center(child: _buildModeToggle()),
-                                      const SizedBox(height: 16),
-                                      if (_viewModel.mode == 'existing') ...[
-                                        _buildExistingShopPicker(),
-                                        const SizedBox(height: 32),
-                                        _buildFullWidthActions(
-                                          GradientButton(
-                                            label: context.l10n.t('Continue'),
-                                            icon: Icons.arrow_forward,
-                                            loading:
-                                                _viewModel.isLoading ||
-                                                _viewModel.isLoadingShops,
-                                            onPressed: _onUseExistingShop,
-                                          ),
-                                        ),
-                                      ] else ...[
-                                        _buildStepIndicator(),
-                                        const SizedBox(height: 20),
-                                        AnimatedSwitcher(
-                                          duration: const Duration(
-                                            milliseconds: 220,
-                                          ),
-                                          child: KeyedSubtree(
-                                            key: ValueKey(_step),
-                                            child: _isFirstStep
-                                                ? _buildShopInfoStep(
-                                                    errors,
-                                                    isWide: isWide,
-                                                  )
-                                                : _buildOwnerInfoStep(
-                                                    errors,
-                                                    isWide: isWide,
-                                                  ),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 28),
-                                        _buildWizardActions(),
-                                      ],
-                                      if (_viewModel.errorMessage != null)
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                            top: 12,
-                                          ),
-                                          child: Text(
-                                            _viewModel.errorMessage!,
-                                            style: const TextStyle(
-                                              color: Colors.red,
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                        ),
-                                      const SizedBox(height: 12),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
+                      Expanded(child: _buildContent(width, isWide, gutter)),
                     ],
                   );
                 },
@@ -608,7 +710,7 @@ class _ShopScreenState extends State<ShopScreen> {
           context.l10n.t('Shop Image'),
           style: TextStyle(
             color: p.textPrimary,
-            fontSize: 14,
+            fontSize: AppTypography.bodySmallSize,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -776,7 +878,13 @@ class _ShopScreenState extends State<ShopScreen> {
     final p = context.palette;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Text(text, style: TextStyle(color: p.textMuted, fontSize: 14)),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: p.textMuted,
+          fontSize: AppTypography.bodySmallSize,
+        ),
+      ),
     );
   }
 
@@ -824,7 +932,7 @@ class _ShopScreenState extends State<ShopScreen> {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
-                      fontSize: 15,
+                      fontSize: AppTypography.bodyMediumSize,
                       color: p.textPrimary,
                     ),
                   ),
@@ -834,7 +942,10 @@ class _ShopScreenState extends State<ShopScreen> {
                       shop.physicalAddress,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: p.textMuted, fontSize: 13),
+                      style: TextStyle(
+                        color: p.textMuted,
+                        fontSize: AppTypography.labelMediumSize,
+                      ),
                     ),
                   ],
                 ],
@@ -852,6 +963,119 @@ class _ShopScreenState extends State<ShopScreen> {
     );
   }
 
+  /// Splits the wide layout into an artwork panel and a scrollable form
+  /// pane, or keeps the single-column layout below [twoPaneFrom].
+  Widget _buildContent(double width, bool isWide, double gutter) {
+    final errors = _viewModel.fieldErrors;
+    if (isWide) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(flex: 5, child: _buildArtPane()),
+          Expanded(
+            flex: 6,
+            child: RefreshableBody(
+              onRefresh: _refresh,
+              child: _buildFormColumn(
+                width: width,
+                isWide: isWide,
+                gutter: gutter,
+                errors: errors,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+    return RefreshableBody(
+      onRefresh: _refresh,
+      child: _buildFormColumn(
+        width: width,
+        isWide: isWide,
+        gutter: gutter,
+        errors: errors,
+      ),
+    );
+  }
+
+  /// The scrollable form column shared by the narrow and the wide layouts.
+  Widget _buildFormColumn({
+    required double width,
+    required bool isWide,
+    required double gutter,
+    required Map<String, String?> errors,
+  }) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          maxWidth: _ShopLayout.contentMaxWidth,
+        ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: gutter, vertical: 20),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (!isWide) ...[
+                  Center(
+                    child: Image.asset(
+                      'assets/shopc.png',
+                      height: 150,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                Center(child: _buildModeToggle()),
+                const SizedBox(height: 16),
+                if (_viewModel.mode == 'existing') ...[
+                  _buildExistingShopPicker(),
+                  const SizedBox(height: 32),
+                  _buildFullWidthActions(
+                    GradientButton(
+                      label: context.l10n.t('Continue'),
+                      icon: Icons.arrow_forward,
+                      loading:
+                          _viewModel.isLoading || _viewModel.isLoadingShops,
+                      onPressed: _onUseExistingShop,
+                    ),
+                  ),
+                ] else ...[
+                  _buildStepIndicator(),
+                  const SizedBox(height: 20),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 220),
+                    child: KeyedSubtree(
+                      key: ValueKey(_step),
+                      child: _isFirstStep
+                          ? _buildShopInfoStep(errors, isWide: isWide)
+                          : _buildOwnerInfoStep(errors, isWide: isWide),
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  _buildWizardActions(),
+                ],
+                if (_viewModel.errorMessage != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Text(
+                      _viewModel.errorMessage!,
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontSize: AppTypography.labelMediumSize,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 12),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _onUseExistingShop() async {
     if (_viewModel.selectedOldShop == null) {
       _viewModel.setError('Please select a shop to continue.');
@@ -862,7 +1086,7 @@ class _ShopScreenState extends State<ShopScreen> {
       _resetForm();
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const RegisterScreen()),
+        AppPageTransitions.auth<void>(const RegisterScreen()),
       );
     }
   }
