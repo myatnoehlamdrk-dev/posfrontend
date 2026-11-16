@@ -8,7 +8,9 @@ import 'package:posfrontend/features/package/presentation/screens/add_package_sc
 import 'package:posfrontend/features/package/presentation/screens/package_details_screen.dart';
 import 'package:posfrontend/features/package/presentation/viewmodels/package_view_model.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
+import 'package:posfrontend/shared/widgets/app_empty_state.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 import 'package:posfrontend/shared/widgets/error_retry_view.dart';
@@ -143,7 +145,7 @@ class _PackageScreenState extends State<PackageScreen> {
             backgroundColor: p.surface,
             floatingActionButton: FloatingActionButton(
               onPressed: _openAddPackage,
-              backgroundColor: const Color(0xFF4FD1D9),
+              backgroundColor: AppColors.teal,
               child: const Icon(Icons.inventory_2, color: Colors.white),
             ),
             body: body,
@@ -154,7 +156,7 @@ class _PackageScreenState extends State<PackageScreen> {
           backgroundColor: p.surface,
           floatingActionButton: FloatingActionButton(
             onPressed: _openAddPackage,
-            backgroundColor: const Color(0xFF4FD1D9),
+            backgroundColor: AppColors.teal,
             child: const Icon(Icons.inventory_2, color: Colors.white),
           ),
           floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
@@ -216,7 +218,7 @@ class _PackageScreenState extends State<PackageScreen> {
                                   (_viewModel.total).toString(),
                                 ),
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: AppTypography.titleSmallSize,
                               fontWeight: FontWeight.bold,
                               color: p.textPrimary,
                             ),
@@ -243,7 +245,7 @@ class _PackageScreenState extends State<PackageScreen> {
 
   Widget _breadcrumb() {
     final p = context.palette;
-    final style = TextStyle(fontSize: 13, color: p.textSecondary);
+    final style = TextStyle(fontSize: AppTypography.labelMediumSize, color: p.textSecondary);
     return Wrap(
       children: [
         // The trail starts at Inventory -- the Dashboard crumb it used to lead
@@ -251,18 +253,18 @@ class _PackageScreenState extends State<PackageScreen> {
         GestureDetector(
           onTap: () {},
           child: Text(
-            context.l10n.t('Inventory'),
-            style: TextStyle(fontSize: 13, color: AppColors.brandPurpleDark),
+             context.l10n.t('Store'),
+            style: TextStyle(fontSize: AppTypography.labelMediumSize, color: AppColors.brandPurpleDark),
           ),
         ),
         Text('  >  ', style: style),
         GestureDetector(
           onTap: () {},
           child: Text(
-            context.l10n.t('Self Inventory'),
+            context.l10n.t('Self Store'),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 13, color: AppColors.brandPurpleDark),
+            style: const TextStyle(fontSize: AppTypography.labelMediumSize, color: AppColors.brandPurpleDark),
           ),
         ),
         Text('  >  ', style: style),
@@ -283,7 +285,7 @@ class _PackageScreenState extends State<PackageScreen> {
               Text(
                 widget.category.name,
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: AppTypography.titleMediumSize,
                   fontWeight: FontWeight.bold,
                   color: p.textPrimary,
                 ),
@@ -291,7 +293,7 @@ class _PackageScreenState extends State<PackageScreen> {
               const SizedBox(height: 6),
               Text(
                 context.l10n.t('Manage your category here...'),
-                style: TextStyle(fontSize: 16, color: p.textSecondary),
+                style: TextStyle(fontSize: AppTypography.bodyLargeSize, color: p.textSecondary),
               ),
             ],
           ),
@@ -310,9 +312,9 @@ class _PackageScreenState extends State<PackageScreen> {
                   : _viewModel.sort,
               hint: Text(
                 context.l10n.t('Sort'),
-                style: TextStyle(color: p.textPrimary, fontSize: 14),
+                style: TextStyle(color: p.textPrimary, fontSize: AppTypography.bodySmallSize),
               ),
-              style: TextStyle(color: p.textPrimary, fontSize: 14),
+              style: TextStyle(color: p.textPrimary, fontSize: AppTypography.bodySmallSize),
               items: [
                 DropdownMenuItem(
                   value: PackageSort.dateNewest,
@@ -332,16 +334,10 @@ class _PackageScreenState extends State<PackageScreen> {
   }
 
   Widget _packageGrid(List<PackageEntity> items, int cols) {
-    final p = context.palette;
     if (items.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 40),
-        child: Center(
-          child: Text(
-            context.l10n.t('No packages found.'),
-            style: TextStyle(color: p.textSecondary),
-          ),
-        ),
+      return AppEmptyState(
+        title: context.l10n.t('No packages found.'),
+        icon: Icons.inventory_2_outlined,
       );
     }
     if (cols == 1) {
@@ -418,7 +414,7 @@ class _PackageScreenState extends State<PackageScreen> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: AppTypography.bodySmallSize,
                             fontWeight: FontWeight.w600,
                             color: pal.textPrimary,
                           ),
@@ -434,7 +430,7 @@ class _PackageScreenState extends State<PackageScreen> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: AppTypography.titleSmallSize,
                       fontWeight: FontWeight.bold,
                       color: pal.textPrimary,
                     ),
@@ -444,7 +440,7 @@ class _PackageScreenState extends State<PackageScreen> {
                     p.spec,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 13, color: pal.textSecondary),
+                    style: TextStyle(fontSize: AppTypography.labelMediumSize, color: pal.textSecondary),
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -458,7 +454,7 @@ class _PackageScreenState extends State<PackageScreen> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: AppTypography.labelMediumSize,
                             fontWeight: FontWeight.w500,
                             color: pal.textPrimary,
                           ),
@@ -477,7 +473,7 @@ class _PackageScreenState extends State<PackageScreen> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: AppTypography.labelMediumSize,
                             color: pal.textSecondary,
                           ),
                         ),
@@ -493,7 +489,7 @@ class _PackageScreenState extends State<PackageScreen> {
                           .t('by {v1}')
                           .replaceAll('{v1}', (p.createdBy).toString()),
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: AppTypography.labelSmallSize,
                         color: pal.textMuted,
                         fontStyle: FontStyle.italic,
                       ),
@@ -542,7 +538,7 @@ class _PackageScreenState extends State<PackageScreen> {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(
-            fontSize: 11,
+            fontSize: AppTypography.labelSmallSize,
             fontWeight: FontWeight.w600,
             color: AppColors.brandPurpleDark,
           ),
@@ -552,18 +548,19 @@ class _PackageScreenState extends State<PackageScreen> {
   }
 
   Widget _statusBadge(StockStatus s) {
+    final pal = context.palette;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: stockBg(s),
+        color: stockBg(pal, s),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         stockLabel(s).localized(context.l10n),
         style: TextStyle(
-          fontSize: 12,
+          fontSize: AppTypography.labelSmallSize,
           fontWeight: FontWeight.w600,
-          color: stockFg(s),
+          color: stockFg(pal, s),
         ),
       ),
     );
@@ -581,8 +578,8 @@ class _PackageScreenState extends State<PackageScreen> {
           borderRadius: BorderRadius.circular(12),
           gradient: LinearGradient(
             colors: [
-              (c.iconColor ?? const Color(0xFF6D28D9)).withValues(alpha: 0.85),
-              (c.iconColor ?? const Color(0xFF6D28D9)).withValues(alpha: 0.55),
+              (c.iconColor ?? AppColors.brandPurpleDark).withValues(alpha: 0.85),
+              (c.iconColor ?? AppColors.brandPurpleDark).withValues(alpha: 0.55),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,

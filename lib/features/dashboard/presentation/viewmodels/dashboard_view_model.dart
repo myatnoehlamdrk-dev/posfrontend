@@ -1,6 +1,8 @@
 import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/core/utils/error_handler.dart';
 import 'package:posfrontend/features/dashboard/domain/entities/dashboard.dart';
+import 'package:posfrontend/features/dashboard/domain/entities/dashboard_table.dart';
+import 'package:posfrontend/features/dashboard/domain/entities/dashboard_tables.dart';
 import 'package:posfrontend/features/dashboard/domain/repositories/dashboard_repository.dart';
 
 class DashboardViewModel extends BaseViewModel {
@@ -27,13 +29,56 @@ class DashboardViewModel extends BaseViewModel {
   String? _monthlyError;
   String? get monthlyError => _monthlyError;
 
-  Future<void> load({int? days}) async {
+  /// The look-back window of `/dashboard/all`, in days. Fixed now that the
+  /// header's period picker is gone: the backend folds it into
+  /// `category_quantity`, so it scopes the quantity chart and the preview
+  /// tables. The card figures come from `month_summary`, not this window.
+  static const int _windowDays = 30;
+
+  Map<String, TablePage> _tablePreviews = const {};
+
+  /// First page of rows behind each inline preview table, keyed by
+  /// [DashboardTablePreviews.requests].
+  Map<String, TablePage> get tablePreviews => _tablePreviews;
+
+  bool _previewsLoaded = false;
+  bool get previewsLoaded => _previewsLoaded;
+
+  SummaryTrendsEntity? _trends;
+
+  /// The arrows beside the Sales Summary figures and the KPI tiles, built from
+  /// the API's calendar-month comparison. Null only when the dashboard itself
+  /// failed to load and the card has no numbers to annotate.
+  SummaryTrendsEntity? get trends => _trends;
+
+  /// One series per KPI tile, keyed by the tile's [MetricTrendKey] — the raw
+  /// shape the tile's mini line is drawn from.
+  ///
+  /// Each series is the metric's calendar-month value over the last year, so
+  /// all four tiles read as a month-by-month trend and the last point lines up
+  /// with the percentage above it.
+  Map<MetricTrendKey, List<double>> _sparklines = const {};
+  Map<MetricTrendKey, List<double>> get sparklines => _sparklines;
+
+  /// Whether [trends] has been built from the loaded dashboard yet.
+  ///
+  /// The arrows come with the dashboard payload, so this flips true in the
+  /// same pass the cards first get their numbers. Until then the tile reserves
+  /// its badge row, and the grid does not jump when the arrows appear.
+  bool _trendsLoaded = false;
+  bool get trendsLoaded => _trendsLoaded;
+
+  Future<void> load() async {
     final result = await runAsync(
-      (token) => _repository.getDashboardData(days: days ?? 365),
+      (token) => _repository.getDashboardData(days: _windowDays),
       errorPrefix: 'Failed to load dashboard',
     );
     if (result != null) _data = result;
-    await loadMonthlySales(year: _selectedYear);
+    _buildMonthlyTrends();
+    await Future.wait([
+      loadMonthlySales(year: _selectedYear),
+      _loadTablePreviews(),
+    ]);
   }
 
   Future<void> loadMonthlySales({required int year}) async {
@@ -49,6 +94,81 @@ class DashboardViewModel extends BaseViewModel {
       _monthlyError = formatApiError(e);
     }
     _isLoadingMonthly = false;
+    notifyListeners();
+  }
+
+  /// The four inline tables, fetched in one pass.
+  ///
+  /// Deliberately not through [runAsync]: that sets the screen's global
+  /// loading flag, and a preview arriving late would blank a dashboard that
+  /// is already showing real numbers. Each request fails independently, so a
+  /// single unavailable table leaves the other three filled and this one with
+  /// an empty page to render as "Nothing to show".
+  Future<void> _loadTablePreviews() async {
+    final entries = await Future.wait(
+      DashboardTablePreviews.requests.map((request) async {
+        try {
+          final page = await _repository.getTable(
+            endpoint: request.endpoint,
+            page: 1,
+            perPage: DashboardTablePreviews.rowsPerPage,
+            query: request.query,
+          );
+          return MapEntry(request.key, page);
+        } catch (_) {
+          return MapEntry(request.key, TablePage.empty);
+        }
+      }),
+    );
+
+    _tablePreviews = Map.fromEntries(entries);
+    _previewsLoaded = true;
+    notifyListeners();
+  }
+
+  /// Derives the arrows and sparklines from the calendar-month figures the
+  /// dashboard payload already carries.
+  ///
+  /// Nothing is fetched here: `/dashboard/all` returns this month's figures
+  /// and last month's side by side, so an arrow can never disagree with the
+  /// value printed above it. If an older backend omits `month_summary` the
+  /// figures arrive as zeroes and the arrows read flat rather than invented.
+  void _buildMonthlyTrends() {
+    final summary = _data?.monthSummary;
+
+    if (summary == null) {
+      _trends = null;
+      _sparklines = const {};
+      _trendsLoaded = false;
+      notifyListeners();
+      return;
+    }
+
+    _trends = SummaryTrendsEntity(
+      revenue: summary.revenue.trend(),
+      orders: summary.orders.trend(),
+      avgOrderValue: summary.avgOrderValue.trend(),
+      itemsSold: summary.itemsSold.trend(),
+      products: summary.products.trend(),
+      // More low stock is worse: the arrow follows the count, only the colour
+      // and the tooltip word flip.
+      lowStock: summary.lowStock.trend(inverted: true),
+    );
+
+    // Every tile has a real month-by-month line now. The figure's series ends
+    // at the current month, so the line's last move matches the arrow.
+    _sparklines = {
+      if (summary.revenue.series.length > 1)
+        MetricTrendKey.revenue: summary.revenue.series,
+      if (summary.itemsSold.series.length > 1)
+        MetricTrendKey.itemsSold: summary.itemsSold.series,
+      if (summary.products.series.length > 1)
+        MetricTrendKey.products: summary.products.series,
+      if (summary.lowStock.series.length > 1)
+        MetricTrendKey.lowStock: summary.lowStock.series,
+    };
+
+    _trendsLoaded = true;
     notifyListeners();
   }
 }

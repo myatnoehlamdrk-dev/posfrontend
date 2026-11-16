@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/features/package/domain/entities/package.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 import 'package:posfrontend/shared/widgets/pressable_card.dart';
@@ -54,7 +55,7 @@ class ExplorePackagesSection extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 19,
+              fontSize: AppTypography.titleSmallSize,
               fontWeight: FontWeight.w800,
               color: p.textPrimary,
             ),
@@ -128,7 +129,7 @@ class _PackageTile extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: AppTypography.labelMediumSize,
               fontWeight: FontWeight.w600,
               color: p.textPrimary,
             ),
@@ -140,7 +141,7 @@ class _PackageTile extends StatelessWidget {
                 .replaceAll('{v1}', package.quantity.toString()),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 11.5, color: p.textSecondary),
+            style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.textSecondary),
           ),
         ],
       ),

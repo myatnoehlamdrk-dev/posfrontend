@@ -11,9 +11,12 @@ import 'package:posfrontend/shared/l10n/app_language.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/shared/l10n/locale_notifier.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_message.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/app_page_transitions.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/app_shell.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
@@ -22,6 +25,7 @@ import 'package:posfrontend/features/auth/presentation/screens/login_screen.dart
 import 'package:posfrontend/features/settings/domain/entities/feedback.dart';
 import 'package:posfrontend/features/settings/domain/entities/settings.dart';
 import 'package:posfrontend/features/settings/presentation/screens/privacy_policy_screen.dart';
+import 'package:posfrontend/features/settings/presentation/screens/printer_settings_screen.dart';
 import 'package:posfrontend/features/settings/presentation/screens/terms_of_service_screen.dart';
 import 'package:posfrontend/features/settings/presentation/viewmodels/settings_view_model.dart';
 import 'package:posfrontend/features/settings/presentation/widgets/settings_skeleton.dart';
@@ -43,8 +47,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // Orange and red are mid-tone brand accents that read correctly on both
   // light and dark surfaces, so they stay const. The neutrals have to track
   // brightness and therefore resolve from the active theme.
-  static const Color orange = Color(0xFFF97316);
-  static const Color red = Color(0xFFEF4444);
+  static const Color orange = AppColors.orangeBright;
+  static const Color red = AppColors.red;
 
   AppPalette get _p => context.palette;
   Color get titleColor => _p.textPrimary;
@@ -148,6 +152,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             const SizedBox(height: 12),
                             _buildBusinessCard(),
                             const SizedBox(height: 28),
+                            _sectionHeader('PRINTER'),
+                            const SizedBox(height: 10),
+                            _buildPrinterCard(),
+                            const SizedBox(height: 28),
                             _sectionHeader('SUPPORT'),
                             const SizedBox(height: 10),
                             _buildSupportCard(),
@@ -176,7 +184,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Text(
       title,
       style: TextStyle(
-        fontSize: 12,
+        fontSize: AppTypography.labelSmallSize,
         fontWeight: FontWeight.bold,
         color: sectionGray,
         letterSpacing: 0.5,
@@ -210,7 +218,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _initial(_userName(context)),
                 style: TextStyle(
                   color: context.palette.surface,
-                  fontSize: 18,
+                  fontSize: AppTypography.titleSmallSize,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -225,7 +233,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: AppTypography.bodyLargeSize,
                       fontWeight: FontWeight.w600,
                       color: titleColor,
                     ),
@@ -235,7 +243,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _email(context),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 13, color: gray),
+                    style: TextStyle(fontSize: AppTypography.labelMediumSize, color: gray),
                   ),
                 ],
               ),
@@ -279,7 +287,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             Text(
               _viewModel.language,
-              style: TextStyle(fontSize: 14, color: gray),
+              style: TextStyle(fontSize: AppTypography.bodySmallSize, color: gray),
             ),
             const SizedBox(width: 4),
             Icon(Icons.chevron_right, color: gray, size: 24),
@@ -300,7 +308,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             Text(
               _viewModel.shopTypeLabel(_viewModel.shopType),
-              style: TextStyle(fontSize: 14, color: gray),
+              style: TextStyle(fontSize: AppTypography.bodySmallSize, color: gray),
             ),
             const SizedBox(width: 4),
             Icon(Icons.chevron_right, color: gray, size: 24),
@@ -309,6 +317,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
         onTap: _showShopTypeModal,
       ),
     );
+  }
+
+  /// Entry point to the printer profiles. The row stays label + chevron like
+  /// the support rows — the screen behind it carries the list, and loading
+  /// SharedPreferences here just to show a count would add async state to a
+  /// card that has never needed any.
+  Widget _buildPrinterCard() {
+    return _settingsCard(
+      child: _settingsRow(
+        icon: Icons.print_outlined,
+        label: context.l10n.t('Printers'),
+        trailing: Icon(Icons.chevron_right, color: gray, size: 24),
+        onTap: _openPrinterSettings,
+      ),
+    );
+  }
+
+  void _openPrinterSettings() {
+    Navigator.of(
+      context,
+    ).push(AppPageTransitions.fadeSlide<void>(const PrinterSettingsScreen()));
   }
 
   Widget _buildShopImageCard() {
@@ -329,7 +358,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: Text(
                     context.l10n.t('Shop Image'),
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: AppTypography.bodyMediumSize,
                       fontWeight: FontWeight.w500,
                       color: titleColor,
                     ),
@@ -466,7 +495,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             context.l10n.t('Logout'),
             style: TextStyle(
               color: red,
-              fontSize: 16,
+              fontSize: AppTypography.bodyLargeSize,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -514,7 +543,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Text(
                 context.l10n.t(label),
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: AppTypography.bodyMediumSize,
                   fontWeight: FontWeight.w500,
                   color: titleColor,
                 ),
@@ -543,7 +572,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Text(
                 context.l10n.t('Select Language'),
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: AppTypography.titleSmallSize,
                   fontWeight: FontWeight.w600,
                   color: titleColor,
                 ),
@@ -602,6 +631,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     color: Colors.transparent,
                     child: Container(
                       width: 340,
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.sizeOf(ctx).height * 0.86,
+                      ),
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         color: context.palette.surface,
@@ -617,7 +649,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               Text(
                                 context.l10n.t('Shop Type'),
                                 style: TextStyle(
-                                  fontSize: 18,
+                                  fontSize: AppTypography.titleSmallSize,
                                   fontWeight: FontWeight.w600,
                                   color: titleColor,
                                 ),
@@ -629,24 +661,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ],
                           ),
                           const SizedBox(height: 20),
-                          GridView.count(
-                            crossAxisCount: 2,
-                            shrinkWrap: true,
-                            mainAxisSpacing: 16,
-                            crossAxisSpacing: 16,
-                            childAspectRatio: 1.0,
-                            physics: const NeverScrollableScrollPhysics(),
-                            children: ShopType.values.map((type) {
-                              final selected = type == _viewModel.shopType;
-                              return _shopTypeCard(
-                                type: type,
-                                selected: selected,
-                                onTap: () {
-                                  _viewModel.setShopType(type);
-                                  setDialogState(() {});
-                                },
-                              );
-                            }).toList(),
+                          Flexible(
+                            child: SingleChildScrollView(
+                              child: GridView.count(
+                                crossAxisCount: 2,
+                                shrinkWrap: true,
+                                mainAxisSpacing: 16,
+                                crossAxisSpacing: 16,
+                                childAspectRatio: 1.0,
+                                physics: const NeverScrollableScrollPhysics(),
+                                children: ShopType.values.map((type) {
+                                  final selected =
+                                      type == _viewModel.shopType;
+                                  return _shopTypeCard(
+                                    type: type,
+                                    selected: selected,
+                                    onTap: () {
+                                      _viewModel.setShopType(type);
+                                      setDialogState(() {});
+                                    },
+                                  );
+                                }).toList(),
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -685,7 +722,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Text(
               _viewModel.shopTypeLabel(type),
               style: TextStyle(
-                fontSize: 14,
+                fontSize: AppTypography.bodySmallSize,
                 fontWeight: FontWeight.w600,
                 color: selected ? Colors.white : titleColor,
               ),
@@ -741,7 +778,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       Text(
                         context.l10n.t('Type'),
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: AppTypography.labelMediumSize,
                           fontWeight: FontWeight.w500,
                           color: gray,
                         ),
@@ -796,7 +833,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           validationError!,
                           style: const TextStyle(
                             color: red,
-                            fontSize: 12,
+                            fontSize: AppTypography.labelSmallSize,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -931,12 +968,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: TextStyle(color: gray, fontSize: 14)),
+        Text(label, style: TextStyle(color: gray, fontSize: AppTypography.bodySmallSize)),
         Text(
           value,
           style: TextStyle(
             color: titleColor,
-            fontSize: 14,
+            fontSize: AppTypography.bodySmallSize,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -947,13 +984,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _showPrivacyPolicy() {
     Navigator.of(
       context,
-    ).push(MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen()));
+    ).push(AppPageTransitions.fade<void>(const PrivacyPolicyScreen()));
   }
 
   void _showTermsOfService() {
     Navigator.of(
       context,
-    ).push(MaterialPageRoute(builder: (_) => const TermsOfServiceScreen()));
+    ).push(AppPageTransitions.fade<void>(const TermsOfServiceScreen()));
   }
 
   void _signOut() {

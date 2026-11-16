@@ -3,7 +3,9 @@ import 'package:posfrontend/shared/l10n/app_strings.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:posfrontend/core/extensions/number_extensions.dart';
@@ -77,15 +79,15 @@ class SalePreviewScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.palette;
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
+      backgroundColor: p.scaffoldBg,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: p.surface,
         elevation: 0,
         leading: const CustomBackButton(),
         title: Text(
           context.l10n.t('Invoice Preview'),
           style: TextStyle(
-            fontSize: 16,
+            fontSize: AppTypography.bodyLargeSize,
             fontWeight: FontWeight.w600,
             color: p.textPrimary,
           ),
@@ -93,6 +95,7 @@ class SalePreviewScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.print, color: kPurple),
+            tooltip: 'Print',
             onPressed: () {},
           ),
         ],
@@ -107,11 +110,11 @@ class SalePreviewScreen extends StatelessWidget {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: p.border),
-                boxShadow: const [
+                boxShadow: [
                   BoxShadow(
-                    color: Color(0x0D000000),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
-                    offset: Offset(0, 2),
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
@@ -127,7 +130,7 @@ class SalePreviewScreen extends StatelessWidget {
                   _itemsList(p),
                   _divider(p),
                   _summarySection(p),
-                  if (notes?.isNotEmpty == true) _notesSection(),
+                  if (notes?.isNotEmpty == true) _notesSection(p),
                   _footer(p),
                 ],
               ),
@@ -144,7 +147,7 @@ class SalePreviewScreen extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF7C3AED), Color(0xFF5B21B6)],
+          colors: [AppColors.brandPurpleDark, AppColors.brandPurpleDarker],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -178,7 +181,7 @@ class SalePreviewScreen extends StatelessWidget {
               shopName!,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 18,
+                fontSize: AppTypography.titleSmallSize,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -186,14 +189,20 @@ class SalePreviewScreen extends StatelessWidget {
           if (shopAddress?.isNotEmpty == true)
             Text(
               shopAddress!,
-              style: const TextStyle(color: Colors.white70, fontSize: 11),
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: AppTypography.labelSmallSize,
+              ),
             ),
           if (shopPhone?.isNotEmpty == true)
             Padding(
               padding: const EdgeInsets.only(top: 2),
               child: Text(
                 shopPhone!,
-                style: const TextStyle(color: Colors.white70, fontSize: 11),
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: AppTypography.labelSmallSize,
+                ),
               ),
             ),
           if (shopEmail?.isNotEmpty == true)
@@ -201,7 +210,10 @@ class SalePreviewScreen extends StatelessWidget {
               padding: const EdgeInsets.only(top: 2),
               child: Text(
                 shopEmail!,
-                style: const TextStyle(color: Colors.white70, fontSize: 11),
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: AppTypography.labelSmallSize,
+                ),
               ),
             ),
           const SizedBox(height: 10),
@@ -209,7 +221,7 @@ class SalePreviewScreen extends StatelessWidget {
             AppStrings.current.t('INVOICE'),
             style: TextStyle(
               color: Colors.white,
-              fontSize: 20,
+              fontSize: AppTypography.titleMediumSize,
               fontWeight: FontWeight.w700,
               letterSpacing: 2,
             ),
@@ -219,7 +231,7 @@ class SalePreviewScreen extends StatelessWidget {
             voucherNo,
             style: const TextStyle(
               color: Colors.white70,
-              fontSize: 13,
+              fontSize: AppTypography.labelMediumSize,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -261,13 +273,31 @@ class SalePreviewScreen extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: _monoStyle(fontSize: 13, color: p.textSecondary)),
-        Text(
-          value,
-          style: _monoStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: p.textPrimary,
+        Flexible(
+          flex: 2,
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: _monoStyle(
+              fontSize: AppTypography.labelMediumSize,
+              color: p.textSecondary,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Flexible(
+          flex: 3,
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: _monoStyle(
+              fontSize: AppTypography.labelMediumSize,
+              fontWeight: FontWeight.w600,
+              color: p.textPrimary,
+            ),
           ),
         ),
       ],
@@ -285,10 +315,10 @@ class SalePreviewScreen extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF5F0FF),
+                  color: p.selectionTint,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.person, color: kPurple, size: 18),
+                child: Icon(Icons.person, color: kPurple, size: 18),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -297,13 +327,16 @@ class SalePreviewScreen extends StatelessWidget {
                   children: [
                     Text(
                       AppStrings.current.t('Customer'),
-                      style: TextStyle(fontSize: 11, color: p.textSecondary),
+                      style: TextStyle(
+                        fontSize: AppTypography.labelSmallSize,
+                        color: p.textSecondary,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       customerName,
                       style: _monoStyle(
-                        fontSize: 14,
+                        fontSize: AppTypography.bodySmallSize,
                         fontWeight: FontWeight.w600,
                         color: p.textPrimary,
                       ),
@@ -312,14 +345,20 @@ class SalePreviewScreen extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         customerPhone!,
-                        style: _monoStyle(fontSize: 12, color: p.textSecondary),
+                        style: _monoStyle(
+                          fontSize: AppTypography.labelSmallSize,
+                          color: p.textSecondary,
+                        ),
                       ),
                     ],
                     if (customerLocation?.isNotEmpty == true) ...[
                       const SizedBox(height: 2),
                       Text(
                         customerLocation!,
-                        style: _monoStyle(fontSize: 12, color: p.textSecondary),
+                        style: _monoStyle(
+                          fontSize: AppTypography.labelSmallSize,
+                          color: p.textSecondary,
+                        ),
                       ),
                     ],
                   ],
@@ -342,7 +381,7 @@ class SalePreviewScreen extends StatelessWidget {
             child: Text(
               AppStrings.current.t('Item'),
               style: _monoStyle(
-                fontSize: 11,
+                fontSize: AppTypography.labelSmallSize,
                 fontWeight: FontWeight.w600,
                 color: p.textSecondary,
               ),
@@ -354,7 +393,7 @@ class SalePreviewScreen extends StatelessWidget {
               AppStrings.current.t('Qty'),
               textAlign: TextAlign.center,
               style: _monoStyle(
-                fontSize: 11,
+                fontSize: AppTypography.labelSmallSize,
                 fontWeight: FontWeight.w600,
                 color: p.textSecondary,
               ),
@@ -366,7 +405,7 @@ class SalePreviewScreen extends StatelessWidget {
               AppStrings.current.t('Price'),
               textAlign: TextAlign.right,
               style: _monoStyle(
-                fontSize: 11,
+                fontSize: AppTypography.labelSmallSize,
                 fontWeight: FontWeight.w600,
                 color: p.textSecondary,
               ),
@@ -378,7 +417,7 @@ class SalePreviewScreen extends StatelessWidget {
               AppStrings.current.t('Total'),
               textAlign: TextAlign.right,
               style: _monoStyle(
-                fontSize: 11,
+                fontSize: AppTypography.labelSmallSize,
                 fontWeight: FontWeight.w600,
                 color: p.textSecondary,
               ),
@@ -422,7 +461,7 @@ class SalePreviewScreen extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: _monoStyle(
-                          fontSize: 13,
+                          fontSize: AppTypography.labelMediumSize,
                           fontWeight: FontWeight.w600,
                           color: p.textPrimary,
                         ),
@@ -431,7 +470,10 @@ class SalePreviewScreen extends StatelessWidget {
                         const SizedBox(height: 2),
                         Text(
                           variant,
-                          style: _monoStyle(fontSize: 11, color: p.textSecondary),
+                          style: _monoStyle(
+                            fontSize: AppTypography.labelSmallSize,
+                            color: p.textSecondary,
+                          ),
                         ),
                       ],
                     ],
@@ -444,26 +486,40 @@ class SalePreviewScreen extends StatelessWidget {
                         .t('{v1}')
                         .replaceAll('{v1}', (item.quantity).toString()),
                     textAlign: TextAlign.center,
-                    style: _monoStyle(fontSize: 13, color: p.textPrimary),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    _fmtPrice(item.unitPrice),
-                    textAlign: TextAlign.right,
-                    style: _monoStyle(fontSize: 12, color: p.textPrimary),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    _fmtPrice(item.subtotal),
-                    textAlign: TextAlign.right,
                     style: _monoStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                      fontSize: AppTypography.labelMediumSize,
                       color: p.textPrimary,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      _fmtPrice(item.unitPrice),
+                      textAlign: TextAlign.right,
+                      style: _monoStyle(
+                        fontSize: AppTypography.labelSmallSize,
+                        color: p.textPrimary,
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      _fmtPrice(item.subtotal),
+                      textAlign: TextAlign.right,
+                      style: _monoStyle(
+                        fontSize: AppTypography.labelSmallSize,
+                        fontWeight: FontWeight.w600,
+                        color: p.textPrimary,
+                      ),
                     ),
                   ),
                 ),
@@ -497,22 +553,37 @@ class SalePreviewScreen extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F0FF),
+        color: p.selectionTint,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            AppStrings.current.t('Payment Method'),
-            style: TextStyle(fontSize: 13, color: p.textSecondary),
+          Flexible(
+            flex: 2,
+            child: Text(
+              AppStrings.current.t('Payment Method'),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: AppTypography.labelMediumSize,
+                color: p.textSecondary,
+              ),
+            ),
           ),
-          Text(
-            paymentMethod,
-            style: _monoStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: kPurple,
+          const SizedBox(width: 12),
+          Flexible(
+            flex: 3,
+            child: Text(
+              paymentMethod,
+              textAlign: TextAlign.end,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: _monoStyle(
+                fontSize: AppTypography.labelMediumSize,
+                fontWeight: FontWeight.w600,
+                color: kPurple,
+              ),
             ),
           ),
         ],
@@ -520,14 +591,14 @@ class SalePreviewScreen extends StatelessWidget {
     );
   }
 
-  Widget _notesSection() {
+  Widget _notesSection(AppPalette p) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: const Color(0xFFFEF9C3),
+          color: p.warningBg,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Column(
@@ -536,15 +607,18 @@ class SalePreviewScreen extends StatelessWidget {
             Text(
               AppStrings.current.t('Notes'),
               style: TextStyle(
-                fontSize: 11,
+                fontSize: AppTypography.labelSmallSize,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF92400E),
+                color: p.warningFg,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               notes!,
-              style: const TextStyle(fontSize: 12, color: Color(0xFF78350F)),
+              style: TextStyle(
+                fontSize: AppTypography.labelSmallSize,
+                color: p.warningFg,
+              ),
             ),
           ],
         ),
@@ -556,8 +630,8 @@ class SalePreviewScreen extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
-      decoration: const BoxDecoration(
-        color: Color(0xFFF9FAFB),
+      decoration: BoxDecoration(
+        color: p.surfaceAlt,
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(12),
           bottomRight: Radius.circular(12),
@@ -565,12 +639,13 @@ class SalePreviewScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Icon(Icons.check_circle, color: Color(0xFF16A34A), size: 32),
+          Icon(Icons.check_circle, size: 32, color: p.successFg),
+
           const SizedBox(height: 8),
           Text(
             AppStrings.current.t('Thank you for your purchase!'),
             style: TextStyle(
-              fontSize: 13,
+              fontSize: AppTypography.labelMediumSize,
               fontWeight: FontWeight.w600,
               color: p.textPrimary,
             ),
@@ -580,7 +655,10 @@ class SalePreviewScreen extends StatelessWidget {
             AppStrings.current
                 .t('Total Items: {v1}')
                 .replaceAll('{v1}', (items.length).toString()),
-            style: TextStyle(fontSize: 12, color: p.textSecondary),
+            style: TextStyle(
+              fontSize: AppTypography.labelSmallSize,
+              color: p.textSecondary,
+            ),
           ),
         ],
       ),

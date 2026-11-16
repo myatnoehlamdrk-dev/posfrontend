@@ -74,6 +74,7 @@ class AppColors {
   // Teal
   static const Color teal = Color(0xFF14B8A6);
   static const Color tealDark = Color(0xFF0F9D8A);
+  static const Color tealLight = Color(0xFF5EEAD4);
 
   // Status accents. For a badge or chip use the palette pairs instead
   // (`palette.successBg` / `palette.successFg`) so the two stay in step.

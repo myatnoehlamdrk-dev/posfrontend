@@ -3,8 +3,6 @@ import 'package:posfrontend/core/local/app_database.dart';
 import 'package:posfrontend/core/local/local_store.dart';
 import 'package:posfrontend/features/product/data/models/product_api_model.dart';
 import 'package:posfrontend/features/product/data/models/category_api_model.dart';
-import 'package:posfrontend/features/product/domain/entities/product.dart';
-import 'package:posfrontend/features/product/domain/entities/category.dart';
 
 class ProductLocalDataSource {
   final LocalStore _store;

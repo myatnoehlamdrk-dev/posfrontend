@@ -6,6 +6,7 @@ import 'package:posfrontend/shared/services/profile_image_service.dart';
 import 'package:posfrontend/core/utils/image_compressor.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/custom_back_button.dart';
@@ -325,7 +326,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           padding: const EdgeInsets.only(bottom: 12),
           child: Text(
             _viewModel.errorMessage!,
-            style: TextStyle(color: _p.dangerFg, fontSize: 13),
+            style: TextStyle(color: _p.dangerFg, fontSize: AppTypography.labelMediumSize),
           ),
         ),
       _gradientButton(
@@ -350,7 +351,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           label,
           style: TextStyle(
             color: labelColor,
-            fontSize: 14,
+            fontSize: AppTypography.bodySmallSize,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -419,6 +420,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 size: 20,
                               ),
                               suffixIcon: IconButton(
+                tooltip: 'Toggle password visibility',
                                 icon: Icon(
                                   _obscureCurrent
                                       ? Icons.visibility_outlined
@@ -462,6 +464,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 size: 20,
                               ),
                               suffixIcon: IconButton(
+                tooltip: 'Toggle password visibility',
                                 icon: Icon(
                                   _obscureNew
                                       ? Icons.visibility_outlined
@@ -505,6 +508,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 size: 20,
                               ),
                               suffixIcon: IconButton(
+                tooltip: 'Toggle password visibility',
                                 icon: Icon(
                                   _obscureConfirm
                                       ? Icons.visibility_outlined
@@ -624,7 +628,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return InputDecoration(
       hintText: hint,
       errorText: errorText,
-      hintStyle: TextStyle(color: hintColor, fontSize: 14),
+      hintStyle: TextStyle(color: hintColor, fontSize: AppTypography.bodySmallSize),
       prefixIcon: icon != null ? Icon(icon, color: primary, size: 20) : null,
       suffixIcon: suffixIcon,
       filled: true,
@@ -820,7 +824,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         _viewModel.errorMessage!,
                                         style: TextStyle(
                                           color: _p.dangerFg,
-                                          fontSize: 13,
+                                          fontSize: AppTypography.labelMediumSize,
                                         ),
                                       ),
                                     ),
@@ -861,7 +865,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 context.l10n.t('My Profile'),
                 style: TextStyle(
                   color: labelColor,
-                  fontSize: 18,
+                  fontSize: AppTypography.titleSmallSize,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -896,7 +900,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Text(
             _viewModel.name.isNotEmpty ? _viewModel.name : 'Your Name',
             style: TextStyle(
-              fontSize: 20,
+              fontSize: AppTypography.titleMediumSize,
               fontWeight: FontWeight.bold,
               color: labelColor,
             ),
@@ -904,7 +908,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 4),
           Text(
             _viewModel.email.isNotEmpty ? _viewModel.email : 'your@email.com',
-            style: TextStyle(fontSize: 14, color: hintColor),
+            style: TextStyle(fontSize: AppTypography.bodySmallSize, color: hintColor),
           ),
         ],
       ),
@@ -964,7 +968,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Text(
                       context.l10n.t(title),
                       style: TextStyle(
-                        fontSize: 15,
+                        fontSize: AppTypography.bodyMediumSize,
                         fontWeight: FontWeight.w600,
                         color: labelColor,
                       ),
@@ -1026,7 +1030,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: AppTypography.labelSmallSize,
                     color: hintColor,
                     fontWeight: FontWeight.w500,
                   ),
@@ -1035,7 +1039,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text(
                   value,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: AppTypography.bodySmallSize,
                     color: labelColor,
                     fontWeight: FontWeight.w500,
                   ),
@@ -1068,7 +1072,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           label,
           style: TextStyle(
             color: labelColor,
-            fontSize: 14,
+            fontSize: AppTypography.bodySmallSize,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -1141,7 +1145,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       label,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 16,
+                        fontSize: AppTypography.bodyLargeSize,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

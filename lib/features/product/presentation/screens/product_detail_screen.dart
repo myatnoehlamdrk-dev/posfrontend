@@ -15,6 +15,7 @@ import 'package:posfrontend/features/product/presentation/screens/add_product_sc
 import 'package:posfrontend/features/product/presentation/viewmodels/product_detail_view_model.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_message.dart';
@@ -71,18 +72,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       builder: (context, _) {
         // Dock the drawer beside the page on wide windows, the same as the
         // other drill-down detail screens (sale, purchase, cart card).
+        // Measure the window, not the docked pane: WideDrawerDock already
+        // removed 240dp for the drawer, so checking the child constraint
+        // delayed the two-pane layout until the window was ~1008dp.
+        final isWide = MediaQuery.sizeOf(context).width >= 768;
         return WideDrawerDock(
           active: DrawerDestination.product,
-          child: LayoutBuilder(
-            builder: (ctx, constraints) {
-              final isWide = constraints.maxWidth >= 768;
-              final body = _content(isWide: isWide);
-
-              return Scaffold(
-                backgroundColor: _p.scaffoldBg,
-                body: SafeArea(child: body),
-              );
-            },
+          child: Scaffold(
+            backgroundColor: _p.scaffoldBg,
+            body: SafeArea(child: _content(isWide: isWide)),
           ),
         );
       },
@@ -218,14 +216,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: const Color(0xFF16A34A),
+              color: AppColors.green,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
               context.l10n.t('Active'),
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 13,
+                fontSize: AppTypography.labelMediumSize,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -303,7 +301,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: AppTypography.titleMediumSize,
                     fontWeight: FontWeight.bold,
                     color: _titleColor,
                   ),
@@ -315,7 +313,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           PriceText(
             _viewModel.detail!.price,
             style: TextStyle(
-              fontSize: 18,
+              fontSize: AppTypography.titleSmallSize,
               fontWeight: FontWeight.bold,
               color: AppColors.brandPurple,
             ),
@@ -358,7 +356,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   child: Text(
                     tabs[i],
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: AppTypography.bodySmallSize,
                       fontWeight: FontWeight.w600,
                       color: active ? _accentColor : _mutedColor,
                     ),
@@ -392,7 +390,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         Text(
           context.l10n.t('Overview'),
           style: TextStyle(
-            fontSize: 16,
+            fontSize: AppTypography.bodyLargeSize,
             fontWeight: FontWeight.w600,
             color: _titleColor,
           ),
@@ -405,7 +403,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         Text(
           context.l10n.t('Identification'),
           style: TextStyle(
-            fontSize: 16,
+            fontSize: AppTypography.bodyLargeSize,
             fontWeight: FontWeight.w600,
             color: _titleColor,
           ),
@@ -414,12 +412,26 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         _card([
           _row(Icons.qr_code, 'SKU', d.sku),
           _row(Icons.layers, 'Is Set / Bundle', d.isBundle),
+          if (d.costPrice > 0) ...[
+            _row(
+              Icons.payments_outlined,
+              'Cost Price',
+              formatPrice(d.costPrice),
+            ),
+            if (d.price > 0)
+              _row(
+                Icons.trending_up,
+                'Profit / Unit',
+                '${formatPrice(d.price - d.costPrice)} '
+                    '(${(((d.price - d.costPrice) / d.price) * 100).toStringAsFixed(1)}%)',
+              ),
+          ],
         ]),
         const SizedBox(height: 24),
         Text(
           context.l10n.t('Attributes'),
           style: TextStyle(
-            fontSize: 16,
+            fontSize: AppTypography.bodyLargeSize,
             fontWeight: FontWeight.w600,
             color: _titleColor,
           ),
@@ -438,7 +450,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           Text(
             context.l10n.t('Audit Information'),
             style: TextStyle(
-              fontSize: 16,
+              fontSize: AppTypography.bodyLargeSize,
               fontWeight: FontWeight.w600,
               color: _titleColor,
             ),
@@ -460,7 +472,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           Text(
             context.l10n.t('Variants'),
             style: TextStyle(
-              fontSize: 16,
+              fontSize: AppTypography.bodyLargeSize,
               fontWeight: FontWeight.w600,
               color: _titleColor,
             ),
@@ -502,7 +514,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                 : (v.color.isNotEmpty ? v.color : 'Default'),
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
-                              fontSize: 14,
+                              fontSize: AppTypography.bodySmallSize,
                               color: _titleColor,
                             ),
                           ),
@@ -510,7 +522,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             Text(
                               v.color,
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: AppTypography.labelSmallSize,
                                 color: _mutedColor,
                               ),
                             ),
@@ -518,7 +530,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             context.l10n
                                 .t('Qty: {v1}')
                                 .replaceAll('{v1}', (v.quantity).toString()),
-                            style: TextStyle(fontSize: 12, color: _mutedColor),
+                            style: TextStyle(
+                              fontSize: AppTypography.labelSmallSize,
+                              color: _mutedColor,
+                            ),
                           ),
                         ],
                       ),
@@ -527,7 +542,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       v.price,
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        fontSize: 14,
+                        fontSize: AppTypography.bodySmallSize,
                         color: AppColors.brandPurple,
                       ),
                     ),
@@ -548,7 +563,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final color = d.stockStatus == 'High Stock'
         ? _p.successFg
         : (d.stockStatus == 'Mid-Cap Stock'
-              ? const Color(0xFF60A5FA)
+              ? _p.infoFg
               : (d.stockStatus == 'Low Stock' ? _p.warningFg : _p.dangerFg));
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -582,14 +597,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           .t('{v1}')
                           .replaceAll('{v1}', (d.stockAvailable).toString()),
                       style: TextStyle(
-                        fontSize: 28,
+                        fontSize: AppTypography.displaySmallSize,
                         fontWeight: FontWeight.bold,
                         color: _titleColor,
                       ),
                     ),
                     Text(
                       context.l10n.t('Units in Stock'),
-                      style: TextStyle(fontSize: 13, color: _mutedColor),
+                      style: TextStyle(
+                        fontSize: AppTypography.labelMediumSize,
+                        color: _mutedColor,
+                      ),
                     ),
                   ],
                 ),
@@ -606,7 +624,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 child: Text(
                   context.l10n.t('Active'),
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: AppTypography.labelSmallSize,
                     fontWeight: FontWeight.w600,
                     color: _p.successFg,
                   ),
@@ -619,7 +637,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         Text(
           context.l10n.t('Stock Info'),
           style: TextStyle(
-            fontSize: 16,
+            fontSize: AppTypography.bodyLargeSize,
             fontWeight: FontWeight.w600,
             color: _titleColor,
           ),
@@ -644,13 +662,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 children: [
                   Text(
                     context.l10n.t('Current Stock Status'),
-                    style: TextStyle(fontSize: 14, color: _mutedColor),
+                    style: TextStyle(
+                      fontSize: AppTypography.bodySmallSize,
+                      color: _mutedColor,
+                    ),
                   ),
                   const Spacer(),
                   Text(
                     d.stockStatus.localized(context.l10n),
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: AppTypography.bodySmallSize,
                       fontWeight: FontWeight.w600,
                       color: color,
                     ),
@@ -687,7 +708,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         Text(
           context.l10n.t('Supplier Information'),
           style: TextStyle(
-            fontSize: 16,
+            fontSize: AppTypography.bodyLargeSize,
             fontWeight: FontWeight.w600,
             color: _titleColor,
           ),
@@ -862,7 +883,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         context.l10n.t('Direct Sale'),
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 15,
+                          fontSize: AppTypography.bodyMediumSize,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -905,7 +926,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           Text(
             value,
             style: TextStyle(
-              fontSize: 12.5,
+              fontSize: AppTypography.labelMediumSize,
               fontWeight: FontWeight.w600,
               color: _accentColor,
             ),
@@ -948,7 +969,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 14, color: _mutedColor),
+              style: TextStyle(
+                fontSize: AppTypography.bodySmallSize,
+                color: _mutedColor,
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -958,7 +982,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ? Text(
                     '—',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: AppTypography.bodySmallSize,
                       fontWeight: FontWeight.w600,
                       color: _titleColor,
                     ),
@@ -985,7 +1009,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       child: Text(
         value,
         style: TextStyle(
-          fontSize: 12.5,
+          fontSize: AppTypography.labelMediumSize,
           fontWeight: FontWeight.w600,
           color: _titleColor,
         ),
@@ -1025,7 +1049,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 14, color: _mutedColor),
+              style: TextStyle(
+                fontSize: AppTypography.bodySmallSize,
+                color: _mutedColor,
+              ),
             ),
           ),
           Expanded(
@@ -1036,7 +1063,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.end,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: AppTypography.bodySmallSize,
                 fontWeight: FontWeight.w600,
                 color: _titleColor,
               ),
@@ -1108,14 +1135,20 @@ class _QuantityPickDialogState extends State<_QuantityPickDialog> {
         children: [
           Text(
             context.l10n.t('Choose Quantity'),
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            style: TextStyle(
+              fontSize: AppTypography.bodyLargeSize,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 2),
           Text(
             widget.productName,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 12, color: _mutedColor),
+            style: TextStyle(
+              fontSize: AppTypography.labelSmallSize,
+              color: _mutedColor,
+            ),
           ),
         ],
       ),
@@ -1130,7 +1163,7 @@ class _QuantityPickDialogState extends State<_QuantityPickDialog> {
                     .t('Stock: {v1}')
                     .replaceAll('{v1}', (widget.maxQty).toString()),
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: AppTypography.labelSmallSize,
                   fontWeight: FontWeight.w600,
                   color: _accentColor,
                 ),
@@ -1139,7 +1172,7 @@ class _QuantityPickDialogState extends State<_QuantityPickDialog> {
               PriceText(
                 widget.price,
                 style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: AppTypography.labelMediumSize,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -1168,7 +1201,7 @@ class _QuantityPickDialogState extends State<_QuantityPickDialog> {
                       textAlign: TextAlign.center,
                       maxLength: 4,
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: AppTypography.bodyLargeSize,
                         fontWeight: FontWeight.w700,
                         color: _titleColor,
                       ),
@@ -1324,6 +1357,7 @@ class _RestockDialogState extends State<_RestockDialog> {
         color: v.color,
         quantity: v.quantity + added,
         price: v.price,
+        costPrice: v.costPrice,
       );
     }).toList();
     return ProductCreateRequest(name: _product.name, variants: variants);
@@ -1342,14 +1376,20 @@ class _RestockDialogState extends State<_RestockDialog> {
         children: [
           Text(
             context.l10n.t('Stock Add'),
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            style: TextStyle(
+              fontSize: AppTypography.bodyLargeSize,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 2),
           Text(
             _product.name,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 12, color: _mutedColor),
+            style: TextStyle(
+              fontSize: AppTypography.labelSmallSize,
+              color: _mutedColor,
+            ),
           ),
         ],
       ),
@@ -1400,13 +1440,19 @@ class _RestockDialogState extends State<_RestockDialog> {
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: AppTypography.bodySmallSize,
                   fontWeight: FontWeight.w500,
                   color: _titleColor,
                 ),
               ),
               const SizedBox(height: 4),
-              Text(current, style: TextStyle(fontSize: 12, color: _mutedColor)),
+              Text(
+                current,
+                style: TextStyle(
+                  fontSize: AppTypography.labelSmallSize,
+                  color: _mutedColor,
+                ),
+              ),
             ],
           ),
         ),
@@ -1417,7 +1463,10 @@ class _RestockDialogState extends State<_RestockDialog> {
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
               hintText: context.l10n.t('Add'),
-              hintStyle: TextStyle(color: _p.textSecondary, fontSize: 14),
+              hintStyle: TextStyle(
+                color: _p.textSecondary,
+                fontSize: AppTypography.bodySmallSize,
+              ),
               filled: true,
               fillColor: _p.surface,
               contentPadding: const EdgeInsets.symmetric(
@@ -1479,7 +1528,7 @@ class _RestockDialogState extends State<_RestockDialog> {
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
-                        fontSize: 14,
+                        fontSize: AppTypography.bodySmallSize,
                       ),
                     ),
             ),

@@ -6,6 +6,7 @@ import 'package:posfrontend/features/category/data/repositories/category_reposit
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/features/package/domain/entities/package.dart';
 import 'package:posfrontend/features/package/data/repositories/package_repository_impl.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
@@ -192,7 +193,7 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
                   Text(
                     isEdit ? 'Edit Package' : 'Package Information',
                     style: TextStyle(
-                      fontSize: 32,
+                      fontSize: AppTypography.displayLargeSize,
                       fontWeight: FontWeight.bold,
                       color: p.textPrimary,
                     ),
@@ -202,7 +203,7 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
                     isEdit
                         ? 'Update the details for this package.'
                         : 'Provide the details for your new inventory package.',
-                    style: TextStyle(fontSize: 16, color: p.textSecondary),
+                    style: TextStyle(fontSize: AppTypography.bodyLargeSize, color: p.textSecondary),
                   ),
                   const SizedBox(height: 24),
                   FormCard(

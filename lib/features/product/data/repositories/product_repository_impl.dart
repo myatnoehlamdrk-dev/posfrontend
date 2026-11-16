@@ -1,11 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:posfrontend/core/auth/session_store.dart';
 import 'package:posfrontend/core/network/app_exceptions.dart';
-import 'package:posfrontend/core/local/local_store.dart';
 import 'package:posfrontend/features/product/data/datasources/product_local_data_source.dart';
 import 'package:posfrontend/features/product/data/datasources/product_remote_data_source.dart';
 import 'package:posfrontend/features/product/data/models/product_api_model.dart';
-import 'package:posfrontend/features/product/data/models/product_detail_api_model.dart';
 import 'package:posfrontend/features/product/domain/entities/product.dart';
 import 'package:posfrontend/features/product/domain/entities/product_detail.dart';
 import 'package:posfrontend/features/product/domain/entities/category.dart';
@@ -190,13 +188,9 @@ class ProductRepositoryImpl implements ProductRepository {
 
 class ProductDetailRepositoryImpl implements ProductDetailRepository {
   final ProductRemoteDataSource _remoteDataSource;
-  final Future<String?> Function() _currentShopId;
 
-  ProductDetailRepositoryImpl({
-    ProductRemoteDataSource? remoteDataSource,
-    Future<String?> Function()? currentShopId,
-  })  : _remoteDataSource = remoteDataSource ?? ProductRemoteDataSource(),
-        _currentShopId = currentShopId ?? SessionStore.currentShopId;
+  ProductDetailRepositoryImpl({ProductRemoteDataSource? remoteDataSource})
+    : _remoteDataSource = remoteDataSource ?? ProductRemoteDataSource();
 
   @override
   Future<ProductDetailEntity> getDetail(

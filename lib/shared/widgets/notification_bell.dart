@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:posfrontend/features/notifications/data/notification_store.dart';
 import 'package:posfrontend/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:posfrontend/shared/l10n/app_strings.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 
 /// The app-bar notification bell, with the unread badge driven by
@@ -53,14 +55,14 @@ class NotificationBell extends StatelessWidget {
                   decoration: const BoxDecoration(
                     // Red-600 rather than the old 8px dot's #EF4444: white
                     // text needs 4.5:1 and #EF4444 only gives 3.76.
-                    color: Color(0xFFDC2626),
+                    color: AppColors.red,
                     shape: BoxShape.circle,
                   ),
                   child: Text(
                     count > 9 ? '9+' : '$count',
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 10,
+                      fontSize: AppTypography.labelSmallSize,
                       height: 1,
                       fontWeight: FontWeight.w700,
                     ),

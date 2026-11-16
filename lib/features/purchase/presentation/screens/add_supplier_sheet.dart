@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/features/purchase/presentation/viewmodels/purchase_item_view_model.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class AddSupplierSheet extends StatefulWidget {
@@ -62,7 +63,7 @@ class _AddSupplierSheetState extends State<AddSupplierSheet> {
                   Text(
                     context.l10n.t('Add New Supplier'),
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: AppTypography.titleSmallSize,
                       fontWeight: FontWeight.w600,
                       color: p.textPrimary,
                     ),
@@ -147,7 +148,7 @@ class _AddSupplierSheetState extends State<AddSupplierSheet> {
         Text(
           label,
           style: TextStyle(
-            fontSize: 13,
+            fontSize: AppTypography.labelMediumSize,
             fontWeight: FontWeight.w500,
             color: p.textPrimary,
           ),
@@ -158,7 +159,7 @@ class _AddSupplierSheetState extends State<AddSupplierSheet> {
           keyboardType: isNumber ? TextInputType.number : TextInputType.text,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: p.textSecondary, fontSize: 14),
+            hintStyle: TextStyle(color: p.textSecondary, fontSize: AppTypography.bodySmallSize),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: p.border),

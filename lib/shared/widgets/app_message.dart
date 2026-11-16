@@ -49,7 +49,10 @@ class AppMessageBanner extends StatelessWidget {
       AppMessageKind.error => Icons.error_outline_rounded,
     };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s16,
+        vertical: AppSpacing.s12,
+      ),
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -104,6 +107,33 @@ void showErrorMessage(BuildContext context, Object error) {
   );
 }
 
+/// Reports a *local* failure — printing, file access — verbatim, with an
+/// optional recovery action.
+///
+/// [showErrorMessage] routes unknown errors through `formatApiError`, which
+/// deliberately flattens anything it does not recognise into a generic
+/// sentence: right for an API response nobody anticipated, wrong for a
+/// message written specifically for this failure. The action (a fallback
+/// path the operator can take right now) needs the longer duration too —
+/// three seconds is not a fair window to read and tap.
+void showErrorDetail(
+  BuildContext context,
+  String message, {
+  String? actionLabel,
+  VoidCallback? onAction,
+}) {
+  _showMessage(
+    context,
+    AppMessageBanner(
+      message: message,
+      kind: AppMessageKind.error,
+      actionLabel: actionLabel,
+      onAction: onAction,
+    ),
+    duration: Duration(seconds: actionLabel != null ? 8 : 3),
+  );
+}
+
 /// For an operation that succeeded but not the way the user would have chosen
 /// -- an image that was saved, say, only on this shop's own server. Red would
 /// imply the save failed; saying nothing would hide a photo that vanishes with
@@ -115,7 +145,11 @@ void showWarningMessage(BuildContext context, String message) {
   );
 }
 
-void _showMessage(BuildContext context, AppMessageBanner banner) {
+void _showMessage(
+  BuildContext context,
+  AppMessageBanner banner, {
+  Duration duration = const Duration(seconds: 3),
+}) {
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(
@@ -126,7 +160,7 @@ void _showMessage(BuildContext context, AppMessageBanner banner) {
         behavior: SnackBarBehavior.floating,
         padding: EdgeInsets.zero,
         margin: const EdgeInsets.all(AppSpacing.s16),
-        duration: const Duration(seconds: 3),
+        duration: duration,
       ),
     );
 }

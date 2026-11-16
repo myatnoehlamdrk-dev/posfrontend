@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:posfrontend/core/extensions/number_extensions.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/features/cart/domain/entities/cart_item_entity.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
@@ -20,8 +22,8 @@ class CartItemRow extends StatelessWidget {
     // The teal price sits on a card, so it needs lifting in dark to keep
     // contrast; AppColors.teal is the light-mode value.
     final priceColor = context.isDark
-        ? const Color(0xFF5EEAD4)
-        : const Color(0xFF0F766E);
+        ? AppColors.tealLight
+        : AppColors.tealDark;
     return Row(
       children: [
         Container(
@@ -70,7 +72,7 @@ class CartItemRow extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 10.5,
+                          fontSize: AppTypography.labelSmallSize,
                           color: p.textSecondary,
                         ),
                       ),
@@ -84,7 +86,7 @@ class CartItemRow extends StatelessWidget {
                     .t('{v1} x {v2}')
                     .replaceAll('{v1}', item.unitPrice.withCommas())
                     .replaceAll('{v2}', (item.quantity).toString()),
-                style: TextStyle(fontSize: 11, color: p.textSecondary),
+                style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.textSecondary),
               ),
             ],
           ),
@@ -92,7 +94,7 @@ class CartItemRow extends StatelessWidget {
         PriceText(
           item.subtotal,
           style: TextStyle(
-            fontSize: 13,
+            fontSize: AppTypography.labelMediumSize,
             fontWeight: FontWeight.w700,
             color: priceColor,
           ),

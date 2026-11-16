@@ -20,19 +20,22 @@ samples, guidance on mobile development, and a full API reference.
 The app is compiled with a single origin that every API call **and** every
 `/uploads/…` image URL is resolved against (`ApiClient.baseUrl`).
 
-- **The production origin `https://mdrkposbackend.onrender.com` is the default**
-  (`defaultValue` in `ApiClient.baseUrl`), so a bare `flutter build apk
-  --release` already ships pointing at the real server — no flags needed.
-- To target a dev/LAN server instead, copy `config/env.example.json` to
-  `config/env.json` and set `BASE_URL` to the origin serving
-  `posback/posbackend/public`, e.g. `http://192.168.1.110:8000` — no trailing
-  slash, no `/api` suffix.
+- **Default: the deployed API**, `https://mdrkposbackend.onrender.com`. It is
+  the `defaultValue` on `String.fromEnvironment('BASE_URL')`, so a build with
+  no `--dart-define` at all — including a bare `flutter build apk --release` —
+  ships an origin that answers instead of the empty string.
+- To build against a local backend, say so explicitly: copy
+  `config/env.example.json` to `config/env.json` and set `BASE_URL` to the
+  origin serving `posback/posbackend/public`, e.g. `http://127.0.0.1:8000` —
+  no trailing slash, no `/api` suffix.
 - Run with `tool\run.bat`, build with `tool\build.bat [apk|web|all]`. Both read
   that one file via `--dart-define-from-file`, which overrides the default, so
   a build can never ship a different origin from the one you tested against.
 - The machine's LAN address is assigned by DHCP. When it changes, edit
   `config/env.json` and rebuild — a stale value is exactly what turns every
   uploaded photo into a broken-image icon.
+- Every debug startup prints `API origin: …`, so a wrong origin is visible in
+  the console at launch rather than as broken images later.
 
 Uploaded images are stored on the API server's own disk by default
 (`IMAGES_STORE=local` in the backend, served through `GET /uploads/{file}`),

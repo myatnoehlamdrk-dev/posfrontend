@@ -8,6 +8,14 @@ abstract class DashboardRepository {
     required int year,
   });
 
+  /// Daily order counts and revenue for the last [days] days.
+  Future<List<SalesChartPointEntity>> getSalesChart({required int days});
+
+  /// Units sold across every category in the last [days] days — the sum the
+  /// dashboard shows as Items Sold, available for any window so two windows
+  /// can be differenced into a trend.
+  Future<int> getItemsSold({required int days});
+
   /// Rows for one page of a "View all" table.
   Future<TablePage> getTable({
     required String endpoint,

@@ -235,9 +235,9 @@ class ProductRemoteDataSource {
         '/categories',
         data: {
           'name': name,
-          if (description != null) 'description': description,
-          if (inventoryId != null) 'inventoryId': inventoryId,
-          if (type != null) 'type': type,
+          'description': ?description,
+          'inventoryId': ?inventoryId,
+          'type': ?type,
         },
       );
     } on DioException catch (e) {
@@ -255,9 +255,9 @@ class ProductRemoteDataSource {
       await _dio.patch(
         '/categories/$id',
         data: {
-          if (name != null) 'name': name,
-          if (description != null) 'description': description,
-          if (active != null) 'active': active,
+          'name': ?name,
+          'description': ?description,
+          'active': ?active,
         },
       );
     } on DioException catch (e) {

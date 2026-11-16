@@ -16,6 +16,7 @@ class ProductDetailApiModel {
   final String packageName;
   final String inventoryType;
   final double price;
+  final double costPrice;
   final int stockAvailable;
   final String stockStatus;
   final String supplierId;
@@ -40,6 +41,7 @@ class ProductDetailApiModel {
     this.packageName = '',
     this.inventoryType = '',
     this.price = 0,
+    this.costPrice = 0,
     this.stockAvailable = 0,
     this.stockStatus = '',
     this.supplierId = '',
@@ -89,6 +91,7 @@ class ProductDetailApiModel {
       packageName: json.str('packageName', '—'),
       inventoryType: json.str('inventoryType', '—'),
       price: price,
+      costPrice: json.decimal('costPrice'),
       stockAvailable: stock,
       stockStatus: stockStatus,
       supplierId: json.str('supplierId', '—'),
@@ -116,6 +119,7 @@ class ProductDetailApiModel {
       packageName: packageName,
       inventoryType: inventoryType,
       price: price,
+      costPrice: costPrice,
       stockAvailable: stockAvailable,
       stockStatus: stockStatus,
       supplierId: supplierId,
@@ -135,6 +139,7 @@ class ProductVariantDetailApiModel {
   final String size;
   final String color;
   final double price;
+  final double costPrice;
   final int quantity;
 
   const ProductVariantDetailApiModel({
@@ -142,6 +147,7 @@ class ProductVariantDetailApiModel {
     this.size = '',
     this.color = '',
     this.price = 0,
+    this.costPrice = 0,
     this.quantity = 0,
   });
 
@@ -151,6 +157,7 @@ class ProductVariantDetailApiModel {
       size: json.str('size'),
       color: json.str('color'),
       price: json.decimal('price'),
+      costPrice: json.decimal('costPrice'),
       quantity: json.integer('quantity'),
     );
   }
@@ -161,6 +168,7 @@ class ProductVariantDetailApiModel {
       size: size,
       color: color,
       price: price,
+      costPrice: costPrice,
       quantity: quantity,
     );
   }

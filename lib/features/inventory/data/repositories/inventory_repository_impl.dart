@@ -13,12 +13,12 @@ class InventoryRepositoryImpl implements InventoryRepository {
   List<InventoryOptionEntity> getOptions() => const [
     InventoryOptionEntity(
       key: 'self',
-      title: 'Self Inventory',
+      title: 'Self Store',
       description: 'Manage products and stocks only for your own shop.',
     ),
     InventoryOptionEntity(
       key: 'public',
-      title: 'Public Inventory',
+      title: 'Public Store',
       description: 'View and manage products and stocks shared publicly.',
     ),
   ];

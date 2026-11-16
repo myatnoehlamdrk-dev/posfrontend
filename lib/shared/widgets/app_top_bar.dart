@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/theme/app_dimens.dart';
 import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/features/profile/presentation/screens/profile_screen.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/app_page_transitions.dart';
 import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 import 'package:posfrontend/shared/widgets/notification_bell.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
@@ -45,6 +47,7 @@ class AppTopBar extends StatelessWidget {
         if (showMenuButton)
           IconButton(
             icon: const GradientIcon(icon: Icons.menu),
+            tooltip: 'Menu',
             onPressed: onMenuTap,
           ),
         if (showBackButton)
@@ -77,14 +80,14 @@ class AppTopBar extends StatelessWidget {
           onTap: () {
             Navigator.of(
               context,
-            ).push(MaterialPageRoute(builder: (_) => const ProfileScreen()));
+            ).push(AppPageTransitions.fadeSlide<void>(const ProfileScreen()));
           },
           child: ValueListenableBuilder<String>(
             valueListenable: ProfileImageNotifier.instance,
             builder: (context, imageUrl, _) {
               return CircleAvatar(
                 radius: 20,
-                backgroundColor: const Color(0xFF6D28D9),
+                backgroundColor: AppColors.brandPurpleDark,
                 backgroundImage: imageUrl.isNotEmpty
                     ? CachedNetworkImageProvider(imageUrl, maxWidth: 224)
                     : null,

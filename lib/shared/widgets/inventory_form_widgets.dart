@@ -6,14 +6,6 @@ import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 
-/// `kTitle`, `kGray` and `kBorder` used to live here as `static const`
-/// colours, and `sale_preview_screen` plus `package_details_screen` imported
-/// them — which meant the invoice preview painted `#111827` headings and `#6B7280`
-/// captions unconditionally. In dark mode that is 1.35:1 and 3.10:1: the
-/// preview was unreadable. Both screens now read `palette.textPrimary` /
-/// `textSecondary` / `border`, so the values follow the theme.
-const Color kBg = Color(0xFFFFFFFF);
-
 /// The one purple the inventory forms are built in, shared with the welcome
 /// screen's `Get started` button, the product prices and the sale buttons.
 ///
@@ -91,6 +83,7 @@ class InventoryHeader extends StatelessWidget {
         if (showMenu)
           IconButton(
             icon: const GradientIcon(icon: Icons.menu),
+            tooltip: 'Menu',
             onPressed: onMenu,
           )
         else
@@ -113,6 +106,7 @@ class InventoryHeader extends StatelessWidget {
                 Icons.notifications_none_outlined,
                 color: p.textPrimary,
               ),
+              tooltip: 'Notifications',
               onPressed: () {},
             ),
             Positioned(

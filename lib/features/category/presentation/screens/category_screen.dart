@@ -8,7 +8,10 @@ import 'package:posfrontend/features/category/presentation/viewmodels/category_v
 import 'package:posfrontend/features/inventory/domain/repositories/inventory_repository.dart';
 import 'package:posfrontend/features/package/presentation/screens/package_screen.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
+import 'package:posfrontend/shared/widgets/app_empty_state.dart';
+import 'package:posfrontend/shared/widgets/app_page_transitions.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 import 'package:posfrontend/shared/widgets/error_retry_view.dart';
@@ -30,11 +33,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
   String get _inventoryLabel {
     switch (widget.inventoryType) {
-      case 'public':
-        return 'Public Inventory';
-      case 'self':
-      default:
-        return 'Self Inventory';
+       case 'public':
+         return 'Public Store';
+       case 'self':
+       default:
+         return 'Self Store';
     }
   }
 
@@ -147,7 +150,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
             backgroundColor: p.surface,
             floatingActionButton: FloatingActionButton(
               onPressed: _openAddCategory,
-              backgroundColor: const Color(0xFF4FD1D9),
+              backgroundColor: AppColors.teal,
               child: const Icon(Icons.category, color: Colors.white),
             ),
             body: body,
@@ -158,7 +161,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
           backgroundColor: p.surface,
           floatingActionButton: FloatingActionButton(
             onPressed: _openAddCategory,
-            backgroundColor: const Color(0xFF4FD1D9),
+            backgroundColor: AppColors.teal,
             child: const Icon(Icons.category, color: Colors.white),
           ),
           floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
@@ -234,7 +237,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
   Widget _breadcrumb() {
     final p = context.palette;
-    final style = TextStyle(fontSize: 13, color: p.textSecondary);
+    final style = TextStyle(fontSize: AppTypography.labelMediumSize, color: p.textSecondary);
     return Wrap(
       children: [
         // The trail starts at Inventory -- the Dashboard crumb it used to lead
@@ -242,8 +245,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
         GestureDetector(
           onTap: () => Navigator.of(context).pop(),
           child: Text(
-            context.l10n.t('Inventory'),
-            style: TextStyle(fontSize: 13, color: AppColors.brandPurpleDark),
+             context.l10n.t('Store'),
+            style: TextStyle(fontSize: AppTypography.labelMediumSize, color: AppColors.brandPurpleDark),
           ),
         ),
         Text('  >  ', style: style),
@@ -253,7 +256,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
             context.l10n.t(_inventoryLabel),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 13, color: AppColors.brandPurpleDark),
+            style: const TextStyle(fontSize: AppTypography.labelMediumSize, color: AppColors.brandPurpleDark),
           ),
         ),
         Text('  >  ', style: style),
@@ -274,7 +277,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
               Text(
                 context.l10n.t('Categories'),
                 style: TextStyle(
-                  fontSize: 19,
+                  fontSize: AppTypography.titleSmallSize,
                   fontWeight: FontWeight.bold,
                   color: p.textPrimary,
                 ),
@@ -296,9 +299,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
                   : _viewModel.sort,
               hint: Text(
                 context.l10n.t('Sort'),
-                style: TextStyle(color: p.textPrimary, fontSize: 14),
+                style: TextStyle(color: p.textPrimary, fontSize: AppTypography.bodySmallSize),
               ),
-              style: TextStyle(color: p.textPrimary, fontSize: 14),
+              style: TextStyle(color: p.textPrimary, fontSize: AppTypography.bodySmallSize),
               items: [
                 DropdownMenuItem(
                   value: CategorySort.dateNewest,
@@ -318,16 +321,10 @@ class _CategoryScreenState extends State<CategoryScreen> {
   }
 
   Widget _categoryGrid(List<Category> items, int cols) {
-    final p = context.palette;
     if (items.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 40),
-        child: Center(
-          child: Text(
-            context.l10n.t('No categories found.'),
-            style: TextStyle(color: p.textSecondary),
-          ),
-        ),
+      return AppEmptyState(
+        title: context.l10n.t('No categories found.'),
+        icon: Icons.category_outlined,
       );
     }
     if (cols == 1) {
@@ -369,7 +366,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
     return GestureDetector(
       onTap: () => Navigator.of(
         context,
-      ).push(MaterialPageRoute(builder: (_) => PackageScreen(category: c))),
+      ).push(AppPageTransitions.fadeSlide<void>(PackageScreen(category: c))),
       onLongPress: () => _showDeleteDialog(c),
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -402,7 +399,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF6D28D9),
+                          color: AppColors.brandPurpleDark,
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 2),
                         ),
@@ -425,7 +422,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: AppTypography.titleSmallSize,
                           fontWeight: FontWeight.bold,
                           color: p.textPrimary,
                         ),
@@ -437,7 +434,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                         c.description,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 13, color: p.textSecondary),
+                        style: TextStyle(fontSize: AppTypography.labelMediumSize, color: p.textSecondary),
                       ),
                     ],
                   ),
@@ -465,7 +462,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                         context.l10n
                             .t('Created: {v1}')
                             .replaceAll('{v1}', (c.createdDate).toString()),
-                        style: TextStyle(fontSize: 12, color: p.textSecondary),
+                        style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.textSecondary),
                       ),
                       if (c.createdBy.isNotEmpty)
                         Text(
@@ -473,7 +470,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                               .t('by {v1}')
                               .replaceAll('{v1}', (c.createdBy).toString()),
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: AppTypography.labelSmallSize,
                             color: p.textSecondary,
                             fontStyle: FontStyle.italic,
                           ),
@@ -502,8 +499,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
           borderRadius: BorderRadius.circular(12),
           gradient: LinearGradient(
             colors: [
-              const Color(0xFF6D28D9).withValues(alpha: 0.85),
-              const Color(0xFF6D28D9).withValues(alpha: 0.55),
+              AppColors.brandPurpleDark.withValues(alpha: 0.85),
+              AppColors.brandPurpleDark.withValues(alpha: 0.55),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -633,7 +630,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
             .replaceAll('{v1}', (count).toString())
             .replaceAll('{v2}', (limit).toString()),
         style: const TextStyle(
-          fontSize: 12,
+          fontSize: AppTypography.labelSmallSize,
           fontWeight: FontWeight.w600,
           color: AppColors.brandPurpleDark,
         ),
@@ -652,7 +649,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
       child: Text(
         active ? context.l10n.t('Active') : context.l10n.t('Inactive'),
         style: TextStyle(
-          fontSize: 12,
+          fontSize: AppTypography.labelSmallSize,
           fontWeight: FontWeight.w600,
           color: active ? p.successFg : p.dangerFg,
         ),
@@ -671,7 +668,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                 .t('First {v2} of {v1} categories')
                 .replaceAll('{v1}', vm.totalCount.toString())
                 .replaceAll('{v2}', shown.toString()),
-            style: TextStyle(fontSize: 13, color: p.textSecondary),
+            style: TextStyle(fontSize: AppTypography.labelMediumSize, color: p.textSecondary),
             overflow: TextOverflow.ellipsis,
           ),
         ),
@@ -681,6 +678,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
           const SizedBox(width: 12),
           IconButton(
             icon: Icon(Icons.chevron_left, color: p.textSecondary),
+            tooltip: 'Previous page',
             onPressed: vm.canGoPrev ? () => vm.prevPage() : null,
           ),
           Container(
@@ -699,6 +697,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
           ),
           IconButton(
             icon: Icon(Icons.chevron_right, color: p.textSecondary),
+            tooltip: 'Next page',
             onPressed: vm.canGoNext ? () => vm.nextPage() : null,
           ),
         ],

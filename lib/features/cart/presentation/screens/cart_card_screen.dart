@@ -9,6 +9,7 @@ import 'package:posfrontend/features/cart/presentation/widgets/cart_item_row.dar
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
 import 'package:posfrontend/features/sale/presentation/screens/new_sale_screen.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/pressable_card.dart';
@@ -194,7 +195,7 @@ class _CartCardScreenState extends State<CartCardScreen> {
                 style: TextStyle(
                   color: AppColors.lightViolet,
                   fontWeight: FontWeight.w600,
-                  fontSize: 15,
+                  fontSize: AppTypography.bodyMediumSize,
                 ),
               ),
             ),

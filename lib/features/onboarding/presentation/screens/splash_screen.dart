@@ -10,6 +10,7 @@ import 'package:posfrontend/features/auth/data/models/login_response.dart';
 import 'package:posfrontend/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:posfrontend/features/onboarding/presentation/screens/get_started_screen.dart';
 import 'package:posfrontend/features/settings/presentation/server_preferences.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/shared/services/fcm_service.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
@@ -282,7 +283,7 @@ class _SplashScreenState extends State<SplashScreen>
                   curve: const Interval(0.35, 1.0, curve: Curves.easeOut),
                 ),
                 child: Text(
-                  context.l10n.t('MDRK POS'),
+                  context.l10n.t('SMART POS'),
                   style: TextStyle(
                     fontSize: 40,
                     fontWeight: FontWeight.w800,
@@ -304,7 +305,7 @@ class _SplashScreenState extends State<SplashScreen>
                 child: Text(
                   context.l10n.t('Powered by MDRK'),
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: AppTypography.labelMediumSize,
                     fontWeight: FontWeight.w500,
                     letterSpacing: 0.4,
                     color: Colors.white.withValues(alpha: 0.6),

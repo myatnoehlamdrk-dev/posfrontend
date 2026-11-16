@@ -7,12 +7,14 @@ import 'package:posfrontend/features/sale/presentation/screens/sale_detail_scree
 import 'package:posfrontend/features/sale/presentation/widgets/sale_items_skeleton.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/app_page_transitions.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/app_shell.dart';
 import 'package:posfrontend/shared/widgets/error_retry_view.dart';
 import 'package:posfrontend/shared/widgets/filter_tabs.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class SaleItemScreen extends StatefulWidget {
@@ -134,7 +136,7 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                   child: Center(
                     child: Text(
                       context.l10n.t('No more items'),
-                      style: TextStyle(color: p.textSecondary, fontSize: 13),
+                      style: TextStyle(color: p.textSecondary, fontSize: AppTypography.labelMediumSize),
                     ),
                   ),
                 ),
@@ -172,7 +174,7 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
         child: DropdownButton<int>(
           value: selected != null && years.contains(selected) ? selected : 0,
           icon: const Icon(Icons.keyboard_arrow_down, size: 18),
-          style: TextStyle(fontSize: 13, color: p.textSecondary),
+          style: TextStyle(fontSize: AppTypography.labelMediumSize, color: p.textSecondary),
           items: [
             DropdownMenuItem(value: 0, child: Text(context.l10n.t('All'))),
             ...years.map(
@@ -194,7 +196,7 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
     return GestureDetector(
       onTap: () {
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => SaleDetailScreen(order: order)),
+          AppPageTransitions.fadeSlide<void>(SaleDetailScreen(order: order)),
         );
       },
       child: Container(
@@ -239,7 +241,7 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                               ? order.voucherNo
                               : 'Order #${order.orderId}',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: AppTypography.labelSmallSize,
                             color: p.textSecondary,
                             fontWeight: FontWeight.w500,
                           ),
@@ -259,7 +261,7 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                               ? context.l10n.t('Already Sale')
                               : context.l10n.t('Will Be Sale'),
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: AppTypography.labelSmallSize,
                             fontWeight: FontWeight.w600,
                             color: isAlreadySale ? p.successFg : p.warningFg,
                           ),
@@ -280,7 +282,7 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                   Text(
                     order.productName,
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: AppTypography.bodyMediumSize,
                       fontWeight: FontWeight.w600,
                       color: p.textPrimary,
                     ),
@@ -289,7 +291,7 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                     const SizedBox(height: 2),
                     Text(
                       order.customerName,
-                      style: TextStyle(fontSize: 12, color: p.textSecondary),
+                      style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.textSecondary),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -301,7 +303,7 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                           .t('by {v1}')
                           .replaceAll('{v1}', (order.createdBy).toString()),
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: AppTypography.labelSmallSize,
                         color: p.textSecondary,
                         fontStyle: FontStyle.italic,
                       ),
@@ -317,7 +319,7 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                             .t('x{v1}')
                             .replaceAll('{v1}', (order.quantity).toString()),
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: AppTypography.labelSmallSize,
                           color: p.textSecondary,
                           fontWeight: FontWeight.w500,
                         ),
@@ -335,7 +337,7 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: AppTypography.labelSmallSize,
                             color: p.textSecondary,
                           ),
                         ),
@@ -344,7 +346,7 @@ class _SaleItemScreenState extends State<SaleItemScreen> {
                         child: PriceText(
                           order.amount.toDouble(),
                           style: const TextStyle(
-                            fontSize: 14,
+                            fontSize: AppTypography.bodySmallSize,
                             fontWeight: FontWeight.w700,
                             color: AppColors.brandPurple,
                           ),

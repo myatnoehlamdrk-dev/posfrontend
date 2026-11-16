@@ -5,8 +5,10 @@ import 'package:posfrontend/features/auth/domain/usecases/forgot_password.dart';
 import 'package:posfrontend/features/auth/presentation/viewmodels/forgot_password_view_model.dart';
 import 'package:posfrontend/features/auth/presentation/screens/login_screen.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_input_decoration.dart';
+import 'package:posfrontend/shared/widgets/app_page_transitions.dart';
 import 'package:posfrontend/shared/widgets/gradient_button.dart';
 import 'package:posfrontend/shared/widgets/required_label.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
@@ -66,7 +68,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       showSuccessSnackBar(context, 'Password reset successful!');
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        AppPageTransitions.fade<void>(const LoginScreen()),
         (route) => false,
       );
     }
@@ -97,7 +99,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       context.l10n.t('Reset Password'),
                       style: TextStyle(
                         color: p.textPrimary,
-                        fontSize: 26,
+                        fontSize: AppTypography.displaySmallSize,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -106,7 +108,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       context.l10n
                           .t('Create a new password for {v1}')
                           .replaceAll('{v1}', (widget.email).toString()),
-                      style: TextStyle(color: p.textMuted, fontSize: 14),
+                      style: TextStyle(
+                        color: p.textMuted,
+                        fontSize: AppTypography.bodySmallSize,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 36),
@@ -124,6 +129,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                         hint: context.l10n.t('Enter new password'),
                         errorText: errors['password'],
                         suffixIcon: IconButton(
+                          tooltip: 'Toggle password visibility',
                           onPressed: () {
                             setState(() {
                               _obscurePassword = !_obscurePassword;
@@ -154,6 +160,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                         hint: context.l10n.t('Confirm new password'),
                         errorText: errors['password_confirmation'],
                         suffixIcon: IconButton(
+                          tooltip: 'Toggle password visibility',
                           onPressed: () {
                             setState(() {
                               _obscureConfirm = !_obscureConfirm;
@@ -181,7 +188,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                           _viewModel.errorMessage!,
                           style: const TextStyle(
                             color: Colors.red,
-                            fontSize: 13,
+                            fontSize: AppTypography.labelMediumSize,
                           ),
                         ),
                       ),
@@ -210,21 +217,29 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
   Widget _buildBackToLogin() {
     final p = context.palette;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    // Wrap rather than Row: translated prompts run long (Myanmar is ~400dp at
+    // 14px), and both halves need to be able to move onto a second line instead
+    // of throwing a RenderFlex overflow.
+    return Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 6,
+      runSpacing: 2,
       children: [
         Text(
           context.l10n.t('Remember your password?'),
-          style: TextStyle(color: p.textMuted, fontSize: 14),
+          style: TextStyle(
+            color: p.textMuted,
+            fontSize: AppTypography.bodySmallSize,
+          ),
         ),
-        const SizedBox(width: 6),
         GestureDetector(
           onTap: () => Navigator.pop(context),
           child: Text(
             context.l10n.t('Back to Login'),
             style: TextStyle(
               color: AppColors.primary,
-              fontSize: 14,
+              fontSize: AppTypography.bodySmallSize,
               fontWeight: FontWeight.w600,
             ),
           ),

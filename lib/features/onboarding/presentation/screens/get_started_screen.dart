@@ -3,7 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:posfrontend/features/auth/presentation/screens/login_screen.dart';
-import 'package:posfrontend/shared/widgets/brochure_viewer_screen.dart';
+import 'package:posfrontend/shared/services/usb_printer_transport.dart';
+import 'package:posfrontend/shared/services/usb_setup_download.dart';
 
 /// Design tokens for the welcome page.
 ///
@@ -162,8 +163,8 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
             final headlineSize = switch (layout) {
               _PageLayout.desktop => (width * 0.045).clamp(44.0, 58.0),
               _PageLayout.medium => (width * 0.055).clamp(38.0, 50.0),
-              _PageLayout.compact || _PageLayout.mobile =>
-                (width * 0.105).clamp(30.0, 42.0),
+              _PageLayout.compact ||
+              _PageLayout.mobile => (width * 0.105).clamp(30.0, 42.0),
             };
 
             return SingleChildScrollView(
@@ -241,7 +242,10 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
       children: [
         const _BrandRow(),
         const SizedBox(height: 20),
-        _copyBlock(headlineSize: headlineSize, align: CrossAxisAlignment.center),
+        _copyBlock(
+          headlineSize: headlineSize,
+          align: CrossAxisAlignment.center,
+        ),
         const SizedBox(height: 24),
         _IllustrationPanel(mode: _mode, desktop: false),
         const SizedBox(height: 23),
@@ -281,11 +285,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _DesktopHeader(
-          onGetStarted: _goToLogin,
-          onNavigate: _scrollToFeatures,
-          onBrochure: _openBrochure,
-        ),
+        _DesktopHeader(onGetStarted: _goToLogin, onNavigate: _scrollToFeatures),
         const Divider(color: _Spec.border, height: 1),
         const SizedBox(height: 65),
         Row(
@@ -363,11 +363,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
       children: [
         const _EyebrowLabel(),
         const SizedBox(height: 16),
-        _Headline(
-          size: headlineSize,
-          align: align,
-          tight: wide,
-        ),
+        _Headline(size: headlineSize, align: align, tight: wide),
         SizedBox(height: wide ? 23 : 17),
         _Description(wide: wide),
         if (wide) const SizedBox(height: 28),
@@ -428,11 +424,7 @@ class _BrandRow extends StatelessWidget {
 /// on the right, and a hairline under the whole thing. On mobile this is
 /// replaced by [_BrandRow], which is a centred mark with no navigation.
 class _DesktopHeader extends StatelessWidget {
-  const _DesktopHeader({
-    required this.onGetStarted,
-    required this.onNavigate,
-    required this.onBrochure,
-  });
+  const _DesktopHeader({required this.onGetStarted, required this.onNavigate});
 
   final VoidCallback onGetStarted;
   final VoidCallback onNavigate;
@@ -577,17 +569,11 @@ class _Wordmark extends StatelessWidget {
           children: [
             TextSpan(
               text: 'smart',
-              style: TextStyle(
-                fontWeight: FontWeight.w800,
-                color: _Spec.ink,
-              ),
+              style: TextStyle(fontWeight: FontWeight.w800, color: _Spec.ink),
             ),
             TextSpan(
               text: 'pos',
-              style: TextStyle(
-                fontWeight: FontWeight.w500,
-                color: _Spec.ink,
-              ),
+              style: TextStyle(fontWeight: FontWeight.w500, color: _Spec.ink),
             ),
             const TextSpan(
               text: '.',
@@ -751,7 +737,10 @@ class _IllustrationPanel extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           Positioned.fill(
-            child: _PanelBackground(radius: desktop ? 28 : 24, ringScale: desktop ? 1.3 : 1.0),
+            child: _PanelBackground(
+              radius: desktop ? 28 : 24,
+              ringScale: desktop ? 1.3 : 1.0,
+            ),
           ),
           // Rotation only: the phone and everything inside it turn as one
           // group, which is what makes it read as a tilted object rather than
@@ -764,8 +753,16 @@ class _IllustrationPanel extends StatelessWidget {
           ),
           if (desktop) ...[
             const Positioned(top: 102, left: -24, child: _SaleNotification()),
-            const Positioned(top: 172, right: -15, child: _GrowthNotification()),
-            const Positioned(bottom: 106, right: -23, child: _StockNotification()),
+            const Positioned(
+              top: 172,
+              right: -15,
+              child: _GrowthNotification(),
+            ),
+            const Positioned(
+              bottom: 106,
+              right: -23,
+              child: _StockNotification(),
+            ),
           ] else ...[
             const Positioned(top: 10, left: 3, child: _SaleNotification()),
             const Positioned(bottom: 12, right: 3, child: _StockNotification()),
@@ -857,8 +854,7 @@ class _DotPainter extends CustomPainter {
     final paint = Paint();
     for (var y = step / 2; y < size.height; y += step) {
       // 1 in the middle of the panel, 0 at both edges.
-      final distanceToEdge =
-          math.min(y, size.height - y) / (size.height / 2);
+      final distanceToEdge = math.min(y, size.height - y) / (size.height / 2);
       final fade = (distanceToEdge * 1.6).clamp(0.0, 1.0);
       if (fade == 0) continue;
       for (var x = step / 2; x < size.width; x += step) {
@@ -1411,8 +1407,18 @@ class _SalesCard extends StatelessWidget {
   /// highlighted, which is what makes the chart read as a chart and not as a
   /// row of identical blocks.
   static const List<double> _bars = [
-    0.34, 0.52, 0.41, 0.66, 0.48, 0.72,
-    0.58, 0.83, 0.62, 0.75, 0.88, 1.0,
+    0.34,
+    0.52,
+    0.41,
+    0.66,
+    0.48,
+    0.72,
+    0.58,
+    0.83,
+    0.62,
+    0.75,
+    0.88,
+    1.0,
   ];
 
   @override
@@ -1783,11 +1789,7 @@ class _SaleNotification extends StatelessWidget {
             shape: BoxShape.circle,
             color: _Spec.greenBg,
           ),
-          child: const Icon(
-            Icons.check_rounded,
-            size: 13,
-            color: _Spec.green,
-          ),
+          child: const Icon(Icons.check_rounded, size: 13, color: _Spec.green),
         ),
         title: 'Another happy customer.',
         subtitle: 'Sale completed · \$48.00',
@@ -1945,10 +1947,7 @@ class _NotificationCard extends StatelessWidget {
                   subtitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.dmSans(
-                    fontSize: 7.5,
-                    color: _Spec.muted,
-                  ),
+                  style: GoogleFonts.dmSans(fontSize: 7.5, color: _Spec.muted),
                 ),
               ],
             ),
@@ -2214,9 +2213,7 @@ class _SecondaryAction extends StatelessWidget {
 }
 
 class _SupportLine extends StatelessWidget {
-  const _SupportLine({
-    this.alignment = MainAxisAlignment.center,
-  });
+  const _SupportLine({this.alignment = MainAxisAlignment.center});
 
   /// Left-packed inside the desktop hero column, centred everywhere else.
   final MainAxisAlignment alignment;
@@ -2845,6 +2842,66 @@ class _TrustRow extends StatelessWidget {
   }
 }
 
+/// Footer link to the one-time Windows driver package for the WebUSB
+/// printer.
+///
+/// Shipped as a footer action rather than an auto-download because browsers
+/// block downloads that no one asked for, and a native Android install has
+/// nothing to use a Windows zip — [UsbPrinterTransport.isSupported] keeps it
+/// on exactly the machines that need it.
+class _SetupDownloadButton extends StatelessWidget {
+  const _SetupDownloadButton();
+
+  @override
+  Widget build(BuildContext context) {
+    if (!UsbPrinterTransport.isSupported) return const SizedBox.shrink();
+
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: () => _open(context),
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: _Spec.border),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.download_rounded, size: 13, color: _Spec.purple),
+              const SizedBox(width: 6),
+              Text(
+                'USB printer setup (Windows)',
+                style: GoogleFonts.dmSans(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: _Spec.purple,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// A refused launch (popup blocker) has to say something — the download
+  /// silently not happening is the same failure mode USB printing had.
+  Future<void> _open(BuildContext context) async {
+    final ok = await UsbSetupDownload.open();
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('The download could not be started. Try again.'),
+        ),
+      );
+    }
+  }
+}
+
 /// Phone footer: brand, tagline and copyright stacked and centred.
 class _Footer extends StatelessWidget {
   const _Footer();
@@ -2862,6 +2919,8 @@ class _Footer extends StatelessWidget {
           textAlign: TextAlign.center,
           style: GoogleFonts.dmSans(fontSize: 10, color: _Spec.muted),
         ),
+        const SizedBox(height: 12),
+        const _SetupDownloadButton(),
         const SizedBox(height: 12),
         Text(
           '© ${DateTime.now().year} Smart POS',
@@ -2887,12 +2946,16 @@ class _FooterRow extends StatelessWidget {
           children: [
             const _Wordmark(size: 19),
             const SizedBox(width: 12),
-            Flexible(
+            // Expanded rather than loose-flexible so the setup button and
+            // copyright stay flush right once the button takes a slot.
+            Expanded(
               child: Text(
                 'A smarter way to run your everyday.',
                 style: GoogleFonts.dmSans(fontSize: 11, color: _Spec.muted),
               ),
             ),
+            const SizedBox(width: 16),
+            const _SetupDownloadButton(),
             const SizedBox(width: 16),
             Text(
               '© ${DateTime.now().year} Smart POS',
@@ -2948,6 +3011,10 @@ class _DemoDialogState extends State<_DemoDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: _Spec.pageBg,
+      // The body is ~300dp of choices plus the intro and closing lines. On a
+      // landscape phone the dialog's height budget is smaller than that, so
+      // let it scroll rather than paint overflow stripes.
+      scrollable: true,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       title: Row(
         children: [
@@ -3000,7 +3067,7 @@ class _DemoDialogState extends State<_DemoDialog> {
           ],
         ),
       ),
-actions: [
+      actions: [
         TextButton(
           onPressed: () {
             // Captured before the pop: after it this context is defunct, and

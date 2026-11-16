@@ -8,6 +8,7 @@ class ProductApiModel {
   final String brand;
   final String sku;
   final double price;
+  final double costPrice;
   final int stock;
   final bool isSet;
   final String category;
@@ -22,6 +23,7 @@ class ProductApiModel {
     this.brand = '',
     this.sku = '',
     this.price = 0,
+    this.costPrice = 0,
     this.stock = 0,
     this.isSet = false,
     this.category = '',
@@ -43,6 +45,7 @@ class ProductApiModel {
       brand: json['brand']?.toString() ?? '',
       sku: json['sku']?.toString() ?? '',
       price: price,
+      costPrice: (json['costPrice'] as num?)?.toDouble() ?? 0,
       stock: (json['stock'] as num?)?.toInt() ?? 0,
       isSet: json['isSet'] == true,
       category: json['category']?.toString() ?? '',
@@ -64,6 +67,7 @@ class ProductApiModel {
       brand: brand,
       sku: sku,
       price: price,
+      costPrice: costPrice,
       stock: stock,
       isSet: isSet,
       category: category,
@@ -80,12 +84,14 @@ class ProductVariantApiModel {
   final String color;
   final int quantity;
   final double price;
+  final double costPrice;
 
   const ProductVariantApiModel({
     this.size = '',
     this.color = '',
     this.quantity = 0,
     this.price = 0,
+    this.costPrice = 0,
   });
 
   factory ProductVariantApiModel.fromJson(Map<String, dynamic> json) {
@@ -94,6 +100,7 @@ class ProductVariantApiModel {
       color: (json['color'] as String?)?.trim() ?? '',
       quantity: (json['quantity'] as num?)?.toInt() ?? 0,
       price: (json['price'] as num?)?.toDouble() ?? 0,
+      costPrice: (json['costPrice'] as num?)?.toDouble() ?? 0,
     );
   }
 
@@ -103,6 +110,7 @@ class ProductVariantApiModel {
       color: color,
       quantity: quantity,
       price: price,
+      costPrice: costPrice,
     );
   }
 }

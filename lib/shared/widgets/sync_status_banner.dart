@@ -5,6 +5,8 @@ import 'package:posfrontend/core/network/connectivity.dart';
 import 'package:posfrontend/core/offline/offline_writes_flag.dart';
 import 'package:posfrontend/core/offline/outbox_queue.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 
 /// The strip that tells the cashier what the data on screen actually is.
 ///
@@ -100,7 +102,7 @@ class SyncStatusBanner extends StatelessWidget {
                 : '';
 
         return Material(
-          color: const Color(0xFFB26A00),
+          color: AppColors.orange,
           child: SafeArea(
             bottom: false,
             child: Padding(
@@ -114,7 +116,7 @@ class SyncStatusBanner extends StatelessWidget {
                       '$message$time$pendingSuffix$failedSuffix',
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 12,
+                        fontSize: AppTypography.labelSmallSize,
                         fontWeight: FontWeight.w600,
                       ),
                       maxLines: 1,

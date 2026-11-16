@@ -6,11 +6,14 @@ import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart';
 import 'package:posfrontend/features/product/presentation/screens/product_detail_screen.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
+import 'package:posfrontend/shared/widgets/app_empty_state.dart';
+import 'package:posfrontend/shared/widgets/app_page_transitions.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
 import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 import 'package:posfrontend/shared/widgets/error_retry_view.dart';
 import 'package:posfrontend/shared/widgets/search_input_bar.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
@@ -193,21 +196,9 @@ class _ProductCardScreenState extends State<ProductCardScreen> {
       );
     }
     if (products.isEmpty) {
-      return Center(
-        child: Column(
-          children: [
-            Icon(
-              Icons.inventory_2_outlined,
-              size: 64,
-              color: palette.textMuted,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              context.l10n.t('No products found'),
-              style: TextStyle(fontSize: 16, color: palette.textSecondary),
-            ),
-          ],
-        ),
+      return AppEmptyState(
+        title: context.l10n.t('No products found'),
+        icon: Icons.inventory_2_outlined,
       );
     }
 
@@ -248,7 +239,9 @@ class _ProductCardScreenState extends State<ProductCardScreen> {
 
   void _openProduct(CatalogProductView p) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => ProductDetailScreen(productId: p.id)),
+      AppPageTransitions.fadeSlide<void>(
+        ProductDetailScreen(productId: p.id),
+      ),
     );
   }
 }
@@ -323,7 +316,7 @@ class _ProductCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: AppTypography.bodySmallSize,
                         fontWeight: FontWeight.w600,
                         color: palette.textPrimary,
                       ),
@@ -335,7 +328,7 @@ class _ProductCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: AppTypography.labelSmallSize,
                           color: palette.textSecondary,
                         ),
                       ),
@@ -347,7 +340,7 @@ class _ProductCard extends StatelessWidget {
                           child: PriceText(
                             product.price,
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: AppTypography.bodySmallSize,
                               fontWeight: FontWeight.w700,
                               color: AppColors.brandPurple,
                             ),
@@ -365,7 +358,7 @@ class _ProductCard extends StatelessWidget {
                           child: Text(
                             stockLabel.localized(context.l10n),
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: AppTypography.labelSmallSize,
                               fontWeight: FontWeight.w600,
                               color: stockColor,
                             ),
@@ -380,7 +373,7 @@ class _ProductCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: AppTypography.labelSmallSize,
                           color: palette.textSecondary,
                         ),
                       ),

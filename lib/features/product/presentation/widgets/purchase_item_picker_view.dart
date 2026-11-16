@@ -4,6 +4,7 @@ import 'package:posfrontend/features/purchase/domain/entities/purchase.dart';
 import 'package:posfrontend/features/purchase/presentation/viewmodels/purchase_item_view_model.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/error_retry_view.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
@@ -73,7 +74,7 @@ class _PurchaseItemPickerViewState extends State<PurchaseItemPickerView> {
                 hintText: context.l10n.t(
                   'Search by product, supplier or order id',
                 ),
-                hintStyle: TextStyle(color: p.textSecondary, fontSize: 14),
+                hintStyle: TextStyle(color: p.textSecondary, fontSize: AppTypography.bodySmallSize),
                 prefixIcon: Icon(
                   Icons.search,
                   color: p.textSecondary,
@@ -171,7 +172,7 @@ class _PurchaseItemPickerViewState extends State<PurchaseItemPickerView> {
                 ? 'No pending purchase items'
                 : 'No pending item matches "$_query"',
             textAlign: TextAlign.center,
-            style: TextStyle(color: p.textSecondary, fontSize: 13),
+            style: TextStyle(color: p.textSecondary, fontSize: AppTypography.labelMediumSize),
           ),
         ],
       ),
@@ -215,7 +216,7 @@ class _PurchaseItemPickerViewState extends State<PurchaseItemPickerView> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: AppTypography.bodySmallSize,
                       fontWeight: FontWeight.w700,
                       color: p.textPrimary,
                     ),
@@ -229,7 +230,7 @@ class _PurchaseItemPickerViewState extends State<PurchaseItemPickerView> {
                     ].join(' · '),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 11.5, color: p.textSecondary),
+                    style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.textSecondary),
                   ),
                 ],
               ),
@@ -238,7 +239,7 @@ class _PurchaseItemPickerViewState extends State<PurchaseItemPickerView> {
             PriceText(
               order.unitPrice.toDouble(),
               style: const TextStyle(
-                fontSize: 13,
+                fontSize: AppTypography.labelMediumSize,
                 fontWeight: FontWeight.w700,
                 color: AppColors.teal,
               ),

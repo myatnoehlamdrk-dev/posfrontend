@@ -16,6 +16,10 @@ class ProductDetailEntity extends Equatable {
   final String inventoryType;
   final String status;
   final double price;
+
+  /// Original cost price per unit, kept as the fallback for variants without
+  /// their own cost. Profit = selling price - cost.
+  final double costPrice;
   final int stockAvailable;
   final int stockReserved;
   final int reorderLevel;
@@ -51,6 +55,7 @@ class ProductDetailEntity extends Equatable {
     this.inventoryType = '',
     this.status = 'Active',
     this.price = 0,
+    this.costPrice = 0,
     this.stockAvailable = 0,
     this.stockReserved = 0,
     this.reorderLevel = 10,
@@ -73,5 +78,5 @@ class ProductDetailEntity extends Equatable {
   });
 
   @override
-  List<Object?> get props => [id, name, sku, price, stockAvailable];
+  List<Object?> get props => [id, name, sku, price, costPrice, stockAvailable];
 }

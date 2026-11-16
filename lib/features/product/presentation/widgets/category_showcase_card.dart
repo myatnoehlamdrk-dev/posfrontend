@@ -3,6 +3,7 @@ import 'package:posfrontend/features/product/presentation/entities/catalog_produ
 import 'package:posfrontend/features/product/presentation/widgets/category_showcase_data.dart';
 import 'package:posfrontend/features/product/presentation/widgets/category_tile.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/l10n/app_strings.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
@@ -188,7 +189,7 @@ class CategoryShowcaseCard extends StatelessWidget {
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       style: TextStyle(
-        fontSize: 13,
+        fontSize: AppTypography.labelMediumSize,
         height: 1.3,
         fontWeight: FontWeight.w400,
         fontStyle: FontStyle.italic,
@@ -217,7 +218,7 @@ class CategoryShowcaseCard extends StatelessWidget {
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       style: TextStyle(
-        fontSize: 12,
+        fontSize: AppTypography.labelSmallSize,
         fontWeight: FontWeight.w600,
         color: p.textMuted.withValues(alpha: 0.75),
       ),
@@ -232,7 +233,7 @@ class CategoryShowcaseCard extends StatelessWidget {
         child: Center(
           child: Text(
             AppStrings.current.t('No products'),
-            style: TextStyle(fontSize: 13, color: p.textMuted),
+            style: TextStyle(fontSize: AppTypography.labelMediumSize, color: p.textMuted),
           ),
         ),
       );

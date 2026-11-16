@@ -6,7 +6,9 @@ import 'package:posfrontend/features/dashboard/domain/entities/dashboard_tables.
 import 'package:posfrontend/features/dashboard/presentation/viewmodels/dashboard_table_view_model.dart';
 import 'package:posfrontend/features/dashboard/presentation/widgets/dashboard_table_skeleton.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
+import 'package:posfrontend/shared/widgets/app_page_transitions.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/error_retry_view.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
@@ -57,8 +59,8 @@ class DashboardTableScreen extends StatefulWidget {
     bool showDirectionToggle = false,
     String initialDirection = 'desc',
   }) {
-    return MaterialPageRoute<void>(
-      builder: (_) => DashboardTableScreen(
+    return AppPageTransitions.fadeSlide<void>(
+      DashboardTableScreen(
         spec: spec,
         query: query,
         showDirectionToggle: showDirectionToggle,
@@ -192,7 +194,7 @@ class _DashboardTableScreenState extends State<DashboardTableScreen> {
                     .t(_viewModel.total == 1 ? '1 row' : '{v1} rows')
                     .replaceAll('{v1}', _viewModel.total.toString()),
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: AppTypography.labelSmallSize,
                   fontWeight: FontWeight.w600,
                   color: p.textSecondary,
                 ),
@@ -202,7 +204,7 @@ class _DashboardTableScreenState extends State<DashboardTableScreen> {
                   context.l10n
                       .t('  ·  showing {v1}')
                       .replaceAll('{v1}', (_viewModel.rows.length).toString()),
-                  style: TextStyle(fontSize: 12, color: p.textMuted),
+                  style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.textMuted),
                 ),
               ],
             ],
@@ -211,7 +213,7 @@ class _DashboardTableScreenState extends State<DashboardTableScreen> {
             const SizedBox(height: 4),
             Text(
               context.l10n.t(widget.spec.note!),
-              style: TextStyle(fontSize: 11, color: p.textMuted),
+              style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.textMuted),
             ),
           ],
         ],
@@ -322,7 +324,7 @@ class _DashboardTableScreenState extends State<DashboardTableScreen> {
             Text(
               context.l10n.t(_numberColumn.label),
               style: TextStyle(
-                fontSize: 12,
+                fontSize: AppTypography.labelSmallSize,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.2,
                 color: p.textSecondary,
@@ -336,7 +338,7 @@ class _DashboardTableScreenState extends State<DashboardTableScreen> {
               Text(
                 context.l10n.t(column.label),
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: AppTypography.labelSmallSize,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.2,
                   color: p.textSecondary,
@@ -366,7 +368,7 @@ class _DashboardTableScreenState extends State<DashboardTableScreen> {
             Text(
               rowNumber.toString(),
               style: TextStyle(
-                fontSize: 13,
+                fontSize: AppTypography.labelMediumSize,
                 color: p.textMuted,
                 fontWeight: FontWeight.w400,
               ),
@@ -385,7 +387,7 @@ class _DashboardTableScreenState extends State<DashboardTableScreen> {
                   ? PriceText(
                       row.number(column.fieldKey),
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: AppTypography.labelMediumSize,
                         fontWeight: FontWeight.w600,
                         color: p.textPrimary,
                       ),
@@ -393,7 +395,7 @@ class _DashboardTableScreenState extends State<DashboardTableScreen> {
                   : Text(
                       row.display(column),
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: AppTypography.labelMediumSize,
                         color: p.textPrimary,
                         fontWeight: column.kind == TableValueKind.text
                             ? FontWeight.w400
@@ -478,6 +480,9 @@ class _MonthFilter extends StatelessWidget {
     final palette = this.palette;
     final picked = await showModalBottomSheet<String?>(
       context: context,
+      // The sheet is taller than the default 9/16 cap on a phone, and taller
+      // still in landscape. Let it size itself and scroll internally.
+      isScrollControlled: true,
       backgroundColor: palette.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -502,7 +507,7 @@ class _MonthFilter extends StatelessWidget {
         Text(
           context.l10n.t('Month'),
           style: TextStyle(
-            fontSize: 13,
+            fontSize: AppTypography.labelMediumSize,
             fontWeight: FontWeight.w500,
             color: p.textSecondary,
           ),
@@ -525,7 +530,7 @@ class _MonthFilter extends StatelessWidget {
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: AppTypography.labelMediumSize,
                     fontWeight: FontWeight.w600,
                     color: p.textPrimary,
                   ),
@@ -585,77 +590,93 @@ class _MonthSheetState extends State<_MonthSheet> {
     final p = widget.palette;
     final now = DateTime.now();
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Center(
-            child: Text(
-              context.l10n.t('Select month'),
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: p.textSecondary,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
+    return SafeArea(
+      top: false,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.9,
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              IconButton(
-                onPressed: _year > 2000 ? () => setState(() => _year--) : null,
-                icon: Icon(Icons.chevron_left, color: p.textMuted),
-              ),
-              Expanded(
-                child: Center(
-                  child: Text(
-                    context.l10n
-                        .t('{v1}')
-                        .replaceAll('{v1}', (_year).toString()),
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: p.textPrimary,
-                    ),
+              Center(
+                child: Text(
+                  context.l10n.t('Select month'),
+                  style: TextStyle(
+                    fontSize: AppTypography.bodySmallSize,
+                    fontWeight: FontWeight.w600,
+                    color: p.textSecondary,
                   ),
                 ),
               ),
-              IconButton(
-                onPressed: _year < now.year
-                    ? () => setState(() => _year++)
-                    : null,
-                icon: Icon(Icons.chevron_right, color: p.textMuted),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  IconButton(
+                    onPressed:
+                        _year > 2000 ? () => setState(() => _year--) : null,
+                    icon: Icon(Icons.chevron_left, color: p.textMuted),
+                    tooltip: 'Previous year',
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        context.l10n
+                            .t('{v1}')
+                            .replaceAll('{v1}', (_year).toString()),
+                        style: TextStyle(
+                          fontSize: AppTypography.titleSmallSize,
+                          fontWeight: FontWeight.w700,
+                          color: p.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: _year < now.year
+                        ? () => setState(() => _year++)
+                        : null,
+                    icon: Icon(Icons.chevron_right, color: p.textMuted),
+                    tooltip: 'Next year',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              GridView.count(
+                crossAxisCount: 3,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+                childAspectRatio: 2,
+                children: [
+                  for (var month = 1; month <= 12; month++)
+                    _monthCell(month, now),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextButton.icon(
+                onPressed: () {
+                  final isAllTime = _selected == null;
+                  // Same as the months: picking what is already active just
+                  // closes.
+                  Navigator.pop(context, isAllTime ? null : _allTimeMonth);
+                },
+                icon: Icon(Icons.clear_all, size: 16, color: p.accentText),
+                label: Text(
+                  context.l10n.t('All time'),
+                  style: TextStyle(
+                    color: p.accentText,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          GridView.count(
-            crossAxisCount: 3,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-            childAspectRatio: 2,
-            children: [
-              for (var month = 1; month <= 12; month++) _monthCell(month, now),
-            ],
-          ),
-          const SizedBox(height: 12),
-          TextButton.icon(
-            onPressed: () {
-              final isAllTime = _selected == null;
-              // Same as the months: picking what is already active just closes.
-              Navigator.pop(context, isAllTime ? null : _allTimeMonth);
-            },
-            icon: Icon(Icons.clear_all, size: 16, color: p.accentText),
-            label: Text(
-              context.l10n.t('All time'),
-              style: TextStyle(color: p.accentText, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -678,7 +699,7 @@ class _MonthSheetState extends State<_MonthSheet> {
         child: Text(
           _MonthFilter._monthNames[month - 1].substring(0, 3),
           style: TextStyle(
-            fontSize: 13,
+            fontSize: AppTypography.labelMediumSize,
             fontWeight: FontWeight.w600,
             color: !isSelected && isCurrent ? p.primary : p.textPrimary,
             decoration: !isSelected && isCurrent
@@ -726,7 +747,7 @@ class _DirectionToggle extends StatelessWidget {
                     entry.value,
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: AppTypography.labelMediumSize,
                       fontWeight: FontWeight.w600,
                       color: value == entry.key
                           ? Colors.white

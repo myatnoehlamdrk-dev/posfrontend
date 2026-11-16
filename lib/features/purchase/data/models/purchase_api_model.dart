@@ -71,6 +71,24 @@ class PurchaseOrderApiModel {
       updatedAt: updatedAt,
     );
   }
+
+  /// The shape [fromJson] reads, so a locally cached row can be handed back to
+  /// the same parsing path as a fresh API row.
+  Map<String, dynamic> toJson() => {
+    'id': orderId,
+    'supplierId': supplierId,
+    'supplierName': supplierName,
+    'productName': productName,
+    'quantity': quantity,
+    'unitPrice': unitPrice,
+    'date': date,
+    'status': status.name,
+    'notes': notes,
+    'createdBy': createdBy,
+    'updatedBy': updatedBy,
+    'createdAt': createdAt,
+    'updatedAt': updatedAt,
+  };
 }
 
 class SupplierApiModel {

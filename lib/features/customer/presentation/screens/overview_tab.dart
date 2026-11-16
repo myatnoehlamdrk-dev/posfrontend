@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/features/customer/domain/entities/customer.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class OverviewTab extends StatelessWidget {
@@ -9,9 +10,9 @@ class OverviewTab extends StatelessWidget {
 
   const OverviewTab({super.key, required this.analytics});
 
-  static const Color teal = Color(0xFF4FD1D9);
-  static const Color green = Color(0xFF10B981);
-  static const Color orange = Color(0xFFF59E0B);
+  static const Color teal = AppColors.teal;
+  static const Color green = AppColors.green;
+  static const Color orange = AppColors.orange;
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +69,7 @@ class OverviewTab extends StatelessWidget {
             Text(
               context.l10n.t('Top 3 Customers'),
               style: TextStyle(
-                fontSize: 16,
+                fontSize: AppTypography.bodyLargeSize,
                 fontWeight: FontWeight.w600,
                 color: p.textPrimary,
               ),
@@ -121,13 +122,13 @@ class OverviewTab extends StatelessWidget {
             Text(
               value,
               style: TextStyle(
-                fontSize: 24,
+                fontSize: AppTypography.titleLargeSize,
                 fontWeight: FontWeight.bold,
                 color: color,
               ),
             ),
             const SizedBox(height: 4),
-            Text(label, style: TextStyle(fontSize: 13, color: p.textSecondary)),
+            Text(label, style: TextStyle(fontSize: AppTypography.labelMediumSize, color: p.textSecondary)),
           ],
         ),
       ),
@@ -151,7 +152,7 @@ class OverviewTab extends StatelessWidget {
           Text(
             context.l10n.t('New vs Returning Customers'),
             style: TextStyle(
-              fontSize: 16,
+              fontSize: AppTypography.bodyLargeSize,
               fontWeight: FontWeight.w600,
               color: p.textPrimary,
             ),
@@ -199,12 +200,12 @@ class OverviewTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(fontSize: 13, color: p.textSecondary)),
+          Text(label, style: TextStyle(fontSize: AppTypography.labelMediumSize, color: p.textSecondary)),
           const SizedBox(height: 4),
           Text(
             context.l10n.t('{v1}').replaceAll('{v1}', (count).toString()),
             style: TextStyle(
-              fontSize: 20,
+              fontSize: AppTypography.titleMediumSize,
               fontWeight: FontWeight.bold,
               color: color,
             ),
@@ -212,7 +213,7 @@ class OverviewTab extends StatelessWidget {
           Text(
             context.l10n.t('{v1}%').replaceAll('{v1}', (pct).toString()),
             style: TextStyle(
-              fontSize: 13,
+              fontSize: AppTypography.labelMediumSize,
               fontWeight: FontWeight.w500,
               color: color,
             ),
@@ -233,12 +234,12 @@ class OverviewTab extends StatelessWidget {
         color: rank == 0 ? p.warningBg : p.surface,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: rank == 0 ? const Color(0xFFF59E0B) : p.border,
+          color: rank == 0 ? AppColors.orange : p.border,
         ),
       ),
       child: Row(
         children: [
-          Text(medal, style: const TextStyle(fontSize: 20)),
+          Text(medal, style: const TextStyle(fontSize: AppTypography.titleMediumSize)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -247,7 +248,7 @@ class OverviewTab extends StatelessWidget {
                 Text(
                   c.name,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: AppTypography.bodySmallSize,
                     fontWeight: FontWeight.w600,
                     color: p.textPrimary,
                   ),
@@ -256,7 +257,7 @@ class OverviewTab extends StatelessWidget {
                   context.l10n
                       .t('{v1} orders')
                       .replaceAll('{v1}', (c.totalOrders).toString()),
-                  style: TextStyle(fontSize: 12, color: p.textSecondary),
+                  style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.textSecondary),
                 ),
               ],
             ),
@@ -266,9 +267,9 @@ class OverviewTab extends StatelessWidget {
                 .t('MMK {v1}')
                 .replaceAll('{v1}', (c.totalSpending).toString()),
             style: TextStyle(
-              fontSize: 14,
+              fontSize: AppTypography.bodySmallSize,
               fontWeight: FontWeight.w700,
-              color: rank == 0 ? const Color(0xFFF59E0B) : AppColors.brandPurpleDark,
+              color: rank == 0 ? AppColors.orange : AppColors.brandPurpleDark,
             ),
           ),
         ],
@@ -292,7 +293,7 @@ class OverviewTab extends StatelessWidget {
           Text(
             context.l10n.t('Purchase Behavior'),
             style: TextStyle(
-              fontSize: 16,
+              fontSize: AppTypography.bodyLargeSize,
               fontWeight: FontWeight.w600,
               color: p.textPrimary,
             ),
@@ -334,12 +335,12 @@ class OverviewTab extends StatelessWidget {
       children: [
         Icon(icon, size: 18, color: p.textSecondary),
         const SizedBox(width: 10),
-        Text(label, style: TextStyle(fontSize: 13, color: p.textSecondary)),
+        Text(label, style: TextStyle(fontSize: AppTypography.labelMediumSize, color: p.textSecondary)),
         const Spacer(),
         Text(
           value,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: AppTypography.bodySmallSize,
             fontWeight: FontWeight.w600,
             color: p.textPrimary,
           ),

@@ -16,6 +16,7 @@ import 'package:posfrontend/features/sale/presentation/viewmodels/sale_view_mode
 import 'package:posfrontend/features/sale/presentation/widgets/quick_sale_cart_panel.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
@@ -214,7 +215,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
       child: Column(
         children: [
           AppScreenTopBar(
-            title: context.l10n.t('Quick Sale'),
+            title: context.l10n.t('Sale'),
             showMenuButton: !isWide,
             onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
           ),
@@ -247,10 +248,10 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
           return TextField(
             controller: _search,
             onChanged: _catalog.setSearchQuery,
-            style: TextStyle(fontSize: 14, color: p.textPrimary),
+            style: TextStyle(fontSize: AppTypography.bodySmallSize, color: p.textPrimary),
             decoration: InputDecoration(
               hintText: context.l10n.t('Search products...'),
-              hintStyle: TextStyle(fontSize: 14, color: p.textMuted),
+              hintStyle: TextStyle(fontSize: AppTypography.bodySmallSize, color: p.textMuted),
               prefixIcon: Icon(Icons.search, color: p.accentText, size: 20),
               suffixIcon: _search.text.isEmpty
                   ? null
@@ -260,6 +261,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                         _catalog.setSearchQuery('');
                         setState(() {});
                       },
+                      tooltip: 'Clear search',
                       icon: Icon(Icons.close, size: 18, color: p.textSecondary),
                     ),
               isDense: true,
@@ -337,7 +339,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: AppTypography.labelMediumSize,
               fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
               color: selected ? Colors.white : p.textPrimary,
             ),
@@ -530,13 +532,13 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                       .replaceAll('{v1}', _catalog.searchQuery.trim())
                 : context.l10n.t('No products in this category'),
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 16, color: p.textSecondary),
+            style: TextStyle(fontSize: AppTypography.bodyLargeSize, color: p.textSecondary),
           ),
           const SizedBox(height: 8),
           Text(
             context.l10n.t('Try a different keyword or category'),
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: p.textMuted),
+            style: TextStyle(fontSize: AppTypography.labelMediumSize, color: p.textMuted),
           ),
         ],
       ),
@@ -563,7 +565,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
               _catalog.errorMessage ?? '',
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 12, color: p.dangerFg),
+              style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.dangerFg),
             ),
           ),
           TextButton(
@@ -575,7 +577,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
             ),
             child: Text(
               context.l10n.t('Retry'),
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+              style: const TextStyle(fontSize: AppTypography.labelSmallSize, fontWeight: FontWeight.w700),
             ),
           ),
         ],
@@ -785,7 +787,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: AppTypography.labelMediumSize,
                       fontWeight: FontWeight.w600,
                       color: p.textPrimary,
                     ),
@@ -794,7 +796,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                   PriceText(
                     _sale.totalPayable,
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: AppTypography.bodyMediumSize,
                       fontWeight: FontWeight.w800,
                       color: p.accentText,
                     ),
@@ -928,7 +930,7 @@ class _QuickSaleCard extends StatelessWidget {
                                   .t('Stock: {v1}')
                                   .replaceAll('{v1}', product.stock.toString()),
                         style: const TextStyle(
-                          fontSize: 10,
+                          fontSize: AppTypography.labelSmallSize,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
                         ),
@@ -966,7 +968,7 @@ class _QuickSaleCard extends StatelessWidget {
                               .t('×{v1}')
                               .replaceAll('{v1}', qtyInCart.toString()),
                           style: const TextStyle(
-                            fontSize: 11,
+                            fontSize: AppTypography.labelSmallSize,
                             fontWeight: FontWeight.w700,
                             color: Colors.white,
                           ),
@@ -986,7 +988,7 @@ class _QuickSaleCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: AppTypography.labelMediumSize,
                       fontWeight: FontWeight.w600,
                       color: p.textPrimary,
                     ),
@@ -998,7 +1000,7 @@ class _QuickSaleCard extends StatelessWidget {
                         child: PriceText(
                           _price,
                           style: const TextStyle(
-                            fontSize: 15,
+                            fontSize: AppTypography.bodyMediumSize,
                             fontWeight: FontWeight.w800,
                             color: AppColors.brandPurple,
                           ),
@@ -1035,7 +1037,7 @@ class _QuickSaleCard extends StatelessWidget {
                           ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 11, color: p.textSecondary),
+                      style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.textSecondary),
                     ),
                   ],
                 ],

@@ -30,6 +30,23 @@ class DashboardRemoteDataSource {
     return response.data as Map<String, dynamic>;
   }
 
+  /// Daily order counts and revenue for the last [days] days, oldest first.
+  ///
+  /// Returns the raw list because the endpoint is a bare JSON array, not an
+  /// object; the shape is `[{date, count, total}, ...]` with days that had no
+  /// sales absent rather than zeroed.
+  Future<List<dynamic>> getSalesChart({
+    required int days,
+    CancelToken? cancelToken,
+  }) async {
+    final response = await _dio.get(
+      '/dashboard/sales-chart',
+      queryParameters: {'days': days},
+      cancelToken: cancelToken,
+    );
+    return response.data as List<dynamic>;
+  }
+
   /// One of the paginated "View all" tables. [query] carries whatever the table
   /// filters on (low-stock flag, most/least direction, month).
   Future<Map<String, dynamic>> getTable({

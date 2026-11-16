@@ -4,6 +4,7 @@ import 'package:get_it/get_it.dart';
 import 'package:posfrontend/features/category/domain/entities/category.dart';
 import 'package:posfrontend/features/category/domain/repositories/category_repository.dart';
 import 'package:posfrontend/features/category/presentation/viewmodels/add_category_view_model.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
@@ -158,7 +159,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                   Text(
                     isEdit ? 'Edit Category' : 'Category Information',
                     style: TextStyle(
-                      fontSize: 32,
+                      fontSize: AppTypography.displayLargeSize,
                       fontWeight: FontWeight.bold,
                       color: p.textPrimary,
                     ),
@@ -168,7 +169,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                     isEdit
                         ? 'Update the details for this category.'
                         : 'Provide the details for your new inventory category.',
-                    style: TextStyle(fontSize: 16, color: p.textSecondary),
+                    style: TextStyle(fontSize: AppTypography.bodyLargeSize, color: p.textSecondary),
                   ),
                   const SizedBox(height: 24),
                   FormCard(

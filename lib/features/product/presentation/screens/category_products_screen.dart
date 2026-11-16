@@ -16,6 +16,8 @@ import 'package:posfrontend/features/product/presentation/widgets/category_produ
 import 'package:posfrontend/features/sale/data/repositories/sale_repository_impl.dart';
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
+import 'package:posfrontend/shared/widgets/app_empty_state.dart';
+import 'package:posfrontend/shared/widgets/app_page_transitions.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
@@ -25,6 +27,7 @@ import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 
 class VariantPick {
@@ -254,7 +257,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
   void _openCart() {
     Navigator.of(
       context,
-    ).push(MaterialPageRoute(builder: (_) => const AddToCartScreen()));
+    ).push(AppPageTransitions.fadeSlide<void>(const AddToCartScreen()));
   }
 
   double get _selectedTotal {
@@ -552,7 +555,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
     });
     if (updatedCard == null) return;
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => CartCardScreen(card: updatedCard)),
+      AppPageTransitions.fadeSlide<void>(CartCardScreen(card: updatedCard)),
     );
   }
 
@@ -616,7 +619,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
     }
     Navigator.of(
       context,
-    ).push(MaterialPageRoute(builder: (_) => CartCardScreen(card: card)));
+    ).push(AppPageTransitions.fadeSlide<void>(CartCardScreen(card: card)));
   }
 
   String _random5() {
@@ -693,21 +696,9 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
           }
 
           if (_products.isEmpty) {
-            return Center(
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.inventory_2_outlined,
-                    size: 64,
-                    color: _p.textMuted,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    context.l10n.t('No products in this category'),
-                    style: TextStyle(fontSize: 16, color: _p.textSecondary),
-                  ),
-                ],
-              ),
+            return AppEmptyState(
+              title: context.l10n.t('No products in this category'),
+              icon: Icons.inventory_2_outlined,
             );
           }
 
@@ -815,7 +806,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                             .t('{v1}')
                             .replaceAll('{v1}', (_selectedCount).toString()),
                         style: const TextStyle(
-                          fontSize: 10,
+                          fontSize: AppTypography.labelSmallSize,
                           fontWeight: FontWeight.w700,
                           color: Colors.white,
                         ),
@@ -835,7 +826,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                         ? '$_selectedCount Items Selected'
                         : 'No items selected',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: AppTypography.bodySmallSize,
                       fontWeight: FontWeight.w600,
                       color: _titleColor,
                     ),
@@ -843,7 +834,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                   PriceText(
                     _selectedTotal,
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: AppTypography.bodyLargeSize,
                       fontWeight: FontWeight.bold,
                       color: AppColors.brandPurple,
                     ),
@@ -898,7 +889,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
-                              fontSize: 14,
+                              fontSize: AppTypography.bodySmallSize,
                             ),
                           ),
                         ],
@@ -1005,7 +996,7 @@ class _ProductCard extends StatelessWidget {
                             .t('Stock: {v1}')
                             .replaceAll('{v1}', (product.stock).toString()),
                         style: const TextStyle(
-                          fontSize: 10,
+                          fontSize: AppTypography.labelSmallSize,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
                         ),
@@ -1060,7 +1051,7 @@ class _ProductCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: AppTypography.labelMediumSize,
                       fontWeight: FontWeight.w600,
                       color: p.textPrimary,
                     ),
@@ -1069,7 +1060,7 @@ class _ProductCard extends StatelessWidget {
                   PriceText(
                     _displayPrice,
                     style: const TextStyle(
-                      fontSize: 15,
+                      fontSize: AppTypography.bodyMediumSize,
                       fontWeight: FontWeight.w700,
                       color: AppColors.brandPurple,
                     ),
@@ -1088,7 +1079,7 @@ class _ProductCard extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: AppTypography.labelSmallSize,
                               color: p.textSecondary,
                             ),
                           ),
@@ -1100,7 +1091,7 @@ class _ProductCard extends StatelessWidget {
                       context.l10n
                           .t('Stock: {v1}')
                           .replaceAll('{v1}', (_displayStock).toString()),
-                      style: TextStyle(fontSize: 11, color: p.textSecondary),
+                      style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.textSecondary),
                     ),
                   if (selected) ...[
                     const SizedBox(height: 8),
@@ -1124,7 +1115,7 @@ class _ProductCard extends StatelessWidget {
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: AppTypography.labelSmallSize,
                                 fontWeight: FontWeight.w600,
                                 color: p.accentText,
                               ),
@@ -1145,7 +1136,7 @@ class _ProductCard extends StatelessWidget {
                                     Text(
                                       context.l10n.t('Edit variants'),
                                       style: TextStyle(
-                                        fontSize: 11,
+                                        fontSize: AppTypography.labelSmallSize,
                                         fontWeight: FontWeight.w600,
                                         color: AppColors.teal,
                                       ),
@@ -1165,7 +1156,7 @@ class _ProductCard extends StatelessWidget {
                                   Text(
                                     context.l10n.t('Quantity'),
                                     style: TextStyle(
-                                      fontSize: 11,
+                                      fontSize: AppTypography.labelSmallSize,
                                       fontWeight: FontWeight.w600,
                                       color: p.textSecondary,
                                     ),
@@ -1183,7 +1174,7 @@ class _ProductCard extends StatelessWidget {
                               Text(
                                 context.l10n.t('Total'),
                                 style: TextStyle(
-                                  fontSize: 11,
+                                  fontSize: AppTypography.labelSmallSize,
                                   fontWeight: FontWeight.w600,
                                   color: p.textSecondary,
                                 ),
@@ -1192,7 +1183,7 @@ class _ProductCard extends StatelessWidget {
                                 child: PriceText(
                                   _itemTotal,
                                   style: const TextStyle(
-                                    fontSize: 12,
+                                    fontSize: AppTypography.labelSmallSize,
                                     fontWeight: FontWeight.w700,
                                     color: AppColors.brandPurple,
                                   ),
@@ -1252,7 +1243,7 @@ class _ProductCard extends StatelessWidget {
               textAlign: TextAlign.center,
               maxLength: 4,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: AppTypography.labelMediumSize,
                 fontWeight: FontWeight.w700,
                 color: p.textPrimary,
               ),
@@ -1413,14 +1404,14 @@ class _VariantPickDialogState extends State<VariantPickDialog> {
         children: [
           Text(
             context.l10n.t('Choose Variants'),
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            style: TextStyle(fontSize: AppTypography.bodyLargeSize, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 2),
           Text(
             _product.name,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 12, color: _mutedColor),
+            style: TextStyle(fontSize: AppTypography.labelSmallSize, color: _mutedColor),
           ),
           const SizedBox(height: 8),
           Row(
@@ -1432,7 +1423,7 @@ class _VariantPickDialogState extends State<VariantPickDialog> {
                       .replaceAll('{v1}', (_totalPicked).toString())
                       .replaceAll('{v2}', (_productStock).toString()),
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: AppTypography.labelSmallSize,
                     fontWeight: FontWeight.w600,
                     color: _accentColor,
                   ),
@@ -1457,7 +1448,7 @@ class _VariantPickDialogState extends State<VariantPickDialog> {
                       Text(
                         context.l10n.t('Fill all stock'),
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: AppTypography.labelSmallSize,
                           fontWeight: FontWeight.w700,
                           color: _accentColor,
                         ),
@@ -1533,7 +1524,7 @@ class _VariantPickDialogState extends State<VariantPickDialog> {
                     Text(
                       variantTitle(v),
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: AppTypography.labelMediumSize,
                         fontWeight: FontWeight.w600,
                         color: _titleColor,
                       ),
@@ -1543,7 +1534,7 @@ class _VariantPickDialogState extends State<VariantPickDialog> {
                       context.l10n
                           .t('Stock: {v1}')
                           .replaceAll('{v1}', (v.quantity).toString()),
-                      style: TextStyle(fontSize: 11, color: _mutedColor),
+                      style: TextStyle(fontSize: AppTypography.labelSmallSize, color: _mutedColor),
                     ),
                   ],
                 ),
@@ -1551,7 +1542,7 @@ class _VariantPickDialogState extends State<VariantPickDialog> {
               PriceText(
                 v.price,
                 style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: AppTypography.labelMediumSize,
                   fontWeight: FontWeight.w700,
                   color: AppColors.brandPurple,
                 ),
@@ -1565,7 +1556,7 @@ class _VariantPickDialogState extends State<VariantPickDialog> {
               Text(
                 qty > 0 ? 'Selected: $qty' : 'Tap + to select',
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: AppTypography.labelSmallSize,
                   color: qty > 0 ? _accentColor : _mutedColor,
                 ),
               ),
@@ -1590,7 +1581,7 @@ class _VariantPickDialogState extends State<VariantPickDialog> {
                         textAlign: TextAlign.center,
                         maxLength: 4,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: AppTypography.labelMediumSize,
                           fontWeight: FontWeight.w700,
                           color: _titleColor,
                         ),
@@ -1650,7 +1641,7 @@ class _AddToCartChoiceDialog extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: Text(
         'Add to Cart',
-        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+        style: TextStyle(fontSize: AppTypography.bodyLargeSize, fontWeight: FontWeight.w700),
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1714,7 +1705,7 @@ class _AddToCartChoiceDialog extends StatelessWidget {
                   Text(
                     title,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: AppTypography.bodySmallSize,
                       fontWeight: FontWeight.w700,
                       color: p.textPrimary,
                     ),
@@ -1722,7 +1713,7 @@ class _AddToCartChoiceDialog extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: TextStyle(fontSize: 12, color: p.textSecondary),
+                    style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.textSecondary),
                   ),
                 ],
               ),
@@ -1769,7 +1760,7 @@ class _ExistingCardPickerState extends State<_ExistingCardPicker> {
                     child: Text(
                       context.l10n.t('Existing Cards'),
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: AppTypography.bodyLargeSize,
                         fontWeight: FontWeight.w700,
                         color: _titleColor,
                       ),
@@ -1831,7 +1822,7 @@ class _ExistingCardPickerState extends State<_ExistingCardPicker> {
                                         (card.totalQuantity).toString(),
                                       ),
                                   style: TextStyle(
-                                    fontSize: 13,
+                                    fontSize: AppTypography.labelMediumSize,
                                     fontWeight: FontWeight.w700,
                                     color: _titleColor,
                                   ),
@@ -1845,7 +1836,7 @@ class _ExistingCardPickerState extends State<_ExistingCardPicker> {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    fontSize: 11,
+                                    fontSize: AppTypography.labelSmallSize,
                                     color: _mutedColor,
                                   ),
                                 ),
@@ -1856,7 +1847,7 @@ class _ExistingCardPickerState extends State<_ExistingCardPicker> {
                           PriceText(
                             card.total,
                             style: const TextStyle(
-                              fontSize: 13,
+                              fontSize: AppTypography.labelMediumSize,
                               fontWeight: FontWeight.w700,
                               color: AppColors.brandPurple,
                             ),

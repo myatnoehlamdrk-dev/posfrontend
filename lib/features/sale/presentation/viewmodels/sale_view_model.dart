@@ -92,8 +92,9 @@ class SaleViewModel extends BaseViewModel {
     _voucherRandom = _generateRandom5();
     _orderRandom = _generateRandom5();
     if (initialItems != null) _items.addAll(initialItems);
-    if (initialCustomerName?.isNotEmpty == true)
+    if (initialCustomerName?.isNotEmpty == true) {
       _customerName = initialCustomerName!;
+    }
     if (initialCustomerPhone != null) _customerPhone = initialCustomerPhone;
     if (initialPaymentMethod != null) _paymentMethod = initialPaymentMethod;
     notifyListeners();

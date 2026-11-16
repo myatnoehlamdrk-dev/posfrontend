@@ -14,6 +14,8 @@ import 'package:posfrontend/features/product/presentation/screens/category_produ
 import 'package:posfrontend/features/product/presentation/viewmodels/products_catalog_view_model.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/app_empty_state.dart';
+import 'package:posfrontend/shared/widgets/app_page_transitions.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/app_shell.dart';
 import 'package:posfrontend/shared/widgets/app_top_bar.dart';
@@ -152,7 +154,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
 
   void _openProduct(CatalogProductView p) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => ProductDetailScreen(productId: p.id)),
+      AppPageTransitions.fadeSlide<void>(ProductDetailScreen(productId: p.id)),
     );
   }
 
@@ -250,7 +252,10 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
     final search = FloatingActionButton(
       onPressed: () => setState(() => _isSearchOpen = !_isSearchOpen),
       backgroundColor: brandPurple,
-      child: Icon(_isSearchOpen ? Icons.close : Icons.search, color: Colors.white),
+      child: Icon(
+        _isSearchOpen ? Icons.close : Icons.search,
+        color: Colors.white,
+      ),
     );
 
     if (!_showBackToTop) return search;
@@ -317,6 +322,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                         const SizedBox(width: 8),
                         _iconButton(
                           Icons.close,
+                          tooltip: 'Close search',
                           onTap: () {
                             setState(() {
                               _isSearchOpen = false;
@@ -363,23 +369,10 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
     }
 
     if (categories.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.category_outlined, size: 64, color: _p.textMuted),
-            const SizedBox(height: 16),
-            Text(
-              context.l10n.t('No categories available'),
-              style: TextStyle(fontSize: 16, color: _mutedColor),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              context.l10n.t('Add products to see categories here'),
-              style: TextStyle(fontSize: 13, color: _p.textMuted),
-            ),
-          ],
-        ),
+      return AppEmptyState(
+        title: context.l10n.t('No categories available'),
+        subtitle: context.l10n.t('Add products to see categories here'),
+        icon: Icons.category_outlined,
       );
     }
 
@@ -480,7 +473,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                     context.l10n.t('Show more categories'),
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: AppTypography.bodySmallSize,
                       fontWeight: FontWeight.w600,
                       color: context.palette.textPrimary,
                     ),
@@ -502,7 +495,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                     child: Text(
                       '+$remaining',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: AppTypography.labelSmallSize,
                         fontWeight: FontWeight.w600,
                         color: _p.textSecondary,
                       ),
@@ -563,7 +556,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: AppTypography.bodySmallSize,
                       fontWeight: FontWeight.w600,
                       color: context.palette.textPrimary,
                     ),
@@ -574,7 +567,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: AppTypography.labelSmallSize,
                         color: context.palette.textSecondary,
                       ),
                     ),
@@ -583,7 +576,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
                         .t('Stock: {v1}')
                         .replaceAll('{v1}', (p.stock).toString()),
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: AppTypography.labelSmallSize,
                       color: context.palette.textSecondary,
                     ),
                   ),
@@ -627,12 +620,18 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
               context.l10n
                   .t('No products found for "{v1}"')
                   .replaceAll('{v1}', (query).toString()),
-              style: TextStyle(fontSize: 16, color: _mutedColor),
+              style: TextStyle(
+                fontSize: AppTypography.bodyLargeSize,
+                color: _mutedColor,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               context.l10n.t('Try a different keyword or brand'),
-              style: TextStyle(fontSize: 13, color: _p.textMuted),
+              style: TextStyle(
+                fontSize: AppTypography.labelMediumSize,
+                color: _p.textMuted,
+              ),
             ),
           ],
         ),
@@ -645,7 +644,11 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
     );
   }
 
-  Widget _iconButton(IconData icon, {required VoidCallback onTap}) {
+  Widget _iconButton(
+    IconData icon, {
+    required VoidCallback onTap,
+    String? tooltip,
+  }) {
     return Container(
       height: 40,
       width: 40,
@@ -657,6 +660,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
       child: IconButton(
         icon: Icon(icon, color: context.palette.textPrimary, size: 20),
         onPressed: onTap,
+        tooltip: tooltip ?? 'Action',
         padding: EdgeInsets.zero,
       ),
     );
@@ -666,18 +670,14 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
     return TextField(
       controller: _search,
       onChanged: _viewModel.setSearchQuery,
-      style: const TextStyle(fontSize: 13),
+      style: const TextStyle(fontSize: AppTypography.labelMediumSize),
       decoration: InputDecoration(
         hintText: context.l10n.t('Search...'),
         hintStyle: TextStyle(
           color: context.palette.textSecondary,
-          fontSize: 13,
+          fontSize: AppTypography.labelMediumSize,
         ),
-        prefixIcon: Icon(
-          Icons.search,
-          color: brandPurple,
-          size: 18,
-        ),
+        prefixIcon: Icon(Icons.search, color: brandPurple, size: 18),
         isDense: true,
         filled: true,
         fillColor: _p.surface,
@@ -774,151 +774,164 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
       onTap: () => _openProduct(p),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(8, 4, 8, 2),
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              width: double.infinity,
-              height: 194,
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-              decoration: BoxDecoration(
-                gradient: lightGradient,
-                borderRadius: BorderRadius.circular(22),
-                boxShadow: [
-                  BoxShadow(
-                    color: accent.withValues(alpha: 0.35),
-                    blurRadius: 16,
-                    offset: const Offset(0, 8),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // The artwork is an overlay pinned to the right edge; derive its
+            // width from the card's real width instead of a flat 160 so a
+            // phone still has room for the copy beside it.
+            final imageWidth = (constraints.maxWidth * 0.42).clamp(96.0, 160.0);
+            // The card used to be a fixed 194dp tall, which clipped the copy
+            // as soon as the OS text scale passed ~1.3x. Growth is linear, so
+            // scaling the height with the text keeps the layout intact.
+            final textScale = MediaQuery.textScalerOf(context).scale(1.0);
+            final cardHeight = 194 * textScale;
+            return Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: double.infinity,
+                  height: cardHeight,
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                  decoration: BoxDecoration(
+                    gradient: lightGradient,
+                    borderRadius: BorderRadius.circular(22),
+                    boxShadow: [
+                      BoxShadow(
+                        color: accent.withValues(alpha: 0.35),
+                        blurRadius: 16,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 126,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.6),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              p.category.isEmpty ? 'Featured' : p.category,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF111827),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            p.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF111827),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          PriceText(
-                            p.price,
-                            // `accentText`, not the `#7952DB` literal this used
-                            // to carry: at 16px bold this is body text, so it
-                            // needs 4.5:1, and the brand purple only reaches
-                            // 2.54:1 on a dark surface.
-                            style: TextStyle(
-                              fontSize: AppTypography.bodyLargeSize,
-                              fontWeight: FontWeight.bold,
-                              color: _p.accentText,
-                            ),
-                          ),
-                          const Spacer(),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [gradient.colors[1], accent],
-                              ),
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: accent.withValues(alpha: 0.4),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 3),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 126 * textScale,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 3,
                                 ),
-                              ],
-                            ),
-                            child: Text(
-                              context.l10n.t('View Details'),
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.6),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  p.category.isEmpty ? 'Featured' : p.category,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: AppTypography.labelSmallSize,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF111827),
+                                  ),
+                                ),
                               ),
-                            ),
+                              const SizedBox(height: 8),
+                              Text(
+                                p.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: AppTypography.titleSmallSize,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF111827),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              PriceText(
+                                p.price,
+                                // `accentText`, not the `#7952DB` literal this used
+                                // to carry: at 16px bold this is body text, so it
+                                // needs 4.5:1, and the brand purple only reaches
+                                // 2.54:1 on a dark surface.
+                                style: TextStyle(
+                                  fontSize: AppTypography.bodyLargeSize,
+                                  fontWeight: FontWeight.bold,
+                                  color: _p.accentText,
+                                ),
+                              ),
+                              const Spacer(),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [gradient.colors[1], accent],
+                                  ),
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: accent.withValues(alpha: 0.4),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: Text(
+                                  context.l10n.t('View Details'),
+                                  style: TextStyle(
+                                    fontSize: AppTypography.labelSmallSize,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
+                        ),
+                      ),
+                      SizedBox(width: imageWidth),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  right: 6,
+                  bottom: 6,
+                  child: Container(
+                    width: 150,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      gradient: RadialGradient(
+                        radius: 1.1,
+                        colors: [
+                          Colors.black.withValues(alpha: 0.16),
+                          Colors.black.withValues(alpha: 0.06),
+                          Colors.transparent,
                         ],
+                        stops: const [0.0, 0.6, 1.0],
                       ),
                     ),
                   ),
-                  const SizedBox(width: 90),
-                ],
-              ),
-            ),
-            Positioned(
-              right: 6,
-              bottom: 6,
-              child: Container(
-                width: 150,
-                height: 40,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  gradient: RadialGradient(
-                    radius: 1.1,
-                    colors: [
-                      Colors.black.withValues(alpha: 0.16),
-                      Colors.black.withValues(alpha: 0.06),
-                      Colors.transparent,
-                    ],
-                    stops: const [0.0, 0.6, 1.0],
+                ),
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  bottom: 0,
+                  child: SizedBox(
+                    width: imageWidth,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(22),
+                      child: hasImage
+                          ? _GradientBlendedImage(
+                              imageUrl: p.imageUrl!,
+                              width: imageWidth,
+                              errorFallback: _promoBadge(p, gradient),
+                            )
+                          : _promoBadge(p, gradient),
+                    ),
                   ),
                 ),
-              ),
-            ),
-            Positioned(
-              right: 0,
-              top: 0,
-              bottom: 0,
-              child: SizedBox(
-                width: 160,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(22),
-                  child: hasImage
-                      ? _GradientBlendedImage(
-                          imageUrl: p.imageUrl!,
-                          width: 160,
-                          errorFallback: _promoBadge(p, gradient),
-                        )
-                      : _promoBadge(p, gradient),
-                ),
-              ),
-            ),
-          ],
+              ],
+            );
+          },
         ),
       ),
     );

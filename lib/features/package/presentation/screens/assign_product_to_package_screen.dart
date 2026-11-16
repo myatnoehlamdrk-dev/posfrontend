@@ -7,6 +7,7 @@ import 'package:posfrontend/features/product/presentation/entities/catalog_produ
 import 'package:posfrontend/features/product/data/repositories/product_repository_impl.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 import 'package:posfrontend/shared/widgets/custom_back_button.dart';
@@ -115,7 +116,7 @@ class _AssignProductToPackageScreenState
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: AppTypography.titleSmallSize,
                       fontWeight: FontWeight.w600,
                       color: _titleColor,
                     ),
@@ -128,7 +129,7 @@ class _AssignProductToPackageScreenState
                         .replaceAll('{v2}', (widget.category.name).toString()),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 13, color: _mutedColor),
+                    style: TextStyle(fontSize: AppTypography.labelMediumSize, color: _mutedColor),
                   ),
                 ],
               ),
@@ -151,7 +152,7 @@ class _AssignProductToPackageScreenState
                         ? 'Deselect All'
                         : 'Select All',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: AppTypography.labelSmallSize,
                       fontWeight: FontWeight.w600,
                       color: _accentColor,
                     ),
@@ -185,14 +186,14 @@ class _AssignProductToPackageScreenState
             const SizedBox(height: 12),
             Text(
               context.l10n.t('No unassigned products found.'),
-              style: TextStyle(color: _mutedColor, fontSize: 15),
+              style: TextStyle(color: _mutedColor, fontSize: AppTypography.bodyMediumSize),
             ),
             const SizedBox(height: 4),
             Text(
               context.l10n.t('All products are already in a package.'),
               style: TextStyle(
                 color: _mutedColor.withValues(alpha: 0.7),
-                fontSize: 13,
+                fontSize: AppTypography.labelMediumSize,
               ),
             ),
           ],
@@ -278,7 +279,7 @@ class _AssignProductToPackageScreenState
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
-                      fontSize: 14,
+                      fontSize: AppTypography.bodySmallSize,
                       color: _titleColor,
                     ),
                   ),
@@ -297,7 +298,7 @@ class _AssignProductToPackageScreenState
                         child: Text(
                           p.stock > 0 ? '${p.stock} in stock' : 'Out of stock',
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: AppTypography.labelSmallSize,
                             fontWeight: FontWeight.w600,
                             color: p.stock > 0 ? _p.successFg : _p.dangerFg,
                           ),
@@ -310,7 +311,7 @@ class _AssignProductToPackageScreenState
                             p.brand,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 12, color: _mutedColor),
+                            style: TextStyle(fontSize: AppTypography.labelSmallSize, color: _mutedColor),
                           ),
                         ),
                       ],
@@ -351,7 +352,7 @@ class _AssignProductToPackageScreenState
                     .t('{v1} product(s) selected')
                     .replaceAll('{v1}', (_viewModel.selectedCount).toString()),
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: AppTypography.bodySmallSize,
                   fontWeight: FontWeight.w600,
                   color: _titleColor,
                 ),
@@ -387,7 +388,7 @@ class _AssignProductToPackageScreenState
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
-                          fontSize: 14,
+                          fontSize: AppTypography.bodySmallSize,
                         ),
                       ),
               ),

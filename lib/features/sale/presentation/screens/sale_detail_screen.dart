@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/app_page_transitions.dart';
 import 'package:posfrontend/shared/widgets/responsive_scaffold.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/core/extensions/datetime_extensions.dart';
@@ -20,14 +24,15 @@ class SaleDetailScreen extends StatefulWidget {
 class _SaleDetailScreenState extends State<SaleDetailScreen> {
   late SaleOrderEntity _order;
 
-  static const Color teal = Color(0xFF14B8A6);
-  static const Color titleColor = Color(0xFF111827);
-  static const Color gray = Color(0xFF6B7280);
-  static const Color border = Color(0xFFE5E7EB);
-  static const Color green = Color(0xFF16A34A);
-  static const Color greenBg = Color(0xFFDCFCE7);
-  static const Color orange = Color(0xFFD97706);
-  static const Color orangeBg = Color(0xFFFEF3C7);
+  // Design tokens, read from the active theme so the screen follows light/dark.
+  Color get teal => AppColors.teal;
+  Color get titleColor => context.palette.textPrimary;
+  Color get gray => context.palette.textSecondary;
+  Color get border => context.palette.border;
+  Color get green => context.palette.successFg;
+  Color get greenBg => context.palette.successBg;
+  Color get orange => context.palette.warningFg;
+  Color get orangeBg => context.palette.warningBg;
 
   @override
   void initState() {
@@ -42,7 +47,7 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
     return WideDrawerDock(
       active: DrawerDestination.saleItem,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8F9FC),
+        backgroundColor: context.palette.scaffoldBg,
         body: SafeArea(
           child: Column(
             children: [
@@ -102,8 +107,8 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                                         children: [
                                           Text(
                                             item.productName,
-                                            style: const TextStyle(
-                                              fontSize: 13,
+                                            style: TextStyle(
+                                              fontSize: AppTypography.labelMediumSize,
                                               fontWeight: FontWeight.w500,
                                               color: titleColor,
                                             ),
@@ -117,8 +122,8 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                                                 if (item.color.isNotEmpty)
                                                   'Color: ${item.color}',
                                               ].join(' | '),
-                                              style: const TextStyle(
-                                                fontSize: 11,
+                                              style: TextStyle(
+                                                fontSize: AppTypography.labelSmallSize,
                                                 color: gray,
                                               ),
                                             ),
@@ -132,16 +137,16 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                                             '{v1}',
                                             (item.quantity).toString(),
                                           ),
-                                      style: const TextStyle(
-                                        fontSize: 12,
+                                      style: TextStyle(
+                                        fontSize: AppTypography.labelSmallSize,
                                         color: gray,
                                       ),
                                     ),
                                     const SizedBox(width: 8),
                                     PriceText(
                                       item.subtotal.toDouble(),
-                                      style: const TextStyle(
-                                        fontSize: 13,
+                                      style: TextStyle(
+                                        fontSize: AppTypography.labelMediumSize,
                                         fontWeight: FontWeight.w500,
                                         color: titleColor,
                                       ),
@@ -177,14 +182,14 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                             children: [
                               Text(
                                 context.l10n.t('Total Amount'),
-                                style: TextStyle(fontSize: 13, color: gray),
+                                style: TextStyle(fontSize: AppTypography.labelMediumSize, color: gray),
                               ),
                               const SizedBox(width: 12),
                               Flexible(
                                 child: PriceText(
                                   _order.amount.toDouble(),
-                                  style: const TextStyle(
-                                    fontSize: 13,
+                                  style: TextStyle(
+                                    fontSize: AppTypography.labelMediumSize,
                                     fontWeight: FontWeight.w500,
                                     color: titleColor,
                                   ),
@@ -232,13 +237,13 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                             width: double.infinity,
                             child: ElevatedButton.icon(
                               onPressed: _upToSale,
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.shopping_cart_outlined,
                                 size: 18,
                               ),
                               label: Text(context.l10n.t('Up to Sale')),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF6D28D9),
+                                backgroundColor: context.palette.primary,
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 14,
@@ -266,8 +271,8 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
   Widget _buildTopBar(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: context.palette.surface,
         border: Border(bottom: BorderSide(color: border, width: 1)),
       ),
       child: Row(
@@ -279,7 +284,7 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                 context.l10n.t('Sale Detail'),
                 style: TextStyle(
                   color: titleColor,
-                  fontSize: 18,
+                  fontSize: AppTypography.titleSmallSize,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -315,8 +320,8 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                   _order.voucherNo.isNotEmpty
                       ? _order.voucherNo
                       : 'Order #${_order.orderId}',
-                  style: const TextStyle(
-                    fontSize: 16,
+                  style: TextStyle(
+                    fontSize: AppTypography.bodyLargeSize,
                     fontWeight: FontWeight.w700,
                     color: titleColor,
                   ),
@@ -336,7 +341,7 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                       ? context.l10n.t('Already Sale')
                       : context.l10n.t('Will Be Sale'),
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: AppTypography.labelSmallSize,
                     fontWeight: FontWeight.w600,
                     color: isAlreadySale ? green : orange,
                   ),
@@ -347,8 +352,8 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
           const SizedBox(height: 12),
           Text(
             _order.productName,
-            style: const TextStyle(
-              fontSize: 18,
+            style: TextStyle(
+              fontSize: AppTypography.titleSmallSize,
               fontWeight: FontWeight.w600,
               color: titleColor,
             ),
@@ -357,20 +362,20 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
             const SizedBox(height: 4),
             Text(
               _order.description,
-              style: const TextStyle(fontSize: 13, color: gray),
+              style: TextStyle(fontSize: AppTypography.labelMediumSize, color: gray),
             ),
           ],
           const SizedBox(height: 12),
-          const Divider(color: border, height: 1),
+          Divider(color: border, height: 1),
           const SizedBox(height: 12),
           Row(
             children: [
-              const Icon(Icons.calendar_today_outlined, size: 14, color: gray),
+              Icon(Icons.calendar_today_outlined, size: 14, color: gray),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   _formatDate(_order.date),
-                  style: const TextStyle(fontSize: 13, color: gray),
+                  style: TextStyle(fontSize: AppTypography.labelMediumSize, color: gray),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -379,8 +384,8 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
               Flexible(
                 child: PriceText(
                   _order.amount.toDouble(),
-                  style: const TextStyle(
-                    fontSize: 15,
+                  style: TextStyle(
+                    fontSize: AppTypography.bodyMediumSize,
                     fontWeight: FontWeight.w700,
                     color: teal,
                   ),
@@ -413,8 +418,8 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
         children: [
           Text(
             context.l10n.t(title),
-            style: const TextStyle(
-              fontSize: 15,
+            style: TextStyle(
+              fontSize: AppTypography.bodyMediumSize,
               fontWeight: FontWeight.w600,
               color: titleColor,
             ),
@@ -432,13 +437,13 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(context.l10n.t(label), style: const TextStyle(fontSize: 13, color: gray)),
+          Text(context.l10n.t(label), style: TextStyle(fontSize: AppTypography.labelMediumSize, color: gray)),
           const SizedBox(width: 12),
           Flexible(
             child: Text(
               value,
-              style: const TextStyle(
-                fontSize: 13,
+              style: TextStyle(
+                fontSize: AppTypography.labelMediumSize,
                 fontWeight: FontWeight.w500,
                 color: titleColor,
               ),
@@ -467,8 +472,8 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
 
     Navigator.of(context)
         .push(
-          MaterialPageRoute(
-            builder: (_) => NewSaleScreen(
+          AppPageTransitions.fadeSlide<void>(
+            NewSaleScreen(
               initialItems: saleItems,
               initialCustomerName: _order.customerName,
               initialCustomerPhone: _order.customerPhone,

@@ -171,6 +171,7 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
           color: v.color,
           quantity: v.quantity,
           price: v.price,
+          costPrice: v.costPrice,
         ),
       );
     }
@@ -280,9 +281,13 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
     if (_variants.isEmpty) {
       _variants.add(ProductCreateVariant(size: 'Small', color: 'Black'));
     }
+    // A purchase item's unit price is what the shop paid for the unit, so it
+    // seeds the variant's cost.
+    final unitCost = order.unitPrice.toDouble();
     _variants[0] = _variants.first.copyWith(
       quantity: order.quantity,
       price: order.unitPrice.toDouble(),
+      costPrice: unitCost,
     );
 
     if (order.supplierId.isNotEmpty) {
@@ -366,6 +371,10 @@ class AddProductViewModel extends BaseViewModel with FormValidationMixin {
       );
       _imageUrl = result.url;
       _imageDeleteUrl = result.deleteUrl;
+      // A successful upload supersedes an earlier "remove": the payload must
+      // carry the new photo, not `removeImage: true`, or the backend blanks
+      // the image again and the change only lands on the next save.
+      _imageRemoved = false;
       _uploadFailed = false;
       _imageUploadFellBack = result.fellBack;
       _imageKey = UniqueKey();

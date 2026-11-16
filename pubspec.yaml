@@ -52,8 +52,10 @@ dependencies:
   image_picker: ^1.1.0
   # HTTP client for backend API calls.
   dio: ^5.7.0
-  # Charting library (line charts for the dashboard).
-  fl_chart: ^0.70.0
+  # Browser APIs for web-only features such as downloading generated files.
+  web: ^1.1.1
+  # Charting library (line/bar/candlestick charts).
+  fl_chart: ^1.3.0
   # Modern typography (Poppins) for a polished, screenshot-like look.
   google_fonts: ^6.2.1
   # Explicit dependency for multipart image upload content types.
@@ -62,6 +64,10 @@ dependencies:
   printing: ^5.14.3
   # PDF generation
   pdf: ^3.11.2
+  # Direct thermal printing over Bluetooth (Android SPP / iOS BLE).
+  print_bluetooth_thermal: ^1.2.5
+  # ESC/POS byte generation shared by the Bluetooth and WiFi print paths.
+  esc_pos_utils_plus: ^2.0.4
   # Local notifications for stock alerts
   flutter_local_notifications: ^17.2.2
   # Firebase for push notifications (FCM)
@@ -81,10 +87,7 @@ dependencies:
   cached_network_image: ^4.0.4
   mm_nrc_kit: ^1.0.3
   permission_handler: 12.0.0
-  # Renders the bundled client brochure (assets/brochure/*.html) inside an
-  # in-app screen. Android/iOS only -- the web build never imports this
-  # package, see lib/shared/widgets/brochure_viewer_screen.dart.
-  webview_flutter: ^4.10.0
+  url_launcher: ^6.3.3
 
 dev_dependencies:
   flutter_test:
@@ -115,10 +118,11 @@ flutter:
     - assets/shop.png
     - assets/shop_rotated.png
     - assets/launcher.png
-    # Client brochure shown by the "Customer Guide" button on the welcome
-    # screen. The marketing/ folder at the repo root holds the editable
-    # sources; copy them here after editing.
-    - assets/brochure/
+    - assets/login1.png
+    - assets/login2.png
+    - assets/register.png
+    - assets/shopc.png
+    - assets/forgot.png
 
   # Poppins carries no Burmese, Thai or CJK glyphs, so text in those languages
   # would render as tofu boxes. These are applied as a per-glyph fallback

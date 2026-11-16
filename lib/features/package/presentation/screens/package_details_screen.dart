@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/shared/l10n/status_l10n.dart';
 import 'package:posfrontend/features/category/domain/entities/category.dart';
+import 'package:posfrontend/shared/widgets/app_empty_state.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/features/package/domain/entities/package.dart';
 import 'package:posfrontend/features/package/presentation/viewmodels/package_detail_view_model.dart';
@@ -13,6 +14,8 @@ import 'package:posfrontend/features/package/presentation/screens/assign_product
 import 'package:posfrontend/features/product/presentation/screens/product_detail_screen.dart';
 import 'package:posfrontend/shared/widgets/inventory_form_widgets.dart';
 import 'package:posfrontend/features/package/presentation/widgets/package_details_skeleton.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
+import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 import 'package:posfrontend/shared/widgets/error_retry_view.dart';
@@ -45,7 +48,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
       package: widget.package,
       category: CategoryInfo(
         name: widget.category.name,
-        iconColor: widget.category.iconColor ?? const Color(0xFF6D28D9),
+        iconColor: widget.category.iconColor ?? AppColors.brandPurpleDark,
         icon: widget.category.icon ?? Icons.category,
         imageUrl: widget.category.imageUrl,
       ),
@@ -132,7 +135,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                 backgroundColor: context.palette.surface,
                 floatingActionButton: FloatingActionButton.extended(
                   onPressed: _openAddProduct,
-                  backgroundColor: const Color(0xFF4FD1D9),
+                  backgroundColor: AppColors.teal,
                   icon: const Icon(Icons.add, color: Colors.white),
                   label: Text(
                     context.l10n.t('Add Product'),
@@ -146,7 +149,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
               backgroundColor: context.palette.surface,
               floatingActionButton: FloatingActionButton.extended(
                 onPressed: _openAddProduct,
-                backgroundColor: const Color(0xFF4FD1D9),
+                backgroundColor: AppColors.teal,
                 icon: const Icon(Icons.add, color: Colors.white),
                 label: Text(
                   context.l10n.t('Add Product'),
@@ -216,19 +219,9 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
   }
 
   Widget _emptyState() {
-    final p = context.palette;
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.inventory_2_outlined, size: 64, color: p.textMuted),
-          const SizedBox(height: 16),
-          Text(
-            context.l10n.t('No products found.'),
-            style: TextStyle(fontSize: 16, color: p.textSecondary),
-          ),
-        ],
-      ),
+    return AppEmptyState(
+      title: context.l10n.t('No products found.'),
+      icon: Icons.inventory_2_outlined,
     );
   }
 
@@ -243,7 +236,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Breadcrumb([
-          BreadcrumbItem(context.l10n.t('Inventory'), false),
+           BreadcrumbItem(context.l10n.t('Store'), false),
           BreadcrumbItem(widget.category.name, false),
           BreadcrumbItem(p.name, false),
           const BreadcrumbItem('Package Detail', true),
@@ -309,10 +302,10 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                   borderRadius: BorderRadius.circular(14),
                   gradient: LinearGradient(
                     colors: [
-                      (c.iconColor ?? const Color(0xFF6D28D9)).withValues(
+                      (c.iconColor ?? AppColors.brandPurpleDark).withValues(
                         alpha: 0.85,
                       ),
-                      (c.iconColor ?? const Color(0xFF6D28D9)).withValues(
+                      (c.iconColor ?? AppColors.brandPurpleDark).withValues(
                         alpha: 0.55,
                       ),
                     ],
@@ -358,7 +351,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                           child: Text(
                             p.code,
                             style: const TextStyle(
-                              fontSize: 12,
+                              fontSize: AppTypography.labelSmallSize,
                               fontWeight: FontWeight.w600,
                               color: kPurple,
                             ),
@@ -381,7 +374,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                           child: Text(
                             context.l10n.t('Active'),
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: AppTypography.labelSmallSize,
                               fontWeight: FontWeight.w600,
                               color: pal.successFg,
                             ),
@@ -393,7 +386,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                     Text(
                       p.name,
                       style: TextStyle(
-                        fontSize: 32,
+                        fontSize: AppTypography.displayLargeSize,
                         fontWeight: FontWeight.bold,
                         color: pal.textPrimary,
                       ),
@@ -401,7 +394,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                     const SizedBox(height: 6),
                     Text(
                       p.spec,
-                      style: TextStyle(fontSize: 14, color: pal.textSecondary),
+                      style: TextStyle(fontSize: AppTypography.bodySmallSize, color: pal.textSecondary),
                     ),
                   ],
                 ),
@@ -436,7 +429,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 11, color: p.textSecondary),
+                  style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.textSecondary),
                 ),
               ),
             ],
@@ -447,7 +440,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: AppTypography.labelMediumSize,
               fontWeight: FontWeight.w600,
               color: p.textPrimary,
             ),
@@ -501,7 +494,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
 
   Widget _stockSection(PackageEntity p) {
     final pal = context.palette;
-    final color = stockFg(p.status);
+    final color = stockFg(pal, p.status);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -526,7 +519,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
               Text(
                 context.l10n.t('Stock Status'),
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: AppTypography.bodyLargeSize,
                   fontWeight: FontWeight.w600,
                   color: pal.textPrimary,
                 ),
@@ -538,13 +531,13 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: stockBg(p.status),
+                  color: stockBg(pal, p.status),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   _viewModel.stockLabel.localized(context.l10n),
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: AppTypography.labelSmallSize,
                     fontWeight: FontWeight.w600,
                     color: color,
                   ),
@@ -569,7 +562,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                     .t('{v1}%')
                     .replaceAll('{v1}', (_viewModel.stockPct).toString()),
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: AppTypography.bodySmallSize,
                   fontWeight: FontWeight.w600,
                   color: color,
                 ),
@@ -591,7 +584,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                 .t('Products in this Package ({v1})')
                 .replaceAll('{v1}', (_viewModel.totalUnits).toString()),
             style: TextStyle(
-              fontSize: 28,
+              fontSize: AppTypography.displaySmallSize,
               fontWeight: FontWeight.bold,
               color: p.textPrimary,
             ),
@@ -607,6 +600,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
           ),
           child: IconButton(
             icon: Icon(Icons.filter_list, color: p.textPrimary),
+            tooltip: 'Filter',
             onPressed: () {},
           ),
         ),
@@ -675,7 +669,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                   Text(
                     pr.name,
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: AppTypography.bodyLargeSize,
                       fontWeight: FontWeight.bold,
                       color: context.palette.textPrimary,
                     ),
@@ -684,7 +678,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                   Text(
                     pr.brand,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: AppTypography.labelMediumSize,
                       color: context.palette.textSecondary,
                     ),
                   ),
@@ -712,7 +706,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
                         .t('{v1}')
                         .replaceAll('{v1}', (pr.stock).toString()),
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: AppTypography.labelMediumSize,
                       fontWeight: FontWeight.w600,
                       color: kPurple,
                     ),

@@ -1,31 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:equatable/equatable.dart';
+import 'package:posfrontend/shared/theme/app_palette.dart';
 
 enum StockStatus { highStock, midStock, lowStock, outOfStock }
 
-Color stockBg(StockStatus s) {
+Color stockBg(AppPalette p, StockStatus s) {
   switch (s) {
     case StockStatus.highStock:
-      return const Color(0xFFDCFCE7);
+      return p.successBg;
     case StockStatus.midStock:
-      return const Color(0xFFDBEAFE);
+      return p.infoBg;
     case StockStatus.lowStock:
-      return const Color(0xFFFEF3C7);
+      return p.warningBg;
     case StockStatus.outOfStock:
-      return const Color(0xFFFEE2E2);
+      return p.dangerBg;
   }
 }
 
-Color stockFg(StockStatus s) {
+Color stockFg(AppPalette p, StockStatus s) {
   switch (s) {
     case StockStatus.highStock:
-      return const Color(0xFF16A34A);
+      return p.successFg;
     case StockStatus.midStock:
-      return const Color(0xFF2563EB);
+      return p.infoFg;
     case StockStatus.lowStock:
-      return const Color(0xFFD97706);
+      return p.warningFg;
     case StockStatus.outOfStock:
-      return const Color(0xFFDC2626);
+      return p.dangerFg;
   }
 }
 

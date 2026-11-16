@@ -167,6 +167,9 @@ const Map<String, String> japaneseStrings = {
   'No products found.': '商品が見つかりません',
   'Self Inventory': '自己在庫',
   'Stock Status': '在庫状況',
+  'Product Stock Status': '商品在庫状況',
+  'Package Stock Status': 'パッケージ在庫状況',
+  'Inventory Stock Status': '在庫状況',
   'Remove from package': 'パッケージから削除',
   'Remove Product': '商品を削除',
   'Remove': '削除',
@@ -176,6 +179,8 @@ const Map<String, String> japaneseStrings = {
 
   // Inventory
   'Inventory': '在庫',
+  'Shop': 'ショップ',
+  'Inventory data will appear here.': '在庫データがここに表示されます。',
   'Private': '非公開',
   'Shared': '共有',
   'Open': '開く',
@@ -286,6 +291,79 @@ const Map<String, String> japaneseStrings = {
   'Print Settings': '印刷設定',
   'Paper Size': '用紙サイズ',
   'Print Format': '印刷形式',
+  // Print output (PDF / Bluetooth / Wi-Fi)
+  'Output': '出力',
+  'Bluetooth': 'Bluetooth',
+  'Wi-Fi': 'Wi-Fi',
+  'USB': 'USB',
+  'Print directly to a Bluetooth thermal printer': 'Bluetoothサーマルプリンターへ直接印刷',
+  'Print directly to a network thermal printer': 'ネットワークサーマルプリンターへ直接印刷',
+  'Print directly to a USB thermal printer': 'USBサーマルプリンターへ直接印刷',
+  'Thermal printing is not available here': 'ここではサーマル印刷は使えません',
+  'Bluetooth Printer': 'Bluetoothプリンター',
+  'Network Printer': 'ネットワークプリンター',
+  'USB Printer': 'USBプリンター',
+  'No printer selected': 'プリンターが未選択です',
+  'No printer configured': 'プリンターが未設定です',
+  'Plug in the printer, then choose': 'プリンターを接続してから選択してください',
+  'Add a printer in Settings > Printers': '設定 > プリンター から追加してください',
+  'Choose': '選択',
+  'Change': '変更',
+  'Open print dialog': '印刷ダイアログを開く',
+  'Choose Bluetooth Printer': 'Bluetoothプリンターを選択',
+  'Refresh': '更新',
+  'No printers found': 'プリンターが見つかりません',
+  'Pair the printer in system settings, then refresh.':
+      'システム設定でプリンターをペアリングしてから更新してください',
+  'Thermal printing failed: {v1}': 'サーマル印刷に失敗しました: {v1}',
+  'PDF export failed: {v1}': 'PDFエクスポートに失敗しました: {v1}',
+  'Bluetooth is turned off. Turn it on and try again.':
+      'Bluetoothがオフです。オンにして再試行してください',
+  'Bluetooth permission was denied.': 'Bluetoothの許可が拒否されました',
+  'The printer did not receive the receipt. Move it closer and try again.':
+      'プリンターがレシートを受け取りませんでした。近くに置いて再試行してください',
+  'Could not connect to the printer.': 'プリンターに接続できませんでした',
+  'No Bluetooth printer selected. Choose one in Print Settings.':
+      'Bluetoothプリンターが未選択です。印刷設定で選択してください',
+  'No printer configured. Add one in Settings > Printers.':
+      'プリンターが未設定です。設定 > プリンター から追加してください',
+  'Bluetooth printing is not available in the browser.':
+      'ブラウザではBluetooth印刷は使えません',
+  'Wi-Fi printing is not available in the browser.': 'ブラウザではWi-Fi印刷は使えません',
+
+  // Printers
+  'Printer Settings': 'プリンター設定',
+  'Printers': 'プリンター',
+  'Add Printer': 'プリンターを追加',
+  'Edit Printer': 'プリンターを編集',
+  'Printer Name': 'プリンター名',
+  'Printer Model': 'プリンターの機種',
+  'IP Address': 'IPアドレス',
+  'Port': 'ポート',
+  'Set as Default': 'デフォルトに設定',
+  'Default': 'デフォルト',
+  'No printers saved yet.': '保存されたプリンターはありません',
+  'Add your WiFi thermal printer to get started.': '開始するにはWiFiプリンターを追加してください',
+  'Delete Printer': 'プリンターを削除',
+  'Delete this printer?': 'このプリンターを削除しますか？',
+  'Printer saved': 'プリンターを保存しました',
+  'Printer deleted': 'プリンターを削除しました',
+  'Default printer updated.': 'デフォルトプリンターを更新しました',
+  'The app saves printer details here. With Wi-Fi chosen in Print Settings, '
+          'sales print straight to this printer — the print dialog fallback uses '
+          'the printer your system already knows.':
+      'プリンターの情報はここに保存されます。印刷設定でWi-Fiを選べば、販売データは'
+      'このプリンターへ直接送信されます。印刷ダイアログの代替手段は、システムに'
+      '登録済みのプリンターを使用します。',
+  'Test Connection': '接続テスト',
+  'Printer reachable': 'プリンターに接続できました',
+  'Could not reach the printer.': 'プリンターに接続できませんでした。',
+  'Enter a printer name.': 'プリンター名を入力してください。',
+  'Enter a valid IP address, e.g. 192.168.1.100.':
+      '有効なIPアドレスを入力してください（例: 192.168.1.100）',
+  'Port must be between 1 and 65535.': 'ポートは1〜65535の範囲で入力してください。',
+  'e.g. Counter Printer': '例: カウンタープリンター',
+  'e.g. 192.168.1.100': '例: 192.168.1.100',
   'Save PDF file after sale': '販売後にPDFを保存',
   'Invoice Preview': '請求書プレビュー',
   'Invoice': '請求書',
@@ -364,6 +442,8 @@ const Map<String, String> japaneseStrings = {
   '+ Add': '+ 追加',
   '+ Add Variant': '+ バリエーション追加',
   'Add products to your cart': 'カートに商品を追加',
+  'View the products saved in your cart and pick up where you left off.':
+      'カートに保存された商品を確認し、続きから再開できます。',
   'Audit Information': '監査情報',
   'Choose how you want to add a product': '商品の追加方法を選択',
   'Color': '色',
@@ -397,10 +477,8 @@ const Map<String, String> japaneseStrings = {
   'Clear all': 'すべてクリア',
   'No notifications yet': '通知はまだありません',
   'Stock alerts will appear here.': '在庫アラートがここに表示されます',
-  'Thank-you messages will appear here.':
-      '感謝メッセージがここに表示されます',
-  'Thank you for your feedback, {v1}!':
-      '{v1}さん、フィードバックありがとうございます！',
+  'Thank-you messages will appear here.': '感謝メッセージがここに表示されます',
+  'Thank you for your feedback, {v1}!': '{v1}さん、フィードバックありがとうございます！',
   'Thank you for your feedback!': 'フィードバックありがとうございます！',
   'Your message': 'あなたのメッセージ',
   'Reference': '参照',
@@ -408,8 +486,7 @@ const Map<String, String> japaneseStrings = {
   'Alert': 'アラート',
   'News': 'ニュース',
   'Clear all notifications?': 'すべての通知を削除しますか？',
-  'This removes the saved notification history.':
-      '保存済みの通知履歴がすべて削除されます。',
+  'This removes the saved notification history.': '保存済みの通知履歴がすべて削除されます。',
   'Just now': 'たった今',
   '{v1} min ago': '{v1}分前',
   '{v1} hr ago': '{v1}時間前',
@@ -449,4 +526,7 @@ const Map<String, String> japaneseStrings = {
       '写真は保存されましたが、この店舗のサーバーにのみ保存されています。他の端末では表示できない場合があります。',
   'This photo could not be reduced and is uploading at full size.':
       'この写真は圧縮できなかったため、元のサイズのままアップロードしています。',
+  'Download USB setup for this computer': 'このコンピューター用USBセットアップをダウンロード',
+  'The download could not be started. Try again.':
+      'ダウンロードを開始できませんでした。もう一度お試しください。',
 };

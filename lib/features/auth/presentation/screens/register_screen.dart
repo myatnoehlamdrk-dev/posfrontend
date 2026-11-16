@@ -19,21 +19,22 @@ import 'package:mm_nrc_kit/mm_nrc_kit.dart';
 /// on what "wide" means and a user moving between them sees the same shape.
 ///
 /// Three steps rather than two, so the widest step — user detail, with six
-/// fields — is one screen rather than two. Past [twoPaneFrom] the detail step
-/// pairs its fields into rows instead of stacking all six, which is what stops
-/// it turning into a column you have to scroll three times on a tablet.
+/// fields — is one screen rather than two. The form column is capped at the
+/// login screen's width and keeps one field per row, so a desktop window shows
+/// the same compact column as sign-in instead of a page-wide form.
 class _RegisterLayout {
   _RegisterLayout._();
 
   /// Same 768 the product, inventory, sale and shop screens use.
   static const double twoPaneFrom = 768;
 
-  /// Wider than the shop wizard's 960 because the detail step puts two fields
-  /// side by side, and below roughly that they stop being wide enough to read.
-  static const double contentMaxWidth = 1040;
+  /// The wizard's form column stops at the login screen's card width. Before
+  /// this, the form could grow to 1040px on a desktop and the inputs read as
+  /// page-wide bars; capping it means every auth screen shows the same compact
+  /// column.
+  static const double formMaxWidth = 460;
 
   static const double actionsMaxWidth = 640;
-  static const double paneGap = 16;
   static const double gutter = 20;
   static const double wideGutter = 32;
 
@@ -163,6 +164,224 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
+  /// Brand pane for the wide layout: the register artwork filling the panel,
+  /// with a left-edge gradient so the headline reads on every screen size.
+  Widget _buildArtPane() {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Image.asset(
+          'assets/register.png',
+          fit: BoxFit.cover,
+          alignment: Alignment.center,
+        ),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.centerRight,
+              end: Alignment.centerLeft,
+              colors: [
+                Colors.transparent,
+                Colors.black.withValues(alpha: 0.30),
+                Colors.black.withValues(alpha: 0.62),
+              ],
+              stops: const [0.0, 0.55, 1.0],
+            ),
+          ),
+        ),
+        // Bottom-anchored, but scrollable when the pane is short. On a
+        // landscape phone this pane is ~330dp tall while the copy below is
+        // ~400dp, and a bare `Positioned` would clip the lockup and the
+        // headline off the top with no way to reach them.
+        Positioned.fill(
+          child: LayoutBuilder(
+            builder: (context, c) {
+              const inset = 44.0;
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(inset),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: (c.maxHeight - inset * 2)
+                        .clamp(0.0, double.infinity)
+                        .toDouble(),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Image.asset(
+                            'assets/login1.png',
+                            width: 40,
+                            height: 40,
+                            fit: BoxFit.contain,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            context.l10n.t('Smart POS'),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: AppTypography.titleSmallSize,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      Text(
+                        context.l10n.t('A home for\nyour shop.'),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: AppTypography.displayMediumSize,
+                          height: 1.1,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        context.l10n.t(
+                          'Create your account and open the till in minutes — sales, stock, staff and receipts in one place.',
+                        ),
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.92),
+                          fontSize: AppTypography.bodyMediumSize,
+                          height: 1.45,
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      // Tinted rows with rules that fade in from the left and out to
+                      // the right. The tint and the rules share [_heroFade], so the
+                      // colour never starts hard at the edge and the lines on each row's
+                      // top and bottom stay exactly with it.
+                      SizedBox(
+                        width: double.infinity,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _heroHairline(),
+                            _heroRow(Icons.point_of_sale_outlined, 'Checkout'),
+                            _heroHairline(),
+                            _heroRow(Icons.inventory_2_outlined, 'Inventory'),
+                            _heroHairline(),
+                            _heroRow(Icons.receipt_long_outlined, 'Receipts'),
+                            _heroHairline(),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Divider colour for the art-pane list. Fixed white rather than
+  /// palette-driven because the list sits on the brand gradient.
+  static final Color _heroDivider = Colors.white.withValues(alpha: 0.20);
+
+  /// The fade profile shared by a row's tint and its rules, so the colour and
+  /// the top and bottom lines start and end together, and neither begins hard
+  /// at the left edge.
+  LinearGradient _heroFade(Color color) {
+    return LinearGradient(
+      begin: Alignment.centerLeft,
+      end: Alignment.centerRight,
+      colors: [
+        color.withValues(alpha: 0),
+        color,
+        color,
+        color.withValues(alpha: 0),
+      ],
+      stops: const [0.0, 0.10, 0.55, 1.0],
+    );
+  }
+
+  /// A horizontal rule that matches the tint of the row it bounds.
+  Widget _heroHairline() {
+    return Container(
+      height: 1,
+      decoration: BoxDecoration(gradient: _heroFade(_heroDivider)),
+    );
+  }
+
+  /// One row in the art-pane list: icon and label on a faint glass tint.
+  Widget _heroRow(IconData icon, String key) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        gradient: _heroFade(Colors.white.withValues(alpha: 0.10)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.white, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              context.l10n.t(key),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: AppTypography.labelMediumSize,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The scrollable form column used by both the narrow single-column layout
+  /// and the wide form pane of the split layout.
+  Widget _buildFormScrollView({
+    required double width,
+    required bool isWide,
+    required Widget form,
+    required BoxConstraints constraints,
+  }) {
+    final height = constraints.maxHeight;
+    return SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(
+        _RegisterLayout.gutterFor(width),
+        20,
+        _RegisterLayout.gutterFor(width),
+        32,
+      ),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: _RegisterLayout.formMaxWidth,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // On the single-column layout the artwork doubles as a
+              // decorative hero above the form; falls back gracefully on
+              // short screens.
+              if (!isWide && height > 640) ...[
+                Center(
+                  child: Image.asset(
+                    'assets/register.png',
+                    height: 140,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+              form,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _optionalLabel(String text) {
     final p = context.palette;
     return Padding(
@@ -171,7 +390,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         text,
         style: TextStyle(
           color: p.textPrimary,
-          fontSize: 14,
+          fontSize: AppTypography.bodySmallSize,
           fontWeight: FontWeight.w500,
         ),
       ),
@@ -182,25 +401,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final p = context.palette;
     return Padding(
       padding: const EdgeInsets.only(top: 6),
-      child: Text(text, style: TextStyle(color: p.textMuted, fontSize: 12)),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: p.textMuted,
+          fontSize: AppTypography.labelSmallSize,
+        ),
+      ),
     );
   }
 
-  /// A titled card of related fields.
+  /// A card of related fields.
   ///
-  /// The icon and the one-line subtitle do the grouping work that a third
-  /// heading used to: the title says which step you are in, the subtitle says
-  /// what belongs in it, and the fields below need no explanation of their own.
-  Widget _sectionCard({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required List<Widget> children,
-  }) {
+  /// Login's form is a plain card of fields, and this now matches it: the
+  /// wizard's step indicator already says which step is showing, so the old
+  /// icon-plus-title-plus-subtitle header only added height above the fields.
+  Widget _sectionCard({required List<Widget> children}) {
     final p = context.palette;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: p.surface,
         borderRadius: BorderRadius.circular(16),
@@ -215,44 +435,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: p.chipBg,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, size: 20, color: p.accentText),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      context.l10n.t(title),
-                      style: TextStyle(
-                        color: p.textPrimary,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      context.l10n.t(subtitle),
-                      style: TextStyle(color: p.textMuted, fontSize: 12),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          ...children,
-        ],
+        children: children,
       ),
     );
   }
@@ -261,9 +444,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Widget _buildUserInfoStep(Map<String, String?> errors) {
     return _sectionCard(
-      icon: Icons.person_outline,
-      title: 'User Info',
-      subtitle: 'The account you will sign in with',
       children: [
         RequiredLabel('Full Name'),
         TextFormField(
@@ -300,6 +480,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             hint: context.l10n.t('Enter password'),
             errorText: errors['password'],
             suffixIcon: IconButton(
+              tooltip: 'Toggle password visibility',
               onPressed: () {
                 setState(() {
                   _obscurePassword = !_obscurePassword;
@@ -324,7 +505,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   /// genuinely side by side in meaning — one is a date, one is a category; one
   /// is a number, one is a handle — so pairing them reads as grouping rather
   /// than as saving space.
-  Widget _buildUserDetailStep({required bool isWide}) {
+  Widget _buildUserDetailStep() {
     // The NRC field shows the server's format error, so it needs the same
     // field-error map the shop step passes in.
     final errors = _viewModel.fieldErrors;
@@ -440,61 +621,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
         const SizedBox(height: 6),
         Text(
           errors['nrc']!,
-          style: TextStyle(fontSize: 12, color: p.dangerFg),
+          style: TextStyle(
+            fontSize: AppTypography.labelSmallSize,
+            color: p.dangerFg,
+          ),
         ),
       ],
     ];
 
-    final children = isWide
-        ? [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: Column(children: dob)),
-                const SizedBox(width: _RegisterLayout.paneGap),
-                Expanded(child: Column(children: gender)),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: Column(children: phone)),
-                const SizedBox(width: _RegisterLayout.paneGap),
-                Expanded(child: Column(children: social)),
-              ],
-            ),
-            const SizedBox(height: 16),
-            ...address,
-            const SizedBox(height: 16),
-            ...nrc,
-          ]
-        : [
-            ...dob,
-            const SizedBox(height: 16),
-            ...gender,
-            const SizedBox(height: 16),
-            ...phone,
-            const SizedBox(height: 16),
-            ...social,
-            const SizedBox(height: 16),
-            ...address,
-            const SizedBox(height: 16),
-            ...nrc,
-          ];
+    // One field per row: the form column is login-width now, so pairing would
+    // squeeze each input to roughly 200px and undo the compact column.
+    final children = [
+      ...dob,
+      const SizedBox(height: 16),
+      ...gender,
+      const SizedBox(height: 16),
+      ...phone,
+      const SizedBox(height: 16),
+      ...social,
+      const SizedBox(height: 16),
+      ...address,
+      const SizedBox(height: 16),
+      ...nrc,
+    ];
 
-    return _sectionCard(
-      icon: Icons.badge_outlined,
-      title: 'User Detail',
-      subtitle: 'Optional details about this account holder',
-      children: children,
-    );
+    return _sectionCard(children: children);
   }
 
-  Widget _buildShopInfoStep(
-    Map<String, String?> errors, {
-    required bool isWide,
-  }) {
+  Widget _buildShopInfoStep(Map<String, String?> errors) {
     final role = [
       _optionalLabel('User Role'),
       TextFormField(
@@ -524,30 +678,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _helperText('e.g. Cash, Bank Transfer, Mobile Payment, Credit'),
     ];
 
-    final children = isWide
-        ? [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: Column(children: role)),
-                const SizedBox(width: _RegisterLayout.paneGap),
-                Expanded(child: Column(children: billing)),
-              ],
-            ),
-          ]
-        : [...role, const SizedBox(height: 16), ...billing];
+    // One field per row, matching the login-width form column.
+    final children = [...role, const SizedBox(height: 16), ...billing];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _currentShopCard(),
         const SizedBox(height: 16),
-        _sectionCard(
-          icon: Icons.store_outlined,
-          title: 'Shop Info',
-          subtitle: 'How this shop operates and is billed',
-          children: children,
-        ),
+        _sectionCard(children: children),
       ],
     );
   }
@@ -589,7 +728,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   context.l10n.t('Current Shop'),
                   style: TextStyle(
                     color: p.textPrimary,
-                    fontSize: 16,
+                    fontSize: AppTypography.bodyLargeSize,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -622,7 +761,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       color: _viewModel.shopName != null
                           ? p.textPrimary
                           : p.textMuted,
-                      fontSize: 14,
+                      fontSize: AppTypography.bodySmallSize,
                     ),
                   ),
                 ),
@@ -640,7 +779,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       _viewModel.shopType!,
                       style: const TextStyle(
                         color: AppColors.primary,
-                        fontSize: 12,
+                        fontSize: AppTypography.labelSmallSize,
                       ),
                     ),
                   ),
@@ -729,7 +868,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return ListenableBuilder(
       listenable: _viewModel,
       builder: (context, _) {
-        final errors = _viewModel.fieldErrors;
         return PopScope(
           // Past the first step the system gesture steps back instead of
           // leaving the form, so a half-filled registration is never lost to a
@@ -779,65 +917,80 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               final width = constraints.maxWidth;
                               final isWide =
                                   width >= _RegisterLayout.twoPaneFrom;
-                              return SingleChildScrollView(
-                                padding: EdgeInsets.fromLTRB(
-                                  _RegisterLayout.gutterFor(width),
-                                  20,
-                                  _RegisterLayout.gutterFor(width),
-                                  32,
-                                ),
-                                child: Center(
-                                  child: ConstrainedBox(
-                                    constraints: const BoxConstraints(
-                                      maxWidth: _RegisterLayout.contentMaxWidth,
-                                    ),
-                                    child: Form(
-                                      key: _formKey,
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          _buildStepIndicator(),
-                                          const SizedBox(height: 20),
-                                          AnimatedSwitcher(
-                                            duration: const Duration(
-                                              milliseconds: 220,
+
+                              return ListenableBuilder(
+                                listenable: _viewModel,
+                                builder: (context, _) {
+                                  final errors = _viewModel.fieldErrors;
+
+                                  final form = Form(
+                                    key: _formKey,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        _buildStepIndicator(),
+                                        const SizedBox(height: 20),
+                                        AnimatedSwitcher(
+                                          duration: const Duration(
+                                            milliseconds: 220,
+                                          ),
+                                          child: KeyedSubtree(
+                                            key: ValueKey(_step),
+                                            child: switch (_step) {
+                                              0 => _buildUserInfoStep(errors),
+                                              1 => _buildUserDetailStep(),
+                                              _ => _buildShopInfoStep(errors),
+                                            },
+                                          ),
+                                        ),
+                                        const SizedBox(height: 28),
+                                        _buildActions(),
+                                        if (_viewModel.errorMessage != null)
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              top: 12,
                                             ),
-                                            child: KeyedSubtree(
-                                              key: ValueKey(_step),
-                                              child: switch (_step) {
-                                                0 => _buildUserInfoStep(errors),
-                                                1 => _buildUserDetailStep(
-                                                  isWide: isWide,
-                                                ),
-                                                _ => _buildShopInfoStep(
-                                                  errors,
-                                                  isWide: isWide,
-                                                ),
-                                              },
+                                            child: Text(
+                                              _viewModel.errorMessage!,
+                                              style: const TextStyle(
+                                                color: Colors.red,
+                                                fontSize: AppTypography
+                                                    .labelMediumSize,
+                                              ),
                                             ),
                                           ),
-                                          const SizedBox(height: 28),
-                                          _buildActions(),
-                                          if (_viewModel.errorMessage != null)
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                top: 12,
-                                              ),
-                                              child: Text(
-                                                _viewModel.errorMessage!,
-                                                style: const TextStyle(
-                                                  color: Colors.red,
-                                                  fontSize: 13,
-                                                ),
-                                              ),
-                                            ),
-                                          const SizedBox(height: 12),
-                                        ],
-                                      ),
+                                        const SizedBox(height: 12),
+                                      ],
                                     ),
-                                  ),
-                                ),
+                                  );
+
+                                  if (isWide) {
+                                    return Row(
+                                      children: [
+                                        Expanded(
+                                          flex: 5,
+                                          child: _buildArtPane(),
+                                        ),
+                                        Expanded(
+                                          flex: 6,
+                                          child: _buildFormScrollView(
+                                            width: constraints.maxWidth,
+                                            isWide: isWide,
+                                            form: form,
+                                            constraints: constraints,
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  }
+                                  return _buildFormScrollView(
+                                    width: constraints.maxWidth,
+                                    isWide: isWide,
+                                    form: form,
+                                    constraints: constraints,
+                                  );
+                                },
                               );
                             },
                           ),

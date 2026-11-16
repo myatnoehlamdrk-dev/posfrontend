@@ -6,9 +6,11 @@ import 'package:posfrontend/features/sale/domain/entities/sale.dart';
 import 'package:posfrontend/features/sale/presentation/viewmodels/sale_view_model.dart';
 import 'package:posfrontend/features/sale/presentation/widgets/percent_input_formatter.dart';
 import 'package:posfrontend/shared/services/receipt_print_service.dart';
+import 'package:posfrontend/shared/services/sale_output_service.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_dimens.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
+import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/cached_product_image.dart';
@@ -113,39 +115,56 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
     widget.onSaleCompleted?.call();
     showSuccessMessage(context, context.l10n.t('Sale saved successfully!'));
 
-    // Quick sale always emits the thermal slip: a till running quick sale
-    // has a roll printer behind it, and making the cashier hunt for the
-    // new-sale screen's print toggle to get a receipt is the wrong default
-    // for the surface built for the queue at the counter. Only the paper
-    // size still comes from the shared preference — that is a property of
-    // the printer, not of the sale surface. The sale is already stored, so
-    // a print failure is only a snackbar; it never undoes the sale.
+    // One output setting drives both sale surfaces: whatever the new-sale
+    // screen's Print Settings sheet chose — share a PDF, Bluetooth thermal,
+    // Wi-Fi thermal — is what quick sale does after this sale too. The sale
+    // is already stored, so a print failure is only a snackbar; it never
+    // undoes the sale.
     final settings = await SalePrintSettings.load();
     if (!mounted) return;
-    _runPrint(
-      () => ReceiptPrintService.printReceipt(
-        args,
-        SalePrintSettings(
-          exportPdf: false,
-          printVoucher: true,
-          format: 'thermal',
-          paperSize: settings.paperSize,
-        ),
-      ),
-      'Thermal printing failed: {v1}',
-    );
+    await _runOutput(args, settings);
   }
 
   /// Printing is best-effort after a stored sale: report the failure, keep
-  /// the till moving.
-  Future<void> _runPrint(Future<void> Function() run, String messageKey) async {
+  /// the till moving — and for the thermal outputs offer the OS print dialog,
+  /// so a bad connection still ends with paper rather than an apology.
+  Future<void> _runOutput(
+    Map<String, dynamic> args,
+    SalePrintSettings settings,
+  ) async {
     try {
-      await run();
+      await SaleOutputService.printAfterSale(args, settings);
     } catch (e) {
       if (!mounted) return;
-      showErrorMessage(
+      final messageKey = settings.output == SalePrintSettings.outputPdf
+          ? 'PDF export failed: {v1}'
+          : 'Thermal printing failed: {v1}';
+      showErrorDetail(
         context,
-        context.l10n.t(messageKey).replaceAll('{v1}', e.toString()),
+        context.l10n
+            .t(messageKey)
+            .replaceAll('{v1}', context.l10n.t(e.toString())),
+        actionLabel: settings.isThermal
+            ? context.l10n.t('Open print dialog')
+            : null,
+        onAction: settings.isThermal
+            ? () async {
+                try {
+                  await ReceiptPrintService.printReceipt(args, settings);
+                } catch (fallbackError) {
+                  if (!mounted) return;
+                  showErrorDetail(
+                    context,
+                    context.l10n
+                        .t('Thermal printing failed: {v1}')
+                        .replaceAll(
+                          '{v1}',
+                          context.l10n.t(fallbackError.toString()),
+                        ),
+                  );
+                }
+              }
+            : null,
       );
     }
   }
@@ -161,11 +180,11 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
         ),
         title: Text(
           context.l10n.t('Clear'),
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          style: TextStyle(fontSize: AppTypography.bodyLargeSize, fontWeight: FontWeight.w700),
         ),
         content: Text(
           context.l10n.t('Remove all items from this sale?'),
-          style: TextStyle(fontSize: 14, color: _mutedColor),
+          style: TextStyle(fontSize: AppTypography.bodySmallSize, color: _mutedColor),
         ),
         actions: [
           TextButton(
@@ -238,7 +257,7 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
                 Text(
                   context.l10n.t('Current Sale'),
                   style: TextStyle(
-                    fontSize: 15,
+                    fontSize: AppTypography.bodyMediumSize,
                     fontWeight: FontWeight.w700,
                     color: _titleColor,
                   ),
@@ -248,7 +267,7 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
                   context.l10n
                       .t('{v1} items')
                       .replaceAll('{v1}', widget.sale.totalItems.toString()),
-                  style: TextStyle(fontSize: 12, color: _mutedColor),
+                  style: TextStyle(fontSize: AppTypography.labelSmallSize, color: _mutedColor),
                 ),
               ],
             ),
@@ -292,7 +311,7 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
           Text(
             context.l10n.t('Tap a product to add it to this sale'),
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: _mutedColor),
+            style: TextStyle(fontSize: AppTypography.labelMediumSize, color: _mutedColor),
           ),
         ],
       ),
@@ -350,7 +369,7 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: AppTypography.labelMediumSize,
                         fontWeight: FontWeight.w600,
                         color: _titleColor,
                       ),
@@ -361,13 +380,13 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
                         variantLine,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 11, color: _mutedColor),
+                        style: TextStyle(fontSize: AppTypography.labelSmallSize, color: _mutedColor),
                       ),
                     ],
                     const SizedBox(height: 2),
                     PriceText(
                       item.unitPrice,
-                      style: TextStyle(fontSize: 11, color: _mutedColor),
+                      style: TextStyle(fontSize: AppTypography.labelSmallSize, color: _mutedColor),
                     ),
                   ],
                 ),
@@ -392,7 +411,7 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
               PriceText(
                 item.subtotal,
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: AppTypography.bodySmallSize,
                   fontWeight: FontWeight.w700,
                   color: _titleColor,
                 ),
@@ -436,13 +455,13 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
             children: [
               Text(
                 context.l10n.t('Subtotal'),
-                style: TextStyle(fontSize: 12, color: _mutedColor),
+                style: TextStyle(fontSize: AppTypography.labelSmallSize, color: _mutedColor),
               ),
               const SizedBox(height: 2),
               PriceText(
                 widget.sale.subtotal,
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: AppTypography.labelMediumSize,
                   fontWeight: FontWeight.w600,
                   color: _titleColor,
                 ),
@@ -456,7 +475,7 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
             children: [
               Text(
                 context.l10n.t('Discount'),
-                style: TextStyle(fontSize: 12, color: _mutedColor),
+                style: TextStyle(fontSize: AppTypography.labelSmallSize, color: _mutedColor),
               ),
               const SizedBox(height: 2),
               Row(
@@ -464,7 +483,7 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
                   PriceText(
                     widget.sale.discountAmount,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: AppTypography.labelMediumSize,
                       fontWeight: FontWeight.w600,
                       color: _titleColor,
                     ),
@@ -484,7 +503,7 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
                       ),
                       textAlign: TextAlign.right,
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: AppTypography.labelMediumSize,
                         fontWeight: FontWeight.w600,
                         color: _titleColor,
                       ),
@@ -492,7 +511,7 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
                         isDense: true,
                         suffixText: '%',
                         suffixStyle: TextStyle(
-                          fontSize: 11,
+                          fontSize: AppTypography.labelSmallSize,
                           color: _mutedColor,
                         ),
                         contentPadding: const EdgeInsets.symmetric(
@@ -529,7 +548,7 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
         Expanded(
           child: Text(
             context.l10n.t('Payment Method'),
-            style: TextStyle(fontSize: 13, color: _mutedColor),
+            style: TextStyle(fontSize: AppTypography.labelMediumSize, color: _mutedColor),
           ),
         ),
         Container(
@@ -554,7 +573,7 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
                     value: label,
                     child: Text(
                       context.l10n.t(label),
-                      style: TextStyle(fontSize: 13, color: _titleColor),
+                      style: TextStyle(fontSize: AppTypography.labelMediumSize, color: _titleColor),
                     ),
                   ),
               ],
@@ -571,13 +590,13 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
   Widget _customerField() {
     return TextField(
       controller: _customerCtrl,
-      style: TextStyle(fontSize: 13, color: _titleColor),
+      style: TextStyle(fontSize: AppTypography.labelMediumSize, color: _titleColor),
       decoration: InputDecoration(
         isDense: true,
         labelText: context.l10n.t('Customer (optional)'),
-        labelStyle: TextStyle(fontSize: 12, color: _mutedColor),
+        labelStyle: TextStyle(fontSize: AppTypography.labelSmallSize, color: _mutedColor),
         hintText: context.l10n.t('Customer'),
-        hintStyle: TextStyle(fontSize: 12, color: _p.textMuted),
+        hintStyle: TextStyle(fontSize: AppTypography.labelSmallSize, color: _p.textMuted),
         prefixIcon: Icon(Icons.person_outline, size: 18, color: _mutedColor),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 10,
@@ -612,7 +631,7 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
       icon: const Icon(Icons.delete_sweep_outlined, size: 17),
       label: Text(
         context.l10n.t('Clear'),
-        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+        style: const TextStyle(fontSize: AppTypography.labelMediumSize, fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -633,13 +652,13 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
                 children: [
                   Text(
                     context.l10n.t('Total'),
-                    style: TextStyle(fontSize: 12, color: _mutedColor),
+                    style: TextStyle(fontSize: AppTypography.labelSmallSize, color: _mutedColor),
                   ),
                   const SizedBox(height: 2),
                   PriceText(
                     widget.sale.totalPayable,
                     style: TextStyle(
-                      fontSize: 19,
+                      fontSize: AppTypography.titleSmallSize,
                       fontWeight: FontWeight.w800,
                       color: _p.accentText,
                     ),
@@ -717,7 +736,7 @@ class PressableSaleButton extends StatelessWidget {
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,
-                fontSize: 14,
+                fontSize: AppTypography.bodySmallSize,
               ),
             ),
           ],
