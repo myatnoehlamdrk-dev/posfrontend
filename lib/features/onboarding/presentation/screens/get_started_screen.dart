@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:posfrontend/features/auth/presentation/screens/login_screen.dart';
 import 'package:posfrontend/shared/services/usb_printer_transport.dart';
 import 'package:posfrontend/shared/services/usb_setup_download.dart';
+import 'package:posfrontend/shared/widgets/brochure_viewer_screen.dart';
 
 /// Design tokens for the welcome page.
 ///
@@ -285,7 +286,11 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _DesktopHeader(onGetStarted: _goToLogin, onNavigate: _scrollToFeatures),
+        _DesktopHeader(
+          onGetStarted: _goToLogin,
+          onNavigate: _scrollToFeatures,
+          onBrochure: _openBrochure,
+        ),
         const Divider(color: _Spec.border, height: 1),
         const SizedBox(height: 65),
         Row(
@@ -424,7 +429,11 @@ class _BrandRow extends StatelessWidget {
 /// on the right, and a hairline under the whole thing. On mobile this is
 /// replaced by [_BrandRow], which is a centred mark with no navigation.
 class _DesktopHeader extends StatelessWidget {
-  const _DesktopHeader({required this.onGetStarted, required this.onNavigate});
+  const _DesktopHeader({
+    required this.onGetStarted,
+    required this.onNavigate,
+    required this.onBrochure,
+  });
 
   final VoidCallback onGetStarted;
   final VoidCallback onNavigate;

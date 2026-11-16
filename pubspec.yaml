@@ -88,6 +88,7 @@ dependencies:
   mm_nrc_kit: ^1.0.3
   permission_handler: 12.0.0
   url_launcher: ^6.3.3
+  webview_flutter: ^4.14.1
 
 dev_dependencies:
   flutter_test:
@@ -123,6 +124,9 @@ flutter:
     - assets/register.png
     - assets/shopc.png
     - assets/forgot.png
+    # The client brochure, loaded by BrochureViewerScreen on native (WebView
+    # asset) and web (tab). Both files must ship or the viewer opens blank.
+    - assets/brochure/
 
   # Poppins carries no Burmese, Thai or CJK glyphs, so text in those languages
   # would render as tofu boxes. These are applied as a per-glyph fallback
