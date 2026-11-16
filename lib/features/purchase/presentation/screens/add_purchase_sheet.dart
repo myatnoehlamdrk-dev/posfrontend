@@ -32,6 +32,17 @@ class _AddPurchaseSheetState extends State<AddPurchaseSheet> {
   );
   final _notesController = TextEditingController();
 
+  /// True while the POST is in flight. The sheet used to give no sign at all
+  /// during that wait: the button looked idle on an endpoint that can take
+  /// seconds to wake, so a second tap sent a second order. It now shows a
+  /// spinner and refuses further taps until the answer arrives.
+  bool _saving = false;
+
+  /// What to tell the user when the save fails. The view model reports it on
+  /// itself, which this sheet does not listen to, so a rejected save used to
+  /// look like a tap that did nothing.
+  String? _error;
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -42,6 +53,54 @@ class _AddPurchaseSheetState extends State<AddPurchaseSheet> {
     _dateController.dispose();
     _notesController.dispose();
     super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (_saving) return;
+
+    final name = _nameController.text.trim();
+    final qty = int.tryParse(_qtyController.text.trim()) ?? 0;
+    final price = int.tryParse(_priceController.text.trim()) ?? 0;
+
+    // Say what is missing instead of returning silently: an empty name or a
+    // zero quantity used to swallow the tap with no feedback at all.
+    if (name.isEmpty) {
+      setState(() => _error = context.l10n.t('Enter the item name'));
+      return;
+    }
+    if (qty <= 0) {
+      setState(() => _error = context.l10n.t('Enter a quantity'));
+      return;
+    }
+
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+
+    final success = await widget.viewModel.createPurchaseItem(
+      productName: name,
+      quantity: qty,
+      unitPrice: price,
+      date: _dateController.text,
+      supplierId: _selectedSupplierId,
+      notes: _notesController.text,
+      size: _sizeController.text,
+      color: _colorController.text,
+    );
+
+    if (!mounted) return;
+    setState(() => _saving = false);
+    if (success) {
+      Navigator.pop(context);
+    } else {
+      setState(
+        () =>
+            _error =
+                widget.viewModel.errorMessage ??
+                context.l10n.t('Could not create the purchase order'),
+      );
+    }
   }
 
   @override
@@ -213,41 +272,56 @@ class _AddPurchaseSheetState extends State<AddPurchaseSheet> {
                 _notesController,
               ),
               const SizedBox(height: 24),
+              if (_error != null) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: p.dangerBg,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    _error!,
+                    style: TextStyle(
+                      color: p.dangerFg,
+                      fontSize: AppTypography.labelMediumSize,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
               SizedBox(
                 width: double.infinity,
                 height: 48,
                 child: ElevatedButton(
-                  onPressed: () async {
-                    if (_nameController.text.isEmpty) return;
-                    final qty = int.tryParse(_qtyController.text) ?? 0;
-                    final price = int.tryParse(_priceController.text) ?? 0;
-                    if (qty <= 0) return;
-
-                    final success = await widget.viewModel.createPurchaseItem(
-                      productName: _nameController.text,
-                      quantity: qty,
-                      unitPrice: price,
-                      date: _dateController.text,
-                      supplierId: _selectedSupplierId,
-                      notes: _notesController.text,
-                      size: _sizeController.text,
-                      color: _colorController.text,
-                    );
-                    if (success && context.mounted) {
-                      Navigator.pop(context);
-                    }
-                  },
+                  onPressed: _saving ? null : _submit,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.brandPurple,
                     foregroundColor: Colors.white,
+                    disabledBackgroundColor: AppColors.brandPurple.withValues(
+                      alpha: 0.6,
+                    ),
+                    disabledForegroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: Text(
-                    context.l10n.t('Create Purchase Order'),
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
+                  child: _saving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(
+                          context.l10n.t('Create Purchase Order'),
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
                 ),
               ),
               const SizedBox(height: 8),

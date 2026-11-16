@@ -2298,10 +2298,37 @@ class _MonthlySalesChartPainter extends CustomPainter {
     final sorted = [...items]..sort((a, b) => a.month.compareTo(b.month));
     if (sorted.isEmpty) return;
 
-    const leftPad = 52.0;
+    final maxVal = sorted.map((e) => e.total).reduce((a, b) => a > b ? a : b);
+    final chartMax = maxVal <= 0 ? 1.0 : maxVal * 1.15;
+
+    final axisStyle = appText(
+      size: AppTypography.labelSmallSize,
+      color: palette.textSecondary,
+    );
+
+    // The money gutter sizes itself from its widest figure instead of a fixed
+    // 52pt: on a phone that column eats the bars' room, and a five-character
+    // value ("1.2M") still has to fit inside it.
+    const ticks = 4;
+    final tickLabels = <TextPainter>[
+      for (var t = 0; t <= ticks; t++)
+        TextPainter(
+          text: TextSpan(
+            text: _formatValue(chartMax * (t / ticks)),
+            style: axisStyle,
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout(),
+    ];
+    var tickWidth = 0.0;
+    for (final tp in tickLabels) {
+      if (tp.width > tickWidth) tickWidth = tp.width;
+    }
+
     const rightPad = 16.0;
     const topPad = 30.0;
     const bottomPad = 32.0;
+    final leftPad = (tickWidth + 12).clamp(30.0, 64.0);
     final plot = Rect.fromLTRB(
       leftPad,
       topPad,
@@ -2310,29 +2337,19 @@ class _MonthlySalesChartPainter extends CustomPainter {
     );
     if (plot.width <= 0 || plot.height <= 0) return;
 
-    final maxVal = sorted.map((e) => e.total).reduce((a, b) => a > b ? a : b);
-    final chartMax = maxVal <= 0 ? 1.0 : maxVal * 1.15;
-
     final gridPaint = Paint()
       ..color = palette.border
       ..strokeWidth = 1;
 
     // Money scale on the left, with a horizontal rule at each step so a bar's
     // height can be read without a tooltip.
-    const ticks = 4;
     for (var t = 0; t <= ticks; t++) {
       final y = plot.bottom - (t / ticks) * plot.height;
       canvas.drawLine(Offset(plot.left, y), Offset(plot.right, y), gridPaint);
 
-      final label = _formatValue(chartMax * (t / ticks));
-      final tp = TextPainter(
-        text: TextSpan(
-          text: label,
-          style: appText(size: AppTypography.labelSmallSize, color: palette.textSecondary),
-        ),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      tp.paint(canvas, Offset(plot.left - tp.width - 8, y - tp.height / 2));
+      final tp = tickLabels[t];
+      final x = (plot.left - tp.width - 8).clamp(0.0, double.infinity);
+      tp.paint(canvas, Offset(x, y - tp.height / 2));
     }
 
     // Twelve fixed slots whether or not every month has a sale, so the axis
@@ -2340,24 +2357,35 @@ class _MonthlySalesChartPainter extends CustomPainter {
     final slotWidth = plot.width / 12;
     final barWidth = (slotWidth * 0.5).clamp(6.0, 40.0);
 
-    for (var m = 0; m < 12; m++) {
-      final tp = TextPainter(
-        text: TextSpan(
-          text: _monthLabels[m],
-          style: appText(size: AppTypography.labelSmallSize, color: palette.textSecondary),
-        ),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      tp.paint(
-        canvas,
-        Offset(
-          plot.left + slotWidth * (m + 0.5) - tp.width / 2,
-          plot.bottom + 8,
-        ),
-      );
+    // Month labels. Twelve 12pt abbreviations do not fit once a slot is
+    // narrower than one of them — which is every phone — so they overlapped
+    // into a smear. Step over the axis instead, anchored so December keeps its
+    // label and the gap before it stays even.
+    final monthPainters = <TextPainter>[
+      for (final label in _monthLabels)
+        TextPainter(
+          text: TextSpan(text: label, style: axisStyle),
+          textDirection: TextDirection.ltr,
+        )..layout(),
+    ];
+    var widestMonth = 0.0;
+    for (final tp in monthPainters) {
+      if (tp.width > widestMonth) widestMonth = tp.width;
+    }
+    const minLabelGap = 6.0;
+    final monthStep = (widestMonth + minLabelGap) > slotWidth
+        ? ((widestMonth + minLabelGap) / slotWidth).ceil()
+        : 1;
+
+    for (var m = 11 % monthStep; m < 12; m += monthStep) {
+      final tp = monthPainters[m];
+      final x = (plot.left + slotWidth * (m + 0.5) - tp.width / 2)
+          .clamp(plot.left, plot.right - tp.width);
+      tp.paint(canvas, Offset(x, plot.bottom + 8));
     }
 
     final barPaint = Paint()..color = AppColors.brandPurple;
+    final valueLabels = <_MonthlyValueLabel>[];
     for (final entry in sorted) {
       if (entry.month < 1 || entry.month > 12) continue;
       final centreX = plot.left + slotWidth * ((entry.month - 1) + 0.5);
@@ -2377,8 +2405,9 @@ class _MonthlySalesChartPainter extends CustomPainter {
         barPaint,
       );
 
-      // Value above the bar, dropped when the bar is tall enough that the
-      // label would leave the plot — a clipped figure is worse than none.
+      // A month with no sale gets no figure: a row of "0"s is noise.
+      if (entry.total <= 0) continue;
+
       final vp = TextPainter(
         text: TextSpan(
           text: _formatValue(entry.total.toDouble()),
@@ -2390,10 +2419,31 @@ class _MonthlySalesChartPainter extends CustomPainter {
         ),
         textDirection: TextDirection.ltr,
       )..layout();
+
+      // Value above the bar, dropped when the bar is tall enough that the
+      // label would leave the plot — a clipped figure is worse than none.
       final y = plot.bottom - height - vp.height - 5;
-      if (y >= plot.top - 6) {
-        vp.paint(canvas, Offset(centreX - vp.width / 2, y));
-      }
+      if (y < plot.top - 6) continue;
+      final x = (centreX - vp.width / 2).clamp(plot.left, plot.right - vp.width);
+      valueLabels.add(
+        _MonthlyValueLabel(
+          Rect.fromLTWH(x, y, vp.width, vp.height),
+          vp,
+          entry.total,
+        ),
+      );
+    }
+
+    // Tallest first, so when a phone-width plot cannot hold all twelve figures
+    // the ones worth reading survive and the rest are dropped instead of
+    // printed on top of each other.
+    valueLabels.sort((a, b) => b.value.compareTo(a.value));
+    final taken = <Rect>[];
+    for (final label in valueLabels) {
+      final box = label.rect.inflate(3);
+      if (taken.any(box.overlaps)) continue;
+      taken.add(box);
+      label.painter.paint(canvas, label.rect.topLeft);
     }
   }
 
@@ -2411,6 +2461,16 @@ class _MonthlySalesChartPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _MonthlySalesChartPainter oldDelegate) =>
       oldDelegate.items != items || oldDelegate.palette != palette;
+}
+
+/// A bar's value figure, kept as a laid-out painter plus the box it wants, so
+/// the paint pass can decide which ones fit before drawing any of them.
+class _MonthlyValueLabel {
+  final Rect rect;
+  final TextPainter painter;
+  final int value;
+
+  const _MonthlyValueLabel(this.rect, this.painter, this.value);
 }
 
 // ====================================================== category quantity bar

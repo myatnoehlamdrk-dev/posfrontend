@@ -45,19 +45,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
   void initState() {
     super.initState();
     _vm = AddProductViewModel();
-    // The product cost price feeds the per-variant profit preview, and it is a
-    // plain controller (the view model is not notified on typing).
-    _vm.costPrice.addListener(_onCostChanged);
     _vm.loadInitialData(existingProduct: widget.existingProduct);
-  }
-
-  void _onCostChanged() {
-    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
-    _vm.costPrice.removeListener(_onCostChanged);
     _vm.dispose();
     super.dispose();
   }
@@ -500,16 +492,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
         const SizedBox(height: 16),
         _field('SKU', _vm.sku, 'e.g. SM-WHP-001'),
         const SizedBox(height: 16),
-        _field(
-          'Original Cost Price',
-          _vm.costPrice,
-          'e.g. 18000',
-          kt: const TextInputType.numberWithOptions(decimal: true),
-          helper: context.l10n.t(
-            'What you paid per unit. Used to calculate profit; a variant can override it with its own cost.',
-          ),
-        ),
-        const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -584,7 +566,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
             key: ValueKey('variant_$i'),
             index: i,
             variant: v,
-            fallbackCost: double.tryParse(_vm.costPrice.text.trim()) ?? 0,
             sizeOptions: AddProductViewModel.sizeOptions,
             colorOptions: AddProductViewModel.colorOptions,
             onChanged: (nv) => _vm.onVariantChanged(i, nv),
@@ -1067,9 +1048,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
 class _VariantTile extends StatefulWidget {
   final int index;
   final ProductCreateVariant variant;
-
-  /// Product-level cost used when this variant has no cost of its own.
-  final double fallbackCost;
   final List<String> sizeOptions;
   final List<ProductColorOption> colorOptions;
   final ValueChanged<ProductCreateVariant> onChanged;
@@ -1082,7 +1060,6 @@ class _VariantTile extends StatefulWidget {
     required this.sizeOptions,
     required this.colorOptions,
     required this.onChanged,
-    this.fallbackCost = 0,
     this.onRemove,
   });
 
@@ -1148,10 +1125,9 @@ class _VariantTileState extends State<_VariantTile> {
     );
   }
 
-  /// Cost used for this row: its own, or the product-level fallback.
-  double get _effectiveCost => widget.variant.costPrice > 0
-      ? widget.variant.costPrice
-      : widget.fallbackCost;
+  /// Cost used for this row. It is the variant's own cost: the store keeps no
+  /// product-level one, so there is nothing to fall back to.
+  double get _effectiveCost => widget.variant.costPrice;
 
   @override
   Widget build(BuildContext context) {

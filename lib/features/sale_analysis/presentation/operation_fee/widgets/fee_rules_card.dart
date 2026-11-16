@@ -600,13 +600,30 @@ class _FeeFooter extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Text(
-            'Estimated monthly operation fees',
-            style: ofText(size: 12, color: p.textSecondary),
+          // The label is the part that can give way: on a phone the fixed
+          // caption plus the amount is wider than the card, and the Row had
+          // nothing flexible between them to absorb the difference. Letting the
+          // caption wrap keeps it readable and leaves the money at full size;
+          // the info dot rides inline so it stays beside the last word instead
+          // of floating in the middle of a wrapped line.
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                text: 'Estimated monthly operation fees',
+                children: [
+                  WidgetSpan(
+                    alignment: PlaceholderAlignment.middle,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 5),
+                      child: OfInfoDot(size: 12),
+                    ),
+                  ),
+                ],
+              ),
+              style: ofText(size: 12, color: p.textSecondary),
+            ),
           ),
-          const SizedBox(width: 5),
-          const OfInfoDot(size: 12),
-          const Spacer(),
+          const SizedBox(width: 12),
           Text(
             ofMoney(total),
             style: ofText(

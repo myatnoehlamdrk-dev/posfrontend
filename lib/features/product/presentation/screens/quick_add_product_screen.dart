@@ -263,7 +263,6 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
           name: name,
           imageUrl: _imageUrl ?? '',
           stock: stock,
-          costPrice: cost,
           variants: [
             ProductCreateVariant(
               quantity: stock,

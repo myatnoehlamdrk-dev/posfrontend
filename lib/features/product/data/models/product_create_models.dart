@@ -200,10 +200,6 @@ class ProductCreateRequest {
   final int? stock;
   final String sku;
 
-  /// The product-level original cost price, used for variants that carry no
-  /// cost of their own. Null means "unchanged" (omitted from the payload) so
-  /// stock/restock saves cannot reset the cost by accident.
-  final double? costPrice;
   final String supplierId;
   final String supplierName;
   final String supplierContact;
@@ -236,7 +232,6 @@ class ProductCreateRequest {
     this.variants = const [],
     this.stock,
     this.sku = '',
-    this.costPrice,
     this.supplierId = '',
     this.supplierName = '',
     this.supplierContact = '',
@@ -257,7 +252,6 @@ class ProductCreateRequest {
     'image': imageUrl.isEmpty ? null : imageUrl,
     'brand': brand.isEmpty ? null : brand,
     'sku': sku.isEmpty ? null : sku,
-    if (costPrice != null) 'costPrice': costPrice,
     // All four are omitted together in preserve mode: an empty variants
     // array would replace the product's rows (and its derived stock) on the
     // server, and size/color are just head(variants) in the same payload.
