@@ -1,0 +1,29 @@
+# Build the Flutter web app.
+#
+# Netlify build machines cannot `git clone` the Flutter SDK, so the SDK is
+# installed from the official stable release tarball (checksum verified) and
+# cached under ~/.cache for subsequent builds. The framework version must be
+# stamped into bin/cache/flutter.version.json AFTER the first flutter command
+# (that invocation bootstraps the tool and rewrites the version file from
+# git, which is unavailable, yielding 0.0.0-unknown and breaking
+# `flutter pub get` version solving).
+[build]
+  publish = "build/web"
+  command = """
+    set -eu
+    FLUTTER_VERSION="3.50.0"
+    FLUTTER_SHA256="6ea2d806fd57269ae783e6788e2a81fc26eaad782f1e0d0ff38623bb765ff9f5"
+    FLUTTER_HOME="$HOME/.cache/flutter-${FLUTTER_VERSION}"
+    if [ ! -x "${FLUTTER_HOME}/bin/flutter" ]; then
+      echo "Downloading Flutter ${FLUTTER_VERSION} SDK..."
+      curl -fsSL -o /tmp/flutter.tar.xz "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${FLUTTER_VERSION}-stable.tar.xz"
+      echo "${FLUTTER_SHA256}  /tmp/flutter.tar.xz" | sha256sum -c -
+      mkdir -p "${FLUTTER_HOME}"
+      tar -xJf /tmp/flutter.tar.xz -C "${FLUTTER_HOME}" --strip-components=1
+      rm -f /tmp/flutter.tar.xz
+    fi
+    export PATH="${FLUTTER_HOME}/bin:${FLUTTER_HOME}/bin/cache/dart-sdk/bin:${PATH}"
+    flutter config --no-analytics
+    echo '{"frameworkVersion": "3.50.0", "channel": "stable", "repositoryUrl": "https://github.com/flutter/flutter.git", "frameworkRevision": "ab2912035e160d9cad6306df307576da6128ebdb", "frameworkCommitDate": "2026-11-11 19:05:47.000Z", "engineRevision": "371f77202a73e8dff57a8b3bff75bca55c090aee", "engineCommitDate": "2026-11-09 15:57:36.000Z", "engineContentHash": "bf601093ad255aaf5c6d0fc5c4f9acfa60943b2a", "engineBuildDate": "2026-11-09 16:33:19.494", "dartSdkVersion": "3.14.0", "devToolsVersion": "2.61.0", "flutterVersion": "3.50.0"}' > "${FLUTTER_HOME}/bin/cache/flutter.version.json"
+    flutter build web --release --dart-define-from-file=config/env.json
+  """
