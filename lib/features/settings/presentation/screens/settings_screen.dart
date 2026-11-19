@@ -2,9 +2,7 @@
 // there was never a collision to dodge, and hiding it only hid Flutter's.
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:posfrontend/core/auth/session_store.dart';
-import 'package:posfrontend/core/auth/token_storage.dart';
-import 'package:posfrontend/core/network/api_client.dart';
+import 'package:posfrontend/core/auth/session_cleanup.dart';
 import 'package:posfrontend/core/utils/image_compressor.dart';
 import 'package:posfrontend/shared/l10n/app_strings.dart';
 import 'package:posfrontend/shared/l10n/app_language.dart';
@@ -940,7 +938,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _aboutRow(context.l10n.t('App Name'), 'Inventory'),
+              _aboutRow(context.l10n.t('App Name'), 'SmartPos'),
               const SizedBox(height: 8),
               _aboutRow(
                 context.l10n.t('Version'),
@@ -1027,14 +1025,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ? null
                       : () async {
                           setDialogState(() => _isLoggingOut = true);
-                          try {
-                            final dio = ApiClient.instance;
-                            await dio.post('/auth/logout');
-                          } catch (_) {
-                            // Logout API failure is non-critical; proceed with local cleanup
-                          }
-                          await TokenStorage.clearToken();
-                          await SessionStore.clear();
+                          await endSession();
                           if (mounted) {
                             Navigator.of(context).pushAndRemoveUntil(
                               MaterialPageRoute(

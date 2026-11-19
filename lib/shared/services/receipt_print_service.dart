@@ -1,8 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:printing/printing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:posfrontend/features/sale/domain/entities/sale.dart';
 import 'package:posfrontend/shared/services/voucher_pdf_service.dart';
+import 'package:posfrontend/shared/services/window_print_web.dart'
+    if (dart.library.io) 'package:posfrontend/shared/services/window_print_stub.dart';
 
 /// The receipt-output preference a sale reads when it finishes.
 ///
@@ -20,6 +23,10 @@ class SalePrintSettings {
   /// Share the voucher as an A4 PDF after each sale — the only output that
   /// works everywhere, including the browser, so it is also the default.
   static const String outputPdf = 'pdf';
+
+  /// Open the browser/OS print dialog on a receipt laid out for the roll —
+  /// the only way to reach a Wi-Fi/network printer from the web build.
+  static const String outputWindow = 'window';
 
   /// Send ESC/POS bytes to a paired Bluetooth thermal printer directly.
   static const String outputBluetooth = 'bluetooth';
@@ -108,7 +115,8 @@ class SalePrintSettings {
   double get paperWidthMm => paperSize == '80mm' ? 78.0 : 56.7;
 
   /// Whether the selected output sends bytes straight to a thermal printer.
-  bool get isThermal => output != outputPdf;
+  bool get isThermal =>
+      output != outputPdf && output != outputWindow;
 }
 
 /// Executes the two things that can happen to a finished sale's voucher:
@@ -168,6 +176,41 @@ class ReceiptPrintService {
     Map<String, dynamic> args,
     SalePrintSettings settings,
   ) async {
+    await VoucherPdfService.generateAndPrintReceipt(
+      customerName: args['customerName'],
+      customerPhone: args['customerPhone'],
+      staffName: args['staffName'],
+      voucherNo: args['voucherNo'],
+      orderId: args['orderId'],
+      dateTime: args['dateTime'],
+      items: args['items'],
+      discountPct: args['discountPct'],
+      subtotal: args['subtotal'],
+      discountAmt: args['discountAmt'],
+      totalPayable: args['totalPayable'],
+      paymentMethod: args['paymentMethod'],
+      notes: args['notes'],
+      shopName: args['shopName'],
+      shopAddress: args['shopAddress'],
+      shopPhone: args['shopPhone'],
+      shopImage: args['shopImage'],
+      paperWidthMm: settings.paperWidthMm,
+      customerLocation: args['customerLocation'],
+    );
+  }
+
+  /// Opens the browser/OS print dialog on a receipt laid out for the roll —
+  /// the web build's way of reaching a Wi-Fi/network printer, since the
+  /// browser cannot open a raw TCP socket to a printer IP.
+  static Future<void> printWindow(
+    Map<String, dynamic> args,
+    SalePrintSettings settings,
+  ) async {
+    if (kIsWeb) {
+      // Web: plain text via the browser print dialog (no raw TCP to printers).
+      await printPlainTextWindow(args);
+      return;
+    }
     await VoucherPdfService.generateAndPrintReceipt(
       customerName: args['customerName'],
       customerPhone: args['customerPhone'],

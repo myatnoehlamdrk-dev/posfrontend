@@ -50,7 +50,12 @@ class NotificationStore extends ValueNotifier<List<AppNotification>> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getString(_storageKey);
-      if (raw == null || raw.isEmpty) return;
+      if (raw == null || raw.isEmpty) {
+        // Also covers a history removed by a sign-out on this or another
+        // isolate: a refresh must not keep showing the in-memory copy.
+        value = const [];
+        return;
+      }
       final list = (jsonDecode(raw) as List<dynamic>)
           .map((e) => AppNotification.fromJson(e as Map<String, dynamic>))
           .toList();

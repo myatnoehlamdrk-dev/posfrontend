@@ -950,8 +950,9 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       await SaleOutputService.printAfterSale(args, settings);
     } catch (e) {
       if (!mounted) return;
-      final messageKey = settings.output == SalePrintSettings.outputPdf
-          ? 'PDF export failed: {v1}'
+      final messageKey = settings.output == SalePrintSettings.outputPdf ||
+              settings.output == SalePrintSettings.outputWindow
+          ? 'Print failed: {v1}'
           : 'Thermal printing failed: {v1}';
       showErrorDetail(
         context,
@@ -1050,6 +1051,16 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                         subtitle: context.l10n.t('Save PDF file after sale'),
                         value: SalePrintSettings.outputPdf,
                         icon: Icons.picture_as_pdf,
+                      ),
+                      const SizedBox(height: 8),
+                      _outputOption(
+                        setSheetState,
+                        title: context.l10n.t('Window Print'),
+                        subtitle: context.l10n.t(
+                          'Open the browser print dialog (any printer)',
+                        ),
+                        value: SalePrintSettings.outputWindow,
+                        icon: Icons.print,
                       ),
                       const SizedBox(height: 8),
                       // WebUSB is the browser's only direct thermal path, so

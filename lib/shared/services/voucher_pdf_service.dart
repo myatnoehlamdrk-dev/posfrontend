@@ -194,6 +194,7 @@ class PdfBuildParams {
   final Uint8List? shopImageBytes;
   final double paperWidthMm;
   final String? customerLocation;
+  final bool tallPage;
 
   PdfBuildParams({
     required this.customerName,
@@ -215,6 +216,7 @@ class PdfBuildParams {
     this.shopImageBytes,
     this.paperWidthMm = 56.7,
     this.customerLocation,
+    this.tallPage = false,
   });
 }
 
@@ -723,7 +725,7 @@ Future<Uint8List> _buildReceiptPdfBytes(
     pw.MultiPage(
       pageFormat: PdfPageFormat(
         params.paperWidthMm * PdfPageFormat.mm,
-        297 * PdfPageFormat.mm,
+        (params.tallPage ? 2000 : 297) * PdfPageFormat.mm,
       ),
       margin: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       theme: PdfFonts.theme(fontBytes),
@@ -1114,6 +1116,7 @@ class VoucherPdfService {
       shopImageBytes: monoImageBytes,
       paperWidthMm: paperWidthMm,
       customerLocation: customerLocation,
+      tallPage: true,
     );
 
     final pdfBytes = await _offMainThread(
@@ -1124,7 +1127,7 @@ class VoucherPdfService {
       name: 'Receipt_$voucherNo',
       format: PdfPageFormat(
         paperWidthMm * PdfPageFormat.mm,
-        297 * PdfPageFormat.mm,
+        2000 * PdfPageFormat.mm,
       ),
     );
   }

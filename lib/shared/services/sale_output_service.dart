@@ -82,6 +82,9 @@ abstract final class SaleOutputService {
         );
         await UsbPrinterTransport.send(bytes: usbJob);
 
+      case SalePrintSettings.outputWindow:
+        await ReceiptPrintService.printWindow(args, settings);
+
       default:
         await ReceiptPrintService.exportPdf(args);
     }

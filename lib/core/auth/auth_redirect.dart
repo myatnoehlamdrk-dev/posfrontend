@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:posfrontend/core/auth/session_store.dart';
-import 'package:posfrontend/core/auth/token_storage.dart';
+import 'package:posfrontend/core/auth/session_cleanup.dart';
 import 'package:posfrontend/features/auth/presentation/screens/login_screen.dart';
 
 /// Global navigator key — used for auth redirects without BuildContext.
@@ -27,11 +26,12 @@ Future<void> redirectToLogin() async {
   if (_redirecting) return;
   _redirecting = true;
 
-  await TokenStorage.clearToken();
-  // The cached profile goes with the token. Leaving it behind would let the
-  // next launch restore a session the server had just rejected — and with a
-  // user id that no longer belongs to this token.
-  await SessionStore.clear();
+  // The server has already rejected this token, so there is nothing useful
+  // to tell it. Local cleanup still has to drop the token, the FCM device
+  // token (so the old shop stops pushing to this device) and the cached
+  // profile/history — leaving the profile behind would let the next launch
+  // restore a session the server had just rejected.
+  await endSession(notifyServer: false);
 
   final navigator = navigatorKey.currentState;
   if (navigator == null) {

@@ -88,7 +88,7 @@ class MyApp extends StatelessWidget {
           ]),
           builder: (context, _) {
             return MaterialApp(
-              title: 'Inventory',
+              title: 'SmartPos',
               navigatorKey: navigatorKey,
               // Tracks which named destinations are still alive so drawer
               // navigation can pop back to a screen it already has instead of

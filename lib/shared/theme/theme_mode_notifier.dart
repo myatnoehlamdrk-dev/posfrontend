@@ -15,7 +15,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// arrive after the API round-trip and the app would flash light before going
 /// dark. The mirror is authoritative at launch; the server refreshes it after.
 class ThemeModeNotifier extends ValueNotifier<ThemeMode> {
-  ThemeModeNotifier._() : super(ThemeMode.light);
+  ThemeModeNotifier._() : super(ThemeMode.dark);
 
   static final ThemeModeNotifier instance = ThemeModeNotifier._();
 
@@ -29,8 +29,8 @@ class ThemeModeNotifier extends ValueNotifier<ThemeMode> {
       final stored = prefs.getString(_prefsKey);
       instance.value = _decode(stored);
     } catch (_) {
-      // A theme is cosmetic; fall back to light rather than failing startup.
-      instance.value = ThemeMode.light;
+      // A theme is cosmetic; fall back to dark rather than failing startup.
+      instance.value = ThemeMode.dark;
     }
   }
 
@@ -46,7 +46,7 @@ class ThemeModeNotifier extends ValueNotifier<ThemeMode> {
     'dark' => ThemeMode.dark,
     'light' => ThemeMode.light,
     'system' => ThemeMode.system,
-    _ => ThemeMode.light,
+    _ => ThemeMode.dark,
   };
 
   static String _encode(ThemeMode mode) => switch (mode) {

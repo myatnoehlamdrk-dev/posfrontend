@@ -5,6 +5,7 @@ import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:flutter/services.dart';
 import 'package:posfrontend/core/network/app_exceptions.dart';
 import 'package:posfrontend/core/utils/error_handler.dart';
+import 'package:posfrontend/features/cart/data/cart_card_mapper.dart';
 import 'package:posfrontend/features/cart/data/cart_store.dart';
 import 'package:posfrontend/features/cart/domain/entities/cart_card_entity.dart';
 import 'package:posfrontend/features/cart/domain/entities/cart_item_entity.dart';
@@ -488,6 +489,41 @@ Future<void> _appendToExistingCard(
   BuildContext context,
   List<CartItemEntity> items,
 ) async {
+  // The picker used to read `CartStore.value` directly and came back empty:
+  // this flow is not the cart screen, so nothing here had ever run
+  // `CartStore.init()` to rehydrate the locally saved cards, and nothing had
+  // pulled the draft orders back from the API either. Both happen before the
+  // sheet opens now, so `Existing Card` offers what the cart screen shows.
+  final user = AuthScope.userOf(context);
+  final ownerKeys = cartOwnerKeys(
+    userId: user?.id,
+    fullName: user?.fullName,
+    email: user?.email,
+  );
+
+  await CartStore.instance.init();
+  try {
+    final result = await SaleHistoryRepositoryImpl().getOrders(
+      page: 1,
+      perPage: 50,
+    );
+    final data = result['data'];
+    if (data is List) {
+      final fetched = <CartCardEntity>[];
+      for (final item in data) {
+        if (item is! Map<String, dynamic>) continue;
+        if (!cartOrderBelongsTo(item, ownerKeys)) continue;
+        final card = cartCardFromOrder(item);
+        if (card != null) fetched.add(card);
+      }
+      await CartStore.instance.mergeCards(fetched);
+    }
+  } catch (_) {
+    // A failed fetch is not fatal: whatever the store already holds is still
+    // offered, and the picker explains itself when there is nothing.
+  }
+
+  if (!context.mounted) return;
   final cards = CartStore.instance.value
       .where((c) => c.orderId.isNotEmpty)
       .toList();

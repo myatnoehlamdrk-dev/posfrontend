@@ -136,8 +136,9 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
       await SaleOutputService.printAfterSale(args, settings);
     } catch (e) {
       if (!mounted) return;
-      final messageKey = settings.output == SalePrintSettings.outputPdf
-          ? 'PDF export failed: {v1}'
+      final messageKey = settings.output == SalePrintSettings.outputPdf ||
+              settings.output == SalePrintSettings.outputWindow
+          ? 'Print failed: {v1}'
           : 'Thermal printing failed: {v1}';
       showErrorDetail(
         context,

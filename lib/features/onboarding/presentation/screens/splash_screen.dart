@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:posfrontend/core/auth/session_cleanup.dart';
 import 'package:posfrontend/core/auth/session_store.dart';
 import 'package:posfrontend/core/auth/token_storage.dart';
 import 'package:posfrontend/core/di/injection.dart';
@@ -218,8 +219,10 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _discardSession() async {
-    await TokenStorage.clearToken();
-    await SessionStore.clear();
+    // Either the idle window expired or the launch probe was rejected: in
+    // both cases the session is over, so the device token and the previous
+    // shop's notification history must go with it.
+    await endSession(notifyServer: false);
   }
 
   PageRouteBuilder<void> _route(Widget screen, {String? name}) =>

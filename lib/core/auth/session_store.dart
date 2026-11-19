@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:posfrontend/core/local/local_store.dart';
 import 'package:posfrontend/features/auth/data/models/login_response.dart';
+import 'package:posfrontend/features/notifications/data/notification_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Local record of *who* is signed in and *when the app last used* that
@@ -64,6 +65,16 @@ class SessionStore {
         previousShopId.isNotEmpty &&
         previousShopId != profile['shopId']) {
       await LocalStore.instance.wipeAll();
+      // Notification history is device-global and carries no shop id, so the
+      // only safe rule is: a different shop starts with an empty history.
+      // This catches switches that never passed through a clean sign-out
+      // (a killed process, or a session restored after the logout call
+      // failed), not just the drawer/settings route.
+      try {
+        await NotificationStore.instance.clear();
+      } catch (_) {
+        // History is a convenience; never let it block a sign-in.
+      }
     }
 
     await prefs.setString(_profileKey, jsonEncode(profile));
@@ -147,6 +158,17 @@ class SessionStore {
   /// next user is a different shop — must not be able to browse the
   /// previous account's catalog offline.
   static Future<void> clear() async {
+    // Notifications first, while the profile still identifies the session:
+    // if the process dies halfway through a sign-out, the next launch can
+    // still detect a shop change and finish the cleanup. Removing the
+    // profile first would leave no evidence that the leftover history
+    // belonged to a previous account.
+    try {
+      await NotificationStore.instance.clear();
+    } catch (_) {
+      // History is a convenience; never block a sign-out on it.
+    }
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_profileKey);
     await prefs.remove(_lastUsedKey);

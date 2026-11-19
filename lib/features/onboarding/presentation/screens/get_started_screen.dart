@@ -1,8 +1,11 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:posfrontend/features/auth/presentation/screens/login_screen.dart';
+import 'package:posfrontend/shared/services/demo_page_launcher.dart';
+import 'package:posfrontend/shared/services/demo_page_view.dart';
 import 'package:posfrontend/shared/services/usb_printer_transport.dart';
 import 'package:posfrontend/shared/services/usb_setup_download.dart';
 
@@ -118,6 +121,26 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
     );
   }
 
+  /// Opens the standalone animated demo page in the browser.
+  ///
+  /// Demo only: the page is plain HTML kept beside the project, so it is handed
+  /// to the platform instead of being rendered by Flutter. When it cannot be
+  /// launched (the file is missing, or the platform refuses file URLs) a
+  /// message explains where to open it manually.
+  Future<void> _openAnimatedDemo() async {
+    final opened = await openAnimatedDemo();
+    if (opened) return;
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Animated demo not found. Open marketing/site/animate.html directly '
+          'or run the app from the posfrontend folder.',
+        ),
+      ),
+    );
+  }
+
   void _scrollToFeatures() {
     final target = _featureKey.currentContext;
     if (target == null) return;
@@ -131,6 +154,13 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // On the web the demo page is the Get Started screen: the animated
+    // `demo/animate.html` page fills the frame instead of this Flutter layout.
+    // Phones and desktop keep the layout below, and open the page in a browser.
+    if (kIsWeb) {
+      return buildDemoPageView(onGetStarted: _goToLogin);
+    }
+
     return Scaffold(
       backgroundColor: _Spec.pageBg,
       body: SafeArea(
@@ -200,6 +230,8 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
         _PrimaryButton(onPressed: _goToLogin),
         const SizedBox(height: 6),
         _SecondaryAction(onPressed: _openDemo),
+        const SizedBox(height: 2),
+        _DemoAction(onPressed: _openAnimatedDemo),
         const SizedBox(height: 5),
         const _SupportLine(),
         const SizedBox(height: 32),
@@ -237,6 +269,8 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
         _PrimaryButton(onPressed: _goToLogin),
         const SizedBox(height: 6),
         _SecondaryAction(onPressed: _openDemo),
+        const SizedBox(height: 2),
+        _DemoAction(onPressed: _openAnimatedDemo),
         const SizedBox(height: 5),
         const _SupportLine(),
         const SizedBox(height: 32),
@@ -294,7 +328,12 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                       _SecondaryAction(onPressed: _openDemo, height: 53),
                     ],
                   ),
-                  const SizedBox(height: 17),
+                  const SizedBox(height: 6),
+                  _DemoAction(
+                    onPressed: _openAnimatedDemo,
+                    alignment: Alignment.centerLeft,
+                  ),
+                  const SizedBox(height: 10),
                   const _SupportLine(alignment: MainAxisAlignment.start),
                 ],
               ),
@@ -2149,6 +2188,74 @@ class _SecondaryAction extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A small outlined pill that opens the standalone animated demo page.
+///
+/// It sits below the real onboarding actions and is deliberately quieter than
+/// "See it in action": that one previews the app in place, this one leaves
+/// Flutter and opens the HTML demo in the browser.
+class _DemoAction extends StatelessWidget {
+  const _DemoAction({
+    required this.onPressed,
+    this.alignment = Alignment.center,
+  });
+
+  final VoidCallback onPressed;
+
+  /// Centred under the stacked mobile actions, left-aligned in the desktop
+  /// hero column.
+  final Alignment alignment;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Opens the animated demo page in your browser',
+      child: SizedBox(
+        height: 44,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(999),
+            onTap: onPressed,
+            child: Align(
+              alignment: alignment,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 15,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: _Spec.border),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.open_in_new_rounded,
+                      size: 13,
+                      color: _Spec.purple,
+                    ),
+                    const SizedBox(width: 7),
+                    Text(
+                      'See how it works',
+                      style: GoogleFonts.dmSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: _Spec.purple,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),

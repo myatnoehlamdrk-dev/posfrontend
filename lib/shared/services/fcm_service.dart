@@ -4,6 +4,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:posfrontend/core/auth/session_store.dart';
+import 'package:posfrontend/core/auth/terminal_identity.dart';
+import 'package:posfrontend/core/auth/token_storage.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/features/notifications/data/notification_store.dart';
 
@@ -77,6 +80,12 @@ class FcmService {
   Future<void> _saveToStore(RemoteMessage message) async {
     final notification = message.notification;
     final data = Map<String, dynamic>.from(message.data);
+
+    // A tray entry can be tapped after the user has signed out or switched
+    // shop. Saving it blindly is what put the previous shop's stock alerts
+    // into the new session's history.
+    if (!await _belongsToCurrentShop(data)) return;
+
     final title =
         notification?.title ?? (data['title'] ?? '').toString();
     final body = notification?.body ?? (data['body'] ?? '').toString();
@@ -154,10 +163,29 @@ class FcmService {
 
   Future<void> _listenForegroundMessages() async {
     _foregroundSubscription?.cancel();
-    _foregroundSubscription = FirebaseMessaging.onMessage.listen((message) {
-      _saveToStore(message);
-      _showLocalNotification(message);
+    _foregroundSubscription = FirebaseMessaging.onMessage.listen((
+      message,
+    ) async {
+      // Checked before the tray entry as well as in [_saveToStore]: a push
+      // for a shop this device is no longer signed in to must not pop up
+      // over the login screen or the new shop's dashboard.
+      if (!await _belongsToCurrentShop(message.data)) return;
+      await _saveToStore(message);
+      await _showLocalNotification(message);
     });
+  }
+
+  /// Whether [data] belongs to the shop this device is currently signed in to.
+  ///
+  /// Newer backend payloads carry `shop_id`; older ones do not, and for those
+  /// the only useful guard is "there is no session, so there is nowhere to
+  /// show it". A signed-out device therefore records and displays nothing.
+  Future<bool> _belongsToCurrentShop(Map<String, dynamic> data) async {
+    final current = await SessionStore.currentShopId();
+    if (current == null || current.isEmpty) return false;
+
+    final incoming = (data['shop_id'] ?? data['shopId'] ?? '').toString();
+    return incoming.isEmpty || incoming == current;
   }
 
   Future<void> _showLocalNotification(RemoteMessage message) async {
@@ -229,6 +257,13 @@ class FcmService {
 
   Future<void> _registerToken(String? token) async {
     if (token == null || token.isEmpty) return;
+
+    // A refresh can fire after `endSession` has cleared the bearer token.
+    // Posting then would 401, and on a lax endpoint could create an
+    // ownerless row. Registration only ever belongs to a live session.
+    final sessionToken = await TokenStorage.getToken();
+    if (sessionToken == null || sessionToken.isEmpty) return;
+
     try {
       final dio = ApiClient.instance;
       await dio.post(
@@ -236,11 +271,46 @@ class FcmService {
         data: {
           'token': token,
           'platform': 'android',
+          // Stable per-install label, so the backend can deactivate this
+          // device without knowing which token string it held when it
+          // signed out.
+          'device_id': await TerminalIdentity.label(),
         },
       );
     } catch (e) {
       debugPrint('Failed to register FCM token: $e');
     }
+  }
+
+  /// Drops everything that would otherwise outlive the session.
+  ///
+  /// Called by `endSession` after the bearer token is gone and before the
+  /// cached profile is removed:
+  ///
+  ///  * cancels tray entries, so the old shop's alerts do not sit in the
+  ///    phone's notification shade after sign-out;
+  ///  * deletes the FCM token, so this device stops being a delivery target
+  ///    for the shop that was just left. The next sign-in obtains a fresh
+  ///    token and registers it (see [registerTokenAfterLogin]);
+  ///  * [NotificationStore] history is cleared by `SessionStore.clear()`,
+  ///    which owns the rest of the session-scoped state.
+  ///
+  /// Every step is best-effort: on web/desktop the plugins may be absent,
+  /// and a sign-out must never fail because a platform channel did.
+  Future<void> clearForLogout() async {
+    try {
+      await _localNotifications.cancelAll();
+    } catch (e) {
+      debugPrint('FCM: cancelling local notifications failed: $e');
+    }
+
+    try {
+      await _messaging?.deleteToken();
+    } catch (e) {
+      debugPrint('FCM: deleting the device token failed: $e');
+    }
+
+    _token = null;
   }
 
   void dispose() {
