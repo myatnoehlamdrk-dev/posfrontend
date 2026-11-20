@@ -9,6 +9,8 @@ import 'package:posfrontend/shared/theme/app_dimens.dart';
 import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_input_decoration.dart';
+import 'package:posfrontend/shared/widgets/app_page_transitions.dart';
+import 'package:posfrontend/shared/widgets/brand_art_veil.dart';
 import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 import 'package:posfrontend/shared/widgets/gradient_button.dart';
 import 'package:posfrontend/shared/widgets/required_label.dart';
@@ -151,9 +153,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final navigator = Navigator.of(context);
     final success = await _viewModel.register();
     if (success && mounted) {
+      // Same route as the rest of the auth chain. A plain MaterialPageRoute
+      // here came in with the platform's default motion while Back left with
+      // this one, so the hand-off into verification looked like an instant
+      // swap.
       navigator.pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => VerifyAccountScreen(
+        AppPageTransitions.authRegister<void>(
+          VerifyAccountScreen(
             email: _viewModel.email,
             // register already mailed the code -- a second send here is what
             // put two verification emails in the inbox on every sign-up.
@@ -165,7 +171,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   /// Brand pane for the wide layout: the register artwork filling the panel,
-  /// with a left-edge gradient so the headline reads on every screen size.
+  /// with a left-edge gradient so the headline reads on every screen size, plus
+  /// a light scrim on the edges it never covered.
   Widget _buildArtPane() {
     return Stack(
       fit: StackFit.expand,
@@ -189,6 +196,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           ),
         ),
+        // This artwork is already soft, so it only needs a little more
+        // contrast. Half strength closes the top, right and bottom edges
+        // without taking the image as dark as the reset pane.
+        const BrandArtVeil(intensity: 0.5),
         // Bottom-anchored, but scrollable when the pane is short. On a
         // landscape phone this pane is ~330dp tall while the copy below is
         // ~400dp, and a bare `Positioned` would clip the lockup and the

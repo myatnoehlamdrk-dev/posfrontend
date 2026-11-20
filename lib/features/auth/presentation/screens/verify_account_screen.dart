@@ -13,6 +13,22 @@ import 'package:posfrontend/shared/widgets/gradient_button.dart';
 import 'package:posfrontend/shared/widgets/required_label.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 
+/// Layout thresholds, matching the other auth screens so a window flips to the
+/// desktop treatment in the same place everywhere.
+///
+/// This screen has no brand pane to split with — it is one short form — so
+/// "desktop" means the form is lifted onto a capped card instead of stretching
+/// across the window. The extra pane the other auth screens use would be
+/// decoration here, not information.
+class _VerifyLayout {
+  _VerifyLayout._();
+
+  static const double cardFrom = 600;
+  static const double formMaxWidth = 440;
+  static const double cardMaxWidth = 460;
+  static const double cardPadding = 32;
+}
+
 class VerifyAccountScreen extends StatefulWidget {
   final String email;
 
@@ -93,127 +109,216 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
         return Scaffold(
           backgroundColor: p.scaffoldBg,
           body: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  _buildHeaderIcon(),
-                  const SizedBox(height: 20),
-                  Text(
-                    context.l10n.t('Verify Your Email'),
-                    style: TextStyle(
-                      color: p.textPrimary,
-                      fontSize: AppTypography.displaySmallSize,
-                      fontWeight: FontWeight.bold,
-                    ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final carded = constraints.maxWidth >= _VerifyLayout.cardFrom;
+                return _centeredScroll(
+                  maxWidth: carded
+                      ? _VerifyLayout.cardMaxWidth
+                      : _VerifyLayout.formMaxWidth,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 32,
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    context.l10n.t('We sent a 6-digit verification code to'),
-                    style: TextStyle(
-                      color: p.textMuted,
-                      fontSize: AppTypography.bodySmallSize,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    widget.email,
-                    style: const TextStyle(
-                      color: AppColors.primary,
-                      fontSize: AppTypography.bodySmallSize,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 36),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: RequiredLabel('Verification Code'),
-                  ),
-                  TextFormField(
-                    controller: _otpController,
-                    keyboardType: TextInputType.number,
-                    textInputAction: TextInputAction.done,
-                    maxLength: 6,
-                    onFieldSubmitted: (_) => _handleVerify(),
-                    decoration: appInputDecoration(
-                      context,
-                      icon: Icons.pin_outlined,
-                      hint: context.l10n.t('Enter 6-digit code'),
-                      errorText: errors['otp'],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  GestureDetector(
-                    onTap: loading ? null : _handleResendOtp,
-                    child: Text(
-                      context.l10n.t('Resend Code'),
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontSize: AppTypography.labelMediumSize,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  GradientButton(
-                    label: context.l10n.t('Verify'),
-                    loading: loading,
-                    onPressed: _handleVerify,
-                  ),
-                  if (_viewModel.errorMessage != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 12),
-                      child: Text(
-                        _viewModel.errorMessage!,
-                        style: const TextStyle(
-                          color: Colors.red,
-                          fontSize: AppTypography.labelMediumSize,
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 24),
-                  // Wrap rather than Row: translated prompts run long and
-                  // would overflow on a phone instead of wrapping.
-                  Wrap(
-                    alignment: WrapAlignment.center,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    spacing: 6,
-                    runSpacing: 2,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Text(
-                        context.l10n.t('Already verified?'),
-                        style: TextStyle(
-                          color: p.textMuted,
-                          fontSize: AppTypography.bodySmallSize,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () => Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const LoginScreen(),
-                          ),
-                        ),
-                        child: Text(
-                          context.l10n.t('Back to Login'),
-                          style: TextStyle(
-                            color: AppColors.primary,
-                            fontSize: AppTypography.bodySmallSize,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
+                      _buildHeaderIcon(),
+                      const SizedBox(height: 20),
+                      _buildHeading(),
+                      const SizedBox(height: 28),
+                      if (carded)
+                        _card(
+                          child: _buildForm(errors: errors, loading: loading),
+                        )
+                      else
+                        _buildForm(errors: errors, loading: loading),
                     ],
                   ),
-                ],
-              ),
+                );
+              },
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildHeading() {
+    final p = context.palette;
+    return Column(
+      children: [
+        Text(
+          context.l10n.t('Verify Your Email'),
+          style: TextStyle(
+            color: p.textPrimary,
+            fontSize: AppTypography.displaySmallSize,
+            fontWeight: FontWeight.bold,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          context.l10n.t('We sent a 6-digit verification code to'),
+          style: TextStyle(
+            color: p.textMuted,
+            fontSize: AppTypography.bodySmallSize,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          widget.email,
+          style: const TextStyle(
+            color: AppColors.primary,
+            fontSize: AppTypography.bodySmallSize,
+            fontWeight: FontWeight.w600,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildForm({
+    required Map<String, String?> errors,
+    required bool loading,
+  }) {
+    final p = context.palette;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: RequiredLabel('Verification Code'),
+        ),
+        TextFormField(
+          controller: _otpController,
+          keyboardType: TextInputType.number,
+          textInputAction: TextInputAction.done,
+          maxLength: 6,
+          onFieldSubmitted: (_) => _handleVerify(),
+          decoration: appInputDecoration(
+            context,
+            icon: Icons.pin_outlined,
+            hint: context.l10n.t('Enter 6-digit code'),
+            errorText: errors['otp'],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: GestureDetector(
+            onTap: loading ? null : _handleResendOtp,
+            child: Text(
+              context.l10n.t('Resend Code'),
+              style: const TextStyle(
+                color: AppColors.primary,
+                fontSize: AppTypography.labelMediumSize,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        GradientButton(
+          label: context.l10n.t('Verify'),
+          loading: loading,
+          onPressed: _handleVerify,
+        ),
+        if (_viewModel.errorMessage != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Text(
+              _viewModel.errorMessage!,
+              style: const TextStyle(
+                color: Colors.red,
+                fontSize: AppTypography.labelMediumSize,
+              ),
+            ),
+          ),
+        const SizedBox(height: 24),
+        // Wrap rather than Row: translated prompts run long and would overflow
+        // on a phone instead of wrapping.
+        Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 6,
+          runSpacing: 2,
+          children: [
+            Text(
+              context.l10n.t('Already verified?'),
+              style: TextStyle(
+                color: p.textMuted,
+                fontSize: AppTypography.bodySmallSize,
+              ),
+            ),
+            GestureDetector(
+              onTap: () => Navigator.pushReplacement(
+                context,
+                AppPageTransitions.authSmooth<void>(const LoginScreen()),
+              ),
+              child: Text(
+                context.l10n.t('Back to Login'),
+                style: const TextStyle(
+                  color: AppColors.primary,
+                  fontSize: AppTypography.bodySmallSize,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// Scrolls when the content is taller than the window, centres when it is
+  /// not. The `minHeight` floor is what makes those two agree.
+  Widget _centeredScroll({
+    required Widget child,
+    required double maxWidth,
+    required EdgeInsets padding,
+  }) {
+    return LayoutBuilder(
+      builder: (ctx, c) => SingleChildScrollView(
+        padding: padding,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: c.maxHeight - padding.vertical,
+          ),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: maxWidth),
+              child: child,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// The desktop surface: same fill, radius, border and shadow as the login and
+  /// reset cards, so the form looks like the same object on every auth page.
+  Widget _card({required Widget child}) {
+    final p = context.palette;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(_VerifyLayout.cardPadding),
+      decoration: BoxDecoration(
+        color: p.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: p.border),
+        boxShadow: [
+          BoxShadow(
+            color: p.cardShadow,
+            blurRadius: 32,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: child,
     );
   }
 

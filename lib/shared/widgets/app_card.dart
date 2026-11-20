@@ -16,10 +16,10 @@ class AppCard extends StatelessWidget {
     this.margin,
     this.width,
     this.height,
-    this.radius = AppRadius.md,
+    this.radius = AppRadius.lg,
     this.color,
     this.borderColor,
-    this.elevation = true,
+    this.elevation = false,
     this.onTap,
     this.clipBehavior = Clip.none,
   });

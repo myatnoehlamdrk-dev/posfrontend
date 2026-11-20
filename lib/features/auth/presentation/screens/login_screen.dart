@@ -18,6 +18,7 @@ import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_page_transitions.dart';
 import 'package:posfrontend/shared/widgets/app_input_decoration.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
+import 'package:posfrontend/shared/widgets/brand_avatar_badge.dart';
 import 'package:posfrontend/shared/widgets/shop_scope.dart';
 import 'package:posfrontend/shared/widgets/gradient_button.dart';
 import 'package:posfrontend/shared/widgets/required_label.dart';
@@ -331,26 +332,19 @@ class _LoginScreenState extends State<LoginScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // The illustration sits at the top of the form card, cropped to a
-          // circle so it reads as a mark rather than as a rectangular banner.
+          // The shop artwork stays, but as a compact avatar rather than a
+          // 150dp circular crop: same brand moment, without the weight of a
+          // profile photo on a screen where there is no profile yet.
           Center(
-            child: Container(
-              width: 150,
-              height: 150,
-              clipBehavior: Clip.antiAlias,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: p.border),
-              ),
-              child: Image.asset(
-                'assets/login2.png',
-                fit: BoxFit.cover,
-                cacheWidth: 700,
-                cacheHeight: 700,
-              ),
+            child: BrandAvatarBadge(
+              image: 'assets/login2.png',
+              semanticLabel: context.l10n.t('Secure sign in'),
+              size: BrandAvatarBadge.standardSize,
+              imageScale: 1.7,
+              imageAlignment: const Alignment(0.13, -0.4),
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 26),
           child,
         ],
       ),
@@ -373,7 +367,10 @@ class _LoginScreenState extends State<LoginScreen> {
         const SizedBox(height: 8),
         Text(
           context.l10n.t('Please login to your account'),
-          style: TextStyle(color: p.textMuted, fontSize: AppTypography.bodySmallSize),
+          style: TextStyle(
+            color: p.textMuted,
+            fontSize: AppTypography.bodySmallSize,
+          ),
           textAlign: TextAlign.center,
         ),
       ],
@@ -382,10 +379,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   /// Left pane of the split layout: copy at the top, logo filling the rest.
   ///
-  /// Painted with the shared [AppColors.brandRamp] rather than a private pair of
-  /// purples, so the pane and the Get Started hero the user just came from are
-  /// visibly the same brand and the screen does not read as a different app on
-  /// arrival.
+  /// Painted with [AppColors.brandPaneRamp] — the brand hue's deep stage
+  /// variant — rather than [AppColors.brandRamp]. The interactive ramp is tuned
+  /// for small fills; across half the window its 500 stop was bright enough to
+  /// fight the form for attention. Same hue, same ordering, much lower
+  /// lightness, so the pane reads as a backdrop rather than a violet poster.
   ///
   /// The gradient and the white-on-violet text are fixed rather than
   /// palette-driven because this is the one surface where the brand hue *is* the
@@ -395,15 +393,23 @@ class _LoginScreenState extends State<LoginScreen> {
     return DecoratedBox(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: AppColors.brandRamp,
+          colors: AppColors.brandPaneRamp,
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
       ),
       child: Stack(
         children: [
-          Positioned(right: -80, top: -60, child: _blob(220, 0.07)),
-          Positioned(left: -110, bottom: -90, child: _blob(260, 0.05)),
+          // A single soft violet halo, kept low-alpha. It restores a little of
+          // the brand's luminosity at the top corner without lifting the whole
+          // pane back to the brightness the flat ramp had.
+          Positioned(
+            right: -160,
+            top: -180,
+            child: _glow(460, AppColors.violet400, 0.16),
+          ),
+          Positioned(right: -80, top: -60, child: _blob(220, 0.04)),
+          Positioned(left: -110, bottom: -90, child: _blob(260, 0.03)),
           Positioned.fill(child: _buildBrandContent()),
         ],
       ),
@@ -508,6 +514,26 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  /// A soft radial light source. Unlike [_blob] it has no edge, so it can sit
+  /// partly off the pane without drawing a hard rim where the circle is cut.
+  Widget _glow(double size, Color color, double opacity) {
+    return Container(
+      height: size,
+      width: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [
+            color.withValues(alpha: opacity),
+            color.withValues(alpha: opacity * 0.35),
+            color.withValues(alpha: 0),
+          ],
+          stops: const [0.0, 0.45, 1.0],
+        ),
+      ),
+    );
+  }
+
   Widget _buildFields() {
     final p = context.palette;
     final errors = _viewModel.fieldErrors;
@@ -567,7 +593,9 @@ class _LoginScreenState extends State<LoginScreen> {
             child: GestureDetector(
               onTap: () => Navigator.push(
                 context,
-                AppPageTransitions.auth<void>(const ForgotPasswordScreen()),
+                AppPageTransitions.authSmooth<void>(
+                  const ForgotPasswordScreen(),
+                ),
               ),
               child: Text(
                 context.l10n.t('Forgot Password?'),
@@ -612,7 +640,10 @@ class _LoginScreenState extends State<LoginScreen> {
         children: [
           Text(
             message,
-            style: TextStyle(color: p.dangerFg, fontSize: AppTypography.labelMediumSize),
+            style: TextStyle(
+              color: p.dangerFg,
+              fontSize: AppTypography.labelMediumSize,
+            ),
             textAlign: TextAlign.center,
           ),
           if (message.contains('verify'))
@@ -621,9 +652,8 @@ class _LoginScreenState extends State<LoginScreen> {
               child: GestureDetector(
                 onTap: () => Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        VerifyAccountScreen(email: _emailController.text),
+                  AppPageTransitions.authSmooth<void>(
+                    VerifyAccountScreen(email: _emailController.text),
                   ),
                 ),
                 child: Text(
@@ -650,7 +680,10 @@ class _LoginScreenState extends State<LoginScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(
             context.l10n.t('OR'),
-            style: TextStyle(color: p.textMuted, fontSize: AppTypography.labelMediumSize),
+            style: TextStyle(
+              color: p.textMuted,
+              fontSize: AppTypography.labelMediumSize,
+            ),
           ),
         ),
         Expanded(child: Divider(color: p.border)),
@@ -666,7 +699,10 @@ class _LoginScreenState extends State<LoginScreen> {
         Flexible(
           child: Text(
             context.l10n.t("Don't have an account?"),
-            style: TextStyle(color: p.textMuted, fontSize: AppTypography.bodySmallSize),
+            style: TextStyle(
+              color: p.textMuted,
+              fontSize: AppTypography.bodySmallSize,
+            ),
             textAlign: TextAlign.right,
           ),
         ),
@@ -674,7 +710,7 @@ class _LoginScreenState extends State<LoginScreen> {
         GestureDetector(
           onTap: () => Navigator.push(
             context,
-            AppPageTransitions.auth<void>(const ShopScreen()),
+            AppPageTransitions.authRegister<void>(const ShopScreen()),
           ),
           child: Text(
             context.l10n.t('Register'),
@@ -743,9 +779,7 @@ class _HeroIllustrationState extends State<_HeroIllustration>
     _slide = Tween<Offset>(
       begin: const Offset(0, 0.08),
       end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _entrance, curve: Curves.easeOutCubic),
-    );
+    ).animate(CurvedAnimation(parent: _entrance, curve: Curves.easeOutCubic));
     _bob = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2600),
@@ -812,8 +846,10 @@ class _FeatureListState extends State<_FeatureList>
   ];
 
   /// Hairline that separates the rows. Fixed white rather than palette-driven
-  /// because the list sits on the brand gradient in both brightnesses.
-  static final Color _divider = Colors.white.withValues(alpha: 0.20);
+  /// because the list sits on the brand gradient in both brightnesses. Kept
+  /// low-alpha: on the deep pane a stronger white rule reads as a drawn border
+  /// rather than a separation.
+  static final Color _divider = Colors.white.withValues(alpha: 0.14);
 
   late final AnimationController _controller;
 
@@ -859,7 +895,7 @@ class _FeatureListState extends State<_FeatureList>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        gradient: _fade(Colors.white.withValues(alpha: 0.10)),
+        gradient: _fade(Colors.white.withValues(alpha: 0.07)),
       ),
       child: Row(
         children: [

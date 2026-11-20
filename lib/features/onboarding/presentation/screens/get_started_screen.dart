@@ -134,7 +134,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text(
-          'Animated demo not found. Open marketing/site/animate.html directly '
+          'Animated not found. Open marketing/site/animate.html directly '
           'or run the app from the posfrontend folder.',
         ),
       ),

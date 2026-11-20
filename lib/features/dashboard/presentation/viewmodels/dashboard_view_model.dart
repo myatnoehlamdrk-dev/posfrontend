@@ -68,6 +68,10 @@ class DashboardViewModel extends BaseViewModel {
   bool _trendsLoaded = false;
   bool get trendsLoaded => _trendsLoaded;
 
+  /// Top payment method by transaction count.
+  ({String method, int count, double percent})? _topPayment;
+  ({String method, int count, double percent})? get topPayment => _topPayment;
+
   Future<void> load() async {
     final result = await runAsync(
       (token) => _repository.getDashboardData(days: _windowDays),
@@ -78,7 +82,16 @@ class DashboardViewModel extends BaseViewModel {
     await Future.wait([
       loadMonthlySales(year: _selectedYear),
       _loadTablePreviews(),
+      _loadTopPayment(),
     ]);
+  }
+
+  Future<void> _loadTopPayment() async {
+    try {
+      _topPayment = await _repository.getTopPaymentMethod(days: _windowDays);
+    } catch (_) {
+      // Non-critical: top payment is optional
+    }
   }
 
   Future<void> loadMonthlySales({required int year}) async {
@@ -166,6 +179,10 @@ class DashboardViewModel extends BaseViewModel {
         MetricTrendKey.products: summary.products.series,
       if (summary.lowStock.series.length > 1)
         MetricTrendKey.lowStock: summary.lowStock.series,
+      if (summary.orders.series.length > 1)
+        MetricTrendKey.orders: summary.orders.series,
+      if (summary.avgOrderValue.series.length > 1)
+        MetricTrendKey.avgOrderValue: summary.avgOrderValue.series,
     };
 
     _trendsLoaded = true;

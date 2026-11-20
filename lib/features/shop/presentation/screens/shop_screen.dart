@@ -15,6 +15,7 @@ import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_input_decoration.dart';
 import 'package:posfrontend/shared/widgets/app_page_transitions.dart';
+import 'package:posfrontend/shared/widgets/brand_art_veil.dart';
 import 'package:posfrontend/shared/widgets/custom_back_button.dart';
 import 'package:posfrontend/shared/widgets/gradient_button.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
@@ -185,7 +186,7 @@ class _ShopScreenState extends State<ShopScreen> {
       _resetForm();
       Navigator.push(
         context,
-        AppPageTransitions.auth<void>(const RegisterScreen()),
+        AppPageTransitions.authRegister<void>(const RegisterScreen()),
       );
     }
   }
@@ -240,7 +241,8 @@ class _ShopScreenState extends State<ShopScreen> {
   }
 
   /// Brand pane for the wide layout: the shop artwork filling the panel,
-  /// with a left-edge gradient so the headline reads on every screen size.
+  /// under the same edge scrim as the reset pane so the white copy reads on
+  /// every screen size.
   Widget _buildArtPane() {
     return Stack(
       fit: StackFit.expand,
@@ -250,20 +252,9 @@ class _ShopScreenState extends State<ShopScreen> {
           fit: BoxFit.cover,
           alignment: Alignment.center,
         ),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.centerRight,
-              end: Alignment.centerLeft,
-              colors: [
-                Colors.transparent,
-                Colors.black.withValues(alpha: 0.35),
-                Colors.black.withValues(alpha: 0.60),
-              ],
-              stops: const [0.0, 0.55, 1.0],
-            ),
-          ),
-        ),
+        // Shared with the reset pane. The left-only gradient this pane used to
+        // carry left the top, right and bottom edges of the artwork bright.
+        const BrandArtVeil(),
         // Bottom-anchored, but scrollable when the pane is short. On a
         // landscape phone this pane is ~330dp tall while the copy below is
         // ~400dp, and a bare `Positioned` would clip the lockup and the
@@ -1086,7 +1077,7 @@ class _ShopScreenState extends State<ShopScreen> {
       _resetForm();
       Navigator.push(
         context,
-        AppPageTransitions.auth<void>(const RegisterScreen()),
+        AppPageTransitions.authRegister<void>(const RegisterScreen()),
       );
     }
   }

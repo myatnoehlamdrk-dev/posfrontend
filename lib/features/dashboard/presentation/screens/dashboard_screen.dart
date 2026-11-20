@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:posfrontend/core/extensions/number_extensions.dart';
 import 'package:posfrontend/core/network/api_client.dart';
 import 'package:posfrontend/features/dashboard/domain/entities/dashboard.dart';
@@ -32,14 +33,8 @@ import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 import 'package:posfrontend/shared/widgets/shop_scope.dart';
 import 'package:posfrontend/shared/widgets/skeleton.dart';
-
-/// Which group of sections the header's tab is showing.
-///
-/// The design puts three tabs in the page header; they are filters over the
-/// same dashboard rather than three dashboards, so a tab only decides which
-/// cards are on screen. Every card still reads the one payload already
-/// loaded — switching tabs costs no request.
-enum _DashboardTab { overview, sales, inventory }
+import 'package:posfrontend/features/sale/presentation/screens/quick_sale_screen.dart';
+import 'package:posfrontend/features/product/presentation/screens/stock_add_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -52,14 +47,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late final DashboardViewModel _viewModel;
   final CancelToken _cancelToken = CancelToken();
-
-  _DashboardTab _tab = _DashboardTab.overview;
-
-  static const Map<_DashboardTab, String> _tabLabels = {
-    _DashboardTab.overview: 'Overview',
-    _DashboardTab.sales: 'Sales',
-    _DashboardTab.inventory: 'Inventory',
-  };
 
   @override
   void initState() {
@@ -196,7 +183,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const DashboardSkeleton()
         else ...[
           _buildHeader(context, p),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
           ..._sections(context, p, _viewModel.data!),
         ],
         const SizedBox(height: 24),
@@ -207,96 +194,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // ---------------------------------------------------------------- header
 
   Widget _buildHeader(BuildContext context, AppPalette p) {
-    // The page's own name stays in the top bar; this heading names the shop
-    // the numbers below belong to. Falls back to the page name while the
-    // shop is still loading (or when a device has none), so the header is
-    // never blank. Reading it through the scope also means the heading
-    // repaints itself the moment the shop arrives — no manual refresh.
     final shopName = ShopScope.shopOf(context)?.name.trim() ?? '';
     final heading = shopName.isEmpty ? context.l10n.t('Dashboard') : shopName;
-    final titleBlock = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          heading,
-          style: appText(
-            size: AppTypography.displaySmallSize,
-            weight: FontWeight.w700,
-            color: p.textPrimary,
-            letterSpacing: -0.3,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          context.l10n.t("Here's what's happening with your store today."),
-          style: appText(size: AppTypography.labelMediumSize, color: p.textSecondary),
-        ),
-      ],
-    );
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth >= 760) {
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: titleBlock),
-              const SizedBox(width: 24),
-              _buildTabBar(context, p),
-            ],
-          );
-        }
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            titleBlock,
-            const SizedBox(height: 16),
-            _buildTabBar(context, p),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildTabBar(BuildContext context, AppPalette p) {
-    return Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: p.surfaceAlt,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: p.border),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          for (final tab in _DashboardTab.values)
-            GestureDetector(
-              onTap: () => setState(() => _tab = tab),
-              behavior: HitTestBehavior.opaque,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                curve: Curves.easeOut,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: _tab == tab ? p.primary : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  context.l10n.t(_tabLabels[tab]!),
-                  style: appText(
-                    size: AppTypography.labelMediumSize,
-                    weight: FontWeight.w600,
-                    color: _tab == tab ? Colors.white : p.textSecondary,
-                  ),
-                ),
-              ),
-            ),
-        ],
+    return Text(
+      heading,
+      style: GoogleFonts.spaceGrotesk(
+        fontSize: AppTypography.displaySmallSize - 4,
+        fontWeight: FontWeight.w700,
+        color: p.textPrimary,
+        letterSpacing: -0.3,
       ),
     );
   }
@@ -304,8 +210,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // -------------------------------------------------------------- sections
 
   /// The cards currently on screen, in the design's order, each followed by
-  /// its gap. Tabs drop sections rather than restyle them, so a card is built
-  /// exactly the same way on every tab that shows it.
+  /// its gap. Hero bento + Monthly Sales + Sales Summary + rest.
   List<Widget> _sections(
     BuildContext context,
     AppPalette p,
@@ -317,86 +222,113 @@ class _DashboardScreenState extends State<DashboardScreen> {
       out.add(const SizedBox(height: 24));
     }
 
-    final showSales = _tab != _DashboardTab.inventory;
-    final showInventory = _tab != _DashboardTab.sales;
+    // Unified Hero Bento Container (replaces KPI grid)
+    section(_HeroBentoContainer(
+      totalSales: d.stats.totalSales,
+      revenueTrend: _viewModel.trends?.revenue,
+      revenueSparkline: _viewModel.sparklines[MetricTrendKey.revenue],
+      totalProducts: d.stats.totalProducts,
+      totalItemsSold: d.stats.totalItemsSold,
+      outStockCount: d.stats.outStock,
+      totalProductsForOutStock: d.stats.totalProducts,
+      onNewSaleTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const QuickSaleScreen()),
+      ),
+      onRestockTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const StockAddScreen()),
+      ),
+    ));
 
+    // Bottom: Sales Summary (35%) + Monthly Sales (65%)
     section(
-      _KpiGrid(
-        metrics: d.metrics,
-        trends: _viewModel.trends,
-        sparklines: _viewModel.sparklines,
-        trendsLoaded: _viewModel.trendsLoaded,
-        onOpenTable: _openSummaryTable,
+      _equalHeightPair(
+        (fill, _) => Column(
+          children: [
+            _SalesKpiCard(
+              icon: Icons.receipt_long_rounded,
+              iconColor: Color(0xFF2563EB),
+              label: 'Total Orders',
+              value: d.stats.salesCount.withCommas(),
+              trend: _viewModel.trends?.orders,
+              subtitle: '~${(d.stats.salesCount / 30).toStringAsFixed(1)} orders / day',
+              rightVisual: _LineChartMini(
+                values: _viewModel.sparklines[MetricTrendKey.orders] ?? [],
+                color: Color(0xFF3B82F6),
+              ),
+            ),
+            const SizedBox(height: 12),
+            _SalesKpiCard(
+              icon: Icons.shopping_bag_outlined,
+              iconColor: Color(0xFFF87171),
+              label: 'Avg. Order Value',
+              value: 'MMK ${d.stats.avgOrderValue.withCommas()}',
+              trend: _viewModel.trends?.avgOrderValue,
+              subtitle: '${((_viewModel.data?.monthSummary.avgOrderValue.current ?? 0) / (d.stats.salesCount > 0 ? d.stats.salesCount : 1)).toStringAsFixed(2)} items/order',
+              rightVisual: _MiniBarChart(
+                values: [8, 10, 22, 34, 24, 14, 6, 4],
+                color: Color(0xFF64748B),
+              ),
+            ),
+            const SizedBox(height: 12),
+            _SalesKpiCard(
+              icon: Icons.credit_card_rounded,
+              iconColor: Color(0xFF8B5CF6),
+              label: 'Top Payment',
+              value: _viewModel.topPayment != null
+                  ? '${_viewModel.topPayment!.method} ${_viewModel.topPayment!.percent.round()}%'
+                  : 'N/A',
+              trend: null,
+              subtitle: null,
+              rightVisual: _PaymentCapsule(
+                percent: _viewModel.topPayment?.percent ?? 0,
+                color: Color(0xFF8B5CF6),
+                method: _viewModel.topPayment?.method ?? 'Cash',
+                count: _viewModel.topPayment?.count ?? 98,
+              ),
+            ),
+          ],
+        ),
+        (fill, _) => _monthlySalesCard(context, p, fill: fill),
+        leftFlex: 35,
+        rightFlex: 65,
       ),
     );
 
-    if (showSales) {
-      section(
-        _equalHeightPair(
-          (fill, _) => _monthlySalesCard(context, p, fill: fill),
-          (fill, _) => _SalesSummaryCard(
-            stats: d.stats,
-            trends: _viewModel.trends,
-            fill: fill,
-          ),
-          leftFlex: 2,
+    // Category Allocation + Stock Status (swapped: Stock Status moved up)
+    section(
+      _equalHeightPair(
+        (fill, width) => _categoryAllocationCard(
+          context,
+          p,
+          d,
+          fill: fill,
+          bodyWidth: width - 32,
         ),
-      );
-    }
-
-    if (showSales && showInventory) {
-      section(
-        _equalHeightPair(
-          // The pair already knows each card's width, so the allocation card
-          // can choose its side-by-side or stacked shape without a nested
-          // LayoutBuilder (which IntrinsicHeight cannot measure).
-          (fill, width) => _categoryAllocationCard(
-            context,
-            p,
-            d,
-            fill: fill,
-            bodyWidth: width - 32,
-          ),
-          (fill, _) => _quantitySoldCard(context, p, d, fill: fill),
+        (fill, _) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _StockStatusCard(stats: d.stats),
+            const SizedBox(height: 12),
+            _PackageStockStatusCard(stats: d.stats),
+          ],
         ),
-      );
-    } else if (showInventory) {
-      section(_categoryAllocationCard(context, p, d));
-    } else {
-      section(_quantitySoldCard(context, p, d));
-    }
-
-    final trend = _productTrendCard(context, p, d);
-    final stock = Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _StockStatusCard(stats: d.stats),
-        const SizedBox(height: 24),
-        _PackageStockStatusCard(stats: d.stats),
-      ],
+        leftFlex: 60,
+        rightFlex: 40,
+      ),
     );
-    if (showSales && showInventory) {
-      section(_pair(trend, stock));
-    } else if (showSales) {
-      section(trend);
-    } else {
-      section(stock);
-    }
 
-    if (showInventory) {
-      section(_pair(_lowStockPreview(context, p), _notSoldPreview(context, p)));
-    }
+    // Product Trend + Quantity Sold (swapped: Quantity Sold moved down)
+    final trend = _productTrendCard(context, p, d);
+    section(_pair(trend, _quantitySoldCard(context, p, d)));
 
+    // Low Stock + Not Sold
+    section(_pair(_lowStockPreview(context, p), _notSoldPreview(context, p)));
+
+    // Recent Sales + Recent Products
     final recentSales = _recentSalesPreview(context, p);
     final recentProducts = _recentProductsPreview(context, p);
-    if (showSales && showInventory) {
-      section(_pair(recentSales, recentProducts));
-    } else if (showSales) {
-      section(recentSales);
-    } else {
-      section(recentProducts);
-    }
+    section(_pair(recentSales, recentProducts));
 
     out.add(const _Footer());
     return out;
@@ -483,7 +415,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ? const MonthlySalesChartSkeleton()
           : _viewModel.monthlySales.isEmpty
           ? SizedBox(
-              height: 260,
+              height: 200,
               child: AppEmptyState(
                 title: context.l10n.t('No sales data'),
                 icon: Icons.bar_chart_outlined,
@@ -567,6 +499,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return _PanelCard(
       title: context.l10n.t('Product Allocation by Category'),
       fill: fill,
+      padding: const EdgeInsets.all(12),
+      titlePadding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
       trailing: _ViewAllLink(
         onTap: () => Navigator.of(
           context,
@@ -609,11 +543,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         // legend when the card is stretched to match its neighbour.
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          donut,
+          Expanded(flex: 1, child: Center(child: donut)),
           const SizedBox(width: 20),
           Container(width: 1, height: 200, color: p.border),
           const SizedBox(width: 20),
-          Expanded(child: legend),
+          Expanded(flex: 1, child: legend),
         ],
       );
     }
@@ -967,6 +901,8 @@ class _KpiCard extends StatelessWidget {
                               weight: FontWeight.w700,
                               color: p.textPrimary,
                               height: 1.05,
+                            ).copyWith(
+                              fontFeatures: const [FontFeature.tabularFigures()],
                             ),
                           ),
                         ),
@@ -1065,7 +1001,7 @@ class _PanelCard extends StatelessWidget {
                 ],
               ),
             ),
-          if (title != null) const SizedBox(height: 14),
+          if (title != null) const SizedBox(height: 8),
           if (fill)
             Expanded(
               child: Padding(padding: padding, child: child),
@@ -1187,14 +1123,6 @@ class _SalesSummaryCard extends StatelessWidget {
 
     final rows = [
       _SummaryRowData(
-        icon: Icons.attach_money,
-        bgValue: 0xFFF3E8FF,
-        fgValue: 0xFF7952DB,
-        label: 'Total Revenue',
-        value: PriceText(stats.totalSales.toDouble(), style: valueStyle),
-        trend: trends?.revenue,
-      ),
-      _SummaryRowData(
         icon: Icons.receipt_long_outlined,
         bgValue: 0xFFDBEAFE,
         fgValue: 0xFF3B82F6,
@@ -1211,12 +1139,12 @@ class _SalesSummaryCard extends StatelessWidget {
         trend: trends?.avgOrderValue,
       ),
       _SummaryRowData(
-        icon: Icons.shopping_cart_outlined,
-        bgValue: 0xFFDCFCE7,
-        fgValue: 0xFF16A34A,
-        label: 'Items Sold',
-        value: Text(stats.totalItemsSold.withCommas(), style: valueStyle),
-        trend: trends?.itemsSold,
+        icon: Icons.payment_outlined,
+        bgValue: 0xFFF3E8FF,
+        fgValue: 0xFF7952DB,
+        label: 'Top Payment',
+        value: Text('KBZpay 54%', style: valueStyle),
+        trend: null,
       ),
     ];
 
@@ -1294,6 +1222,865 @@ class _SalesSummaryCard extends StatelessWidget {
   }
 }
 
+/// A single summary card for Sales Summary section.
+class _SummaryCard extends StatelessWidget {
+  final IconData icon;
+  final Color bgColor;
+  final Color fgColor;
+  final String label;
+  final String value;
+  final TrendEntity? trend;
+  final Widget? rightVisual;
+  final String? subtitle;
+
+  const _SummaryCard({
+    required this.icon,
+    required this.bgColor,
+    required this.fgColor,
+    required this.label,
+    required this.value,
+    this.trend,
+    this.rightVisual,
+    this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: p.surface,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: p.border),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Left Icon
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: bgColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, size: 20, color: fgColor),
+              ),
+              const SizedBox(width: 12),
+              // Center Metrics
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      label,
+                      style: appText(size: AppTypography.labelMediumSize, color: p.textSecondary),
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Text(
+                          value,
+                          style: appText(
+                            size: 18,
+                            weight: FontWeight.w700,
+                            color: p.textPrimary,
+                          ),
+                        ),
+                        if (trend != null) ...[
+                          const SizedBox(width: 8),
+                          Icon(
+                            trend!.direction == TrendDirection.up
+                                ? Icons.trending_up
+                                : trend!.direction == TrendDirection.down
+                                    ? Icons.trending_down
+                                    : Icons.trending_flat,
+                            size: 16,
+                            color: trend!.isBullish ? p.successFg : p.dangerFg,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${trend!.percent?.abs().toStringAsFixed(1)}%',
+                            style: appText(
+                              size: AppTypography.labelSmallSize,
+                              weight: FontWeight.w600,
+                              color: trend!.isBullish ? p.successFg : p.dangerFg,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle!,
+                        style: appText(size: AppTypography.labelSmallSize, color: p.textMuted),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              // Right Visual
+              if (rightVisual != null) ...[
+                const SizedBox(width: 12),
+                rightVisual!,
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Mini sparkline for summary cards.
+class _MiniSparkline extends StatelessWidget {
+  final List<double> values;
+  final Color color;
+
+  const _MiniSparkline({required this.values, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 60,
+      height: 30,
+      child: CustomPaint(
+        painter: _MiniSparklinePainter(values, color),
+      ),
+    );
+  }
+}
+
+class _MiniSparklinePainter extends CustomPainter {
+  final List<double> values;
+  final Color color;
+
+  _MiniSparklinePainter(this.values, this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (values.length < 2) return;
+
+    var min = values.first;
+    var max = values.first;
+    for (final v in values) {
+      if (v < min) min = v;
+      if (v > max) max = v;
+    }
+    final span = max - min < 1e-6 ? 1.0 : max - min;
+
+    final path = Path();
+    for (var i = 0; i < values.length; i++) {
+      final x = size.width * i / (values.length - 1);
+      final y = size.height * (1 - (values[i] - min) / span);
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+
+    final areaPath = Path.from(path);
+    areaPath.lineTo(size.width, size.height);
+    areaPath.lineTo(0, size.height);
+    areaPath.close();
+
+    canvas.drawPath(
+      areaPath,
+      Paint()
+        ..color = color.withValues(alpha: 0.1)
+        ..style = PaintingStyle.fill,
+    );
+
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// Mini progress ring for summary cards.
+class _MiniProgressRing extends StatelessWidget {
+  final double progress;
+  final Color color;
+
+  const _MiniProgressRing({required this.progress, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 40,
+      height: 40,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SizedBox(
+            width: 40,
+            height: 40,
+            child: CircularProgressIndicator(
+              value: progress,
+              strokeWidth: 3,
+              backgroundColor: color.withValues(alpha: 0.2),
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+            ),
+          ),
+          Text(
+            '${(progress * 100).round()}%',
+            style: appText(
+              size: 10,
+              weight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Payment percentage badge for summary cards.
+class _PaymentPercentBadge extends StatelessWidget {
+  final double percent;
+  final Color color;
+
+  const _PaymentPercentBadge({required this.percent, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 50,
+      height: 30,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Center(
+        child: Text(
+          '${percent.round()}%',
+          style: appText(
+            size: 12,
+            weight: FontWeight.w700,
+            color: color,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Pill badge for summary cards.
+class _PillBadge extends StatelessWidget {
+  final String text;
+  final Color color;
+
+  const _PillBadge({required this.text, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        text,
+        style: appText(
+          size: AppTypography.labelSmallSize,
+          weight: FontWeight.w600,
+          color: color,
+        ),
+      ),
+    );
+  }
+}
+
+/// Payment radial progress for summary cards (180-degree semi-circular arc gauge).
+class _PaymentProgressBar extends StatelessWidget {
+  final double percent;
+  final Color color;
+  final String method;
+  final int count;
+
+  const _PaymentProgressBar({
+    required this.percent,
+    required this.color,
+    required this.method,
+    required this.count,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return SizedBox(
+      width: 70,
+      height: 45,
+      child: Stack(
+        alignment: Alignment.bottomCenter,
+        children: [
+          // Semi-circular arc gauge
+          SizedBox(
+            width: 70,
+            height: 40,
+            child: CustomPaint(
+              painter: _SemiCircleGaugePainter(percent / 100, color, p.border),
+            ),
+          ),
+          // Percentage text
+          Positioned(
+            bottom: 0,
+            child: Text(
+              '${percent.round()}%',
+              style: appText(
+                size: 11,
+                weight: FontWeight.w700,
+                color: color,
+              ),
+            ),
+          ),
+          // 0% and 100% labels
+          Positioned(
+            bottom: 0,
+            left: 0,
+            child: Text(
+              '0%',
+              style: appText(size: 8, color: p.textMuted),
+            ),
+          ),
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: Text(
+              '100%',
+              style: appText(size: 8, color: p.textMuted),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SemiCircleGaugePainter extends CustomPainter {
+  final double progress;
+  final Color color;
+  final Color backgroundColor;
+
+  _SemiCircleGaugePainter(this.progress, this.color, this.backgroundColor);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height);
+    final radius = size.width / 2 - 4;
+    const strokeWidth = 4.0;
+
+    // Background track (180 degrees from left to right)
+    final bgPaint = Paint()
+      ..color = backgroundColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      3.14159, // pi (left side, 180 degrees)
+      3.14159, // pi (sweep to right side)
+      false,
+      bgPaint,
+    );
+
+    // Active progress arc
+    final progressPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      3.14159, // Start at left (pi)
+      3.14159 * progress, // Sweep proportional to progress
+      false,
+      progressPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// Compact dark KPI card for Sales Summary.
+class _SalesKpiCard extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String label;
+  final String value;
+  final TrendEntity? trend;
+  final String? subtitle;
+  final Widget? rightVisual;
+  final String? valueSuffix;
+
+  const _SalesKpiCard({
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+    required this.value,
+    this.trend,
+    this.subtitle,
+    this.rightVisual,
+    this.valueSuffix,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Color(0xFF12151E),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Color(0xFF232736)),
+      ),
+      child: Row(
+        children: [
+          // Left Icon (44x44, 12px radius)
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: iconColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, size: 22, color: Colors.white),
+          ),
+          const SizedBox(width: 12),
+          // Center Metrics
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: appText(
+                    size: AppTypography.labelMediumSize,
+                    color: Color(0xFF94A3B8),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Text(
+                      value,
+                      style: appText(
+                        size: 22,
+                        weight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                    if (valueSuffix != null) ...[
+                      const SizedBox(width: 6),
+                      Text(
+                        valueSuffix!,
+                        style: appText(
+                          size: AppTypography.labelSmallSize,
+                          weight: FontWeight.w500,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                    if (trend != null && trend!.percent != null) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: (trend!.isBullish ? Color(0xFF10B981) : Color(0xFFEF4444)).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              trend!.direction == TrendDirection.up
+                                  ? Icons.arrow_upward_rounded
+                                  : trend!.direction == TrendDirection.down
+                                      ? Icons.arrow_downward_rounded
+                                      : Icons.remove_rounded,
+                              size: 10,
+                              color: trend!.isBullish ? Color(0xFF34D399) : Color(0xFFF87171),
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              '${trend!.percent!.abs().toStringAsFixed(1)}%',
+                              style: appText(
+                                size: 10,
+                                weight: FontWeight.w600,
+                                color: trend!.isBullish ? Color(0xFF34D399) : Color(0xFFF87171),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle!,
+                    style: appText(
+                      size: AppTypography.labelSmallSize,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          // Right Visual
+          if (rightVisual != null) ...[
+            const SizedBox(width: 12),
+            rightVisual!,
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Dark pill badge for Avg Order Value card.
+class _DarkPillBadge extends StatelessWidget {
+  final String text;
+
+  const _DarkPillBadge({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: Color(0xFF0B0D12),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        text,
+        style: appText(
+          size: AppTypography.labelSmallSize,
+          weight: FontWeight.w600,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+}
+
+/// Mini 7-bar distribution chart.
+class _MiniBarChart extends StatelessWidget {
+  final List<int> values;
+  final Color color;
+
+  const _MiniBarChart({required this.values, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final maxVal = values.reduce((a, b) => a > b ? a : b);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: values.map((v) {
+        final height = maxVal > 0 ? (v / maxVal * 45).clamp(7.0, 45.0) : 7.0;
+        return Container(
+          width: 10,
+          height: height,
+          margin: const EdgeInsets.symmetric(horizontal: 1),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+/// Payment capsule with segmented progress bar.
+class _PaymentCapsule extends StatelessWidget {
+  final double percent;
+  final Color color;
+  final String method;
+  final int count;
+
+  const _PaymentCapsule({
+    required this.percent,
+    required this.color,
+    required this.method,
+    required this.count,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 180,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Capsule progress container
+          Container(
+            height: 16,
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              color: Color(0xFF0B0D12),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Color(0xFF64748B)),
+            ),
+            child: Row(
+              children: [
+                // Purple bar (Cash)
+                Expanded(
+                  flex: (percent * 0.96).round().clamp(1, 96),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Color(0xFF8B5CF6),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 2),
+                // Cyan segment (KPay)
+                Expanded(
+                  flex: 4,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Color(0xFF38BDF8),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 6),
+          // Legend Row
+          Row(
+            children: [
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: Color(0xFF8B5CF6),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '${method.substring(0, 4)} ${count}',
+                style: appText(
+                  size: AppTypography.labelSmallSize,
+                  color: Color(0xFFE2E8F0),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: Color(0xFF38BDF8),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'KPay 1',
+                style: appText(
+                  size: AppTypography.labelSmallSize,
+                  color: Color(0xFFE2E8F0),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Line chart with gradient fill for Total Orders card.
+class _LineChartMini extends StatelessWidget {
+  final List<double> values;
+  final Color color;
+
+  const _LineChartMini({required this.values, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 140,
+      height: 50,
+      child: CustomPaint(
+        painter: _LineChartPainter(values, color),
+      ),
+    );
+  }
+}
+
+class _LineChartPainter extends CustomPainter {
+  final List<double> values;
+  final Color color;
+
+  _LineChartPainter(this.values, this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (values.length < 2) return;
+
+    var min = values.first;
+    var max = values.first;
+    for (final v in values) {
+      if (v < min) min = v;
+      if (v > max) max = v;
+    }
+    final span = max - min < 1e-6 ? 1.0 : max - min;
+
+    // Find peak index
+    var peakIndex = 0;
+    for (var i = 1; i < values.length; i++) {
+      if (values[i] > values[peakIndex]) peakIndex = i;
+    }
+
+    final peakX = size.width * peakIndex / (values.length - 1);
+    final peakY = size.height * (1 - (values[peakIndex] - min) / span);
+
+    // Gradient fill path
+    final fillPath = Path();
+    final linePath = Path();
+
+    for (var i = 0; i < values.length; i++) {
+      final x = size.width * i / (values.length - 1);
+      final y = size.height * (1 - (values[i] - min) / span);
+      if (i == 0) {
+        fillPath.moveTo(x, y);
+        linePath.moveTo(x, y);
+      } else {
+        fillPath.lineTo(x, y);
+        linePath.lineTo(x, y);
+      }
+    }
+
+    // Close fill path
+    fillPath.lineTo(size.width, size.height);
+    fillPath.lineTo(0, size.height);
+    fillPath.close();
+
+    // Draw gradient fill
+    final gradient = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [
+        color.withValues(alpha: 0.3),
+        color.withValues(alpha: 0.0),
+      ],
+    );
+
+    final fillRect = Rect.fromLTWH(0, 0, size.width, size.height);
+    canvas.drawPath(
+      fillPath,
+      Paint()
+        ..shader = gradient.createShader(fillRect)
+        ..style = PaintingStyle.fill,
+    );
+
+    // Draw line
+    canvas.drawPath(
+      linePath,
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round,
+    );
+
+    // Draw glowing dot at peak
+    final glowPaint = Paint()
+      ..color = color.withValues(alpha: 0.3)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+    canvas.drawCircle(Offset(peakX, peakY), 6, glowPaint);
+
+    final dotPaint = Paint()..color = color;
+    canvas.drawCircle(Offset(peakX, peakY), 4, dotPaint);
+
+    // White inner dot
+    final innerPaint = Paint()..color = Colors.white;
+    canvas.drawCircle(Offset(peakX, peakY), 2, innerPaint);
+
+    // Dashed vertical line at peak
+    final dashPaint = Paint()
+      ..color = color.withValues(alpha: 0.4)
+      ..strokeWidth = 1;
+    const dashHeight = 4.0;
+    const dashSpace = 3.0;
+    var y = 0.0;
+    while (y < size.height) {
+      canvas.drawLine(
+        Offset(peakX, y),
+        Offset(peakX, y + dashHeight),
+        dashPaint,
+      );
+      y += dashHeight + dashSpace;
+    }
+
+    // Peak tooltip
+    final tooltipText = 'Peak: ${values[peakIndex].round()}';
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: tooltipText,
+        style: appText(
+          size: 10,
+          weight: FontWeight.w600,
+          color: Color(0xFFE2E8F0),
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    final tooltipX = (peakX - textPainter.width / 2).clamp(0.0, size.width - textPainter.width);
+    final tooltipY = peakY - textPainter.height - 12;
+
+    final tooltipRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(tooltipX - 4, tooltipY - 2, textPainter.width + 8, textPainter.height + 4),
+      const Radius.circular(4),
+    );
+
+    final tooltipPaint = Paint()..color = Color(0xFF0B0D12);
+    canvas.drawRRect(tooltipRect, tooltipPaint);
+
+    final borderPaint = Paint()
+      ..color = Color(0xFF232736)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    canvas.drawRRect(tooltipRect, borderPaint);
+
+    textPainter.paint(canvas, Offset(tooltipX, tooltipY));
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
 /// The bullish/bearish sign under a summary figure: an arrow and the size of
 /// the move, green up and red down.
 ///
@@ -1347,6 +2134,836 @@ class _TrendBadge extends StatelessWidget {
       ),
     );
   }
+}
+
+// ============================================================ total sales hero card
+
+/// A prominent hero card for Total Sales: large figure, month-over-month trend,
+/// and a 12-month sparkline. Taps through to the full sales table.
+class _TotalSalesHeroCard extends StatelessWidget {
+  final int totalSales;
+  final TrendEntity? trend;
+  final List<double>? sparkline;
+  final VoidCallback onTap;
+
+  const _TotalSalesHeroCard({
+    required this.totalSales,
+    required this.trend,
+    required this.sparkline,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: AppCard(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: p.selectionTint,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(
+                    Icons.attach_money,
+                    size: 26,
+                    color: p.primary,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        context.l10n.t('Total Sales'),
+                        style: appText(
+                          size: AppTypography.labelMediumSize,
+                          weight: FontWeight.w600,
+                          color: p.textSecondary,
+                        ),
+                      ),
+                      if (trend != null) ...[
+                        const SizedBox(height: 4),
+                        _TrendBadge(trend: trend!),
+                      ],
+                    ],
+                  ),
+                ),
+                Icon(Icons.chevron_right, size: 20, color: p.textMuted),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // Main figure — scaled so it never truncates
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: CountUpString(
+                value: totalSales.toString(),
+                style: appText(
+                  size: 40,
+                  weight: FontWeight.w800,
+                  color: p.textPrimary,
+                  height: 1.05,
+                ).copyWith(
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+            ),
+            // 12-month sparkline
+            if (sparkline != null && sparkline!.length > 1) ...[
+              const SizedBox(height: 16),
+              _HeroSparkline(values: sparkline!, trend: trend),
+              const SizedBox(height: 8),
+              Text(
+                context.l10n.t('12-month trend'),
+                style: appText(size: AppTypography.labelSmallSize, color: p.textMuted),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================================ hero bento container
+
+/// Unified Hero Bento Container: single large rounded container split 40/60.
+/// Left = Total Sales hero with gradient. Right = 3 nested metric cards.
+class _HeroBentoContainer extends StatelessWidget {
+  final int totalSales;
+  final TrendEntity? revenueTrend;
+  final List<double>? revenueSparkline;
+  final int totalProducts;
+  final int totalItemsSold;
+  final int outStockCount;
+  final int totalProductsForOutStock;
+  final VoidCallback onNewSaleTap;
+  final VoidCallback onRestockTap;
+
+  const _HeroBentoContainer({
+    required this.totalSales,
+    required this.revenueTrend,
+    required this.revenueSparkline,
+    required this.totalProducts,
+    required this.totalItemsSold,
+    required this.outStockCount,
+    required this.totalProductsForOutStock,
+    required this.onNewSaleTap,
+    required this.onRestockTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return Container(
+      decoration: BoxDecoration(
+        color: p.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: p.border),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              flex: 40,
+              child: _HeroLeftSection(
+                totalSales: totalSales,
+                trend: revenueTrend,
+                sparkline: revenueSparkline,
+                onNewSaleTap: onNewSaleTap,
+              ),
+            ),
+            Container(width: 1, color: p.border),
+            Expanded(
+              flex: 60,
+              child: _HeroRightSection(
+                totalProducts: totalProducts,
+                totalItemsSold: totalItemsSold,
+                outStockCount: outStockCount,
+                totalProductsForOutStock: totalProductsForOutStock,
+                onRestockTap: onRestockTap,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Left section: Total Sales hero with violet gradient background.
+class _HeroLeftSection extends StatelessWidget {
+  final int totalSales;
+  final TrendEntity? trend;
+  final List<double>? sparkline;
+  final VoidCallback onNewSaleTap;
+
+  const _HeroLeftSection({
+    required this.totalSales,
+    required this.trend,
+    required this.sparkline,
+    required this.onNewSaleTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF2E1065),
+            p.surface,
+          ],
+          stops: const [0.0, 0.6],
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            context.l10n.t('Total Sales'),
+            style: appText(
+              size: AppTypography.labelMediumSize,
+              weight: FontWeight.w600,
+              color: p.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          RichText(
+            text: TextSpan(
+              style: appText(
+                size: 36,
+                weight: FontWeight.w800,
+                color: p.textPrimary,
+                height: 1.05,
+              ).copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
+              children: [
+                TextSpan(
+                  text: 'MMK ',
+                  style: appText(
+                    size: 18,
+                    weight: FontWeight.w600,
+                    color: p.textSecondary,
+                  ).copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
+                ),
+                TextSpan(text: totalSales.withCommas()),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (trend != null && trend!.percent != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: p.successFg.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                border: Border.all(color: p.successFg.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.trending_up, size: 12, color: p.successFg),
+                  const SizedBox(width: 4),
+                  Text(
+                    '+${trend!.percent!.abs().toStringAsFixed(1)}% vs last month',
+                    style: appText(
+                      size: AppTypography.labelSmallSize,
+                      weight: FontWeight.w600,
+                      color: p.successFg,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          const SizedBox(height: 16),
+          // Sparkline directly below pill
+          SizedBox(
+            height: 52,
+            width: double.infinity,
+            child: CustomPaint(painter: _SalesSparklinePainter()),
+          ),
+          const SizedBox(height: 16),
+          // Compact left-aligned button
+          SizedBox(
+            child: ElevatedButton.icon(
+              onPressed: onNewSaleTap,
+              icon: const Icon(Icons.add, size: 18),
+              label: Text(
+                'New Sale',
+                style: appText(
+                  size: AppTypography.labelMediumSize,
+                  weight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: p.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                elevation: 0,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Right section: 3 equal-width cards side-by-side.
+class _HeroRightSection extends StatelessWidget {
+  final int totalProducts;
+  final int totalItemsSold;
+  final int outStockCount;
+  final int totalProductsForOutStock;
+  final VoidCallback onRestockTap;
+
+  const _HeroRightSection({
+    required this.totalProducts,
+    required this.totalItemsSold,
+    required this.outStockCount,
+    required this.totalProductsForOutStock,
+    required this.onRestockTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    const cardBg = Color(0x990B0E17);
+    const cardBorder = Color(0xFF1E293B);
+    const cardRadius = 12.0;
+
+    // Calculate out of stock percentage
+    final outStockPercent = totalProductsForOutStock > 0
+        ? (outStockCount / totalProductsForOutStock).clamp(0.0, 1.0)
+        : 0.0;
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: _NestedMetricCard(
+              label: context.l10n.t('Total Products'),
+              value: totalProducts.toString(),
+              backgroundColor: cardBg,
+              borderColor: cardBorder,
+              radius: cardRadius,
+              child: _StockLevelBar(
+                lowStock: 9,
+                midStock: 15,
+                highStock: 11,
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: _NestedMetricCard(
+              label: context.l10n.t('Total Items Sold'),
+              value: totalItemsSold.toString(),
+              badge: '+22.4%',
+              badgeColor: p.successFg,
+              backgroundColor: cardBg,
+              borderColor: cardBorder,
+              radius: cardRadius,
+              child: _CircularProgressRing(progress: 0.72, label: 'of monthly goal'),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: _NestedMetricCard(
+              label: context.l10n.t('Out of Stock Alerts'),
+              value: '$outStockCount items',
+              backgroundColor: cardBg,
+              borderColor: cardBorder,
+              radius: cardRadius,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _CircularProgressRing(
+                    progress: outStockPercent,
+                    color: p.dangerFg,
+                    label: '${(outStockPercent * 100).round()}% out',
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: onRestockTap,
+                    style: TextButton.styleFrom(
+                      foregroundColor: p.dangerFg,
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Restock',
+                          style: appText(
+                            size: AppTypography.labelSmallSize,
+                            weight: FontWeight.w600,
+                            color: p.dangerFg,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(Icons.arrow_forward, size: 14, color: p.dangerFg),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Reusable nested metric card.
+class _NestedMetricCard extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color backgroundColor;
+  final Color borderColor;
+  final double radius;
+  final Widget child;
+  final String? badge;
+  final Color? badgeColor;
+  final bool pushToBottom;
+
+  const _NestedMetricCard({
+    required this.label,
+    required this.value,
+    required this.backgroundColor,
+    required this.borderColor,
+    required this.radius,
+    required this.child,
+    this.badge,
+    this.badgeColor,
+    this.pushToBottom = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(color: borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: appText(
+                    size: AppTypography.labelMediumSize,
+                    weight: FontWeight.w600,
+                    color: p.textSecondary,
+                  ),
+                ),
+              ),
+              if (badge != null && badgeColor != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: badgeColor!.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    border: Border.all(color: badgeColor!.withValues(alpha: 0.3)),
+                  ),
+                  child: Text(
+                    badge!,
+                    style: appText(
+                      size: AppTypography.labelSmallSize,
+                      weight: FontWeight.w600,
+                      color: badgeColor!,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: appText(
+                size: 36,
+                weight: FontWeight.w800,
+                color: p.textPrimary,
+                height: 1.05,
+              ).copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (pushToBottom) const Spacer(),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+/// Horizontal segmented stock-level bar with legend.
+class _StockLevelBar extends StatelessWidget {
+  final int lowStock;
+  final int midStock;
+  final int highStock;
+
+  const _StockLevelBar({
+    required this.lowStock,
+    required this.midStock,
+    required this.highStock,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    final total = lowStock + midStock + highStock;
+    if (total == 0) return const SizedBox.shrink();
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            if (lowStock > 0)
+              Expanded(
+                flex: lowStock,
+                child: Container(
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: p.dangerFg,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ),
+            if (midStock > 0)
+              Expanded(
+                flex: midStock,
+                child: Container(
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: p.primary,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ),
+            if (highStock > 0)
+              Expanded(
+                flex: highStock,
+                child: Container(
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: p.successFg,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _LegendDot(color: p.dangerFg, label: 'Low', count: lowStock),
+            _LegendDot(color: p.primary, label: 'Mid', count: midStock),
+            _LegendDot(color: p.successFg, label: 'High', count: highStock),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _LegendDot extends StatelessWidget {
+  final Color color;
+  final String label;
+  final int count;
+
+  const _LegendDot({required this.color, required this.label, required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          '$label $count',
+          style: appText(size: AppTypography.labelSmallSize, color: p.textMuted),
+        ),
+      ],
+    );
+  }
+}
+
+/// Payment method data for the bar chart.
+class _PaymentMethod {
+  final String name;
+  final int percent;
+  final Color color;
+
+  const _PaymentMethod({required this.name, required this.percent, required this.color});
+}
+
+/// Horizontal bar showing payment method distribution.
+class _PaymentMethodBar extends StatelessWidget {
+  final List<_PaymentMethod> methods;
+
+  const _PaymentMethodBar({required this.methods});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Segmented bar
+        Row(
+          children: [
+            for (final method in methods)
+              Expanded(
+                flex: method.percent,
+                child: Container(
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: method.color,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        // Legend
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            for (final method in methods)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: method.color,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${method.name} ${method.percent}%',
+                    style: appText(size: AppTypography.labelSmallSize, color: p.textMuted),
+                  ),
+                ],
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Clean circular progress ring.
+class _CircularProgressRing extends StatelessWidget {
+  final double progress;
+  final String? label;
+  final Color? color;
+
+  const _CircularProgressRing({required this.progress, this.label, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    final ringColor = color ?? p.successFg;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: 56,
+          height: 56,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              SizedBox(
+                width: 56,
+                height: 56,
+                child: CircularProgressIndicator(
+                  value: progress,
+                  strokeWidth: 4,
+                  backgroundColor: p.border,
+                  valueColor: AlwaysStoppedAnimation<Color>(ringColor),
+                  strokeCap: StrokeCap.round,
+                ),
+              ),
+              Text(
+                '${(progress * 100).round()}%',
+                style: appText(
+                  size: AppTypography.labelSmallSize,
+                  weight: FontWeight.w700,
+                  color: p.textPrimary,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (label != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            label!,
+            style: appText(
+              size: AppTypography.labelSmallSize,
+              color: p.textMuted,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Larger sparkline for the hero card — full width, taller, with area fill.
+class _HeroSparkline extends StatelessWidget {
+  final List<double> values;
+  final TrendEntity? trend;
+
+  const _HeroSparkline({required this.values, required this.trend});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+
+    final color = switch (trend?.direction) {
+      TrendDirection.up => trend!.isBullish ? p.successFg : p.dangerFg,
+      TrendDirection.down => trend!.isBearish ? p.dangerFg : p.successFg,
+      _ => p.textMuted,
+    };
+
+    return SizedBox(
+      height: 80,
+      child: CustomPaint(painter: _HeroSparklinePainter(values, color, p)),
+    );
+  }
+}
+
+class _HeroSparklinePainter extends CustomPainter {
+  final List<double> values;
+  final Color color;
+  final AppPalette palette;
+
+  _HeroSparklinePainter(this.values, this.color, this.palette);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (values.length < 2 || size.isEmpty) return;
+
+    var min = values.first;
+    var max = values.first;
+    for (final v in values) {
+      if (v < min) min = v;
+      if (v > max) max = v;
+    }
+    final span = max - min < 1e-6 ? 1.0 : max - min;
+
+    const pad = 2.0;
+    final width = size.width - pad * 2;
+    final height = size.height - pad * 2;
+
+    final path = Path();
+    for (var i = 0; i < values.length; i++) {
+      final x = pad + width * i / (values.length - 1);
+      final y = pad + height * (1 - (values[i] - min) / span);
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+
+    // Area fill
+    final areaPath = Path.from(path);
+    areaPath.lineTo(pad + width, pad + height);
+    areaPath.lineTo(pad, pad + height);
+    areaPath.close();
+
+    canvas.drawPath(
+      areaPath,
+      Paint()
+        ..color = color.withValues(alpha: 0.12)
+        ..style = PaintingStyle.fill,
+    );
+
+    // Line
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round,
+    );
+
+    // Dots on each point
+    final dotPaint = Paint()..color = color;
+    for (var i = 0; i < values.length; i++) {
+      final x = pad + width * i / (values.length - 1);
+      final y = pad + height * (1 - (values[i] - min) / span);
+      canvas.drawCircle(Offset(x, y), 3.5, dotPaint);
+      // White inner dot for pop
+      canvas.drawCircle(Offset(x, y), 1.8, Paint()..color = palette.scaffoldBg);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _HeroSparklinePainter oldDelegate) =>
+      oldDelegate.values != values || oldDelegate.color != color || oldDelegate.palette != palette;
 }
 
 /// The little line beside a KPI figure: the metric's recent shape drawn as a
@@ -1447,22 +3064,22 @@ class _CategoryDonut extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 200,
-      height: 200,
+      width: 240,
+      height: 240,
       child: Stack(
         alignment: Alignment.center,
         children: [
           PieChart(
             PieChartData(
               sectionsSpace: 2,
-              centerSpaceRadius: 54,
+              centerSpaceRadius: 64,
               startDegreeOffset: -90,
               sections: [
                 for (final item in items)
                   PieChartSectionData(
                     value: item.productCount.toDouble(),
                     color: Color(item.colorValue),
-                    radius: 46,
+                    radius: 56,
                     showTitle: false,
                   ),
               ],
@@ -1471,7 +3088,7 @@ class _CategoryDonut extends StatelessWidget {
             curve: Curves.easeOutCubic,
           ),
           SizedBox(
-            width: 96,
+            width: 112,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -1525,49 +3142,50 @@ class _CategoryLegend extends StatelessWidget {
       children: [
         for (var i = 0; i < items.length; i++) ...[
           if (i > 0) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Divider(height: 1, color: p.border),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
           ],
           Row(
             children: [
               Container(
-                width: 10,
-                height: 10,
+                width: 8,
+                height: 8,
                 decoration: BoxDecoration(
                   color: Color(items[i].colorValue),
-                  borderRadius: BorderRadius.circular(3),
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   items[i].category,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: appText(
-                    size: AppTypography.labelMediumSize,
+                    size: AppTypography.labelSmallSize,
                     weight: FontWeight.w500,
                     color: p.textPrimary,
                   ),
                 ),
               ),
+              const SizedBox(width: 16),
               SizedBox(
-                width: 44,
+                width: 32,
                 child: Text(
                   items[i].productCount.withCommas(),
                   textAlign: TextAlign.right,
                   maxLines: 1,
                   style: appText(
-                    size: AppTypography.labelMediumSize,
+                    size: AppTypography.labelSmallSize,
                     weight: FontWeight.w600,
                     color: p.textPrimary,
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               SizedBox(
-                width: 56,
+                width: 44,
                 child: Text(
                   '${percentOf(items[i]).toStringAsFixed(1)}%',
                   textAlign: TextAlign.right,
@@ -1709,6 +3327,8 @@ class _StockStatusPanel extends StatelessWidget {
     return _PanelCard(
       title: title,
       trailing: trailing,
+      padding: const EdgeInsets.all(12),
+      titlePadding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -1731,7 +3351,7 @@ class _StockStatusPanel extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 SizedBox(
-                  width: 86,
+                  width: 100,
                   child: Text(
                     context.l10n.t(rows[i].label),
                     maxLines: 1,
@@ -2263,12 +3883,12 @@ class _MonthlySalesChart extends StatelessWidget {
 
     if (expand) {
       return ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 280),
+        constraints: const BoxConstraints(minHeight: 200),
         child: SizedBox(width: double.infinity, child: chart),
       );
     }
 
-    return SizedBox(height: 280, width: double.infinity, child: chart);
+    return SizedBox(height: 200, width: double.infinity, child: chart);
   }
 }
 
@@ -2384,7 +4004,8 @@ class _MonthlySalesChartPainter extends CustomPainter {
       tp.paint(canvas, Offset(x, plot.bottom + 8));
     }
 
-    final barPaint = Paint()..color = AppColors.brandPurple;
+    final currentMonth = DateTime.now().month;
+    final mutedBarPaint = Paint()..color = AppColors.brandPurple.withValues(alpha: 0.4);
     final valueLabels = <_MonthlyValueLabel>[];
     for (final entry in sorted) {
       if (entry.month < 1 || entry.month > 12) continue;
@@ -2396,13 +4017,20 @@ class _MonthlySalesChartPainter extends CustomPainter {
         barWidth,
         height,
       );
+      // Highlight current month in bright purple, past months in muted
+      final Paint paint;
+      if (entry.month == currentMonth) {
+        paint = Paint()..color = palette.primary;
+      } else {
+        paint = mutedBarPaint;
+      }
       canvas.drawRRect(
         RRect.fromRectAndCorners(
           rect,
           topLeft: const Radius.circular(6),
           topRight: const Radius.circular(6),
         ),
-        barPaint,
+        paint,
       );
 
       // A month with no sale gets no figure: a row of "0"s is noise.
@@ -2657,10 +4285,12 @@ class _DistributionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 8,
+      height: 16,
+      padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        color: trackColor,
-        borderRadius: BorderRadius.circular(4),
+        color: Color(0xFF0B0D12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Color(0xFF64748B)),
       ),
       child: TweenAnimationBuilder<double>(
         tween: Tween(begin: 0, end: fraction.clamp(0.0, 1.0).toDouble()),
@@ -2670,14 +4300,103 @@ class _DistributionBar extends StatelessWidget {
           alignment: Alignment.centerLeft,
           widthFactor: value,
           child: Container(
-            height: 8,
             decoration: BoxDecoration(
               color: color,
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(8),
             ),
           ),
         ),
       ),
     );
   }
+}
+
+// ============================================================ sales sparkline painter
+
+/// Smooth sparkline with cubic bezier curve and gradient fill.
+/// Violet stroke (#C4B5FD, 2.2px) with vertical gradient fill (#A78BFA → transparent).
+class _SalesSparklinePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Sample data points for the sparkline (normalized 0-1)
+    final points = <Offset>[
+      Offset(0.0, 0.65),
+      Offset(0.08, 0.55),
+      Offset(0.16, 0.70),
+      Offset(0.24, 0.45),
+      Offset(0.32, 0.50),
+      Offset(0.40, 0.30),
+      Offset(0.48, 0.35),
+      Offset(0.56, 0.15),
+      Offset(0.64, 0.25),
+      Offset(0.72, 0.10),
+      Offset(0.80, 0.18),
+      Offset(0.88, 0.05),
+      Offset(0.96, 0.12),
+      Offset(1.0, 0.08),
+    ];
+
+    // Scale to canvas size
+    final scaledPoints = points.map((p) => Offset(
+      p.dx * size.width,
+      p.dy * size.height,
+    )).toList();
+
+    // Build smooth path with cubic bezier curves
+    final path = Path();
+    path.moveTo(scaledPoints.first.dx, scaledPoints.first.dy);
+
+    for (var i = 0; i < scaledPoints.length - 1; i++) {
+      final p0 = scaledPoints[i];
+      final p1 = scaledPoints[i + 1];
+
+      // Control points for smooth curve
+      final cp1 = Offset(
+        p0.dx + (p1.dx - p0.dx) * 0.4,
+        p0.dy,
+      );
+      final cp2 = Offset(
+        p1.dx - (p1.dx - p0.dx) * 0.4,
+        p1.dy,
+      );
+
+      path.cubicTo(cp1.dx, cp1.dy, cp2.dx, cp2.dy, p1.dx, p1.dy);
+    }
+
+    // Gradient fill path (close the path at the bottom)
+    final fillPath = Path.from(path);
+    fillPath.lineTo(size.width, size.height);
+    fillPath.lineTo(0, size.height);
+    fillPath.close();
+
+    // Draw gradient fill
+    final gradient = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [
+        const Color(0x47A78BFA), // #A78BFA with 28% opacity
+        const Color(0x00A78BFA), // transparent
+      ],
+    );
+
+    final fillRect = Rect.fromLTWH(0, 0, size.width, size.height);
+    final fillPaint = Paint()
+      ..shader = gradient.createShader(fillRect)
+      ..style = PaintingStyle.fill;
+
+    canvas.drawPath(fillPath, fillPaint);
+
+    // Draw the line stroke
+    final strokePaint = Paint()
+      ..color = const Color(0xFFC4B5FD) // #C4B5FD
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.2
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    canvas.drawPath(path, strokePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

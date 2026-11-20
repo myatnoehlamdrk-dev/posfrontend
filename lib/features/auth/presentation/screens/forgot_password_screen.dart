@@ -9,6 +9,9 @@ import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_input_decoration.dart';
+import 'package:posfrontend/shared/widgets/app_page_transitions.dart';
+import 'package:posfrontend/shared/widgets/brand_art_veil.dart';
+import 'package:posfrontend/shared/widgets/brand_avatar_badge.dart';
 import 'package:posfrontend/shared/widgets/gradient_button.dart';
 import 'package:posfrontend/shared/widgets/required_label.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
@@ -75,8 +78,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     if (success && mounted) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (_) => ResetPasswordScreen(
+        AppPageTransitions.authSmooth<void>(
+          ResetPasswordScreen(
             email: _viewModel.email,
             resetToken: _viewModel.resetToken,
           ),
@@ -152,8 +155,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            _buildHeaderIcon(),
-                            const SizedBox(height: 20),
+                            // On tablet the avatar lives inside the card with
+                            // the form, so showing it here as well would put
+                            // two copies of the same mark on one screen.
+                            if (!carded) ...[
+                              _buildHeaderIcon(),
+                              const SizedBox(height: 20),
+                            ],
                             _buildHeading(otpSent: otpSent),
                             const SizedBox(height: 28),
                             if (carded)
@@ -215,7 +223,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   /// Brand pane for the wide layout: the forgot-password artwork filling the
-  /// panel, with a left-edge gradient so the copy reads on every screen size.
+  /// panel, with left and top veils for the copy, plus right and bottom veils
+  /// that close the dark frame around the artwork.
   ///
   /// The lockup, headline, supporting copy and the Email → OTP → Reset list
   /// form one block, centred vertically in the pane so the text and the list
@@ -229,20 +238,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           fit: BoxFit.cover,
           alignment: Alignment.centerRight,
         ),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-              colors: [
-                Colors.black.withValues(alpha: 0.55),
-                Colors.black.withValues(alpha: 0.25),
-                Colors.transparent,
-              ],
-              stops: const [0.0, 0.55, 1.0],
-            ),
-          ),
-        ),
+        // Shared scrim: top-left radial, then a veil on each of the four
+        // edges. See [BrandArtVeil] for why the corners need both directions.
+        const BrandArtVeil(),
         Positioned.fill(
           // `_centeredScroll` supplies both the horizontal and the vertical
           // centring: its `minHeight` floor equals the pane, so the block sits
@@ -443,26 +441,18 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // The illustration sits at the top of the form card, cropped to a
-          // circle so it reads as a mark rather than as a rectangular banner.
+          // Same anchor as the login card: the recovery artwork as a circular
+          // avatar, with a key badge instead of login's lock.
           Center(
-            child: Container(
-              width: 150,
-              height: 150,
-              clipBehavior: Clip.antiAlias,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: p.border),
-              ),
-              child: Image.asset(
-                'assets/forgot.png',
-                fit: BoxFit.cover,
-                cacheWidth: 700,
-                cacheHeight: 700,
-              ),
+            child: BrandAvatarBadge(
+              image: 'assets/forgot.png',
+              semanticLabel: context.l10n.t('Reset password'),
+              size: BrandAvatarBadge.standardSize,
+              badgeIcon: Icons.key_rounded,
+              accent: const [AppColors.teal, AppColors.tealDark],
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 26),
           child,
         ],
       ),
@@ -597,28 +587,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   Widget _buildHeaderIcon() {
-    final p = context.palette;
-    return Container(
-      width: 150,
-      height: 150,
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: p.border),
-        boxShadow: [
-          BoxShadow(
-            color: p.cardShadow,
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Image.asset(
-        'assets/forgot.png',
-        fit: BoxFit.cover,
-        cacheWidth: 600,
-        cacheHeight: 600,
-      ),
+    return BrandAvatarBadge(
+      image: 'assets/forgot.png',
+      semanticLabel: context.l10n.t('Reset password'),
+      size: BrandAvatarBadge.standardSize,
+      badgeIcon: Icons.key_rounded,
+      // The artwork is violet edge to edge, so the default violet frame would
+      // disappear into it. Teal is the app's secondary accent and gives the
+      // avatar a visible edge without adding another brand hue.
+      accent: const [AppColors.teal, AppColors.tealDark],
     );
   }
 

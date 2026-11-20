@@ -117,4 +117,25 @@ class AppColors {
     brandPurpleDark,
     brandPurpleDarker,
   ];
+
+  /// The brand ramp's deep "stage" variant, for large brand surfaces.
+  ///
+  /// [brandRamp] is tuned for small fills — buttons, step dots, avatars — where
+  /// 500–700 reads as saturated rather than as a slab of colour. Painted across
+  /// half a screen it is too bright: the login pane starts competing with the
+  /// form instead of sitting behind it, and the whole screen reads as a violet
+  /// poster rather than as a modern product surface.
+  ///
+  /// These stops keep the same 257° hue and the same light-to-dark ordering,
+  /// but drop both lightness and saturation, so the pane reads as a deep
+  /// backdrop. White text clears 4.5:1 on every stop by a wide margin:
+  ///
+  ///   10.42 · 14.06 · 17.29
+  ///
+  /// versus 5.19 on the old 500 stop, which was the one the pane started from.
+  static const List<Color> brandPaneRamp = [
+    Color(0xFF453574),
+    Color(0xFF2E2453),
+    Color(0xFF1B1636),
+  ];
 }

@@ -145,15 +145,6 @@ class DashboardApiModel {
     // visible without opening a tile.
     final metrics = [
       MetricEntity(
-        icon: Icons.bar_chart_rounded,
-        iconBgValue: 0xFFF3E8FF,
-        iconColorValue: 0xFF7952DB,
-        tableKey: DashboardTableKey.sales,
-        trendKey: MetricTrendKey.revenue,
-        label: 'Total Sales',
-        value: 'MMK ${totalSales.withCommas()}',
-      ),
-      MetricEntity(
         icon: Icons.inventory_2_outlined,
         iconBgValue: 0xFFDCFCE7,
         iconColorValue: 0xFF16A34A,

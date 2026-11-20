@@ -23,4 +23,9 @@ abstract class DashboardRepository {
     int perPage = 15,
     Map<String, dynamic> query = const {},
   });
+
+  /// Top payment method by transaction count.
+  Future<({String method, int count, double percent})> getTopPaymentMethod({
+    int days = 30,
+  });
 }

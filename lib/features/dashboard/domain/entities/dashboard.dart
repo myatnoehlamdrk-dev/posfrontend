@@ -201,7 +201,7 @@ class MonthSummaryEntity extends Equatable {
 /// The tiles are fixed copy written in the API model, so the key travels with
 /// the tile and the screen resolves it against the trends the view model
 /// built from the API's calendar-month figures.
-enum MetricTrendKey { none, revenue, itemsSold, products, lowStock }
+enum MetricTrendKey { none, revenue, orders, avgOrderValue, itemsSold, products, lowStock }
 
 class MetricEntity extends Equatable {
   /// Resolved rather than stored as a code point: the four KPI tiles are
@@ -411,6 +411,8 @@ class SummaryTrendsEntity extends Equatable {
   /// The change behind one KPI tile, keyed by the tile's [MetricTrendKey].
   TrendEntity? forMetric(MetricTrendKey key) => switch (key) {
     MetricTrendKey.revenue => revenue,
+    MetricTrendKey.orders => orders,
+    MetricTrendKey.avgOrderValue => avgOrderValue,
     MetricTrendKey.itemsSold => itemsSold,
     MetricTrendKey.products => products,
     MetricTrendKey.lowStock => lowStock,

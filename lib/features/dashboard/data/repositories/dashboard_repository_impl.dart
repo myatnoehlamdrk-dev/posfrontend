@@ -105,4 +105,43 @@ class DashboardRepositoryImpl implements DashboardRepository {
       perPage: (meta['per_page'] as num?)?.toInt() ?? perPage,
     );
   }
+
+  @override
+  Future<({String method, int count, double percent})> getTopPaymentMethod({
+    int days = 30,
+  }) async {
+    try {
+      // Fetch a large page of sales to calculate payment distribution
+      final json = await _remoteDataSource.getTable(
+        endpoint: '/dashboard/tables/sales',
+        page: 1,
+        perPage: 500, // Get enough to calculate distribution
+        query: {},
+      );
+
+      final rows = (json['data'] as List<dynamic>? ?? const [])
+          .whereType<Map<String, dynamic>>();
+
+      // Count payment methods
+      final Map<String, int> counts = {};
+      for (final row in rows) {
+        final method = row['pay_method'] as String? ?? 'Unknown';
+        counts[method] = (counts[method] ?? 0) + 1;
+      }
+
+      if (counts.isEmpty) {
+        return (method: 'N/A', count: 0, percent: 0.0);
+      }
+
+      // Find top method
+      final topEntry = counts.entries.reduce((a, b) => a.value > b.value ? a : b);
+      final total = counts.values.fold<int>(0, (sum, c) => sum + c);
+      final percent = total > 0 ? (topEntry.value / total * 100) : 0.0;
+
+      return (method: topEntry.key, count: topEntry.value, percent: percent);
+    } catch (e) {
+      // If API fails, return N/A
+      return (method: 'N/A', count: 0, percent: 0.0);
+    }
+  }
 }
