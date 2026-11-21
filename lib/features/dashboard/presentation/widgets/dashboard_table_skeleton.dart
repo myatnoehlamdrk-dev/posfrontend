@@ -17,14 +17,17 @@ class DashboardTableSkeleton extends StatelessWidget {
   final double totalWidth;
   final int rowCount;
 
-  /// Matches the row-number column in DashboardTableScreen.
-  static const double _numberWidth = 48;
+  /// Width of the leading column in the real table: 48 for the row number, or
+  /// wider when the table shows a product photo. Reserving the right slot keeps
+  /// every header cell from shifting when loading ends.
+  final double leadWidth;
 
   const DashboardTableSkeleton({
     super.key,
     required this.columns,
     required this.totalWidth,
     this.rowCount = 8,
+    this.leadWidth = 48,
   });
 
   @override
@@ -108,9 +111,9 @@ class DashboardTableSkeleton extends StatelessWidget {
   }
 
   Widget _numberCell() {
-    return const SizedBox(
-      width: _numberWidth,
-      child: SkeletonBox(height: 12, width: 24),
+    return SizedBox(
+      width: leadWidth,
+      child: const SkeletonBox(height: 12, width: 24),
     );
   }
 }

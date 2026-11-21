@@ -27,12 +27,21 @@ class DashboardTableSpec {
   /// meaningful month dimension, so only it opts in.
   final bool showMonthFilter;
 
+  /// Shows the product's photo in place of the leading row number.
+  ///
+  /// The stock tables are the product-identification case: a photo tells a
+  /// cashier which item is running low faster than a position in the list,
+  /// which carries no meaning of its own. Row numbers stay on the other tables,
+  /// where they are a useful count.
+  final bool showThumbnail;
+
   const DashboardTableSpec({
     required this.title,
     required this.endpoint,
     required this.columns,
     this.note,
     this.showMonthFilter = false,
+    this.showThumbnail = false,
   });
 
   double get totalWidth =>
@@ -82,6 +91,7 @@ class DashboardTables {
     endpoint: '/dashboard/tables/stock',
     note: 'One row per variant. Low stock means 1 to 5 left.',
     columns: _variantColumns,
+    showThumbnail: true,
   );
 
   /// In Stock and Low Stock read the same rows; the low-stock table adds
@@ -176,25 +186,27 @@ class DashboardTables {
     columns: DashboardTables.bought.columns,
   );
 
-  /// No bought: product name, price, who created it, when.
+  /// No bought: product name, how long it has sat idle, and how much is left.
+  /// Price, category and creator are deliberately absent: they do not help
+  /// decide which dead stock to clear.
   static const noBought = DashboardTableSpec(
     title: 'No Bought',
     endpoint: '/dashboard/tables/no-bought-products',
     columns: [
       TableColumn(label: 'Product Name', width: 240, jsonKey: 'name'),
       TableColumn(
-        label: 'Price',
-        width: 140,
-        jsonKey: 'price',
+        label: 'Days Idle',
+        width: 110,
+        jsonKey: 'days_idle',
         align: TableColumnAlign.right,
-        kind: TableValueKind.currency,
+        kind: TableValueKind.number,
       ),
-      TableColumn(label: 'Created By', width: 160, jsonKey: 'creator_name'),
       TableColumn(
-        label: 'Created Time',
-        width: 160,
-        jsonKey: 'created_at',
-        kind: TableValueKind.dateTime,
+        label: 'Stock',
+        width: 100,
+        jsonKey: 'stock',
+        align: TableColumnAlign.right,
+        kind: TableValueKind.number,
       ),
     ],
   );
@@ -226,24 +238,30 @@ class DashboardTablePreviews {
         kind: TableValueKind.number,
       ),
     ],
+    showThumbnail: true,
   );
 
-  /// The backend has no "days since last sale" column, so the design's Days
-  /// column is answered with the price and the creator instead — the two
-  /// things the row actually carries.
+  /// The risk matrix answers the same three questions the chart labels do:
+  /// name, days idle, and how much stock is tied up.
   static const productsNotSold = DashboardTableSpec(
     title: 'Products Not Sold',
     endpoint: '/dashboard/tables/no-bought-products',
     columns: [
       TableColumn(label: 'Product Name', width: 200, jsonKey: 'name'),
       TableColumn(
-        label: 'Price',
-        width: 110,
-        jsonKey: 'price',
+        label: 'Days Idle',
+        width: 96,
+        jsonKey: 'days_idle',
         align: TableColumnAlign.right,
-        kind: TableValueKind.currency,
+        kind: TableValueKind.number,
       ),
-      TableColumn(label: 'Created By', width: 120, jsonKey: 'creator_name'),
+      TableColumn(
+        label: 'Stock',
+        width: 72,
+        jsonKey: 'stock',
+        align: TableColumnAlign.right,
+        kind: TableValueKind.number,
+      ),
     ],
   );
 
@@ -299,33 +317,43 @@ class DashboardTablePreviews {
 
   /// How many rows each preview fetches. Five is what the design shows and
   /// what fits above a fold without the card growing taller than the chart
-  /// beside it.
+  /// beside it. The dead-stock risk matrix is the exception: it has to see the
+  /// whole unsold set to plot the quadrant, so it asks for the full page.
   static const int rowsPerPage = 5;
+
+  /// How many rows the Bubble Risk Matrix draws. The backend clamps a page
+  /// request at 100, which is comfortably above the dashboard's own preview
+  /// slice for the other cards and enough for the quadrant to stay readable.
+  static const int riskMatrixRowsPerPage = 100;
 
   /// The requests behind [tablePreviews] on the view model, keyed the way the
   /// screen looks them up. `low: 1` is the same flag the Low Stock "View all"
   /// link sends, so the preview and the screen behind it show the same rows.
-  static const List<({String key, String endpoint, Map<String, dynamic> query})>
+  static const List<({String key, String endpoint, Map<String, dynamic> query, int perPage})>
   requests = [
     (
       key: 'lowStockItems',
       endpoint: '/dashboard/tables/stock',
       query: <String, dynamic>{'low': 1},
+      perPage: rowsPerPage,
     ),
     (
       key: 'productsNotSold',
       endpoint: '/dashboard/tables/no-bought-products',
       query: <String, dynamic>{},
+      perPage: riskMatrixRowsPerPage,
     ),
     (
       key: 'recentSales',
       endpoint: '/dashboard/tables/sales',
       query: <String, dynamic>{},
+      perPage: rowsPerPage,
     ),
     (
       key: 'recentProducts',
       endpoint: '/dashboard/tables/products',
       query: <String, dynamic>{},
+      perPage: rowsPerPage,
     ),
   ];
 }

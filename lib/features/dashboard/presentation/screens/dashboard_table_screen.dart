@@ -5,6 +5,7 @@ import 'package:posfrontend/features/dashboard/domain/entities/dashboard_table.d
 import 'package:posfrontend/features/dashboard/domain/entities/dashboard_tables.dart';
 import 'package:posfrontend/features/dashboard/presentation/viewmodels/dashboard_table_view_model.dart';
 import 'package:posfrontend/features/dashboard/presentation/widgets/dashboard_table_skeleton.dart';
+import 'package:posfrontend/features/dashboard/presentation/widgets/product_row_thumb.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
@@ -76,10 +77,12 @@ class DashboardTableScreen extends StatefulWidget {
 class _DashboardTableScreenState extends State<DashboardTableScreen> {
   static const double _numberWidth = 48;
 
-  /// The row-number column. Every table gets one; the value it shows is the
-  /// row's position in the already-loaded list (`index + 1`), so numbering
-  /// starts at 1 and keeps counting as more pages arrive without any already
-  /// visible row changing its number.
+  /// The row-number column, used by every table except the ones that opt into
+  /// a product photo through [DashboardTableSpec.showThumbnail].
+  ///
+  /// The value it shows is the row's position in the already-loaded list
+  /// (`index + 1`), so numbering starts at 1 and keeps counting as more pages
+  /// arrive without any already visible row changing its number.
   static const TableColumn _numberColumn = TableColumn(
     label: '#',
     width: _numberWidth,
@@ -226,6 +229,7 @@ class _DashboardTableScreenState extends State<DashboardTableScreen> {
       return DashboardTableSkeleton(
         columns: widget.spec.columns,
         totalWidth: _tableWidth,
+        leadWidth: _leadColumn.width,
       );
     }
 
@@ -276,8 +280,18 @@ class _DashboardTableScreenState extends State<DashboardTableScreen> {
     );
   }
 
-  /// The width the number column adds on top of the spec's own width.
-  double get _tableWidth => widget.spec.totalWidth + _numberColumn.width;
+  /// The width the leading column adds on top of the spec's own width.
+  double get _tableWidth => widget.spec.totalWidth + _leadColumn.width;
+
+  /// The leading column is the row number, or a product photo on the stock
+  /// tables, where the photo is what the user scans for.
+  TableColumn get _leadColumn => widget.spec.showThumbnail
+      ? const TableColumn(
+          label: 'Photo',
+          width: 64,
+          align: TableColumnAlign.left,
+        )
+      : _numberColumn;
 
   Widget _buildTable(AppPalette p) {
     return Container(
@@ -320,17 +334,19 @@ class _DashboardTableScreenState extends State<DashboardTableScreen> {
       child: Row(
         children: [
           _cell(
-            _numberColumn,
-            Text(
-              context.l10n.t(_numberColumn.label),
-              style: TextStyle(
-                fontSize: AppTypography.labelSmallSize,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.2,
-                color: p.textSecondary,
-              ),
-              textAlign: _textAlign(_numberColumn),
-            ),
+            _leadColumn,
+            widget.spec.showThumbnail
+                ? Icon(Icons.photo_outlined, size: 14, color: p.textSecondary)
+                : Text(
+                    context.l10n.t(_leadColumn.label),
+                    style: TextStyle(
+                      fontSize: AppTypography.labelSmallSize,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.2,
+                      color: p.textSecondary,
+                    ),
+                    textAlign: _textAlign(_leadColumn),
+                  ),
           ),
           for (final column in widget.spec.columns)
             _cell(
@@ -364,16 +380,18 @@ class _DashboardTableScreenState extends State<DashboardTableScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _cell(
-            _numberColumn,
-            Text(
-              rowNumber.toString(),
-              style: TextStyle(
-                fontSize: AppTypography.labelMediumSize,
-                color: p.textMuted,
-                fontWeight: FontWeight.w400,
-              ),
-              textAlign: _textAlign(_numberColumn),
-            ),
+            _leadColumn,
+            widget.spec.showThumbnail
+                ? ProductRowThumb(url: row.text('image'), size: 32)
+                : Text(
+                    rowNumber.toString(),
+                    style: TextStyle(
+                      fontSize: AppTypography.labelMediumSize,
+                      color: p.textMuted,
+                      fontWeight: FontWeight.w400,
+                    ),
+                    textAlign: _textAlign(_leadColumn),
+                  ),
           ),
           for (final column in widget.spec.columns)
             _cell(

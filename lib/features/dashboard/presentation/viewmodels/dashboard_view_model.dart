@@ -69,8 +69,14 @@ class DashboardViewModel extends BaseViewModel {
   bool get trendsLoaded => _trendsLoaded;
 
   /// Top payment method by transaction count.
-  ({String method, int count, double percent})? _topPayment;
-  ({String method, int count, double percent})? get topPayment => _topPayment;
+  ({String method, int count, double percent, List<({String method, int count, double percent})> distribution})?
+      _topPayment;
+  ({String method, int count, double percent, List<({String method, int count, double percent})> distribution})?
+      get topPayment => _topPayment;
+
+  /// Full payment distribution (all methods), sorted by count descending.
+  List<({String method, int count, double percent})> get paymentDistribution =>
+      _topPayment?.distribution ?? const [];
 
   Future<void> load() async {
     final result = await runAsync(
@@ -92,6 +98,7 @@ class DashboardViewModel extends BaseViewModel {
     } catch (_) {
       // Non-critical: top payment is optional
     }
+    notifyListeners();
   }
 
   Future<void> loadMonthlySales({required int year}) async {
@@ -124,7 +131,7 @@ class DashboardViewModel extends BaseViewModel {
           final page = await _repository.getTable(
             endpoint: request.endpoint,
             page: 1,
-            perPage: DashboardTablePreviews.rowsPerPage,
+            perPage: request.perPage,
             query: request.query,
           );
           return MapEntry(request.key, page);

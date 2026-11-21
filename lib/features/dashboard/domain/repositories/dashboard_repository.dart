@@ -24,8 +24,10 @@ abstract class DashboardRepository {
     Map<String, dynamic> query = const {},
   });
 
-  /// Top payment method by transaction count.
-  Future<({String method, int count, double percent})> getTopPaymentMethod({
+  /// Top payment method by transaction count, plus the full distribution so
+  /// the dashboard can render every method as a segment instead of one.
+  Future<({String method, int count, double percent, List<({String method, int count, double percent})> distribution})>
+      getTopPaymentMethod({
     int days = 30,
   });
 }

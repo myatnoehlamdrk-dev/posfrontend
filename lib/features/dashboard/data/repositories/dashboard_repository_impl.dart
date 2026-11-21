@@ -107,16 +107,16 @@ class DashboardRepositoryImpl implements DashboardRepository {
   }
 
   @override
-  Future<({String method, int count, double percent})> getTopPaymentMethod({
+  Future<({String method, int count, double percent, List<({String method, int count, double percent})> distribution})>
+      getTopPaymentMethod({
     int days = 30,
   }) async {
     try {
-      // Fetch a large page of sales to calculate payment distribution
       final json = await _remoteDataSource.getTable(
         endpoint: '/dashboard/tables/sales',
         page: 1,
         perPage: 500, // Get enough to calculate distribution
-        query: {},
+        query: {'days': days},
       );
 
       final rows = (json['data'] as List<dynamic>? ?? const [])
@@ -125,23 +125,46 @@ class DashboardRepositoryImpl implements DashboardRepository {
       // Count payment methods
       final Map<String, int> counts = {};
       for (final row in rows) {
-        final method = row['pay_method'] as String? ?? 'Unknown';
+        final method = row['pay_method']?.toString() ?? 'Unknown';
         counts[method] = (counts[method] ?? 0) + 1;
       }
 
       if (counts.isEmpty) {
-        return (method: 'N/A', count: 0, percent: 0.0);
+        return (
+          method: 'N/A',
+          count: 0,
+          percent: 0.0,
+          distribution: const <({String method, int count, double percent})>[],
+        );
       }
 
-      // Find top method
-      final topEntry = counts.entries.reduce((a, b) => a.value > b.value ? a : b);
+      // Build the full distribution, sorted by count descending.
       final total = counts.values.fold<int>(0, (sum, c) => sum + c);
-      final percent = total > 0 ? (topEntry.value / total * 100) : 0.0;
+      final distribution = <({String method, int count, double percent})>[
+        for (final entry in counts.entries)
+          (
+            method: entry.key,
+            count: entry.value,
+            percent: total > 0 ? (entry.value / total * 100) : 0.0,
+          ),
+      ]..sort((a, b) => b.count.compareTo(a.count));
 
-      return (method: topEntry.key, count: topEntry.value, percent: percent);
+      final topEntry = distribution.first;
+
+      return (
+        method: topEntry.method,
+        count: topEntry.count,
+        percent: topEntry.percent,
+        distribution: distribution,
+      );
     } catch (e) {
       // If API fails, return N/A
-      return (method: 'N/A', count: 0, percent: 0.0);
+      return (
+        method: 'N/A',
+        count: 0,
+        percent: 0.0,
+        distribution: const <({String method, int count, double percent})>[],
+      );
     }
   }
 }

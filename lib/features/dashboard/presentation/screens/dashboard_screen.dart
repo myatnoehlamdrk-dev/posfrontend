@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:math' as math;
+import 'dart:ui' show PointerDeviceKind;
 
 import 'package:dio/dio.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
@@ -14,26 +16,27 @@ import 'package:posfrontend/features/dashboard/domain/entities/dashboard_tables.
 import 'package:posfrontend/features/dashboard/presentation/screens/dashboard_table_screen.dart';
 import 'package:posfrontend/features/dashboard/presentation/viewmodels/dashboard_view_model.dart';
 import 'package:posfrontend/features/dashboard/presentation/widgets/dashboard_skeleton.dart';
+import 'package:posfrontend/features/dashboard/presentation/widgets/dashboard_style.dart';
+import 'package:posfrontend/features/dashboard/presentation/widgets/product_row_thumb.dart';
 import 'package:posfrontend/shared/theme/app_dimens.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/app_typography.dart';
-import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_text.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
-import 'package:posfrontend/shared/widgets/app_card.dart';
 import 'package:posfrontend/shared/widgets/app_empty_state.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/app_shell.dart';
-import 'package:posfrontend/shared/widgets/count_up_text.dart';
-import 'package:posfrontend/shared/widgets/error_retry_view.dart';
+import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
-import 'package:posfrontend/shared/widgets/refreshable_body.dart';
+import 'package:posfrontend/shared/widgets/error_retry_view.dart';
 import 'package:posfrontend/shared/widgets/shop_scope.dart';
 import 'package:posfrontend/shared/widgets/skeleton.dart';
 import 'package:posfrontend/features/sale/presentation/screens/quick_sale_screen.dart';
+import 'package:posfrontend/features/product/presentation/screens/product_detail_screen.dart';
+import 'package:posfrontend/features/product/presentation/screens/products_catalog_screen.dart';
 import 'package:posfrontend/features/product/presentation/screens/stock_add_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -146,20 +149,44 @@ class _DashboardScreenState extends State<DashboardScreen> {
               onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
             ),
             Expanded(
-              child: ListenableBuilder(
-                listenable: _viewModel,
-                builder: (context, _) {
-                  return RefreshableBody(
-                    onRefresh: () => _viewModel.load(),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 24,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // One soft violet bloom behind the content. It gives the
+                  // page depth without competing with the cards.
+                  IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: DashboardStyle.pageGlow(context),
                       ),
-                      child: _buildBody(context, p),
                     ),
-                  );
-                },
+                  ),
+                  ListenableBuilder(
+                    listenable: _viewModel,
+                    builder: (context, _) {
+                      final gutter = MediaQuery.sizeOf(context).width < 600
+                          ? 16.0
+                          : 24.0;
+                      return RefreshableBody(
+                        onRefresh: () => _viewModel.load(),
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(
+                              maxWidth: DashboardStyle.maxContentWidth,
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: gutter,
+                                vertical: 12,
+                              ),
+                              child: _buildBody(context, p),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
           ],
@@ -183,10 +210,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const DashboardSkeleton()
         else ...[
           _buildHeader(context, p),
-          const SizedBox(height: 12),
+          const SizedBox(height: 6),
           ..._sections(context, p, _viewModel.data!),
         ],
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
       ],
     );
   }
@@ -196,15 +223,79 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildHeader(BuildContext context, AppPalette p) {
     final shopName = ShopScope.shopOf(context)?.name.trim() ?? '';
     final heading = shopName.isEmpty ? context.l10n.t('Dashboard') : shopName;
-    return Text(
-      heading,
-      style: GoogleFonts.spaceGrotesk(
-        fontSize: AppTypography.displaySmallSize - 4,
-        fontWeight: FontWeight.w700,
-        color: p.textPrimary,
-        letterSpacing: -0.3,
-      ),
+    final today = MaterialLocalizations.of(
+      context,
+    ).formatFullDate(DateTime.now());
+
+    final title = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          heading,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+            color: p.textPrimary,
+            letterSpacing: -0.4,
+            height: 1.15,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          '$today  ·  ${context.l10n.t('Business overview')}',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: appText(
+            size: AppTypography.labelSmallSize,
+            color: p.textMuted,
+          ),
+        ),
+      ],
     );
+
+    final refreshControl = _viewModel.isLoading
+        ? SizedBox(
+            width: 42,
+            height: 42,
+            child: Center(
+              child: SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: p.textSecondary,
+                ),
+              ),
+            ),
+          )
+        : DashboardIconButton(
+            icon: Icons.refresh_rounded,
+            tooltip: context.l10n.t('Refresh'),
+            onTap: _viewModel.load,
+          );
+
+    final actions = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [refreshControl],
+    );
+
+    final isNarrow = MediaQuery.sizeOf(context).width < 700;
+
+    return isNarrow
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [title, const SizedBox(height: 16), actions],
+          )
+        : Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(child: title),
+              const SizedBox(width: 16),
+              actions,
+            ],
+          );
   }
 
   // -------------------------------------------------------------- sections
@@ -217,85 +308,127 @@ class _DashboardScreenState extends State<DashboardScreen> {
     DashboardEntity d,
   ) {
     final out = <Widget>[];
-    void section(Widget child) {
-      out.add(child);
-      out.add(const SizedBox(height: 24));
+    var reveal = 0;
+
+    void add(Widget child, {double gap = DashboardStyle.gap}) {
+      out.add(DashboardReveal(index: reveal++, child: child));
+      out.add(SizedBox(height: gap));
     }
 
-    // Unified Hero Bento Container (replaces KPI grid)
-    section(_HeroBentoContainer(
-      totalSales: d.stats.totalSales,
-      revenueTrend: _viewModel.trends?.revenue,
-      revenueSparkline: _viewModel.sparklines[MetricTrendKey.revenue],
-      totalProducts: d.stats.totalProducts,
-      totalItemsSold: d.stats.totalItemsSold,
-      outStockCount: d.stats.outStock,
-      totalProductsForOutStock: d.stats.totalProducts,
-      onNewSaleTap: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const QuickSaleScreen()),
-      ),
-      onRestockTap: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const StockAddScreen()),
-      ),
-    ));
+    void group(String label) {
+      out.add(const SizedBox(height: 4));
+      out.add(DashboardSectionLabel(label: context.l10n.t(label)));
+      out.add(const SizedBox(height: 12));
+    }
 
-    // Bottom: Sales Summary (35%) + Monthly Sales (65%)
-    section(
+    // The revenue line is real: the API's daily series when it has one, and
+    // otherwise the month-by-month series the summary already carries. The
+    // painter handles a missing/one-point series without collapsing the card.
+    final revenueSpark =
+        _viewModel.sparklines[MetricTrendKey.revenue] ?? const <double>[];
+    final revenueSeries = revenueSpark.isNotEmpty
+        ? revenueSpark
+        : d.monthSummary.revenue.series;
+
+    final monthOrders = d.monthSummary.orders.current;
+    final dayOfMonth = DateTime.now().day.clamp(1, 31);
+    final ordersPerDay = monthOrders > 0 ? monthOrders / dayOfMonth : 0.0;
+    final itemsPerOrder = monthOrders > 0
+        ? d.monthSummary.itemsSold.current / monthOrders
+        : 0.0;
+
+    // Hero bento.
+    add(
+      _HeroBentoContainer(
+        totalSales: d.stats.totalSales,
+        revenueTrend: _viewModel.trends?.revenue,
+        revenueSparkline: revenueSeries,
+        stats: d.stats,
+        itemsSoldTrend: _viewModel.trends?.itemsSold,
+        itemsSoldSeries: d.monthSummary.itemsSold.series,
+        onRestockTap: () => Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const StockAddScreen())),
+        onNewSaleTap: () => Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const QuickSaleScreen())),
+      ),
+      gap: 28,
+    );
+
+    group('Performance');
+
+    add(
       _equalHeightPair(
-        (fill, _) => Column(
+        (fill, width) => Column(
           children: [
             _SalesKpiCard(
               icon: Icons.receipt_long_rounded,
-              iconColor: Color(0xFF2563EB),
-              label: 'Total Orders',
+              iconColor: p.infoFg,
+              label: context.l10n.t('Total Orders'),
               value: d.stats.salesCount.withCommas(),
               trend: _viewModel.trends?.orders,
-              subtitle: '~${(d.stats.salesCount / 30).toStringAsFixed(1)} orders / day',
+              subtitle: monthOrders > 0
+                  ? '${ordersPerDay.toStringAsFixed(1)} '
+                        '${context.l10n.t('orders / day')}'
+                  : context.l10n.t('No orders yet this month'),
               rightVisual: _LineChartMini(
-                values: _viewModel.sparklines[MetricTrendKey.orders] ?? [],
-                color: Color(0xFF3B82F6),
+                values:
+                    _viewModel.sparklines[MetricTrendKey.orders] ??
+                    const <double>[],
+                color: p.infoFg,
               ),
+              showVisual: width >= 380,
             ),
             const SizedBox(height: 12),
             _SalesKpiCard(
               icon: Icons.shopping_bag_outlined,
-              iconColor: Color(0xFFF87171),
-              label: 'Avg. Order Value',
+              iconColor: p.accentText,
+              label: context.l10n.t('Avg. Order Value'),
               value: 'MMK ${d.stats.avgOrderValue.withCommas()}',
               trend: _viewModel.trends?.avgOrderValue,
-              subtitle: '${((_viewModel.data?.monthSummary.avgOrderValue.current ?? 0) / (d.stats.salesCount > 0 ? d.stats.salesCount : 1)).toStringAsFixed(2)} items/order',
+              subtitle: monthOrders > 0
+                  ? '${itemsPerOrder.toStringAsFixed(2)} '
+                        '${context.l10n.t('items / order')}'
+                  : null,
               rightVisual: _MiniBarChart(
-                values: [8, 10, 22, 34, 24, 14, 6, 4],
-                color: Color(0xFF64748B),
+                values: d.monthSummary.avgOrderValue.series
+                    .map((value) => value.round())
+                    .toList(),
+                color: p.accentText,
               ),
+              showVisual: width >= 380,
             ),
             const SizedBox(height: 12),
             _SalesKpiCard(
               icon: Icons.credit_card_rounded,
-              iconColor: Color(0xFF8B5CF6),
-              label: 'Top Payment',
+              iconColor: p.successFg,
+              label: context.l10n.t('Top Payment'),
               value: _viewModel.topPayment != null
-                  ? '${_viewModel.topPayment!.method} ${_viewModel.topPayment!.percent.round()}%'
-                  : 'N/A',
+                  ? '${_viewModel.topPayment!.method} '
+                        '${_viewModel.topPayment!.percent.round()}%'
+                  : context.l10n.t('No payments yet'),
               trend: null,
-              subtitle: null,
+              subtitle: (_viewModel.topPayment?.count ?? 0) > 0
+                  ? '${_viewModel.topPayment!.count} '
+                        '${context.l10n.t('payments')}'
+                  : null,
               rightVisual: _PaymentCapsule(
-                percent: _viewModel.topPayment?.percent ?? 0,
-                color: Color(0xFF8B5CF6),
-                method: _viewModel.topPayment?.method ?? 'Cash',
-                count: _viewModel.topPayment?.count ?? 98,
+                segments: _viewModel.paymentDistribution,
               ),
+              showVisual: width >= 380,
             ),
           ],
         ),
-        (fill, _) => _monthlySalesCard(context, p, fill: fill),
+        (fill, width) => _monthlySalesCard(context, p, fill: fill),
         leftFlex: 35,
         rightFlex: 65,
       ),
     );
 
-    // Category Allocation + Stock Status (swapped: Stock Status moved up)
-    section(
+    group('Inventory');
+
+    add(
       _equalHeightPair(
         (fill, width) => _categoryAllocationCard(
           context,
@@ -318,17 +451,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
 
-    // Product Trend + Quantity Sold (swapped: Quantity Sold moved down)
-    final trend = _productTrendCard(context, p, d);
-    section(_pair(trend, _quantitySoldCard(context, p, d)));
+    group('Products');
+    add(
+      _pair(_productTrendCard(context, p, d), _quantitySoldCard(context, p, d)),
+    );
 
-    // Low Stock + Not Sold
-    section(_pair(_lowStockPreview(context, p), _notSoldPreview(context, p)));
+    group('Needs attention');
+    add(_pair(_lowStockPreview(context, p), _notSoldRiskCard(context, p)));
 
-    // Recent Sales + Recent Products
-    final recentSales = _recentSalesPreview(context, p);
-    final recentProducts = _recentProductsPreview(context, p);
-    section(_pair(recentSales, recentProducts));
+    group('Recent activity');
+    add(
+      _pair(
+        _recentSalesPreview(context, p),
+        _recentProductsPreview(context, p),
+      ),
+    );
 
     out.add(const _Footer());
     return out;
@@ -365,28 +502,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         );
       },
     );
-  }
-
-  void _openSummaryTable(DashboardTableKey? key) {
-    final route = switch (key) {
-      DashboardTableKey.products => DashboardTableScreen.route(
-        spec: DashboardTables.products,
-      ),
-      DashboardTableKey.inStock => DashboardTableScreen.route(
-        spec: DashboardTables.inStock,
-      ),
-      DashboardTableKey.lowStock => DashboardTableScreen.route(
-        spec: DashboardTables.lowStock,
-        query: const {'low': 1},
-      ),
-      DashboardTableKey.sales => DashboardTableScreen.route(
-        spec: DashboardTables.sales,
-      ),
-      null => null,
-    };
-
-    if (route == null) return;
-    Navigator.of(context).push(route);
   }
 
   // -------------------------------------------------------- monthly + summary
@@ -617,10 +732,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
       ),
+      // Neutral, not red. Red is reserved for stock problems (low/out of
+      // stock); a product simply not selling yet is information, not an alarm.
       _TrendTile(
         title: context.l10n.t('No Sales'),
-        tint: p.dangerBg,
-        titleColor: p.dangerFg,
+        tint: p.chipBg,
+        titleColor: p.textSecondary,
         items: d.noBought,
         onViewAll: () => Navigator.of(
           context,
@@ -675,6 +792,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       columns: DashboardTablePreviews.lowStockItems.columns,
       page: _viewModel.tablePreviews['lowStockItems'],
       loaded: _viewModel.previewsLoaded,
+      showThumbnail: true,
+      stockPill: true,
+      restock: true,
       onViewAll: () => Navigator.of(context).push(
         DashboardTableScreen.route(
           spec: DashboardTables.lowStock,
@@ -684,24 +804,47 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _notSoldPreview(BuildContext context, AppPalette p) {
-    return _PreviewTableCard(
+  /// Products that have never sold, plotted as a bubble risk matrix.
+  ///
+  /// A table of name/price/creator answered "what are these products"; this
+  /// card has to answer "which dead stock should I clear first". Days idle and
+  /// the stock tied up are the two axes, and severity is encoded twice — the
+  /// bubble grows with age and its glow warms from amber to coral as the
+  /// product passes 36 and then 45 days without a sale.
+  Widget _notSoldRiskCard(BuildContext context, AppPalette p) {
+    final page = _viewModel.tablePreviews['productsNotSold'];
+    return _PanelCard(
       title: context.l10n.t('Products Not Sold'),
-      columns: DashboardTablePreviews.productsNotSold.columns,
-      page: _viewModel.tablePreviews['productsNotSold'],
-      loaded: _viewModel.previewsLoaded,
-      onViewAll: () => Navigator.of(
-        context,
-      ).push(DashboardTableScreen.route(spec: DashboardTables.noBought)),
+      badgeLabel: context.l10n.t('${page?.rows.length ?? 0}'),
+      trailing: _ViewAllLink(
+        onTap: () => Navigator.of(
+          context,
+        ).push(DashboardTableScreen.route(spec: DashboardTables.noBought)),
+      ),
+      child: !_viewModel.previewsLoaded
+          ? const _BubbleRiskSkeleton()
+          : page == null || page.rows.isEmpty
+          ? SizedBox(
+              height: 260,
+              child: AppEmptyState(
+                title: context.l10n.t('Nothing to show'),
+                icon: Icons.scatter_plot_outlined,
+              ),
+            )
+          : _BubbleRiskMatrix(rows: page.rows, palette: p),
     );
   }
 
   Widget _recentSalesPreview(BuildContext context, AppPalette p) {
+    final page = _viewModel.tablePreviews['recentSales'];
+    final total = page?.total ?? page?.rows.length ?? 0;
     return _PreviewTableCard(
       title: context.l10n.t('Recent Sales'),
       columns: DashboardTablePreviews.recentSales.columns,
-      page: _viewModel.tablePreviews['recentSales'],
+      page: page,
       loaded: _viewModel.previewsLoaded,
+      receiptIcon: true,
+      badgeLabel: total > 0 ? context.l10n.t('$total sales') : null,
       onViewAll: () => Navigator.of(
         context,
       ).push(DashboardTableScreen.route(spec: DashboardTables.sales)),
@@ -723,220 +866,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
 // ============================================================ shared pieces
 
-/// Lays [children] out in a responsive grid: [maxColumns] across on wide
-/// windows, two on medium, one on phones, with [gap] between cells.
-///
-/// Rows are always full-width and the last row's missing cells collapse to a
-/// gap, so a five-item grid on a four-column window reads as four then one
-/// rather than stretching five across.
-Widget _responsiveGrid(
-  List<Widget> children, {
-  double wideAt = 1080,
-  double mediumAt = 620,
-  double gap = 16,
-  int maxColumns = 4,
-}) {
-  if (children.isEmpty) return const SizedBox.shrink();
-  return LayoutBuilder(
-    builder: (context, constraints) {
-      final width = constraints.maxWidth;
-      final columns = width >= wideAt
-          ? maxColumns
-          : width >= mediumAt
-          ? 2
-          : 1;
-
-      final rows = <Widget>[];
-      for (var i = 0; i < children.length; i += columns) {
-        final end = i + columns > children.length
-            ? children.length
-            : i + columns;
-        final slice = children.sublist(i, end);
-        rows.add(
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (var j = 0; j < columns; j++) ...[
-                if (j > 0) SizedBox(width: gap),
-                Expanded(
-                  child: j < slice.length ? slice[j] : const SizedBox.shrink(),
-                ),
-              ],
-            ],
-          ),
-        );
-        if (end < children.length) rows.add(SizedBox(height: gap));
-      }
-      return Column(children: rows);
-    },
-  );
-}
-
-class _KpiGrid extends StatelessWidget {
-  final List<MetricEntity> metrics;
-  final SummaryTrendsEntity? trends;
-  final Map<MetricTrendKey, List<double>> sparklines;
-  final bool trendsLoaded;
-  final void Function(DashboardTableKey? key) onOpenTable;
-
-  const _KpiGrid({
-    required this.metrics,
-    required this.trends,
-    required this.sparklines,
-    required this.trendsLoaded,
-    required this.onOpenTable,
-  });
-
-  /// The arrow for one tile, or null when the tile declares no comparison
-  /// or the windows could not be fetched.
-  TrendEntity? _trendFor(MetricEntity metric) =>
-      metric.trendKey == MetricTrendKey.none
-      ? null
-      : trends?.forMetric(metric.trendKey);
-
-  @override
-  Widget build(BuildContext context) {
-    return _responsiveGrid(
-      [
-        for (final metric in metrics)
-          _KpiCard(
-            metric: metric,
-            trend: _trendFor(metric),
-            series: sparklines[metric.trendKey],
-            // A tile that will show an arrow keeps its row until the answer
-            // arrives, so the cards below do not shift when it does.
-            reserveBadge:
-                metric.trendKey != MetricTrendKey.none &&
-                _trendFor(metric) == null &&
-                !trendsLoaded,
-            onOpenTable: onOpenTable,
-          ),
-      ],
-      wideAt: 1080,
-      mediumAt: 620,
-      gap: 16,
-    );
-  }
-}
-
-class _KpiCard extends StatelessWidget {
-  final MetricEntity metric;
-  final TrendEntity? trend;
-
-  /// The tile's daily line, or null while it is still being fetched.
-  final List<double>? series;
-  final bool reserveBadge;
-  final void Function(DashboardTableKey? key) onOpenTable;
-
-  const _KpiCard({
-    required this.metric,
-    required this.trend,
-    required this.series,
-    required this.reserveBadge,
-    required this.onOpenTable,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.palette;
-    return InkWell(
-      onTap: metric.tableKey == null
-          ? null
-          : () => onOpenTable(metric.tableKey),
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      child: AppCard(
-        padding: const EdgeInsets.all(AppSpacing.s16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: Color(metric.iconBgValue),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                metric.icon,
-                size: 22,
-                color: Color(metric.iconColorValue),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          context.l10n.t(metric.label),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: appText(size: AppTypography.labelSmallSize, color: p.textSecondary),
-                        ),
-                      ),
-                      if (metric.tableKey != null)
-                        Icon(Icons.chevron_right, size: 16, color: p.textMuted),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  // Scaled rather than truncated: `MMK 11,280,000` must stay
-                  // whole, and an ellipsis would cut the very figure the card
-                  // exists to show.
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          alignment: Alignment.centerLeft,
-                          child: CountUpString(
-                            value: metric.value,
-                            maxLines: 1,
-                            style: appText(
-                              size: 24,
-                              weight: FontWeight.w700,
-                              color: p.textPrimary,
-                              height: 1.05,
-                            ).copyWith(
-                              fontFeatures: const [FontFeature.tabularFigures()],
-                            ),
-                          ),
-                        ),
-                      ),
-                      if (series != null && series!.length > 1) ...[
-                        const SizedBox(width: 8),
-                        // The design's little line beside the figure: the
-                        // metric's recent shape, tinted the same way as the
-                        // arrow underneath it.
-                        _Sparkline(values: series!, trend: trend),
-                      ],
-                    ],
-                  ),
-                  if (trend != null) ...[
-                    const SizedBox(height: 6),
-                    // The photo's `↑ 18% from last month`, in the same badge
-                    // the Sales Summary rows use. Absent when the API keeps
-                    // no history for this tile — a guessed arrow would be
-                    // worse than none.
-                    _TrendBadge(trend: trend!),
-                  ] else if (reserveBadge)
-                    // Same height as the badge above, held empty until the
-                    // comparison arrives.
-                    const SizedBox(height: 20),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 /// A bordered panel with an optional heading and a trailing affordance (a
 /// year picker, a "View all" link, a chip).
 ///
@@ -957,6 +886,9 @@ class _PanelCard extends StatelessWidget {
   /// to match a sibling; on its own the body keeps its natural height.
   final bool fill;
 
+  /// Small label in the card header next to the title, e.g. a total or a count.
+  final String? badgeLabel;
+
   const _PanelCard({
     this.title,
     this.trailing,
@@ -964,15 +896,20 @@ class _PanelCard extends StatelessWidget {
     this.padding = const EdgeInsets.all(16),
     this.titlePadding,
     this.fill = false,
+    this.badgeLabel,
   });
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    return AppCard(
+    return Container(
       width: double.infinity,
-      padding: EdgeInsets.zero,
-      radius: AppRadius.lg,
+      decoration: BoxDecoration(
+        color: p.surface,
+        borderRadius: BorderRadius.circular(DashboardStyle.cardRadius),
+        border: Border.all(color: p.border),
+        boxShadow: DashboardStyle.cardShadow(context),
+      ),
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -983,20 +920,29 @@ class _PanelCard extends StatelessWidget {
               padding: titlePadding ?? padding,
               child: Row(
                 children: [
-                  if (title != null)
+                  if (title != null) ...[
                     Expanded(
-                      child: Text(
-                        title!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: appText(
-                          size: 16,
-                          weight: FontWeight.w700,
-                          color: p.textPrimary,
-                          letterSpacing: -0.2,
-                        ),
+                      child: Row(
+                        children: [
+                          Text(
+                            title!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: appText(
+                              size: 15,
+                              weight: FontWeight.w700,
+                              color: p.textPrimary,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                          if (badgeLabel != null) ...[
+                            const SizedBox(width: 8),
+                            _TagChip(label: badgeLabel!),
+                          ],
+                        ],
                       ),
                     ),
+                  ],
                   ?trailing,
                 ],
               ),
@@ -1060,7 +1006,7 @@ class _TagChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: p.surfaceAlt,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(999),
         border: Border.all(color: p.border),
       ),
       child: Text(
@@ -1077,553 +1023,7 @@ class _TagChip extends StatelessWidget {
 
 // ======================================================= sales summary panel
 
-class _SummaryRowData {
-  final IconData icon;
-  final int bgValue;
-  final int fgValue;
-  final String label;
-  final Widget value;
-
-  /// The change behind this figure, drawn under it. Null when the comparison
-  /// could not be fetched — the row still shows its number, without a sign.
-  final TrendEntity? trend;
-
-  const _SummaryRowData({
-    required this.icon,
-    required this.bgValue,
-    required this.fgValue,
-    required this.label,
-    required this.value,
-    this.trend,
-  });
-}
-
-class _SalesSummaryCard extends StatelessWidget {
-  final DashboardStatsEntity stats;
-  final SummaryTrendsEntity? trends;
-
-  /// Whether to spread the rows over the card's full height so this panel can
-  /// stand level with the taller monthly chart beside it.
-  final bool fill;
-
-  const _SalesSummaryCard({
-    required this.stats,
-    required this.trends,
-    this.fill = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.palette;
-    final valueStyle = appText(
-      size: 14,
-      weight: FontWeight.w700,
-      color: p.textPrimary,
-    );
-
-    final rows = [
-      _SummaryRowData(
-        icon: Icons.receipt_long_outlined,
-        bgValue: 0xFFDBEAFE,
-        fgValue: 0xFF3B82F6,
-        label: 'Total Orders',
-        value: Text(stats.salesCount.withCommas(), style: valueStyle),
-        trend: trends?.orders,
-      ),
-      _SummaryRowData(
-        icon: Icons.shopping_bag_outlined,
-        bgValue: 0xFFFEE2E2,
-        fgValue: 0xFFEF4444,
-        label: 'Avg. Order Value',
-        value: PriceText(stats.avgOrderValue.toDouble(), style: valueStyle),
-        trend: trends?.avgOrderValue,
-      ),
-      _SummaryRowData(
-        icon: Icons.payment_outlined,
-        bgValue: 0xFFF3E8FF,
-        fgValue: 0xFF7952DB,
-        label: 'Top Payment',
-        value: Text('KBZpay 54%', style: valueStyle),
-        trend: null,
-      ),
-    ];
-
-    return _PanelCard(
-      title: context.l10n.t('Sales Summary'),
-      fill: fill,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: fill
-            ? MainAxisAlignment.spaceBetween
-            : MainAxisAlignment.start,
-        children: [
-          for (var i = 0; i < rows.length; i++) ...[
-            if (i > 0) ...[
-              const SizedBox(height: 12),
-              Divider(height: 1, color: p.border),
-              const SizedBox(height: 12),
-            ],
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: Color(rows[i].bgValue),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    rows[i].icon,
-                    size: 18,
-                    color: Color(rows[i].fgValue),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  flex: 3,
-                  child: Text(
-                    context.l10n.t(rows[i].label),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: appText(size: AppTypography.labelMediumSize, color: p.textSecondary),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Tight, so the column takes its whole share of the row and
-                // every figure — and every percentage under it — ends on the
-                // same right edge. Loose let the column shrink to its widest
-                // child and sit at the left of the flex area, so rows with
-                // different values drifted out of line. The money still scales
-                // down inside this bounded box instead of pushing the row past
-                // the card. The sign sits under the figure rather than beside
-                // it: a row that already carries `MMK 11,280,000` has no room
-                // left for an arrow.
-                Expanded(
-                  flex: 2,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      rows[i].value,
-                      if (rows[i].trend != null) ...[
-                        const SizedBox(height: 2),
-                        _TrendBadge(trend: rows[i].trend!),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-/// A single summary card for Sales Summary section.
-class _SummaryCard extends StatelessWidget {
-  final IconData icon;
-  final Color bgColor;
-  final Color fgColor;
-  final String label;
-  final String value;
-  final TrendEntity? trend;
-  final Widget? rightVisual;
-  final String? subtitle;
-
-  const _SummaryCard({
-    required this.icon,
-    required this.bgColor,
-    required this.fgColor,
-    required this.label,
-    required this.value,
-    this.trend,
-    this.rightVisual,
-    this.subtitle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.palette;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: p.surface,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: p.border),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Left Icon
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: bgColor,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, size: 20, color: fgColor),
-              ),
-              const SizedBox(width: 12),
-              // Center Metrics
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      label,
-                      style: appText(size: AppTypography.labelMediumSize, color: p.textSecondary),
-                    ),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        Text(
-                          value,
-                          style: appText(
-                            size: 18,
-                            weight: FontWeight.w700,
-                            color: p.textPrimary,
-                          ),
-                        ),
-                        if (trend != null) ...[
-                          const SizedBox(width: 8),
-                          Icon(
-                            trend!.direction == TrendDirection.up
-                                ? Icons.trending_up
-                                : trend!.direction == TrendDirection.down
-                                    ? Icons.trending_down
-                                    : Icons.trending_flat,
-                            size: 16,
-                            color: trend!.isBullish ? p.successFg : p.dangerFg,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${trend!.percent?.abs().toStringAsFixed(1)}%',
-                            style: appText(
-                              size: AppTypography.labelSmallSize,
-                              weight: FontWeight.w600,
-                              color: trend!.isBullish ? p.successFg : p.dangerFg,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    if (subtitle != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitle!,
-                        style: appText(size: AppTypography.labelSmallSize, color: p.textMuted),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              // Right Visual
-              if (rightVisual != null) ...[
-                const SizedBox(width: 12),
-                rightVisual!,
-              ],
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Mini sparkline for summary cards.
-class _MiniSparkline extends StatelessWidget {
-  final List<double> values;
-  final Color color;
-
-  const _MiniSparkline({required this.values, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 60,
-      height: 30,
-      child: CustomPaint(
-        painter: _MiniSparklinePainter(values, color),
-      ),
-    );
-  }
-}
-
-class _MiniSparklinePainter extends CustomPainter {
-  final List<double> values;
-  final Color color;
-
-  _MiniSparklinePainter(this.values, this.color);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (values.length < 2) return;
-
-    var min = values.first;
-    var max = values.first;
-    for (final v in values) {
-      if (v < min) min = v;
-      if (v > max) max = v;
-    }
-    final span = max - min < 1e-6 ? 1.0 : max - min;
-
-    final path = Path();
-    for (var i = 0; i < values.length; i++) {
-      final x = size.width * i / (values.length - 1);
-      final y = size.height * (1 - (values[i] - min) / span);
-      if (i == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
-    }
-
-    final areaPath = Path.from(path);
-    areaPath.lineTo(size.width, size.height);
-    areaPath.lineTo(0, size.height);
-    areaPath.close();
-
-    canvas.drawPath(
-      areaPath,
-      Paint()
-        ..color = color.withValues(alpha: 0.1)
-        ..style = PaintingStyle.fill,
-    );
-
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = color
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5
-        ..strokeCap = StrokeCap.round,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-/// Mini progress ring for summary cards.
-class _MiniProgressRing extends StatelessWidget {
-  final double progress;
-  final Color color;
-
-  const _MiniProgressRing({required this.progress, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 40,
-      height: 40,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          SizedBox(
-            width: 40,
-            height: 40,
-            child: CircularProgressIndicator(
-              value: progress,
-              strokeWidth: 3,
-              backgroundColor: color.withValues(alpha: 0.2),
-              valueColor: AlwaysStoppedAnimation<Color>(color),
-            ),
-          ),
-          Text(
-            '${(progress * 100).round()}%',
-            style: appText(
-              size: 10,
-              weight: FontWeight.w700,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Payment percentage badge for summary cards.
-class _PaymentPercentBadge extends StatelessWidget {
-  final double percent;
-  final Color color;
-
-  const _PaymentPercentBadge({required this.percent, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 50,
-      height: 30,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Center(
-        child: Text(
-          '${percent.round()}%',
-          style: appText(
-            size: 12,
-            weight: FontWeight.w700,
-            color: color,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Pill badge for summary cards.
-class _PillBadge extends StatelessWidget {
-  final String text;
-  final Color color;
-
-  const _PillBadge({required this.text, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Text(
-        text,
-        style: appText(
-          size: AppTypography.labelSmallSize,
-          weight: FontWeight.w600,
-          color: color,
-        ),
-      ),
-    );
-  }
-}
-
-/// Payment radial progress for summary cards (180-degree semi-circular arc gauge).
-class _PaymentProgressBar extends StatelessWidget {
-  final double percent;
-  final Color color;
-  final String method;
-  final int count;
-
-  const _PaymentProgressBar({
-    required this.percent,
-    required this.color,
-    required this.method,
-    required this.count,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.palette;
-    return SizedBox(
-      width: 70,
-      height: 45,
-      child: Stack(
-        alignment: Alignment.bottomCenter,
-        children: [
-          // Semi-circular arc gauge
-          SizedBox(
-            width: 70,
-            height: 40,
-            child: CustomPaint(
-              painter: _SemiCircleGaugePainter(percent / 100, color, p.border),
-            ),
-          ),
-          // Percentage text
-          Positioned(
-            bottom: 0,
-            child: Text(
-              '${percent.round()}%',
-              style: appText(
-                size: 11,
-                weight: FontWeight.w700,
-                color: color,
-              ),
-            ),
-          ),
-          // 0% and 100% labels
-          Positioned(
-            bottom: 0,
-            left: 0,
-            child: Text(
-              '0%',
-              style: appText(size: 8, color: p.textMuted),
-            ),
-          ),
-          Positioned(
-            bottom: 0,
-            right: 0,
-            child: Text(
-              '100%',
-              style: appText(size: 8, color: p.textMuted),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SemiCircleGaugePainter extends CustomPainter {
-  final double progress;
-  final Color color;
-  final Color backgroundColor;
-
-  _SemiCircleGaugePainter(this.progress, this.color, this.backgroundColor);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height);
-    final radius = size.width / 2 - 4;
-    const strokeWidth = 4.0;
-
-    // Background track (180 degrees from left to right)
-    final bgPaint = Paint()
-      ..color = backgroundColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      3.14159, // pi (left side, 180 degrees)
-      3.14159, // pi (sweep to right side)
-      false,
-      bgPaint,
-    );
-
-    // Active progress arc
-    final progressPaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      3.14159, // Start at left (pi)
-      3.14159 * progress, // Sweep proportional to progress
-      false,
-      progressPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-/// Compact dark KPI card for Sales Summary.
+/// Compact KPI card for the Sales Summary column.
 class _SalesKpiCard extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
@@ -1632,7 +1032,11 @@ class _SalesKpiCard extends StatelessWidget {
   final TrendEntity? trend;
   final String? subtitle;
   final Widget? rightVisual;
-  final String? valueSuffix;
+
+  /// Whether the trailing chart fits. Decided by the caller, which already
+  /// knows the column width: this card sits under an `IntrinsicHeight` pair,
+  /// where a nested `LayoutBuilder` cannot be measured.
+  final bool showVisual;
 
   const _SalesKpiCard({
     required this.icon,
@@ -1642,32 +1046,43 @@ class _SalesKpiCard extends StatelessWidget {
     this.trend,
     this.subtitle,
     this.rightVisual,
-    this.valueSuffix,
+    this.showVisual = true,
   });
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
+    final trendColor = switch (trend?.direction) {
+      TrendDirection.up => trend!.isBullish ? p.successFg : p.dangerFg,
+      TrendDirection.down => trend!.isBearish ? p.dangerFg : p.successFg,
+      _ => p.textSecondary,
+    };
+    final trendIcon = switch (trend?.direction) {
+      TrendDirection.up => Icons.arrow_upward_rounded,
+      TrendDirection.down => Icons.arrow_downward_rounded,
+      _ => Icons.remove_rounded,
+    };
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: Color(0xFF12151E),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Color(0xFF232736)),
+        color: p.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: p.border),
+        boxShadow: DashboardStyle.cardShadow(context),
       ),
       child: Row(
         children: [
-          // Left Icon (44x44, 12px radius)
           Container(
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: iconColor,
+              color: iconColor.withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, size: 22, color: Colors.white),
+            child: Icon(icon, size: 22, color: iconColor),
           ),
-          const SizedBox(width: 12),
-          // Center Metrics
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1675,62 +1090,65 @@ class _SalesKpiCard extends StatelessWidget {
               children: [
                 Text(
                   label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: appText(
-                    size: AppTypography.labelMediumSize,
-                    color: Color(0xFF94A3B8),
+                    size: AppTypography.labelSmallSize,
+                    weight: FontWeight.w500,
+                    color: p.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text(
-                      value,
-                      style: appText(
-                        size: 22,
-                        weight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                    if (valueSuffix != null) ...[
-                      const SizedBox(width: 6),
-                      Text(
-                        valueSuffix!,
-                        style: appText(
-                          size: AppTypography.labelSmallSize,
-                          weight: FontWeight.w500,
-                          color: Color(0xFF64748B),
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          value,
+                          maxLines: 1,
+                          style:
+                              appText(
+                                size: 22,
+                                weight: FontWeight.w700,
+                                color: p.textPrimary,
+                                letterSpacing: -0.4,
+                              ).copyWith(
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures(),
+                                ],
+                              ),
                         ),
                       ),
-                    ],
-                    if (trend != null && trend!.percent != null) ...[
+                    ),
+                    if (trend != null) ...[
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
-                          color: (trend!.isBullish ? Color(0xFF10B981) : Color(0xFFEF4444)).withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(10),
+                          color: trendColor.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
-                              trend!.direction == TrendDirection.up
-                                  ? Icons.arrow_upward_rounded
-                                  : trend!.direction == TrendDirection.down
-                                      ? Icons.arrow_downward_rounded
-                                      : Icons.remove_rounded,
-                              size: 10,
-                              color: trend!.isBullish ? Color(0xFF34D399) : Color(0xFFF87171),
-                            ),
-                            const SizedBox(width: 2),
-                            Text(
-                              '${trend!.percent!.abs().toStringAsFixed(1)}%',
-                              style: appText(
-                                size: 10,
-                                weight: FontWeight.w600,
-                                color: trend!.isBullish ? Color(0xFF34D399) : Color(0xFFF87171),
+                            Icon(trendIcon, size: 11, color: trendColor),
+                            if (trend!.percent != null) ...[
+                              const SizedBox(width: 2),
+                              Text(
+                                '${trend!.percent!.abs().toStringAsFixed(1)}%',
+                                style: appText(
+                                  size: 10,
+                                  weight: FontWeight.w600,
+                                  color: trendColor,
+                                ),
                               ),
-                            ),
+                            ],
                           ],
                         ),
                       ),
@@ -1741,47 +1159,19 @@ class _SalesKpiCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     subtitle!,
-                    style: appText(
-                      size: AppTypography.labelSmallSize,
-                      color: Color(0xFF64748B),
-                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: appText(size: 11, color: p.textMuted),
                   ),
                 ],
               ],
             ),
           ),
-          // Right Visual
-          if (rightVisual != null) ...[
+          if (showVisual && rightVisual != null) ...[
             const SizedBox(width: 12),
             rightVisual!,
           ],
         ],
-      ),
-    );
-  }
-}
-
-/// Dark pill badge for Avg Order Value card.
-class _DarkPillBadge extends StatelessWidget {
-  final String text;
-
-  const _DarkPillBadge({required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: Color(0xFF0B0D12),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        text,
-        style: appText(
-          size: AppTypography.labelSmallSize,
-          weight: FontWeight.w600,
-          color: Colors.white,
-        ),
       ),
     );
   }
@@ -1796,14 +1186,20 @@ class _MiniBarChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final maxVal = values.reduce((a, b) => a > b ? a : b);
+    if (values.isEmpty) return const SizedBox.shrink();
+    // The series can be a full year; a KPI tile only has room for the recent
+    // shape, so keep the last eight points.
+    final shown = values.length > 8
+        ? values.sublist(values.length - 8)
+        : values;
+    final maxVal = shown.reduce((a, b) => a > b ? a : b);
     return Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.end,
-      children: values.map((v) {
-        final height = maxVal > 0 ? (v / maxVal * 45).clamp(7.0, 45.0) : 7.0;
+      children: shown.map((v) {
+        final height = maxVal > 0 ? (v / maxVal * 42).clamp(6.0, 42.0) : 6.0;
         return Container(
-          width: 10,
+          width: 9,
           height: height,
           margin: const EdgeInsets.symmetric(horizontal: 1),
           decoration: BoxDecoration(
@@ -1816,102 +1212,95 @@ class _MiniBarChart extends StatelessWidget {
   }
 }
 
-/// Payment capsule with segmented progress bar.
+/// Segmented bar showing the full payment distribution.
 class _PaymentCapsule extends StatelessWidget {
-  final double percent;
-  final Color color;
-  final String method;
-  final int count;
+  final List<({String method, int count, double percent})> segments;
 
-  const _PaymentCapsule({
-    required this.percent,
-    required this.color,
-    required this.method,
-    required this.count,
-  });
+  const _PaymentCapsule({required this.segments});
+
+  Color _colorFor(String method, AppPalette p) {
+    final name = method.toLowerCase();
+    if (name.contains('cash')) return p.successFg;
+    if (name.contains('kpay')) return p.infoFg;
+    if (name.contains('wave')) return p.accentText;
+    if (name.contains('other')) return p.textMuted;
+    return p.primary;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
+    if (segments.isEmpty) {
+      return Text(
+        context.l10n.t('No payments yet'),
+        style: appText(size: AppTypography.labelSmallSize, color: p.textMuted),
+      );
+    }
+    final total = segments.fold<int>(0, (sum, s) => sum + s.count);
     return SizedBox(
-      width: 180,
+      width: 160,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Capsule progress container
           Container(
-            height: 16,
+            height: 12,
             padding: const EdgeInsets.all(2),
             decoration: BoxDecoration(
               color: Color(0xFF0B0D12),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: Color(0xFF64748B)),
             ),
-            child: Row(
-              children: [
-                // Purple bar (Cash)
-                Expanded(
-                  flex: (percent * 0.96).round().clamp(1, 96),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Color(0xFF8B5CF6),
-                      borderRadius: BorderRadius.circular(8),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Row(
+                children: [
+                  for (final segment in segments)
+                    Expanded(
+                      flex: segment.count > 0 ? segment.count : 1,
+                      child: Container(color: _colorFor(segment.method, p)),
                     ),
-                  ),
-                ),
-                const SizedBox(width: 2),
-                // Cyan segment (KPay)
-                Expanded(
-                  flex: 4,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Color(0xFF38BDF8),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 6),
-          // Legend Row
-          Row(
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 10,
+            runSpacing: 4,
             children: [
-              Container(
-                width: 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: Color(0xFF8B5CF6),
-                  shape: BoxShape.circle,
+              for (final segment in segments)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: _colorFor(segment.method, p),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${segment.method} ${segment.percent.toStringAsFixed(0)}%',
+                      style: appText(
+                        size: 10,
+                        weight: FontWeight.w600,
+                        color: p.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                '${method.substring(0, 4)} ${count}',
-                style: appText(
-                  size: AppTypography.labelSmallSize,
-                  color: Color(0xFFE2E8F0),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Container(
-                width: 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: Color(0xFF38BDF8),
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                'KPay 1',
-                style: appText(
-                  size: AppTypography.labelSmallSize,
-                  color: Color(0xFFE2E8F0),
-                ),
-              ),
             ],
           ),
+          if (total > 0) ...[
+            const SizedBox(height: 2),
+            Text(
+              '$total ${context.l10n.t('payments')}',
+              style: appText(size: 10, color: p.textMuted),
+            ),
+          ],
         ],
       ),
     );
@@ -1927,12 +1316,11 @@ class _LineChartMini extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (values.length < 2) return const SizedBox.shrink();
     return SizedBox(
-      width: 140,
-      height: 50,
-      child: CustomPaint(
-        painter: _LineChartPainter(values, color),
-      ),
+      width: 112,
+      height: 44,
+      child: CustomPaint(painter: _LineChartPainter(values, color)),
     );
   }
 }
@@ -1989,10 +1377,7 @@ class _LineChartPainter extends CustomPainter {
     final gradient = LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
-      colors: [
-        color.withValues(alpha: 0.3),
-        color.withValues(alpha: 0.0),
-      ],
+      colors: [color.withValues(alpha: 0.3), color.withValues(alpha: 0.0)],
     );
 
     final fillRect = Rect.fromLTWH(0, 0, size.width, size.height);
@@ -2027,216 +1412,42 @@ class _LineChartPainter extends CustomPainter {
     final innerPaint = Paint()..color = Colors.white;
     canvas.drawCircle(Offset(peakX, peakY), 2, innerPaint);
 
-    // Dashed vertical line at peak
-    final dashPaint = Paint()
-      ..color = color.withValues(alpha: 0.4)
-      ..strokeWidth = 1;
-    const dashHeight = 4.0;
-    const dashSpace = 3.0;
-    var y = 0.0;
-    while (y < size.height) {
-      canvas.drawLine(
-        Offset(peakX, y),
-        Offset(peakX, y + dashHeight),
-        dashPaint,
-      );
-      y += dashHeight + dashSpace;
-    }
-
-    // Peak tooltip
-    final tooltipText = 'Peak: ${values[peakIndex].round()}';
-    final textPainter = TextPainter(
+    // Peak value label, kept inside the chart bounds so a large peak can never
+    // push the annotation off-canvas.
+    final valueText = 'Peak: ${values[peakIndex].round()}';
+    final tp = TextPainter(
       text: TextSpan(
-        text: tooltipText,
-        style: appText(
-          size: 10,
-          weight: FontWeight.w600,
-          color: Color(0xFFE2E8F0),
-        ),
+        text: valueText,
+        style: appText(size: 8, weight: FontWeight.w700, color: color),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-
-    final tooltipX = (peakX - textPainter.width / 2).clamp(0.0, size.width - textPainter.width);
-    final tooltipY = peakY - textPainter.height - 12;
-
-    final tooltipRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(tooltipX - 4, tooltipY - 2, textPainter.width + 8, textPainter.height + 4),
+    final labelX = (peakX - tp.width / 2).clamp(0.0, size.width - tp.width);
+    var labelY = peakY - tp.height - 6;
+    labelY = labelY.clamp(0.0, size.height - tp.height - 4);
+    final labelRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(labelX - 3, labelY - 2, tp.width + 6, tp.height + 4),
       const Radius.circular(4),
     );
-
-    final tooltipPaint = Paint()..color = Color(0xFF0B0D12);
-    canvas.drawRRect(tooltipRect, tooltipPaint);
-
-    final borderPaint = Paint()
-      ..color = Color(0xFF232736)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
-    canvas.drawRRect(tooltipRect, borderPaint);
-
-    textPainter.paint(canvas, Offset(tooltipX, tooltipY));
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-/// The bullish/bearish sign under a summary figure: an arrow and the size of
-/// the move, green up and red down.
-///
-/// The percentage is unsigned because the arrow already carries the sign —
-/// `▼ 12.4%` reads faster than `-12.4%` next to a red arrow. The word lives
-/// in the tooltip rather than on the surface: four labels printed down a
-/// narrow card would crowd the figures they describe.
-class _TrendBadge extends StatelessWidget {
-  final TrendEntity trend;
-
-  const _TrendBadge({required this.trend});
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.palette;
-
-    // The arrow follows the number; the colour follows whether that direction
-    // is good news. Low Stock Items rising is a warning, so it draws red
-    // while pointing up.
-    final (color, icon, label) = switch (trend.direction) {
-      TrendDirection.up =>
-        trend.isBullish
-            ? (p.successFg, Icons.trending_up, 'Bullish')
-            : (p.dangerFg, Icons.trending_up, 'Bearish'),
-      TrendDirection.down =>
-        trend.isBearish
-            ? (p.dangerFg, Icons.trending_down, 'Bearish')
-            : (p.successFg, Icons.trending_down, 'Bullish'),
-      TrendDirection.flat => (p.textMuted, Icons.trending_flat, 'No change'),
-    };
-
-    return Tooltip(
-      message: context.l10n.t(label),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: color),
-          if (trend.percent != null) ...[
-            const SizedBox(width: 3),
-            Text(
-              '${trend.percent!.abs().toStringAsFixed(1)}%',
-              style: appText(
-                size: AppTypography.labelSmallSize,
-                weight: FontWeight.w700,
-                color: color,
-                letterSpacing: -0.1,
-              ),
-            ),
-          ],
-        ],
-      ),
+    canvas.drawRRect(
+      labelRect,
+      Paint()
+        ..color = color.withValues(alpha: 0.18)
+        ..style = PaintingStyle.fill,
     );
+    canvas.drawRRect(
+      labelRect,
+      Paint()
+        ..color = color.withValues(alpha: 0.4)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.5,
+    );
+    tp.paint(canvas, Offset(labelX, labelY));
   }
-}
-
-// ============================================================ total sales hero card
-
-/// A prominent hero card for Total Sales: large figure, month-over-month trend,
-/// and a 12-month sparkline. Taps through to the full sales table.
-class _TotalSalesHeroCard extends StatelessWidget {
-  final int totalSales;
-  final TrendEntity? trend;
-  final List<double>? sparkline;
-  final VoidCallback onTap;
-
-  const _TotalSalesHeroCard({
-    required this.totalSales,
-    required this.trend,
-    required this.sparkline,
-    required this.onTap,
-  });
 
   @override
-  Widget build(BuildContext context) {
-    final p = context.palette;
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      child: AppCard(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: p.selectionTint,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(
-                    Icons.attach_money,
-                    size: 26,
-                    color: p.primary,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        context.l10n.t('Total Sales'),
-                        style: appText(
-                          size: AppTypography.labelMediumSize,
-                          weight: FontWeight.w600,
-                          color: p.textSecondary,
-                        ),
-                      ),
-                      if (trend != null) ...[
-                        const SizedBox(height: 4),
-                        _TrendBadge(trend: trend!),
-                      ],
-                    ],
-                  ),
-                ),
-                Icon(Icons.chevron_right, size: 20, color: p.textMuted),
-              ],
-            ),
-            const SizedBox(height: 20),
-            // Main figure — scaled so it never truncates
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: CountUpString(
-                value: totalSales.toString(),
-                style: appText(
-                  size: 40,
-                  weight: FontWeight.w800,
-                  color: p.textPrimary,
-                  height: 1.05,
-                ).copyWith(
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
-              ),
-            ),
-            // 12-month sparkline
-            if (sparkline != null && sparkline!.length > 1) ...[
-              const SizedBox(height: 16),
-              _HeroSparkline(values: sparkline!, trend: trend),
-              const SizedBox(height: 8),
-              Text(
-                context.l10n.t('12-month trend'),
-                style: appText(size: AppTypography.labelSmallSize, color: p.textMuted),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
+  bool shouldRepaint(covariant _LineChartPainter oldDelegate) =>
+      oldDelegate.values != values || oldDelegate.color != color;
 }
 
 // ============================================================ hero bento container
@@ -2246,24 +1457,24 @@ class _TotalSalesHeroCard extends StatelessWidget {
 class _HeroBentoContainer extends StatelessWidget {
   final int totalSales;
   final TrendEntity? revenueTrend;
-  final List<double>? revenueSparkline;
-  final int totalProducts;
-  final int totalItemsSold;
-  final int outStockCount;
-  final int totalProductsForOutStock;
-  final VoidCallback onNewSaleTap;
+  final List<double> revenueSparkline;
+  final DashboardStatsEntity stats;
+  final TrendEntity? itemsSoldTrend;
+  final List<double> itemsSoldSeries;
   final VoidCallback onRestockTap;
+
+  /// Floating "New Sale" action for the Total Sales hero, pinned top-right.
+  final VoidCallback? onNewSaleTap;
 
   const _HeroBentoContainer({
     required this.totalSales,
     required this.revenueTrend,
     required this.revenueSparkline,
-    required this.totalProducts,
-    required this.totalItemsSold,
-    required this.outStockCount,
-    required this.totalProductsForOutStock,
-    required this.onNewSaleTap,
+    required this.stats,
+    required this.itemsSoldTrend,
+    required this.itemsSoldSeries,
     required this.onRestockTap,
+    this.onNewSaleTap,
   });
 
   @override
@@ -2272,144 +1483,284 @@ class _HeroBentoContainer extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: p.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(DashboardStyle.cardRadius),
         border: Border.all(color: p.border),
+        boxShadow: DashboardStyle.cardShadow(context),
       ),
       clipBehavior: Clip.antiAlias,
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              flex: 40,
-              child: _HeroLeftSection(
-                totalSales: totalSales,
-                trend: revenueTrend,
-                sparkline: revenueSparkline,
-                onNewSaleTap: onNewSaleTap,
-              ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final left = _HeroLeftSection(
+            totalSales: totalSales,
+            trend: revenueTrend,
+            sparkline: revenueSparkline,
+            onNewSaleTap: onNewSaleTap,
+          );
+          final stacked = constraints.maxWidth < 860;
+          final rightWidth = stacked
+              ? constraints.maxWidth
+              : (constraints.maxWidth - 1) * (58 / 100);
+          final right = _HeroRightSection(
+            stats: stats,
+            itemsSoldTrend: itemsSoldTrend,
+            itemsSoldSeries: itemsSoldSeries,
+            onRestockTap: onRestockTap,
+            // The three cards decide for themselves between a row and a stack
+            // from the width they were actually given — no nested LayoutBuilder,
+            // which cannot live under an IntrinsicHeight.
+            compact: rightWidth < 560,
+            stretch: !stacked,
+          );
+
+          // Stacked below the two-column breakpoint rather than squeezing the
+          // three metric cards into a phone's width.
+          if (stacked) {
+            return Column(
+              children: [
+                left,
+                Divider(height: 1, color: p.border),
+                right,
+              ],
+            );
+          }
+
+          return IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(flex: 42, child: left),
+                Container(width: 1, color: p.border),
+                Expanded(flex: 58, child: right),
+              ],
             ),
-            Container(width: 1, color: p.border),
-            Expanded(
-              flex: 60,
-              child: _HeroRightSection(
-                totalProducts: totalProducts,
-                totalItemsSold: totalItemsSold,
-                outStockCount: outStockCount,
-                totalProductsForOutStock: totalProductsForOutStock,
-                onRestockTap: onRestockTap,
-              ),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 }
 
-/// Left section: Total Sales hero with violet gradient background.
+/// Left section: Total Sales hero with a palette-aware violet wash.
 class _HeroLeftSection extends StatelessWidget {
   final int totalSales;
   final TrendEntity? trend;
-  final List<double>? sparkline;
-  final VoidCallback onNewSaleTap;
+  final List<double> sparkline;
+
+  /// Floating "New Sale" action pinned to the top-right of the hero.
+  final VoidCallback? onNewSaleTap;
 
   const _HeroLeftSection({
     required this.totalSales,
     required this.trend,
     required this.sparkline,
-    required this.onNewSaleTap,
+    this.onNewSaleTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final newSaleTap = onNewSaleTap;
     final p = context.palette;
+    final change = trend?.percent;
+    final good = trend?.isBullish ?? true;
+    final trendColor = good ? p.successFg : p.dangerFg;
+    final trendIcon = switch (trend?.direction) {
+      TrendDirection.up => Icons.trending_up_rounded,
+      TrendDirection.down => Icons.trending_down_rounded,
+      _ => Icons.trending_flat_rounded,
+    };
+
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF2E1065),
-            p.surface,
-          ],
-          stops: const [0.0, 0.6],
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+      decoration: BoxDecoration(gradient: DashboardStyle.heroGradient(context)),
+      child: Stack(
+        clipBehavior: Clip.none,
         children: [
-          Text(
-            context.l10n.t('Total Sales'),
-            style: appText(
-              size: AppTypography.labelMediumSize,
-              weight: FontWeight.w600,
-              color: p.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          RichText(
-            text: TextSpan(
-              style: appText(
-                size: 36,
-                weight: FontWeight.w800,
-                color: p.textPrimary,
-                height: 1.05,
-              ).copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
-              children: [
-                TextSpan(
-                  text: 'MMK ',
-                  style: appText(
-                    size: 18,
-                    weight: FontWeight.w600,
-                    color: p.textSecondary,
-                  ).copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
+          // A soft bloom in the corner. Painted, not blurred, so it costs one
+          // radial gradient instead of a saveLayer.
+          Positioned(
+            top: -80,
+            right: -60,
+            child: IgnorePointer(
+              child: Container(
+                width: 240,
+                height: 240,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      p.primary.withValues(
+                        alpha: Theme.of(context).brightness == Brightness.dark
+                            ? 0.35
+                            : 0.16,
+                      ),
+                      p.primary.withValues(alpha: 0),
+                    ],
+                  ),
                 ),
-                TextSpan(text: totalSales.withCommas()),
-              ],
+              ),
             ),
           ),
-          const SizedBox(height: 12),
-          if (trend != null && trend!.percent != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: p.successFg.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-                border: Border.all(color: p.successFg.withValues(alpha: 0.3)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
                 children: [
-                  Icon(Icons.trending_up, size: 12, color: p.successFg),
-                  const SizedBox(width: 4),
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: p.primary,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   Text(
-                    '+${trend!.percent!.abs().toStringAsFixed(1)}% vs last month',
+                    context.l10n.t('Total Sales'),
                     style: appText(
-                      size: AppTypography.labelSmallSize,
+                      size: AppTypography.labelMediumSize,
                       weight: FontWeight.w600,
-                      color: p.successFg,
+                      color: p.textSecondary,
+                      letterSpacing: 0.1,
                     ),
                   ),
                 ],
               ),
-            ),
-          const SizedBox(height: 16),
-          // Sparkline directly below pill
-          SizedBox(
-            height: 52,
-            width: double.infinity,
-            child: CustomPaint(painter: _SalesSparklinePainter()),
+              const SizedBox(height: 14),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: RichText(
+                  text: TextSpan(
+                    style:
+                        appText(
+                          size: 38,
+                          weight: FontWeight.w800,
+                          color: p.textPrimary,
+                          height: 1.05,
+                          letterSpacing: -1,
+                        ).copyWith(
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                    children: [
+                      TextSpan(
+                        text: 'MMK ',
+                        style:
+                            appText(
+                              size: 18,
+                              weight: FontWeight.w600,
+                              color: p.textSecondary,
+                            ).copyWith(
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
+                              ],
+                            ),
+                      ),
+                      TextSpan(text: totalSales.withCommas()),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (change != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: trendColor.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    border: Border.all(
+                      color: trendColor.withValues(alpha: 0.28),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(trendIcon, size: 13, color: trendColor),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${trend!.direction == TrendDirection.down ? '−' : '+'}'
+                        '${change.abs().toStringAsFixed(1)}% '
+                        '${context.l10n.t('vs last month')}',
+                        style: appText(
+                          size: AppTypography.labelSmallSize,
+                          weight: FontWeight.w600,
+                          color: trendColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 18),
+              SizedBox(
+                height: 66,
+                width: double.infinity,
+                child: ChartReveal(
+                  grow: true,
+                  duration: const Duration(milliseconds: 800),
+                  child: _HeroSparkline(values: sparkline, trend: trend),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                '${context.l10n.t('Revenue trend')} · '
+                '${context.l10n.t('last 12 months')}',
+                style: appText(
+                  size: 11,
+                  weight: FontWeight.w500,
+                  color: p.textMuted,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          // Compact left-aligned button
-          SizedBox(
-            child: ElevatedButton.icon(
-              onPressed: onNewSaleTap,
-              icon: const Icon(Icons.add, size: 18),
-              label: Text(
+          if (newSaleTap != null)
+            Positioned(
+              top: 24,
+              right: 24,
+              child: _HeroNewSaleButton(onTap: newSaleTap),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Floating "New Sale" pill anchored to the hero card's top-right corner.
+class _HeroNewSaleButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _HeroNewSaleButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            color: p.primary,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            boxShadow: [
+              BoxShadow(
+                color: p.primary.withValues(alpha: 0.4),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.add_rounded, size: 16, color: Colors.white),
+              const SizedBox(width: 6),
+              Text(
                 'New Sale',
                 style: appText(
                   size: AppTypography.labelMediumSize,
@@ -2417,157 +1768,246 @@ class _HeroLeftSection extends StatelessWidget {
                   color: Colors.white,
                 ),
               ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: p.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-                elevation: 0,
-              ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 }
 
-/// Right section: 3 equal-width cards side-by-side.
+/// Small "View details" action row used inside the hero's nested metric cards,
+/// styled like the Out of Stock card's Restock link.
+class _HeroCardAction extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _HeroCardAction({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: TextButton(
+        onPressed: onTap,
+        style: TextButton.styleFrom(
+          foregroundColor: color,
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: appText(
+                size: AppTypography.labelSmallSize,
+                weight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(icon, size: 14, color: color),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Right section: three nested metric cards.
 class _HeroRightSection extends StatelessWidget {
-  final int totalProducts;
-  final int totalItemsSold;
-  final int outStockCount;
-  final int totalProductsForOutStock;
+  final DashboardStatsEntity stats;
+  final TrendEntity? itemsSoldTrend;
+  final List<double> itemsSoldSeries;
   final VoidCallback onRestockTap;
 
+  /// Stack the three cards instead of laying them out in a row.
+  final bool compact;
+
+  /// When true the parent will stretch the section to the row's height, so the
+  /// row can use `crossAxisAlignment: stretch`. In stacked mode the cards size
+  /// themselves, so the row falls back to their natural heights.
+  final bool stretch;
+
   const _HeroRightSection({
-    required this.totalProducts,
-    required this.totalItemsSold,
-    required this.outStockCount,
-    required this.totalProductsForOutStock,
+    required this.stats,
+    required this.itemsSoldTrend,
+    required this.itemsSoldSeries,
     required this.onRestockTap,
+    this.compact = false,
+    this.stretch = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    const cardBg = Color(0x990B0E17);
-    const cardBorder = Color(0xFF1E293B);
-    const cardRadius = 12.0;
-
-    // Calculate out of stock percentage
-    final outStockPercent = totalProductsForOutStock > 0
-        ? (outStockCount / totalProductsForOutStock).clamp(0.0, 1.0)
+    final outPercent = stats.totalProducts > 0
+        ? (stats.outStock / stats.totalProducts).clamp(0.0, 1.0)
         : 0.0;
+    final itemsChange = itemsSoldTrend?.percent;
 
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            child: _NestedMetricCard(
-              label: context.l10n.t('Total Products'),
-              value: totalProducts.toString(),
-              backgroundColor: cardBg,
-              borderColor: cardBorder,
-              radius: cardRadius,
-              child: _StockLevelBar(
-                lowStock: 9,
-                midStock: 15,
-                highStock: 11,
-              ),
-            ),
+    final cards = <Widget>[
+      _NestedMetricCard(
+        label: context.l10n.t('Total Products'),
+        value: stats.totalProducts.withCommas(),
+        badge: stats.lowStock > 0
+            ? '${stats.lowStock} ${context.l10n.t('low')}'
+            : null,
+        badgeColor: stats.lowStock > 0 ? p.warningFg : null,
+        action: _HeroCardAction(
+          label: context.l10n.t('View products'),
+          icon: Icons.inventory_2_outlined,
+          color: p.primary,
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const ProductsCatalogScreen()),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: _NestedMetricCard(
-              label: context.l10n.t('Total Items Sold'),
-              value: totalItemsSold.toString(),
-              badge: '+22.4%',
-              badgeColor: p.successFg,
-              backgroundColor: cardBg,
-              borderColor: cardBorder,
-              radius: cardRadius,
-              child: _CircularProgressRing(progress: 0.72, label: 'of monthly goal'),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: _NestedMetricCard(
-              label: context.l10n.t('Out of Stock Alerts'),
-              value: '$outStockCount items',
-              backgroundColor: cardBg,
-              borderColor: cardBorder,
-              radius: cardRadius,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _CircularProgressRing(
-                    progress: outStockPercent,
-                    color: p.dangerFg,
-                    label: '${(outStockPercent * 100).round()}% out',
+        ),
+        child: _StockLevelBar(stats: stats),
+      ),
+      _NestedMetricCard(
+        label: context.l10n.t('Total Items Sold'),
+        value: stats.totalItemsSold.withCommas(),
+        badge: itemsChange != null
+            ? '${itemsSoldTrend!.direction == TrendDirection.down ? '−' : '+'}'
+                  '${itemsChange.abs().toStringAsFixed(1)}%'
+            : null,
+        badgeColor: itemsChange == null
+            ? null
+            : (itemsSoldTrend!.isBullish ? p.successFg : p.dangerFg),
+        action: _HeroCardAction(
+          label: context.l10n.t('View sales'),
+          icon: Icons.receipt_long_outlined,
+          color: p.infoFg,
+          onTap: () => Navigator.of(
+            context,
+          ).push(DashboardTableScreen.route(spec: DashboardTables.sales)),
+        ),
+        child: SizedBox(
+          height: 30,
+          width: double.infinity,
+          child: itemsSoldSeries.length > 1
+              ? CustomPaint(
+                  painter: _SparklinePainter(itemsSoldSeries, p.accentText),
+                )
+              : Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    context.l10n.t('No history yet'),
+                    style: appText(
+                      size: AppTypography.labelSmallSize,
+                      color: p.textMuted,
+                    ),
                   ),
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: onRestockTap,
-                    style: TextButton.styleFrom(
-                      foregroundColor: p.dangerFg,
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+        ),
+      ),
+      _NestedMetricCard(
+        label: context.l10n.t('Out of Stock Alerts'),
+        value: '${stats.outStock} ${context.l10n.t('items')}',
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _CircularProgressRing(
+              progress: outPercent,
+              color: p.dangerFg,
+              label:
+                  '${(outPercent * 100).round()}% '
+                  '${context.l10n.t('out')}',
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: onRestockTap,
+              style: TextButton.styleFrom(
+                foregroundColor: p.dangerFg,
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    context.l10n.t('Restock'),
+                    style: appText(
+                      size: AppTypography.labelSmallSize,
+                      weight: FontWeight.w600,
+                      color: p.dangerFg,
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Restock',
-                          style: appText(
-                            size: AppTypography.labelSmallSize,
-                            weight: FontWeight.w600,
-                            color: p.dangerFg,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Icon(Icons.arrow_forward, size: 14, color: p.dangerFg),
-                      ],
-                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 14,
+                    color: p.dangerFg,
                   ),
                 ],
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
+    ];
+
+    final row = Row(
+      crossAxisAlignment: stretch
+          ? CrossAxisAlignment.stretch
+          : CrossAxisAlignment.start,
+      children: [
+        Expanded(child: cards[0]),
+        const SizedBox(width: 12),
+        Expanded(child: cards[1]),
+        const SizedBox(width: 12),
+        Expanded(child: cards[2]),
+      ],
     );
+    final body = compact
+        ? Column(
+            children: [
+              cards[0],
+              const SizedBox(height: 12),
+              cards[1],
+              const SizedBox(height: 12),
+              cards[2],
+            ],
+          )
+        : stretch
+        ? row
+        : IntrinsicHeight(child: row);
+
+    return Padding(padding: const EdgeInsets.all(16), child: body);
   }
 }
 
-/// Reusable nested metric card.
+/// Reusable nested metric card. Reads the theme so it is a quiet inner surface
+/// in light mode instead of a dark island inside a white card.
 class _NestedMetricCard extends StatelessWidget {
   final String label;
   final String value;
-  final Color backgroundColor;
-  final Color borderColor;
-  final double radius;
   final Widget child;
   final String? badge;
   final Color? badgeColor;
-  final bool pushToBottom;
+
+  /// Optional action under the body — e.g. "View details", styled like the
+  /// Out of Stock card's Restock link.
+  final Widget? action;
 
   const _NestedMetricCard({
     required this.label,
     required this.value,
-    required this.backgroundColor,
-    required this.borderColor,
-    required this.radius,
     required this.child,
     this.badge,
     this.badgeColor,
-    this.pushToBottom = false,
+    this.action,
   });
 
   @override
@@ -2576,43 +2016,53 @@ class _NestedMetricCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: borderColor),
+        color: p.surfaceAlt,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: p.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: Text(
                   label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: appText(
-                    size: AppTypography.labelMediumSize,
+                    size: AppTypography.labelSmallSize,
                     weight: FontWeight.w600,
                     color: p.textSecondary,
                   ),
                 ),
               ),
-              if (badge != null && badgeColor != null)
+              if (badge != null && badgeColor != null) ...[
+                const SizedBox(width: 6),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
-                    color: badgeColor!.withValues(alpha: 0.15),
+                    color: badgeColor!.withValues(alpha: 0.14),
                     borderRadius: BorderRadius.circular(AppRadius.pill),
-                    border: Border.all(color: badgeColor!.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: badgeColor!.withValues(alpha: 0.28),
+                    ),
                   ),
                   child: Text(
                     badge!,
                     style: appText(
-                      size: AppTypography.labelSmallSize,
+                      size: 10,
                       weight: FontWeight.w600,
                       color: badgeColor!,
                     ),
                   ),
                 ),
+              ],
             ],
           ),
           const SizedBox(height: 8),
@@ -2622,87 +2072,87 @@ class _NestedMetricCard extends StatelessWidget {
             child: Text(
               value,
               style: appText(
-                size: 36,
-                weight: FontWeight.w800,
+                size: 30,
+                weight: FontWeight.w700,
                 color: p.textPrimary,
                 height: 1.05,
+                letterSpacing: -0.6,
               ).copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
             ),
           ),
           const SizedBox(height: 12),
-          if (pushToBottom) const Spacer(),
           child,
+          if (action != null) ...[const SizedBox(height: 10), action!],
         ],
       ),
     );
   }
 }
 
-/// Horizontal segmented stock-level bar with legend.
+/// Horizontal segmented stock-level bar with legend, driven by real counts.
 class _StockLevelBar extends StatelessWidget {
-  final int lowStock;
-  final int midStock;
-  final int highStock;
+  final DashboardStatsEntity stats;
 
-  const _StockLevelBar({
-    required this.lowStock,
-    required this.midStock,
-    required this.highStock,
-  });
+  const _StockLevelBar({required this.stats});
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final total = lowStock + midStock + highStock;
-    if (total == 0) return const SizedBox.shrink();
+    final total = stats.inStock + stats.lowStock + stats.outStock;
+    if (total == 0) {
+      return Text(
+        context.l10n.t('No stock yet'),
+        style: appText(size: AppTypography.labelSmallSize, color: p.textMuted),
+      );
+    }
+
+    Widget segment(int value, Color color) {
+      return Expanded(
+        flex: value,
+        child: Container(
+          height: 6,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(3),
+          ),
+        ),
+      );
+    }
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Row(
           children: [
-            if (lowStock > 0)
-              Expanded(
-                flex: lowStock,
-                child: Container(
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: p.dangerFg,
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ),
-              ),
-            if (midStock > 0)
-              Expanded(
-                flex: midStock,
-                child: Container(
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: p.primary,
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ),
-              ),
-            if (highStock > 0)
-              Expanded(
-                flex: highStock,
-                child: Container(
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: p.successFg,
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ),
-              ),
+            if (stats.inStock > 0) segment(stats.inStock, p.successFg),
+            if (stats.inStock > 0 && (stats.lowStock > 0 || stats.outStock > 0))
+              const SizedBox(width: 2),
+            if (stats.lowStock > 0) segment(stats.lowStock, p.warningFg),
+            if (stats.lowStock > 0 && stats.outStock > 0)
+              const SizedBox(width: 2),
+            if (stats.outStock > 0) segment(stats.outStock, p.dangerFg),
           ],
         ),
         const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Wrap(
+          spacing: 10,
+          runSpacing: 4,
           children: [
-            _LegendDot(color: p.dangerFg, label: 'Low', count: lowStock),
-            _LegendDot(color: p.primary, label: 'Mid', count: midStock),
-            _LegendDot(color: p.successFg, label: 'High', count: highStock),
+            _LegendDot(
+              color: p.successFg,
+              label: context.l10n.t('In'),
+              count: stats.inStock,
+            ),
+            _LegendDot(
+              color: p.warningFg,
+              label: context.l10n.t('Low'),
+              count: stats.lowStock,
+            ),
+            _LegendDot(
+              color: p.dangerFg,
+              label: context.l10n.t('Out'),
+              count: stats.outStock,
+            ),
           ],
         ),
       ],
@@ -2715,7 +2165,11 @@ class _LegendDot extends StatelessWidget {
   final String label;
   final int count;
 
-  const _LegendDot({required this.color, required this.label, required this.count});
+  const _LegendDot({
+    required this.color,
+    required this.label,
+    required this.count,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -2734,76 +2188,10 @@ class _LegendDot extends StatelessWidget {
         const SizedBox(width: 4),
         Text(
           '$label $count',
-          style: appText(size: AppTypography.labelSmallSize, color: p.textMuted),
-        ),
-      ],
-    );
-  }
-}
-
-/// Payment method data for the bar chart.
-class _PaymentMethod {
-  final String name;
-  final int percent;
-  final Color color;
-
-  const _PaymentMethod({required this.name, required this.percent, required this.color});
-}
-
-/// Horizontal bar showing payment method distribution.
-class _PaymentMethodBar extends StatelessWidget {
-  final List<_PaymentMethod> methods;
-
-  const _PaymentMethodBar({required this.methods});
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.palette;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Segmented bar
-        Row(
-          children: [
-            for (final method in methods)
-              Expanded(
-                flex: method.percent,
-                child: Container(
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: method.color,
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        // Legend
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            for (final method in methods)
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: method.color,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${method.name} ${method.percent}%',
-                    style: appText(size: AppTypography.labelSmallSize, color: p.textMuted),
-                  ),
-                ],
-              ),
-          ],
+          style: appText(
+            size: AppTypography.labelSmallSize,
+            color: p.textMuted,
+          ),
         ),
       ],
     );
@@ -2834,12 +2222,11 @@ class _CircularProgressRing extends StatelessWidget {
               SizedBox(
                 width: 56,
                 height: 56,
-                child: CircularProgressIndicator(
-                  value: progress,
-                  strokeWidth: 4,
-                  backgroundColor: p.border,
-                  valueColor: AlwaysStoppedAnimation<Color>(ringColor),
-                  strokeCap: StrokeCap.round,
+                child: CustomPaint(
+                  painter: _GradientProgressRingPainter(
+                    progress: progress.clamp(0.0, 1.0),
+                    color: ringColor,
+                  ),
                 ),
               ),
               Text(
@@ -2868,7 +2255,64 @@ class _CircularProgressRing extends StatelessWidget {
   }
 }
 
+/// Progress ring with a soft gradient arc and a glow — a step up from the flat
+/// `CircularProgressIndicator`, which has no gradient and no halo.
+class _GradientProgressRingPainter extends CustomPainter {
+  final double progress;
+  final Color color;
+
+  _GradientProgressRingPainter({required this.progress, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2 - 2.5;
+    final clamped = progress.clamp(0.0, 1.0);
+
+    final arc = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+        colors: [color, color.withValues(alpha: 0.55)],
+      ).createShader(Rect.fromCircle(center: center, radius: radius))
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 5
+      ..strokeCap = StrokeCap.round;
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -math.pi / 2,
+      math.pi * 2 * clamped,
+      false,
+      arc,
+    );
+
+    // Soft halo behind the arc so the ring reads as alive, not flat.
+    final glow = Paint()
+      ..color = color.withValues(alpha: 0.28)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 7
+      ..strokeCap = StrokeCap.round;
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -math.pi / 2,
+      2 * math.pi * clamped,
+      false,
+      glow,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _GradientProgressRingPainter oldDelegate) =>
+      oldDelegate.progress != progress || oldDelegate.color != color;
+}
+
 /// Larger sparkline for the hero card — full width, taller, with area fill.
+/// Larger sparkline for the hero card — full width, taller, with area fill.
+///
+/// The renderer, not the data, owns the shape: it normalizes into the box,
+/// downsamples a long series, smooths without overshooting, and draws a flat
+/// line when there is not enough history. A real daily series can therefore
+/// never collapse the card the way a raw plot would.
 class _HeroSparkline extends StatelessWidget {
   final List<double> values;
   final TrendEntity? trend;
@@ -2885,8 +2329,7 @@ class _HeroSparkline extends StatelessWidget {
       _ => p.textMuted,
     };
 
-    return SizedBox(
-      height: 80,
+    return SizedBox.expand(
       child: CustomPaint(painter: _HeroSparklinePainter(values, color, p)),
     );
   }
@@ -2899,101 +2342,119 @@ class _HeroSparklinePainter extends CustomPainter {
 
   _HeroSparklinePainter(this.values, this.color, this.palette);
 
+  /// Keep the line readable at card width. A 90-day series squeezed into
+  /// 300px is a smear, so it is resampled to at most this many points.
+  static const int _maxPoints = 36;
+
+  List<double> _sample() {
+    if (values.length <= _maxPoints) return values;
+    final step = (values.length - 1) / (_maxPoints - 1);
+    return [
+      for (var i = 0; i < _maxPoints; i++)
+        values[(i * step).round().clamp(0, values.length - 1)],
+    ];
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
-    if (values.length < 2 || size.isEmpty) return;
+    if (size.isEmpty) return;
 
-    var min = values.first;
-    var max = values.first;
-    for (final v in values) {
+    const pad = 6.0;
+    final width = size.width - pad * 2;
+    final height = size.height - pad * 2;
+    if (width <= 0 || height <= 0) return;
+
+    final points = _sample();
+    final hasShape = points.length > 1;
+
+    // A flat series — including the no-history case — sits on the middle
+    // baseline instead of pinning itself to an edge.
+    var min = points.isEmpty ? 0.0 : points.first;
+    var max = min;
+    for (final v in points) {
       if (v < min) min = v;
       if (v > max) max = v;
     }
-    final span = max - min < 1e-6 ? 1.0 : max - min;
+    final span = max - min;
+    final flat = !hasShape || span.abs() < 1e-6;
 
-    const pad = 2.0;
-    final width = size.width - pad * 2;
-    final height = size.height - pad * 2;
-
-    final path = Path();
-    for (var i = 0; i < values.length; i++) {
-      final x = pad + width * i / (values.length - 1);
-      final y = pad + height * (1 - (values[i] - min) / span);
-      if (i == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
+    Offset pointAt(int i) {
+      if (flat) {
+        return Offset(
+          pad + width * i / (points.length <= 1 ? 1 : points.length - 1),
+          pad + height * 0.55,
+        );
       }
+      final x = pad + width * i / (points.length - 1);
+      final y = pad + height * (1 - (points[i] - min) / span);
+      return Offset(x, y);
     }
 
-    // Area fill
-    final areaPath = Path.from(path);
-    areaPath.lineTo(pad + width, pad + height);
-    areaPath.lineTo(pad, pad + height);
-    areaPath.close();
+    final count = points.isEmpty ? 2 : points.length;
+    final first = pointAt(0);
+    final path = Path()..moveTo(first.dx, first.dy);
 
+    if (hasShape && !flat) {
+      // Quadratic smoothing through segment midpoints: the control points are
+      // the data points themselves, so the curve stays inside the series's
+      // vertical range and never dips below its own baseline.
+      var previous = first;
+      for (var i = 1; i < count; i++) {
+        final current = pointAt(i);
+        final mid = Offset(
+          (previous.dx + current.dx) / 2,
+          (previous.dy + current.dy) / 2,
+        );
+        path.quadraticBezierTo(previous.dx, previous.dy, mid.dx, mid.dy);
+        previous = current;
+        if (i == count - 1) path.lineTo(current.dx, current.dy);
+      }
+    } else {
+      final last = pointAt(count - 1);
+      path.lineTo(last.dx, last.dy);
+    }
+
+    // Area fill.
+    final areaPath = Path.from(path)
+      ..lineTo(pad + width, pad + height)
+      ..lineTo(pad, pad + height)
+      ..close();
     canvas.drawPath(
       areaPath,
       Paint()
-        ..color = color.withValues(alpha: 0.12)
-        ..style = PaintingStyle.fill,
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            color.withValues(alpha: flat ? 0.08 : 0.22),
+            color.withValues(alpha: 0),
+          ],
+        ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
     );
 
-    // Line
+    // Line.
     canvas.drawPath(
       path,
       Paint()
         ..color = color
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.5
+        ..strokeWidth = 2.4
         ..strokeCap = StrokeCap.round
         ..strokeJoin = StrokeJoin.round,
     );
 
-    // Dots on each point
-    final dotPaint = Paint()..color = color;
-    for (var i = 0; i < values.length; i++) {
-      final x = pad + width * i / (values.length - 1);
-      final y = pad + height * (1 - (values[i] - min) / span);
-      canvas.drawCircle(Offset(x, y), 3.5, dotPaint);
-      // White inner dot for pop
-      canvas.drawCircle(Offset(x, y), 1.8, Paint()..color = palette.scaffoldBg);
-    }
+    // Only the latest point gets a marker; a dot on every point turns the
+    // line into a beaded chain.
+    final lastPoint = pointAt(count - 1);
+    canvas.drawCircle(lastPoint, 4, Paint()..color = color);
+    canvas.drawCircle(lastPoint, 1.8, Paint()..color = palette.surface);
   }
 
   @override
   bool shouldRepaint(covariant _HeroSparklinePainter oldDelegate) =>
-      oldDelegate.values != values || oldDelegate.color != color || oldDelegate.palette != palette;
-}
-
-/// The little line beside a KPI figure: the metric's recent shape drawn as a
-/// bare polyline, tinted the way the tile's arrow points.
-///
-/// Deliberately not a chart — no axes, no grid, no labels. It exists so the
-/// tile reads as "this moved" at a glance, which is what the design's spark
-/// in the corner does.
-class _Sparkline extends StatelessWidget {
-  final List<double> values;
-  final TrendEntity? trend;
-
-  const _Sparkline({required this.values, required this.trend});
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.palette;
-
-    final color = switch (trend?.direction) {
-      TrendDirection.up => trend!.isBullish ? p.successFg : p.dangerFg,
-      TrendDirection.down => trend!.isBearish ? p.dangerFg : p.successFg,
-      _ => p.textMuted,
-    };
-
-    return SizedBox(
-      width: 64,
-      height: 26,
-      child: CustomPaint(painter: _SparklinePainter(values, color)),
-    );
-  }
+      oldDelegate.values != values ||
+      oldDelegate.color != color ||
+      oldDelegate.palette != palette;
 }
 
 class _SparklinePainter extends CustomPainter {
@@ -3050,7 +2511,7 @@ class _SparklinePainter extends CustomPainter {
 
 // ============================================================ category donut
 
-class _CategoryDonut extends StatelessWidget {
+class _CategoryDonut extends StatefulWidget {
   final List<CategoryDistributionEntity> items;
   final int total;
   final AppPalette palette;
@@ -3062,58 +2523,82 @@ class _CategoryDonut extends StatelessWidget {
   });
 
   @override
+  State<_CategoryDonut> createState() => _CategoryDonutState();
+}
+
+class _CategoryDonutState extends State<_CategoryDonut> {
+  int? _touchedIndex;
+
+  @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 240,
-      height: 240,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          PieChart(
-            PieChartData(
-              sectionsSpace: 2,
-              centerSpaceRadius: 64,
-              startDegreeOffset: -90,
-              sections: [
-                for (final item in items)
-                  PieChartSectionData(
-                    value: item.productCount.toDouble(),
-                    color: Color(item.colorValue),
-                    radius: 56,
-                    showTitle: false,
-                  ),
-              ],
-            ),
-            duration: const Duration(milliseconds: 400),
-            curve: Curves.easeOutCubic,
-          ),
-          SizedBox(
-            width: 112,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  total.withCommas(),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  style: appText(
-                    size: 26,
-                    weight: FontWeight.w700,
-                    color: palette.textPrimary,
-                    letterSpacing: -0.5,
-                  ),
+    final p = widget.palette;
+    return ChartReveal(
+      child: SizedBox(
+        width: 240,
+        height: 240,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            PieChart(
+              PieChartData(
+                sectionsSpace: 2,
+                centerSpaceRadius: 64,
+                startDegreeOffset: -90,
+                pieTouchData: PieTouchData(
+                  touchCallback: (_, PieTouchResponse? response) {
+                    setState(
+                      () => _touchedIndex =
+                          response?.touchedSection?.touchedSectionIndex,
+                    );
+                  },
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  context.l10n.t('Products'),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  style: appText(size: AppTypography.labelSmallSize, color: palette.textSecondary),
-                ),
-              ],
+                sections: [
+                  for (var i = 0; i < widget.items.length; i++)
+                    PieChartSectionData(
+                      value: widget.items[i].productCount.toDouble(),
+                      color: Color(widget.items[i].colorValue),
+                      radius: _touchedIndex == i ? 62 : 56,
+                      showTitle: false,
+                      borderSide: _touchedIndex == i
+                          ? BorderSide(color: Colors.white, width: 2)
+                          : BorderSide.none,
+                    ),
+                ],
+              ),
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeOutCubic,
             ),
-          ),
-        ],
+            SizedBox(
+              width: 112,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    widget.total.withCommas(),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    style: appText(
+                      size: 26,
+                      weight: FontWeight.w700,
+                      color: p.textPrimary,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    context.l10n.t('Products'),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    style: appText(
+                      size: AppTypography.labelSmallSize,
+                      color: p.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -3190,7 +2675,10 @@ class _CategoryLegend extends StatelessWidget {
                   '${percentOf(items[i]).toStringAsFixed(1)}%',
                   textAlign: TextAlign.right,
                   maxLines: 1,
-                  style: appText(size: AppTypography.labelSmallSize, color: p.textSecondary),
+                  style: appText(
+                    size: AppTypography.labelSmallSize,
+                    color: p.textSecondary,
+                  ),
                 ),
               ),
             ],
@@ -3203,206 +2691,11 @@ class _CategoryLegend extends StatelessWidget {
 
 // ============================================================== stock status
 
-class _StockStatusRow {
-  final IconData icon;
-  final int tintValue;
-  final int colorValue;
-  final String label;
-  final int count;
-
-  const _StockStatusRow({
-    required this.icon,
-    required this.tintValue,
-    required this.colorValue,
-    required this.label,
-    required this.count,
-  });
-}
-
-class _StockStatusCard extends StatelessWidget {
-  final DashboardStatsEntity stats;
-
-  const _StockStatusCard({required this.stats});
-
-  @override
-  Widget build(BuildContext context) {
-    return _StockStatusPanel(
-      title: context.l10n.t('Product Stock Status'),
-      total: stats.totalProducts,
-      trailing: _ViewAllLink(
-        onTap: () => Navigator.of(
-          context,
-        ).push(DashboardTableScreen.route(spec: DashboardTables.inStock)),
-      ),
-      rows: [
-        _StockStatusRow(
-          icon: Icons.check_circle_outline,
-          tintValue: 0xFFDCFCE7,
-          colorValue: 0xFF16A34A,
-          label: 'In Stock',
-          count: stats.inStock,
-        ),
-        _StockStatusRow(
-          icon: Icons.warning_amber_outlined,
-          tintValue: 0xFFFEF3C7,
-          colorValue: 0xFFF59E0B,
-          label: 'Low Stock',
-          count: stats.lowStock,
-        ),
-        _StockStatusRow(
-          icon: Icons.cancel_outlined,
-          tintValue: 0xFFFEE2E2,
-          colorValue: 0xFFEF4444,
-          label: 'Out of Stock',
-          count: stats.outStock,
-        ),
-      ],
-    );
-  }
-}
-
 /// Package-level stock, read from the dashboard API.
 ///
 /// Each active package's stock is the summed available stock of the products
 /// assigned to it. The API buckets them into in-stock / low / out, so the rows
 /// here are real figures — nothing is generated on the client.
-class _PackageStockStatusCard extends StatelessWidget {
-  final DashboardStatsEntity stats;
-
-  const _PackageStockStatusCard({required this.stats});
-
-  @override
-  Widget build(BuildContext context) {
-    return _StockStatusPanel(
-      title: context.l10n.t('Package Stock Status'),
-      total: stats.totalPackages,
-      rows: [
-        _StockStatusRow(
-          icon: Icons.check_circle_outline,
-          tintValue: 0xFFDCFCE7,
-          colorValue: 0xFF16A34A,
-          label: 'In Stock',
-          count: stats.packagesInStock,
-        ),
-        _StockStatusRow(
-          icon: Icons.warning_amber_outlined,
-          tintValue: 0xFFFEF3C7,
-          colorValue: 0xFFF59E0B,
-          label: 'Low Stock',
-          count: stats.packagesLowStock,
-        ),
-        _StockStatusRow(
-          icon: Icons.cancel_outlined,
-          tintValue: 0xFFFEE2E2,
-          colorValue: 0xFFEF4444,
-          label: 'Out of Stock',
-          count: stats.packagesOutStock,
-        ),
-      ],
-    );
-  }
-}
-
-class _StockStatusPanel extends StatelessWidget {
-  final String title;
-  final Widget? trailing;
-  final List<_StockStatusRow> rows;
-
-  /// The number the bars and percentages divide by.
-  final int total;
-
-  const _StockStatusPanel({
-    required this.title,
-    required this.rows,
-    required this.total,
-    this.trailing,
-  });
-
-  double _shareOf(int value) =>
-      total <= 0 ? 0 : (value / total).clamp(0.0, 1.0);
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.palette;
-    return _PanelCard(
-      title: title,
-      trailing: trailing,
-      padding: const EdgeInsets.all(12),
-      titlePadding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          for (var i = 0; i < rows.length; i++) ...[
-            if (i > 0) const SizedBox(height: 16),
-            Row(
-              children: [
-                Container(
-                  width: 30,
-                  height: 30,
-                  decoration: BoxDecoration(
-                    color: Color(rows[i].tintValue),
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                  child: Icon(
-                    rows[i].icon,
-                    size: 16,
-                    color: Color(rows[i].colorValue),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                SizedBox(
-                  width: 100,
-                  child: Text(
-                    context.l10n.t(rows[i].label),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: appText(
-                      size: AppTypography.labelMediumSize,
-                      weight: FontWeight.w600,
-                      color: p.textPrimary,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _DistributionBar(
-                    fraction: _shareOf(rows[i].count),
-                    color: Color(rows[i].colorValue),
-                    trackColor: p.chipBg,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                SizedBox(
-                  width: 30,
-                  child: Text(
-                    rows[i].count.withCommas(),
-                    textAlign: TextAlign.right,
-                    maxLines: 1,
-                    style: appText(
-                      size: AppTypography.labelMediumSize,
-                      weight: FontWeight.w700,
-                      color: p.textPrimary,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                SizedBox(
-                  width: 48,
-                  child: Text(
-                    '${(_shareOf(rows[i].count) * 100).toStringAsFixed(1)}%',
-                    textAlign: TextAlign.right,
-                    maxLines: 1,
-                    style: appText(size: AppTypography.labelSmallSize, color: p.textSecondary),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
 
 // ============================================================== trend tiles
 
@@ -3455,16 +2748,19 @@ class _TrendTile extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           if (items.isEmpty)
             Text(
               context.l10n.t('Nothing to show'),
-              style: appText(size: AppTypography.labelSmallSize, color: p.textSecondary),
+              style: appText(
+                size: AppTypography.labelSmallSize,
+                color: p.textSecondary,
+              ),
             ),
           for (final item in items)
             Padding(
               key: ValueKey(item.name),
-              padding: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.only(bottom: 6),
               child: Row(
                 children: [
                   _ProductThumb(item: item, size: 30),
@@ -3489,7 +2785,10 @@ class _TrendTile extends StatelessWidget {
                           item.sold,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: appText(size: AppTypography.labelSmallSize, color: p.textSecondary),
+                          style: appText(
+                            size: AppTypography.labelSmallSize,
+                            color: p.textSecondary,
+                          ),
                         ),
                       ],
                     ),
@@ -3527,11 +2826,8 @@ class _ProductThumb extends StatelessWidget {
               width: size,
               height: size,
               fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => Icon(
-                item.icon,
-                size: size * 0.5,
-                color: p.textSecondary,
-              ),
+              errorBuilder: (_, _, _) =>
+                  Icon(item.icon, size: size * 0.5, color: p.textSecondary),
             )
           : Icon(item.icon, size: size * 0.5, color: p.textSecondary),
     );
@@ -3555,6 +2851,22 @@ class _PreviewTableCard extends StatelessWidget {
   final bool loaded;
   final VoidCallback onViewAll;
 
+  /// Replaces the leading row number with each product's photo.
+  final bool showThumbnail;
+
+  /// Renders the stock cell as a severity pill instead of a status dot.
+  /// Low Stock Items uses this; the lighter product tables use the dot.
+  final bool stockPill;
+
+  /// Adds a subtle Restock action at the end of each row. Low Stock Items.
+  final bool restock;
+
+  /// Adds a small receipt icon at the right edge of each row. Recent Sales.
+  final bool receiptIcon;
+
+  /// Small label in the card header next to the title, e.g. a total or a count.
+  final String? badgeLabel;
+
   /// Horizontal inset for the header and row stripes, matching the card's
   /// normal padding while the stripes themselves run edge to edge.
   static const double _inset = 16;
@@ -3565,6 +2877,11 @@ class _PreviewTableCard extends StatelessWidget {
     required this.page,
     required this.loaded,
     required this.onViewAll,
+    this.showThumbnail = false,
+    this.stockPill = false,
+    this.restock = false,
+    this.receiptIcon = false,
+    this.badgeLabel,
   });
 
   @override
@@ -3575,12 +2892,16 @@ class _PreviewTableCard extends StatelessWidget {
     return _PanelCard(
       title: title,
       trailing: _ViewAllLink(onTap: onViewAll),
+      badgeLabel: badgeLabel,
       padding: EdgeInsets.zero,
       titlePadding: const EdgeInsets.fromLTRB(_inset, 16, _inset, 0),
       child: !loaded
           ? Padding(
               padding: const EdgeInsets.symmetric(horizontal: _inset),
-              child: _PreviewTableSkeleton(columns: columns),
+              child: _PreviewTableSkeleton(
+                columns: columns,
+                showThumbnail: showThumbnail,
+              ),
             )
           : rows.isEmpty
           ? SizedBox(
@@ -3588,7 +2909,10 @@ class _PreviewTableCard extends StatelessWidget {
               child: Center(
                 child: Text(
                   context.l10n.t('Nothing to show'),
-                  style: appText(size: AppTypography.labelMediumSize, color: p.textMuted),
+                  style: appText(
+                    size: AppTypography.labelMediumSize,
+                    color: p.textMuted,
+                  ),
                 ),
               ),
             )
@@ -3600,18 +2924,24 @@ class _PreviewTableCard extends StatelessWidget {
                   color: p.surfaceAlt,
                   padding: const EdgeInsets.symmetric(
                     horizontal: _inset,
-                    vertical: 9,
+                    vertical: 8,
                   ),
                   child: Row(
                     children: [
                       _numberCell(
                         context,
                         p,
-                        Text(
-                          context.l10n.t('#'),
-                          maxLines: 1,
-                          style: _headerStyle(p),
-                        ),
+                        showThumbnail
+                            ? Icon(
+                                Icons.photo_outlined,
+                                size: 14,
+                                color: p.textSecondary,
+                              )
+                            : Text(
+                                context.l10n.t('#'),
+                                maxLines: 1,
+                                style: _headerStyle(p),
+                              ),
                       ),
                       for (final column in columns)
                         _flexCell(
@@ -3634,7 +2964,7 @@ class _PreviewTableCard extends StatelessWidget {
                         : p.surfaceAlt.withValues(alpha: 0.35),
                     padding: const EdgeInsets.symmetric(
                       horizontal: _inset,
-                      vertical: 10,
+                      vertical: 8,
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -3642,17 +2972,67 @@ class _PreviewTableCard extends StatelessWidget {
                         _numberCell(
                           context,
                           p,
-                          Text(
-                            (i + 1).toString(),
-                            maxLines: 1,
-                            style: appText(size: AppTypography.labelMediumSize, color: p.textMuted),
-                          ),
+                          showThumbnail
+                              ? ProductRowThumb(
+                                  url: rows[i].text('image'),
+                                  size: 28,
+                                )
+                              : Text(
+                                  (i + 1).toString(),
+                                  maxLines: 1,
+                                  style: appText(
+                                    size: AppTypography.labelMediumSize,
+                                    color: p.textMuted,
+                                  ),
+                                ),
                         ),
                         for (final column in columns)
                           _flexCell(
                             column,
                             _value(context, p, column, rows[i]),
                           ),
+                        if (restock) ...[
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    ProductDetailScreen(productId: rows[i].id),
+                              ),
+                            ),
+                            behavior: HitTestBehavior.opaque,
+                            child: Padding(
+                              padding: const EdgeInsets.all(4),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    context.l10n.t('Restock'),
+                                    style: appText(
+                                      size: AppTypography.labelSmallSize,
+                                      weight: FontWeight.w600,
+                                      color: p.successFg,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Icon(
+                                    Icons.arrow_forward_rounded,
+                                    size: 12,
+                                    color: p.successFg,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                        if (receiptIcon) ...[
+                          const SizedBox(width: 8),
+                          Icon(
+                            Icons.receipt_long_outlined,
+                            size: 14,
+                            color: p.textMuted,
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -3669,12 +3049,16 @@ class _PreviewTableCard extends StatelessWidget {
     color: p.textSecondary,
   );
 
-  /// The row-number column. Fixed flex so the numbers sit above their column
-  /// on every row and every card.
+  /// The leading cell. Fixed flex so the numbers or photos sit above their
+  /// column on every row and every card. A photo needs a slightly wider slot
+  /// than a one- or two-digit row number.
   Widget _numberCell(BuildContext context, AppPalette p, Widget child) =>
       Expanded(
-        flex: 30,
-        child: Padding(padding: const EdgeInsets.only(right: 8), child: child),
+        flex: showThumbnail ? 34 : 30,
+        child: Padding(
+          padding: EdgeInsets.only(right: showThumbnail ? 4 : 8),
+          child: child,
+        ),
       );
 
   Widget _flexCell(TableColumn column, Widget child) => Expanded(
@@ -3709,20 +3093,781 @@ class _PreviewTableCard extends StatelessWidget {
       );
     }
 
-    return Text(
-      row.display(column),
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      textAlign: column.align == TableColumnAlign.right
-          ? TextAlign.right
-          : TextAlign.left,
-      style: appText(
-        size: AppTypography.labelMediumSize,
-        color: p.textPrimary,
-        weight: column.kind == TableValueKind.text
-            ? FontWeight.w400
-            : FontWeight.w600,
+    Widget content;
+
+    if (column.jsonKey == 'pay_method') {
+      final method = row.text('pay_method');
+      final emerald = method == 'Cash';
+      content = Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: emerald ? p.successBg : p.chipBg,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: emerald ? p.successFg.withValues(alpha: 0.4) : p.border,
+          ),
+        ),
+        child: Text(
+          method,
+          style: appText(
+            size: AppTypography.labelSmallSize,
+            weight: FontWeight.w600,
+            color: emerald ? p.successFg : p.textSecondary,
+          ),
+        ),
+      );
+    } else if (column.jsonKey == 'category') {
+      final category = row.text('category');
+      if (category.isEmpty) {
+        content = Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: p.chipBg,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: p.border),
+          ),
+          child: Text(
+            context.l10n.t('Uncategorized'),
+            style: appText(
+              size: AppTypography.labelSmallSize,
+              weight: FontWeight.w600,
+              color: p.textSecondary,
+            ),
+          ),
+        );
+      } else {
+        content = Text(
+          category,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: appText(
+            size: AppTypography.labelSmallSize,
+            color: p.textSecondary,
+            weight: FontWeight.w600,
+          ),
+        );
+      }
+    } else if (column.jsonKey == 'stock') {
+      final stock = row.integer('stock');
+      if (stockPill) {
+        Color pillBg;
+        Color pillFg;
+        if (stock <= 1) {
+          pillBg = p.dangerBg;
+          pillFg = p.dangerFg;
+        } else if (stock <= 3) {
+          pillBg = p.warningBg;
+          pillFg = p.warningFg;
+        } else {
+          pillBg = p.chipBg;
+          pillFg = p.textSecondary;
+        }
+        content = Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: pillBg,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: pillBg),
+          ),
+          child: Text(
+            '$stock left',
+            style: appText(
+              size: AppTypography.labelSmallSize,
+              weight: FontWeight.w600,
+              color: pillFg,
+            ),
+          ),
+        );
+      } else {
+        final low = stock <= 5;
+        content = Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: low ? p.warningFg : p.successFg,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              '$stock',
+              style: appText(
+                size: AppTypography.labelMediumSize,
+                color: p.textPrimary,
+                weight: FontWeight.w600,
+              ),
+            ),
+          ],
+        );
+      }
+    } else {
+      content = Text(
+        row.display(column),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: column.align == TableColumnAlign.right
+            ? TextAlign.right
+            : TextAlign.left,
+        style: appText(
+          size: AppTypography.labelMediumSize,
+          color: p.textPrimary,
+          weight: column.kind == TableValueKind.text
+              ? FontWeight.w400
+              : FontWeight.w600,
+        ),
+      );
+    }
+
+    return content;
+  }
+}
+
+// =========================================================== bubble risk matrix
+
+/// One unsold product in the risk matrix.
+class _RiskPoint {
+  final String name;
+  final int days;
+  final int stock;
+  final Color color;
+  final double radius;
+
+  /// Strength of the outer glow. Warmed up as the product crosses 36 and 45
+  /// days without a sale.
+  final double glow;
+
+  const _RiskPoint({
+    required this.name,
+    required this.days,
+    required this.stock,
+    required this.color,
+    required this.radius,
+    required this.glow,
+  });
+}
+
+/// Dead stock as a bubble scatter: days idle across, stock amount up, bubble
+/// size and glow for severity.
+///
+/// A row is one product. Days idle is read from the API (`days_idle`, falling
+/// back to `created_at` for an older backend) and the stock amount is the
+/// product's available stock at the time the card loaded. Bubbles stay inside
+/// the 0–60 day / 0–30 unit frame; a larger stock still prints its real figure
+/// in the direct label so clamping the plot never hides the number.
+class _BubbleRiskMatrix extends StatefulWidget {
+  final List<DashboardTableRow> rows;
+  final AppPalette palette;
+
+  static const double _height = 272;
+
+  const _BubbleRiskMatrix({required this.rows, required this.palette});
+
+  @override
+  State<_BubbleRiskMatrix> createState() => _BubbleRiskMatrixState();
+}
+
+class _BubbleRiskMatrixState extends State<_BubbleRiskMatrix> {
+  _RiskPoint? _hover;
+
+  Rect _plotRect(Size size) =>
+      Rect.fromLTRB(46, 18, size.width - 16, size.height - 40);
+
+  Offset _centre(
+    _RiskPoint point,
+    Rect plot,
+    double maxStockAxis,
+    double maxDaysAxis, {
+    double jitter = 0,
+  }) {
+    var cx =
+        plot.left +
+        (point.days.clamp(0, maxDaysAxis) / maxDaysAxis) * plot.width;
+    var cy =
+        plot.bottom -
+        (point.stock.clamp(0, maxStockAxis) / maxStockAxis) * plot.height;
+    final maxR = 26.0;
+    cx = cx.clamp(plot.left + maxR, plot.right - maxR).toDouble();
+    cy = cy.clamp(plot.top + maxR, plot.bottom - maxR).toDouble();
+    return Offset(cx + jitter, cy + jitter);
+  }
+
+  _RiskPoint? _nearest(
+    Offset local,
+    List<_RiskPoint> points,
+    Rect plot,
+    double maxStockAxis,
+    double maxDaysAxis,
+  ) {
+    _RiskPoint? best;
+    var bestDistance = double.infinity;
+    for (final point in points) {
+      final centre = _centre(point, plot, maxStockAxis, maxDaysAxis);
+      final distance = (centre - local).distance;
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        best = point;
+      }
+    }
+    return best;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = widget.palette;
+    final points = <_RiskPoint>[];
+    final now = DateTime.now();
+
+    for (final row in widget.rows) {
+      var days = row.integer('days_idle');
+      if (row.data['days_idle'] == null) {
+        final created = DateTime.tryParse(row.text('created_at'));
+        if (created != null) {
+          days = now.difference(created.toLocal()).inDays;
+        }
+      }
+      if (days < 0) days = 0;
+
+      final stock = row.integer('stock');
+      final plotStock = stock.clamp(0, 30);
+      final severity = days >= 45 ? 2 : (days >= 36 ? 1 : 0);
+      final color = switch (severity) {
+        2 => palette.dangerFg,
+        1 => palette.warningFg,
+        _ => palette.warningFg.withValues(alpha: 0.45),
+      };
+
+      points.add(
+        _RiskPoint(
+          name: row.text('name'),
+          days: days,
+          stock: stock,
+          color: color,
+          radius: (8 + (plotStock / 30) * 16).clamp(8, 24).toDouble(),
+          glow: severity == 2
+              ? 0.55
+              : severity == 1
+              ? 0.4
+              : 0.25,
+        ),
+      );
+    }
+
+    double maxStockAxis = 0;
+    if (points.isNotEmpty) {
+      maxStockAxis = points
+          .map((p) => p.stock.toDouble())
+          .reduce((a, b) => a > b ? a : b);
+    }
+    final stockAxisMax = math.max(10.0, (maxStockAxis * 1.2).ceil().toDouble());
+
+    double maxDaysAxis = 0;
+    if (points.isNotEmpty) {
+      maxDaysAxis = points
+          .map((p) => p.days.toDouble())
+          .reduce((a, b) => a > b ? a : b);
+    }
+    final daysAxisMax = maxDaysAxis + 10;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final size = Size(constraints.maxWidth, _BubbleRiskMatrix._height);
+            final plot = _plotRect(size);
+            return Listener(
+              onPointerMove: (PointerMoveEvent event) {
+                if (event.kind != PointerDeviceKind.mouse) return;
+                final box = context.findRenderObject() as RenderBox?;
+                if (box == null || !box.hasSize) return;
+                final local = box.globalToLocal(event.position);
+                final hovered = _nearest(
+                  local,
+                  points,
+                  plot,
+                  stockAxisMax,
+                  daysAxisMax,
+                );
+                if (_hover != hovered) {
+                  setState(() => _hover = hovered);
+                }
+              },
+              onPointerUp: (PointerUpEvent event) {
+                if (event.kind == PointerDeviceKind.mouse) {
+                  setState(() => _hover = null);
+                }
+              },
+              child: SizedBox(
+                height: _BubbleRiskMatrix._height,
+                width: double.infinity,
+                child: CustomPaint(
+                  painter: _BubbleRiskPainter(
+                    points: points,
+                    palette: palette,
+                    daysTitle: context.l10n.t('Days idle'),
+                    stockTitle: context.l10n.t('Stock'),
+                    maxStockAxis: stockAxisMax,
+                    maxDaysAxis: daysAxisMax,
+                    hovered: _hover,
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 2),
+        _BubbleRiskLegend(palette: palette),
+      ],
+    );
+  }
+}
+
+class _BubbleRiskPainter extends CustomPainter {
+  final List<_RiskPoint> points;
+  final AppPalette palette;
+  final String daysTitle;
+  final String stockTitle;
+  final double maxStockAxis;
+  final double maxDaysAxis;
+  final _RiskPoint? hovered;
+
+  const _BubbleRiskPainter({
+    required this.points,
+    required this.palette,
+    required this.daysTitle,
+    required this.stockTitle,
+    required this.maxStockAxis,
+    required this.maxDaysAxis,
+    required this.hovered,
+  });
+
+  static const double _maxRadius = 26;
+
+  Offset _centre(
+    _RiskPoint point,
+    Rect plot,
+    double maxStockAxis,
+    double maxDaysAxis, {
+    double jitter = 0,
+  }) {
+    var cx =
+        plot.left +
+        (point.days.clamp(0, maxDaysAxis) / maxDaysAxis) * plot.width;
+    var cy =
+        plot.bottom -
+        (point.stock.clamp(0, maxStockAxis) / maxStockAxis) * plot.height;
+    final maxR = _maxRadius;
+    cx = cx.clamp(plot.left + maxR, plot.right - maxR).toDouble();
+    cy = cy.clamp(plot.top + maxR, plot.bottom - maxR).toDouble();
+    return Offset(cx + jitter, cy + jitter);
+  }
+
+  TextPainter _label(
+    String text, {
+    required Color color,
+    double size = 10,
+    FontWeight weight = FontWeight.w500,
+  }) {
+    return TextPainter(
+      text: TextSpan(
+        text: text,
+        style: appText(size: size, weight: weight, color: color),
       ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final plot = Rect.fromLTRB(46, 18, size.width - 16, size.height - 40);
+    if (plot.width <= 40 || plot.height <= 40) return;
+
+    final gridPaint = Paint()
+      ..color = palette.border.withValues(alpha: 0.7)
+      ..strokeWidth = 1;
+
+    // Stock ticks: 0, 15, 30, 45, 60.
+    for (var value = 0; value <= 60; value += 15) {
+      final y = plot.bottom - (value / maxStockAxis) * plot.height;
+      if (y < plot.top) break;
+      canvas.drawLine(Offset(plot.left, y), Offset(plot.right, y), gridPaint);
+      final tp = _label(value.toString(), color: palette.textMuted);
+      tp.paint(canvas, Offset(plot.left - 8 - tp.width, y - tp.height / 2));
+    }
+
+    // Days idle ticks: 0d, 30d, 60d, 90d.
+    for (var value = 0; value <= 90; value += 30) {
+      final x = plot.left + (value / maxDaysAxis) * plot.width;
+      if (x > plot.right) break;
+      canvas.drawLine(Offset(x, plot.top), Offset(x, plot.bottom), gridPaint);
+      final tp = _label('${value}d', color: palette.textMuted);
+      tp.paint(canvas, Offset(x - tp.width / 2, plot.bottom + 7));
+    }
+
+    final midPaint = Paint()
+      ..color = palette.borderStrong.withValues(alpha: 0.28)
+      ..strokeWidth = 1;
+    canvas.drawLine(
+      Offset(plot.left + plot.width / 2, plot.top),
+      Offset(plot.left + plot.width / 2, plot.bottom),
+      midPaint,
+    );
+    canvas.drawLine(
+      Offset(plot.left, plot.top + plot.height / 2),
+      Offset(plot.right, plot.top + plot.height / 2),
+      midPaint,
+    );
+
+    final axisPaint = Paint()
+      ..color = palette.borderStrong.withValues(alpha: 0.45)
+      ..strokeWidth = 1;
+    canvas.drawLine(plot.bottomLeft, plot.bottomRight, axisPaint);
+    canvas.drawLine(plot.bottomLeft, plot.topLeft, axisPaint);
+
+    _paintAxisTitles(canvas, size, plot);
+
+    final bubbleRects = <Rect>[
+      for (var i = 0; i < points.length; i++)
+        Rect.fromCircle(
+          center: _centre(points[i], plot, maxStockAxis, maxDaysAxis),
+          radius: points[i].radius + 3,
+        ),
+    ];
+
+    final centres = <Offset>[
+      for (final point in points)
+        _centre(point, plot, maxStockAxis, maxDaysAxis),
+    ];
+
+    final seen = <String, int>{};
+    final jitterByIndex = <int, double>{};
+    for (var i = 0; i < points.length; i++) {
+      final key = '${points[i].days}_${points[i].stock}';
+      final count = seen[key] ?? 0;
+      seen[key] = count + 1;
+      if (count > 0) {
+        jitterByIndex[i] = (count % 2 == 0 ? -7.0 : 7.0);
+      }
+    }
+
+    for (var i = 0; i < points.length; i++) {
+      final point = points[i];
+      final centre = _centre(
+        point,
+        plot,
+        maxStockAxis,
+        maxDaysAxis,
+        jitter: jitterByIndex[i] ?? 0,
+      );
+
+      canvas.drawCircle(
+        centre,
+        point.radius + 2,
+        Paint()
+          ..color = point.color.withValues(alpha: point.glow)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 9),
+      );
+      canvas.drawCircle(
+        centre,
+        point.radius,
+        Paint()..color = point.color.withValues(alpha: 0.16),
+      );
+      canvas.drawCircle(
+        centre,
+        point.radius,
+        Paint()
+          ..color = point.color
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5,
+      );
+    }
+
+    _paintDirectLabels(
+      canvas,
+      plot,
+      points,
+      centres,
+      bubbleRects,
+      maxStockAxis,
+      maxDaysAxis,
+    );
+
+    if (hovered != null) {
+      _paintHoverTooltip(canvas, plot, hovered, maxStockAxis, maxDaysAxis);
+    }
+  }
+
+  void _paintAxisTitles(Canvas canvas, Size size, Rect plot) {
+    final xTitle = _label(
+      daysTitle,
+      color: palette.textSecondary,
+      size: 10.5,
+      weight: FontWeight.w600,
+    );
+    xTitle.paint(
+      canvas,
+      Offset(plot.center.dx - xTitle.width / 2, size.height - 14),
+    );
+
+    final yTitle = _label(
+      stockTitle,
+      color: palette.textSecondary,
+      size: 10.5,
+      weight: FontWeight.w600,
+    );
+    canvas.save();
+    canvas.translate(11, plot.center.dy);
+    canvas.rotate(-math.pi / 2);
+    yTitle.paint(canvas, Offset(-yTitle.width / 2, -yTitle.height / 2));
+    canvas.restore();
+  }
+
+  void _paintDirectLabels(
+    Canvas canvas,
+    Rect plot,
+    List<_RiskPoint> points,
+    List<Offset> centres,
+    List<Rect> bubbleRects,
+    double maxStockAxis,
+    double maxDaysAxis,
+  ) {
+    final orderedIndices = List<int>.generate(points.length, (i) => i)
+      ..sort((a, b) => centres[a].dy.compareTo(centres[b].dy));
+
+    var topRiskIndex = -1;
+    for (var i = 0; i < points.length; i++) {
+      if (topRiskIndex < 0 || points[i].days > points[topRiskIndex].days) {
+        topRiskIndex = i;
+      }
+    }
+
+    final placed = <Rect>[];
+    for (final index in orderedIndices) {
+      final point = points[index];
+      final centre = centres[index];
+      final tp = TextPainter(
+        text: TextSpan(
+          text: '${point.name} (${point.days}d · ${point.stock})',
+          style: appText(
+            size: 10.2,
+            weight: FontWeight.w600,
+            color: palette.textPrimary,
+          ),
+        ),
+        maxLines: 1,
+        ellipsis: '…',
+        textDirection: TextDirection.ltr,
+      )..layout(maxWidth: 176);
+
+      final width = tp.width;
+      final height = tp.height;
+      final left = (centre.dx - width / 2)
+          .clamp(plot.left, math.max(plot.left, plot.right - width))
+          .toDouble();
+
+      final above = Rect.fromLTWH(
+        left,
+        centre.dy - point.radius - 6 - height,
+        width,
+        height,
+      );
+      final below = Rect.fromLTWH(
+        left,
+        centre.dy + point.radius + 6,
+        width,
+        height,
+      );
+
+      bool collides(Rect rect) =>
+          placed.any(rect.overlaps) ||
+          bubbleRects.any((bubble) => bubble.overlaps(rect));
+
+      Rect chosen = above;
+      bool free = above.top >= plot.top && !collides(above);
+      if (!free) {
+        chosen = below;
+        free = below.bottom <= plot.bottom && !collides(below);
+      }
+
+      final shouldDraw =
+          free || index == topRiskIndex || identical(point, hovered);
+      if (shouldDraw) {
+        final clamped = Rect.fromLTWH(
+          chosen.left
+              .clamp(plot.left, math.max(plot.left, plot.right - chosen.width))
+              .toDouble(),
+          chosen.top
+              .clamp(plot.top, math.max(plot.top, plot.bottom - chosen.height))
+              .toDouble(),
+          chosen.width,
+          chosen.height,
+        );
+        placed.add(clamped);
+        tp.paint(canvas, Offset(clamped.left, clamped.top));
+      }
+    }
+  }
+
+  void _paintHoverTooltip(
+    Canvas canvas,
+    Rect plot,
+    _RiskPoint? hovered,
+    double maxStockAxis,
+    double maxDaysAxis,
+  ) {
+    if (hovered == null) return;
+    final centre = _centre(hovered, plot, maxStockAxis, maxDaysAxis);
+    final tp = TextPainter(
+      text: TextSpan(
+        text: '${hovered.name} (${hovered.days}d · ${hovered.stock})',
+        style: appText(
+          size: 10.2,
+          weight: FontWeight.w600,
+          color: palette.textPrimary,
+        ),
+      ),
+      maxLines: 1,
+      ellipsis: '…',
+      textDirection: TextDirection.ltr,
+    )..layout(maxWidth: 176);
+
+    final width = tp.width;
+    final height = tp.height;
+    final left = (centre.dx - width / 2)
+        .clamp(plot.left, math.max(plot.left, plot.right - width))
+        .toDouble();
+    var top = centre.dy - hovered.radius - 8 - height;
+    if (top < plot.top) {
+      top = centre.dy + hovered.radius + 8;
+    }
+    top = top
+        .clamp(plot.top, math.max(plot.top, plot.bottom - height))
+        .toDouble();
+
+    final rect = Rect.fromLTWH(left, top, width, height);
+    final chip = RRect.fromRectAndRadius(rect, const Radius.circular(6));
+    canvas.drawRRect(
+      chip,
+      Paint()..color = palette.surface.withValues(alpha: 0.94),
+    );
+    canvas.drawRRect(
+      chip,
+      Paint()
+        ..color = hovered.color.withValues(alpha: 0.45)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1,
+    );
+    tp.paint(canvas, Offset(rect.left + 6, rect.top + 3));
+  }
+
+  @override
+  bool shouldRepaint(covariant _BubbleRiskPainter oldDelegate) =>
+      oldDelegate.points != points ||
+      oldDelegate.palette != palette ||
+      oldDelegate.daysTitle != daysTitle ||
+      oldDelegate.stockTitle != stockTitle ||
+      oldDelegate.maxStockAxis != maxStockAxis ||
+      oldDelegate.maxDaysAxis != maxDaysAxis ||
+      !identical(oldDelegate.hovered, hovered);
+}
+
+class _BubbleRiskLegend extends StatelessWidget {
+  final AppPalette palette;
+
+  const _BubbleRiskLegend({required this.palette});
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 14,
+      runSpacing: 6,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        _RiskLegendDot(
+          color: palette.warningFg.withValues(alpha: 0.5),
+          label: context.l10n.t('Under 36d'),
+        ),
+        _RiskLegendDot(
+          color: palette.warningFg,
+          label: context.l10n.t('36d+ at risk'),
+        ),
+        _RiskLegendDot(
+          color: palette.dangerFg,
+          label: context.l10n.t('45d+ dead stock'),
+        ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: palette.textMuted, width: 1.2),
+              ),
+            ),
+            const SizedBox(width: 5),
+            Text(
+              context.l10n.t('Bubble size = Stock'),
+              style: appText(
+                size: AppTypography.labelSmallSize,
+                color: palette.textMuted,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _RiskLegendDot extends StatelessWidget {
+  final Color color;
+  final String label;
+
+  const _RiskLegendDot({required this.color, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: color,
+            boxShadow: [
+              BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 6),
+            ],
+          ),
+        ),
+        const SizedBox(width: 5),
+        Text(
+          label,
+          style: appText(
+            size: AppTypography.labelSmallSize,
+            color: p.textMuted,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BubbleRiskSkeleton extends StatelessWidget {
+  const _BubbleRiskSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox(
+      height: _BubbleRiskMatrix._height,
+      child: SkeletonBox(height: _BubbleRiskMatrix._height, radius: 12),
     );
   }
 }
@@ -3734,7 +3879,16 @@ class _PreviewTableCard extends StatelessWidget {
 class _PreviewTableSkeleton extends StatelessWidget {
   final List<TableColumn> columns;
 
-  const _PreviewTableSkeleton({required this.columns});
+  /// Matches the real preview's leading cell: wider for a product photo, and a
+  /// tall thin block for a row number.
+  final bool showThumbnail;
+
+  const _PreviewTableSkeleton({
+    required this.columns,
+    this.showThumbnail = false,
+  });
+
+  int get _leadFlex => showThumbnail ? 34 : 30;
 
   @override
   Widget build(BuildContext context) {
@@ -3746,7 +3900,7 @@ class _PreviewTableSkeleton extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              flex: 30,
+              flex: _leadFlex,
               child: SkeletonBox(height: 10, width: 14, radius: 5),
             ),
             for (final column in columns) ...[
@@ -3763,8 +3917,12 @@ class _PreviewTableSkeleton extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                flex: 30,
-                child: SkeletonBox(height: 12, width: 18, radius: 6),
+                flex: _leadFlex,
+                child: SkeletonBox(
+                  height: showThumbnail ? 28 : 12,
+                  width: showThumbnail ? 28 : 18,
+                  radius: 6,
+                ),
               ),
               for (final column in columns) ...[
                 const SizedBox(width: 8),
@@ -3798,7 +3956,10 @@ class _Footer extends StatelessWidget {
         children: [
           Text(
             '© ${DateTime.now().year} Simple POS. All rights reserved.',
-            style: appText(size: AppTypography.labelSmallSize, color: p.textMuted),
+            style: appText(
+              size: AppTypography.labelSmallSize,
+              color: p.textMuted,
+            ),
           ),
           Text(
             context.l10n.t('Simple POS. Greater Business.'),
@@ -3834,14 +3995,17 @@ class _YearDropdown extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: p.surface,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(DashboardStyle.controlRadius),
         border: Border.all(color: p.border),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<int>(
           value: years.contains(value) ? value : years.first,
           icon: const Icon(Icons.keyboard_arrow_down, size: 18),
-          style: appText(size: AppTypography.labelMediumSize, color: p.textSecondary),
+          style: appText(
+            size: AppTypography.labelMediumSize,
+            color: p.textSecondary,
+          ),
           items: years
               .map((e) => DropdownMenuItem(value: e, child: Text('$e')))
               .toList(),
@@ -3877,8 +4041,13 @@ class _MonthlySalesChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final chart = CustomPaint(
-      painter: _MonthlySalesChartPainter(items, palette),
+    final chart = TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 800),
+      curve: Curves.easeOutCubic,
+      builder: (context, progress, _) => CustomPaint(
+        painter: _MonthlySalesChartPainter(items, palette, progress),
+      ),
     );
 
     if (expand) {
@@ -3896,7 +4065,11 @@ class _MonthlySalesChartPainter extends CustomPainter {
   final List<MonthlySalesEntity> items;
   final AppPalette palette;
 
-  _MonthlySalesChartPainter(this.items, this.palette);
+  /// 0→1 draw-in. Bars grow from the baseline; value labels wait until the
+  /// growth finishes so they are not left floating above a half-height bar.
+  final double progress;
+
+  _MonthlySalesChartPainter(this.items, this.palette, this.progress);
 
   static const List<String> _monthLabels = [
     'Jan',
@@ -3999,18 +4172,22 @@ class _MonthlySalesChartPainter extends CustomPainter {
 
     for (var m = 11 % monthStep; m < 12; m += monthStep) {
       final tp = monthPainters[m];
-      final x = (plot.left + slotWidth * (m + 0.5) - tp.width / 2)
-          .clamp(plot.left, plot.right - tp.width);
+      final x = (plot.left + slotWidth * (m + 0.5) - tp.width / 2).clamp(
+        plot.left,
+        plot.right - tp.width,
+      );
       tp.paint(canvas, Offset(x, plot.bottom + 8));
     }
 
     final currentMonth = DateTime.now().month;
-    final mutedBarPaint = Paint()..color = AppColors.brandPurple.withValues(alpha: 0.4);
+    final mutedBarPaint = Paint()
+      ..color = palette.primary.withValues(alpha: 0.34);
     final valueLabels = <_MonthlyValueLabel>[];
     for (final entry in sorted) {
       if (entry.month < 1 || entry.month > 12) continue;
       final centreX = plot.left + slotWidth * ((entry.month - 1) + 0.5);
-      final height = (entry.total / chartMax) * plot.height;
+      final height =
+          (entry.total / chartMax) * plot.height * progress.clamp(0.0, 1.0);
       final rect = Rect.fromLTWH(
         centreX - barWidth / 2,
         plot.bottom - height,
@@ -4035,6 +4212,8 @@ class _MonthlySalesChartPainter extends CustomPainter {
 
       // A month with no sale gets no figure: a row of "0"s is noise.
       if (entry.total <= 0) continue;
+      // Labels wait for the bars to finish growing.
+      if (progress < 0.999) continue;
 
       final vp = TextPainter(
         text: TextSpan(
@@ -4052,7 +4231,10 @@ class _MonthlySalesChartPainter extends CustomPainter {
       // label would leave the plot — a clipped figure is worse than none.
       final y = plot.bottom - height - vp.height - 5;
       if (y < plot.top - 6) continue;
-      final x = (centreX - vp.width / 2).clamp(plot.left, plot.right - vp.width);
+      final x = (centreX - vp.width / 2).clamp(
+        plot.left,
+        plot.right - vp.width,
+      );
       valueLabels.add(
         _MonthlyValueLabel(
           Rect.fromLTWH(x, y, vp.width, vp.height),
@@ -4088,7 +4270,9 @@ class _MonthlySalesChartPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _MonthlySalesChartPainter oldDelegate) =>
-      oldDelegate.items != items || oldDelegate.palette != palette;
+      oldDelegate.items != items ||
+      oldDelegate.palette != palette ||
+      oldDelegate.progress != progress;
 }
 
 /// A bar's value figure, kept as a laid-out painter plus the box it wants, so
@@ -4120,9 +4304,14 @@ class _HorizontalCategoryChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final chartH = (items.length * 36.0 + 40.0).clamp(240.0, 520.0);
-    final chart = CustomPaint(
-      painter: _HorizontalCategoryChartPainter(items, palette),
+    final chartH = (items.length * 36.0 + 40.0).clamp(200.0, 460.0);
+    final chart = TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 800),
+      curve: Curves.easeOutCubic,
+      builder: (context, progress, _) => CustomPaint(
+        painter: _HorizontalCategoryChartPainter(items, palette, progress),
+      ),
     );
 
     if (expand) {
@@ -4139,8 +4328,9 @@ class _HorizontalCategoryChart extends StatelessWidget {
 class _HorizontalCategoryChartPainter extends CustomPainter {
   final List<CategoryQuantityEntity> items;
   final AppPalette palette;
+  final double progress;
 
-  _HorizontalCategoryChartPainter(this.items, this.palette);
+  _HorizontalCategoryChartPainter(this.items, this.palette, this.progress);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -4157,7 +4347,10 @@ class _HorizontalCategoryChartPainter extends CustomPainter {
       final tp = TextPainter(
         text: TextSpan(
           text: e.category,
-          style: appText(size: AppTypography.labelSmallSize, color: palette.textSecondary),
+          style: appText(
+            size: AppTypography.labelSmallSize,
+            color: palette.textSecondary,
+          ),
         ),
         textDirection: TextDirection.ltr,
       )..layout();
@@ -4177,6 +4370,57 @@ class _HorizontalCategoryChartPainter extends CustomPainter {
     final maxVal = values.reduce((a, b) => a > b ? a : b);
     final chartMax = maxVal <= 0 ? 1.0 : maxVal * 1.1;
 
+    // Average line: a vertical dashed line at the mean quantity, with a small
+    // label at the top so the eye can compare each bar against the average.
+    final avgVal = values.isNotEmpty
+        ? values.fold<double>(0, (a, b) => a + b) / values.length
+        : 0.0;
+    final avgX = plot.left + (avgVal / chartMax) * plot.width;
+    final avgLinePaint = Paint()
+      ..color = palette.textSecondary.withValues(alpha: 0.35)
+      ..strokeWidth = 1
+      ..style = PaintingStyle.stroke;
+    if (avgVal > 0 && avgX > plot.left && avgX < plot.right) {
+      final dash = 4.0;
+      final gap = 4.0;
+      var y = plot.top;
+      while (y < plot.bottom) {
+        canvas.drawLine(
+          Offset(avgX, y),
+          Offset(avgX, (y + dash).clamp(0.0, plot.bottom)),
+          avgLinePaint,
+        );
+        y += dash + gap;
+      }
+      final avgLabel = TextPainter(
+        text: TextSpan(
+          text: 'Avg ${_formatQuantity(avgVal)}',
+          style: appText(
+            size: AppTypography.labelSmallSize,
+            weight: FontWeight.w600,
+            color: palette.textSecondary,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      canvas.drawRect(
+        Rect.fromLTWH(
+          avgX.clamp(plot.left + 1, plot.right - avgLabel.width - 1),
+          plot.top - avgLabel.height - 4,
+          avgLabel.width,
+          avgLabel.height,
+        ),
+        Paint()..color = palette.surface.withValues(alpha: 0.85),
+      );
+      avgLabel.paint(
+        canvas,
+        Offset(
+          avgX.clamp(plot.left + 1, plot.right - avgLabel.width - 1),
+          plot.top - avgLabel.height - 4,
+        ),
+      );
+    }
+
     final gridPaint = Paint()
       ..color = palette.border
       ..strokeWidth = 1;
@@ -4189,7 +4433,10 @@ class _HorizontalCategoryChartPainter extends CustomPainter {
       final tp = TextPainter(
         text: TextSpan(
           text: _formatQuantity(value),
-          style: appText(size: AppTypography.labelSmallSize, color: palette.textSecondary),
+          style: appText(
+            size: AppTypography.labelSmallSize,
+            color: palette.textSecondary,
+          ),
         ),
         textDirection: TextDirection.ltr,
       )..layout();
@@ -4199,17 +4446,37 @@ class _HorizontalCategoryChartPainter extends CustomPainter {
     final n = sorted.length;
     final rowH = plot.height / n;
     final barH = (rowH * 0.6).clamp(6.0, 22.0);
-    final barPaint = Paint()..color = AppColors.brandPurple;
+
+    // Track behind every bar so empty categories still read as a row, and a
+    // muted gradient so the muted bars stay on-brand instead of flat grey.
+    final trackPaint = Paint()..color = palette.border.withValues(alpha: 0.45);
 
     for (var i = 0; i < n; i++) {
       final e = sorted[i];
       final cy = plot.top + rowH * (i + 0.5);
-      final barW = (e.totalQuantity / chartMax) * plot.width;
+
+      // Stagger the draw-in so the bars cascade in rather than snapping as a
+      // block — reads as one animated chart instead of a static one.
+      final barProgress = ((progress - i * 0.07).clamp(0.0, 1.0));
+      final barW = (e.totalQuantity / chartMax) * plot.width * barProgress;
+
+      // Track.
+      final trackRect = RRect.fromRectAndCorners(
+        Rect.fromLTWH(plot.left, cy - barH / 2, plot.width, barH),
+        topLeft: const Radius.circular(6),
+        topRight: const Radius.circular(6),
+        bottomLeft: const Radius.circular(6),
+        bottomRight: const Radius.circular(6),
+      );
+      canvas.drawRRect(trackRect, trackPaint);
 
       final lp = TextPainter(
         text: TextSpan(
           text: e.category,
-          style: appText(size: AppTypography.labelSmallSize, color: palette.textSecondary),
+          style: appText(
+            size: AppTypography.labelSmallSize,
+            color: palette.textSecondary,
+          ),
         ),
         maxLines: 1,
         ellipsis: '…',
@@ -4224,7 +4491,24 @@ class _HorizontalCategoryChartPainter extends CustomPainter {
         bottomLeft: const Radius.circular(6),
         bottomRight: const Radius.circular(6),
       );
-      canvas.drawRRect(rect, barPaint);
+      final topBar = Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [palette.primary, palette.primary.withValues(alpha: 0.55)],
+        ).createShader(Rect.fromLTWH(0, 0, plot.right - plot.left, barH))
+        ..style = PaintingStyle.fill;
+      final mutedBar = Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            palette.primary.withValues(alpha: 0.40),
+            palette.primary.withValues(alpha: 0.20),
+          ],
+        ).createShader(Rect.fromLTWH(0, 0, plot.right - plot.left, barH))
+        ..style = PaintingStyle.fill;
+      canvas.drawRRect(rect, i == 0 ? topBar : mutedBar);
 
       final vp = TextPainter(
         text: TextSpan(
@@ -4261,7 +4545,9 @@ class _HorizontalCategoryChartPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _HorizontalCategoryChartPainter oldDelegate) =>
-      oldDelegate.items != items || oldDelegate.palette != palette;
+      oldDelegate.items != items ||
+      oldDelegate.palette != palette ||
+      oldDelegate.progress != progress;
 }
 
 /// A category's share of the largest category as an animated, rounded bar on
@@ -4271,6 +4557,223 @@ class _HorizontalCategoryChartPainter extends CustomPainter {
 /// the bar compares a part against the largest part (or, for stock, against
 /// the whole), and the tween means a refresh animates the bars rather than
 /// snapping them.
+
+class _StockStatusRow {
+  final IconData icon;
+  final int tintValue;
+  final int colorValue;
+  final String label;
+  final int count;
+
+  const _StockStatusRow({
+    required this.icon,
+    required this.tintValue,
+    required this.colorValue,
+    required this.label,
+    required this.count,
+  });
+}
+
+class _StockStatusCard extends StatelessWidget {
+  final DashboardStatsEntity stats;
+
+  const _StockStatusCard({required this.stats});
+
+  @override
+  Widget build(BuildContext context) {
+    return _StockStatusPanel(
+      title: context.l10n.t('Product Stock Status'),
+      total: stats.totalProducts,
+      trailing: _ViewAllLink(
+        onTap: () => Navigator.of(
+          context,
+        ).push(DashboardTableScreen.route(spec: DashboardTables.inStock)),
+      ),
+      rows: [
+        _StockStatusRow(
+          icon: Icons.check_circle_outline,
+          tintValue: 0xFFDCFCE7,
+          colorValue: 0xFF16A34A,
+          label: 'In Stock',
+          count: stats.inStock,
+        ),
+        _StockStatusRow(
+          icon: Icons.warning_amber_outlined,
+          tintValue: 0xFFFEF3C7,
+          colorValue: 0xFFF59E0B,
+          label: 'Low Stock',
+          count: stats.lowStock,
+        ),
+        _StockStatusRow(
+          icon: Icons.cancel_outlined,
+          tintValue: 0xFFFEE2E2,
+          colorValue: 0xFFEF4444,
+          label: 'Out of Stock',
+          count: stats.outStock,
+        ),
+      ],
+    );
+  }
+}
+
+class _PackageStockStatusCard extends StatelessWidget {
+  final DashboardStatsEntity stats;
+
+  const _PackageStockStatusCard({required this.stats});
+
+  @override
+  Widget build(BuildContext context) {
+    return _StockStatusPanel(
+      title: context.l10n.t('Package Stock Status'),
+      total: stats.totalPackages,
+      rows: [
+        _StockStatusRow(
+          icon: Icons.check_circle_outline,
+          tintValue: 0xFFDCFCE7,
+          colorValue: 0xFF16A34A,
+          label: 'In Stock',
+          count: stats.packagesInStock,
+        ),
+        _StockStatusRow(
+          icon: Icons.warning_amber_outlined,
+          tintValue: 0xFFFEF3C7,
+          colorValue: 0xFFF59E0B,
+          label: 'Low Stock',
+          count: stats.packagesLowStock,
+        ),
+        _StockStatusRow(
+          icon: Icons.cancel_outlined,
+          tintValue: 0xFFFEE2E2,
+          colorValue: 0xFFEF4444,
+          label: 'Out of Stock',
+          count: stats.packagesOutStock,
+        ),
+      ],
+    );
+  }
+}
+
+class _StockStatusPanel extends StatelessWidget {
+  final String title;
+  final Widget? trailing;
+  final List<_StockStatusRow> rows;
+
+  /// The number the bars and percentages divide by.
+  final int total;
+
+  const _StockStatusPanel({
+    required this.title,
+    required this.rows,
+    required this.total,
+    this.trailing,
+  });
+
+  double _shareOf(int value) =>
+      total <= 0 ? 0 : (value / total).clamp(0.0, 1.0);
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+
+    if (total <= 0) {
+      return _PanelCard(
+        title: title,
+        trailing: trailing,
+        padding: const EdgeInsets.all(12),
+        titlePadding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+        child: SizedBox(
+          height: 80,
+          child: AppEmptyState(
+            title: context.l10n.t('No stock data'),
+            icon: Icons.inventory_2_outlined,
+          ),
+        ),
+      );
+    }
+
+    return _PanelCard(
+      title: title,
+      trailing: trailing,
+      padding: const EdgeInsets.all(12),
+      titlePadding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var i = 0; i < rows.length; i++) ...[
+            if (i > 0) const SizedBox(height: 16),
+            Row(
+              children: [
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: Color(rows[i].tintValue),
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: Icon(
+                    rows[i].icon,
+                    size: 16,
+                    color: Color(rows[i].colorValue),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                SizedBox(
+                  width: 100,
+                  child: Text(
+                    context.l10n.t(rows[i].label),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: appText(
+                      size: AppTypography.labelMediumSize,
+                      weight: FontWeight.w600,
+                      color: p.textPrimary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _DistributionBar(
+                    fraction: _shareOf(rows[i].count),
+                    color: Color(rows[i].colorValue),
+                    trackColor: p.chipBg,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                SizedBox(
+                  width: 30,
+                  child: Text(
+                    rows[i].count.withCommas(),
+                    textAlign: TextAlign.right,
+                    maxLines: 1,
+                    style: appText(
+                      size: AppTypography.labelMediumSize,
+                      weight: FontWeight.w700,
+                      color: p.textPrimary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 48,
+                  child: Text(
+                    '${(_shareOf(rows[i].count) * 100).toStringAsFixed(1)}%',
+                    textAlign: TextAlign.right,
+                    maxLines: 1,
+                    style: appText(
+                      size: AppTypography.labelSmallSize,
+                      color: p.textSecondary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 class _DistributionBar extends StatelessWidget {
   const _DistributionBar({
     required this.fraction,
@@ -4288,115 +4791,29 @@ class _DistributionBar extends StatelessWidget {
       height: 16,
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        color: Color(0xFF0B0D12),
+        color: trackColor,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Color(0xFF64748B)),
+        border: Border.all(color: trackColor.withValues(alpha: 0.6)),
       ),
       child: TweenAnimationBuilder<double>(
-        tween: Tween(begin: 0, end: fraction.clamp(0.0, 1.0).toDouble()),
+        tween: Tween(
+          begin: 0,
+          end: fraction.isFinite ? fraction.clamp(0.0, 1.0).toDouble() : 0.0,
+        ),
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeOutCubic,
         builder: (context, value, _) => FractionallySizedBox(
           alignment: Alignment.centerLeft,
-          widthFactor: value,
+          widthFactor: value.isFinite ? value.clamp(0.0, 1.0) : 0.0,
           child: Container(
+            height: 8,
             decoration: BoxDecoration(
               color: color,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(4),
             ),
           ),
         ),
       ),
     );
   }
-}
-
-// ============================================================ sales sparkline painter
-
-/// Smooth sparkline with cubic bezier curve and gradient fill.
-/// Violet stroke (#C4B5FD, 2.2px) with vertical gradient fill (#A78BFA → transparent).
-class _SalesSparklinePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    // Sample data points for the sparkline (normalized 0-1)
-    final points = <Offset>[
-      Offset(0.0, 0.65),
-      Offset(0.08, 0.55),
-      Offset(0.16, 0.70),
-      Offset(0.24, 0.45),
-      Offset(0.32, 0.50),
-      Offset(0.40, 0.30),
-      Offset(0.48, 0.35),
-      Offset(0.56, 0.15),
-      Offset(0.64, 0.25),
-      Offset(0.72, 0.10),
-      Offset(0.80, 0.18),
-      Offset(0.88, 0.05),
-      Offset(0.96, 0.12),
-      Offset(1.0, 0.08),
-    ];
-
-    // Scale to canvas size
-    final scaledPoints = points.map((p) => Offset(
-      p.dx * size.width,
-      p.dy * size.height,
-    )).toList();
-
-    // Build smooth path with cubic bezier curves
-    final path = Path();
-    path.moveTo(scaledPoints.first.dx, scaledPoints.first.dy);
-
-    for (var i = 0; i < scaledPoints.length - 1; i++) {
-      final p0 = scaledPoints[i];
-      final p1 = scaledPoints[i + 1];
-
-      // Control points for smooth curve
-      final cp1 = Offset(
-        p0.dx + (p1.dx - p0.dx) * 0.4,
-        p0.dy,
-      );
-      final cp2 = Offset(
-        p1.dx - (p1.dx - p0.dx) * 0.4,
-        p1.dy,
-      );
-
-      path.cubicTo(cp1.dx, cp1.dy, cp2.dx, cp2.dy, p1.dx, p1.dy);
-    }
-
-    // Gradient fill path (close the path at the bottom)
-    final fillPath = Path.from(path);
-    fillPath.lineTo(size.width, size.height);
-    fillPath.lineTo(0, size.height);
-    fillPath.close();
-
-    // Draw gradient fill
-    final gradient = LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [
-        const Color(0x47A78BFA), // #A78BFA with 28% opacity
-        const Color(0x00A78BFA), // transparent
-      ],
-    );
-
-    final fillRect = Rect.fromLTWH(0, 0, size.width, size.height);
-    final fillPaint = Paint()
-      ..shader = gradient.createShader(fillRect)
-      ..style = PaintingStyle.fill;
-
-    canvas.drawPath(fillPath, fillPaint);
-
-    // Draw the line stroke
-    final strokePaint = Paint()
-      ..color = const Color(0xFFC4B5FD) // #C4B5FD
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.2
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    canvas.drawPath(path, strokePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
