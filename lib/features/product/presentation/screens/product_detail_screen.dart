@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:posfrontend/shared/widgets/cached_product_image.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/shared/l10n/status_l10n.dart';
 import 'package:flutter/services.dart';
@@ -10,8 +9,8 @@ import 'package:posfrontend/features/product/data/models/product_create_models.d
 import 'package:posfrontend/features/product/data/repositories/product_create_repository_impl.dart';
 import 'package:posfrontend/features/product/data/repositories/product_repository_impl.dart';
 import 'package:posfrontend/features/product/domain/entities/product_detail.dart';
-import 'package:posfrontend/features/product/presentation/entities/catalog_product_view.dart';
 import 'package:posfrontend/features/product/presentation/screens/add_product_screen.dart';
+import 'package:posfrontend/features/product/presentation/widgets/horizontal_accordion_slider.dart';
 import 'package:posfrontend/features/product/presentation/viewmodels/product_detail_view_model.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
@@ -125,7 +124,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _heroImage(),
+                        _accordionSlider(),
                         const SizedBox(height: 16),
                         _summaryCard(),
                         const SizedBox(height: 16),
@@ -159,7 +158,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _heroImage(),
+                    _accordionSlider(),
                     const SizedBox(height: 16),
                     _summaryCard(),
                   ],
@@ -185,98 +184,31 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget _heroImage() {
+  Widget _accordionSlider() {
     final d = _viewModel.detail!;
-    final color = CatalogProductView.colorFor(d.categoryName);
-    final hasImage = d.imageUrl != null;
-    return Stack(
-      children: [
-        Container(
-          width: double.infinity,
-          height: 220,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            color: color,
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: hasImage
-              ? CachedProductImage(
-                  url: d.imageUrl!,
-                  width: double.infinity,
-                  height: 220,
-                  fit: BoxFit.cover,
-                  memCacheWidth: 800,
-                  errorWidget: _heroFallback(color),
-                )
-              : _heroFallback(color),
-        ),
-        Positioned(
-          left: 16,
-          bottom: 16,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: AppColors.green,
-              borderRadius: BorderRadius.circular(20),
+    final slides = <HorizontalAccordionSlide>[
+      HorizontalAccordionSlide(
+        imageUrl: d.imageUrl ?? '',
+        title: d.name,
+        subtitle: d.categoryName.isNotEmpty && d.categoryName != '—'
+            ? d.categoryName
+            : null,
+        brand: d.brand.isNotEmpty ? d.brand : null,
+        price: d.price > 0 ? d.price : null,
+        onTap: () async {
+          await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => AddProductScreen(existingProduct: d),
             ),
-            child: Text(
-              context.l10n.t('Active'),
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: AppTypography.labelMediumSize,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          top: 12,
-          right: 12,
-          child: GestureDetector(
-            onTap: () async {
-              await Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) =>
-                      AddProductScreen(existingProduct: _viewModel.detail),
-                ),
-              );
-              if (mounted) _viewModel.load();
-            },
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.5),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.edit, color: Colors.white, size: 20),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _heroFallback(Color color) {
-    return Container(
-      width: double.infinity,
-      height: 220,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            color.withValues(alpha: 0.85),
-            color.withValues(alpha: 0.55),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+          );
+          if (mounted) _viewModel.load();
+        },
       ),
-      child: Center(
-        child: Icon(
-          Icons.inventory_2,
-          color: Colors.white.withValues(alpha: 0.9),
-          size: 84,
-        ),
-      ),
+    ];
+    return HorizontalAccordionSlider(
+      items: slides,
+      height: 320,
+      initialActiveIndex: 0,
     );
   }
 

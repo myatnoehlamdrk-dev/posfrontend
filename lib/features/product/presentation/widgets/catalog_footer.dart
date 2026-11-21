@@ -36,58 +36,88 @@ class CatalogFooter extends StatelessWidget {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(top: 28),
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 26),
       decoration: BoxDecoration(
         color: p.surface,
-        border: Border(top: BorderSide(color: p.border)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final tiles = [
-                _FooterTile(
-                  icon: Icons.language_rounded,
-                  // The autonym rather than the English name: a shop owner who
-                  // cannot read the current UI still has to be able to find
-                  // their own language here.
-                  label: LocaleNotifier.instance.language.autonym,
-                  caption: context.l10n.t('Language'),
-                ),
-                _FooterTile(
-                  icon: Icons.payments_outlined,
-                  label: 'MMK',
-                  caption: context.l10n.t('Currency'),
-                ),
-                _FooterTile(
-                  icon: Icons.public_rounded,
-                  label: context.l10n.t('Myanmar'),
-                  caption: context.l10n.t('Country'),
-                ),
-              ];
-
-              return constraints.maxWidth < _inlineBreakpoint
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        for (final tile in tiles) ...[
-                          tile,
-                          const SizedBox(height: 8),
-                        ],
-                      ],
-                    )
-                  : Row(
-                      children: [
-                        for (var i = 0; i < tiles.length; i++) ...[
-                          if (i > 0) const SizedBox(width: 10),
-                          Expanded(child: tiles[i]),
-                        ],
-                      ],
-                    );
-            },
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: p.border),
+        boxShadow: [
+          BoxShadow(
+            color: p.cardShadow.withValues(alpha: 0.5),
+            blurRadius: 28,
+            offset: const Offset(0, 10),
           ),
-          ],
+        ],
+      ),
+      // Clip so the accent rule laid over the top edge follows the corners.
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        children: [
+          // The accent rule: a brand-coloured hairline that fades out at both
+          // ends, rather than the flat grey line that used to cap the block.
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              height: 2,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    p.primary.withValues(alpha: 0),
+                    p.primary.withValues(alpha: 0.9),
+                    p.primary.withValues(alpha: 0),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final tiles = [
+                  _FooterTile(
+                    icon: Icons.language_rounded,
+                    // The autonym rather than the English name: a shop owner who
+                    // cannot read the current UI still has to be able to find
+                    // their own language here.
+                    label: LocaleNotifier.instance.language.autonym,
+                    caption: context.l10n.t('Language'),
+                  ),
+                  _FooterTile(
+                    icon: Icons.payments_outlined,
+                    label: 'MMK',
+                    caption: context.l10n.t('Currency'),
+                  ),
+                  _FooterTile(
+                    icon: Icons.public_rounded,
+                    label: context.l10n.t('Myanmar'),
+                    caption: context.l10n.t('Country'),
+                  ),
+                ];
+
+                return constraints.maxWidth < _inlineBreakpoint
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          for (final tile in tiles) ...[
+                            tile,
+                            const SizedBox(height: 8),
+                          ],
+                        ],
+                      )
+                    : Row(
+                        children: [
+                          for (var i = 0; i < tiles.length; i++) ...[
+                            if (i > 0) const SizedBox(width: 10),
+                            Expanded(child: tiles[i]),
+                          ],
+                        ],
+                      );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -108,19 +138,29 @@ class _FooterTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.palette;
 
-    // Plain Container, deliberately not InkWell: these are read-only, and a
-    // press ripple would promise an action that does not exist.
+    // Plain GestureDetector-free Container, deliberately not InkWell: these are
+    // read-only, and a press ripple would promise an action that does not exist.
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
       decoration: BoxDecoration(
         color: p.surfaceAlt,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: p.border),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 17, color: p.textSecondary),
-          const SizedBox(width: 8),
+          // The icon sits in a tinted badge so the three facts read as a set of
+          // indicators rather than as three plain list rows.
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: p.primary.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 17, color: p.primary),
+          ),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,7 +180,10 @@ class _FooterTile extends StatelessWidget {
                   caption,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.textMuted),
+                  style: TextStyle(
+                    fontSize: AppTypography.labelSmallSize,
+                    color: p.textMuted,
+                  ),
                 ),
               ],
             ),

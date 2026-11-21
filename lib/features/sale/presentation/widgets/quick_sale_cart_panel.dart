@@ -238,27 +238,26 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
       child: Row(
         children: [
           Container(
-            width: 36,
-            height: 36,
+            width: 38,
+            height: 38,
             decoration: BoxDecoration(
-              color: _p.selectionTint,
-              borderRadius: BorderRadius.circular(10),
+              color: AppColors.brandPurple.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               Icons.shopping_basket_outlined,
-              color: _p.accentText,
+              color: AppColors.brandPurple,
               size: 20,
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   context.l10n.t('Current Sale'),
-                  style: TextStyle(
-                    fontSize: AppTypography.bodyMediumSize,
+                  style: AppTypography.titleSmall.copyWith(
                     fontWeight: FontWeight.w700,
                     color: _titleColor,
                   ),
@@ -268,7 +267,9 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
                   context.l10n
                       .t('{v1} items')
                       .replaceAll('{v1}', widget.sale.totalItems.toString()),
-                  style: TextStyle(fontSize: AppTypography.labelSmallSize, color: _mutedColor),
+                  style: AppTypography.labelSmall.copyWith(
+                    color: _mutedColor,
+                  ),
                 ),
               ],
             ),
@@ -277,6 +278,8 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
             onPressed: widget.onClose,
             tooltip: context.l10n.t('Close'),
             icon: Icon(Icons.close, size: 20, color: _mutedColor),
+            visualDensity: VisualDensity.compact,
+            constraints: const BoxConstraints(),
           ),
         ],
       ),
@@ -304,15 +307,29 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
 
   Widget _emptyHint() {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 28),
+      padding: const EdgeInsets.symmetric(vertical: 32),
       child: Column(
         children: [
-          Icon(Icons.touch_app_outlined, size: 40, color: _p.textMuted),
-          const SizedBox(height: 12),
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: AppColors.brandPurple.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(
+              Icons.touch_app_outlined,
+              size: 32,
+              color: AppColors.brandPurple,
+            ),
+          ),
+          const SizedBox(height: 16),
           Text(
             context.l10n.t('Tap a product to add it to this sale'),
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: AppTypography.labelMediumSize, color: _mutedColor),
+            style: AppTypography.bodyMedium.copyWith(
+              color: _mutedColor,
+            ),
           ),
         ],
       ),
@@ -327,93 +344,100 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: _p.surfaceAlt,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: _borderColor),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  color: _p.chipBg,
-                  child: item.imageUrl != null
-                      ? CachedProductImage(
-                          url: item.imageUrl!,
-                          width: 40,
-                          height: 40,
-                          fit: BoxFit.cover,
-                          memCacheWidth: 160,
-                        )
-                      : Icon(
-                          CatalogProductView.iconFor(item.category),
-                          color: _mutedColor,
-                          size: 18,
-                        ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.productName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: AppTypography.labelMediumSize,
-                        fontWeight: FontWeight.w600,
-                        color: _titleColor,
-                      ),
+          // Product image.
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              width: 44,
+              height: 44,
+              color: _p.chipBg,
+              child: item.imageUrl != null
+                  ? CachedProductImage(
+                      url: item.imageUrl!,
+                      width: 44,
+                      height: 44,
+                      fit: BoxFit.cover,
+                      memCacheWidth: 160,
+                    )
+                  : Icon(
+                      CatalogProductView.iconFor(item.category),
+                      color: _mutedColor,
+                      size: 18,
                     ),
-                    if (variantLine.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        variantLine,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: AppTypography.labelSmallSize, color: _mutedColor),
-                      ),
-                    ],
-                    const SizedBox(height: 2),
-                    PriceText(
-                      item.unitPrice,
-                      style: TextStyle(fontSize: AppTypography.labelSmallSize, color: _mutedColor),
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                visualDensity: VisualDensity.compact,
-                onPressed: () => widget.sale.removeItem(index),
-                tooltip: context.l10n.t('Remove'),
-                icon: Icon(Icons.delete_outline, size: 17, color: _p.dangerFg),
-              ),
-            ],
+            ),
           ),
-          const SizedBox(height: 8),
-          Row(
+          const SizedBox(width: 12),
+          // Name + variant + price.
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  item.productName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.labelMedium.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: _titleColor,
+                  ),
+                ),
+                if (variantLine.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    variantLine,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.labelSmall.copyWith(
+                      color: _mutedColor,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 4),
+                PriceText(
+                  item.unitPrice,
+                  style: AppTypography.labelSmall.copyWith(
+                    color: _mutedColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Remove button.
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            onPressed: () => widget.sale.removeItem(index),
+            tooltip: context.l10n.t('Remove'),
+            icon: Icon(Icons.delete_outline, size: 17, color: _p.dangerFg),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+          const SizedBox(width: 8),
+          // Quantity + line subtotal.
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               QuantityControl(
                 quantity: item.quantity,
                 onChanged: (next) =>
                     widget.sale.updateItemQuantity(index, next - item.quantity),
               ),
-              const Spacer(),
+              const SizedBox(height: 6),
               PriceText(
                 item.subtotal,
-                style: TextStyle(
-                  fontSize: AppTypography.bodySmallSize,
-                  fontWeight: FontWeight.w700,
+                style: AppTypography.bodySmall.copyWith(
+                  fontWeight: FontWeight.w800,
                   color: _titleColor,
                 ),
               ),
@@ -428,19 +452,19 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
   /// is not needed on every single sale, so it scrolls with the items.
   Widget _detailCard() {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: _p.surfaceAlt,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: _borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _discountRow(),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           _paymentDropdown(),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           _customerField(),
         ],
       ),
@@ -456,13 +480,14 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
             children: [
               Text(
                 context.l10n.t('Subtotal'),
-                style: TextStyle(fontSize: AppTypography.labelSmallSize, color: _mutedColor),
+                style: AppTypography.labelSmall.copyWith(
+                  color: _mutedColor,
+                ),
               ),
               const SizedBox(height: 2),
               PriceText(
                 widget.sale.subtotal,
-                style: TextStyle(
-                  fontSize: AppTypography.labelMediumSize,
+                style: AppTypography.labelMedium.copyWith(
                   fontWeight: FontWeight.w600,
                   color: _titleColor,
                 ),
@@ -476,15 +501,16 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
             children: [
               Text(
                 context.l10n.t('Discount'),
-                style: TextStyle(fontSize: AppTypography.labelSmallSize, color: _mutedColor),
+                style: AppTypography.labelSmall.copyWith(
+                  color: _mutedColor,
+                ),
               ),
               const SizedBox(height: 2),
               Row(
                 children: [
                   PriceText(
                     widget.sale.discountAmount,
-                    style: TextStyle(
-                      fontSize: AppTypography.labelMediumSize,
+                    style: AppTypography.labelMedium.copyWith(
                       fontWeight: FontWeight.w600,
                       color: _titleColor,
                     ),
@@ -503,16 +529,14 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
                         double.tryParse(v) ?? 0,
                       ),
                       textAlign: TextAlign.right,
-                      style: TextStyle(
-                        fontSize: AppTypography.labelMediumSize,
+                      style: AppTypography.labelMedium.copyWith(
                         fontWeight: FontWeight.w600,
                         color: _titleColor,
                       ),
                       decoration: InputDecoration(
                         isDense: true,
                         suffixText: '%',
-                        suffixStyle: TextStyle(
-                          fontSize: AppTypography.labelSmallSize,
+                        suffixStyle: AppTypography.labelSmall.copyWith(
                           color: _mutedColor,
                         ),
                         contentPadding: const EdgeInsets.symmetric(
@@ -549,7 +573,9 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
         Expanded(
           child: Text(
             context.l10n.t('Payment Method'),
-            style: TextStyle(fontSize: AppTypography.labelMediumSize, color: _mutedColor),
+            style: AppTypography.labelMedium.copyWith(
+              color: _mutedColor,
+            ),
           ),
         ),
         Container(
@@ -574,7 +600,9 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
                     value: label,
                     child: Text(
                       context.l10n.t(label),
-                      style: TextStyle(fontSize: AppTypography.labelMediumSize, color: _titleColor),
+                      style: AppTypography.labelMedium.copyWith(
+                        color: _titleColor,
+                      ),
                     ),
                   ),
               ],
@@ -591,13 +619,19 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
   Widget _customerField() {
     return TextField(
       controller: _customerCtrl,
-      style: TextStyle(fontSize: AppTypography.labelMediumSize, color: _titleColor),
+      style: AppTypography.labelMedium.copyWith(
+        color: _titleColor,
+      ),
       decoration: InputDecoration(
         isDense: true,
         labelText: context.l10n.t('Customer (optional)'),
-        labelStyle: TextStyle(fontSize: AppTypography.labelSmallSize, color: _mutedColor),
+        labelStyle: AppTypography.labelSmall.copyWith(
+          color: _mutedColor,
+        ),
         hintText: context.l10n.t('Customer'),
-        hintStyle: TextStyle(fontSize: AppTypography.labelSmallSize, color: _p.textMuted),
+        hintStyle: AppTypography.labelSmall.copyWith(
+          color: _p.textMuted,
+        ),
         prefixIcon: Icon(Icons.person_outline, size: 18, color: _mutedColor),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 10,
@@ -628,11 +662,14 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
         side: BorderSide(color: enabled ? _p.borderStrong : _borderColor),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         padding: const EdgeInsets.symmetric(vertical: 12),
+        minimumSize: const Size(double.infinity, 42),
       ),
       icon: const Icon(Icons.delete_sweep_outlined, size: 17),
       label: Text(
         context.l10n.t('Clear'),
-        style: const TextStyle(fontSize: AppTypography.labelMediumSize, fontWeight: FontWeight.w600),
+        style: AppTypography.labelMedium.copyWith(
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -643,39 +680,58 @@ class _QuickSaleCartPanelState extends State<QuickSaleCartPanel> {
     final canSubmit = widget.sale.hasItems && !submitting;
     return SafeArea(
       top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    context.l10n.t('Total'),
-                    style: TextStyle(fontSize: AppTypography.labelSmallSize, color: _mutedColor),
-                  ),
-                  const SizedBox(height: 2),
-                  PriceText(
-                    widget.sale.totalPayable,
-                    style: TextStyle(
-                      fontSize: AppTypography.titleSmallSize,
-                      fontWeight: FontWeight.w800,
-                      color: _p.accentText,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            PressableSaleButton(
-              enabled: canSubmit,
-              submitting: submitting,
-              label: context.l10n.t('Complete Sale'),
-              icon: Icons.check_circle_outline,
-              onTap: _submit,
+      child: Container(
+        height: 72,
+        decoration: BoxDecoration(
+          color: _p.surface,
+          border: Border(top: BorderSide(color: _borderColor)),
+          boxShadow: [
+            BoxShadow(
+              color: _p.cardShadow,
+              blurRadius: 12,
+              offset: const Offset(0, -2),
             ),
           ],
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        context.l10n.t('Total'),
+                        style: AppTypography.labelSmall.copyWith(
+                          color: _mutedColor,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      PriceText(
+                        widget.sale.totalPayable,
+                        style: AppTypography.titleSmall.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: _p.accentText,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                PressableSaleButton(
+                  enabled: canSubmit,
+                  submitting: submitting,
+                  label: context.l10n.t('Complete Sale'),
+                  icon: Icons.check_circle_outline,
+                  onTap: _submit,
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

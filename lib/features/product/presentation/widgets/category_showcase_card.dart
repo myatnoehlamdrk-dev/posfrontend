@@ -141,8 +141,17 @@ class CategoryShowcaseCard extends StatelessWidget {
   /// This is what makes it distinct from the description: the name has a
   /// background and the description does not, so the two cannot be mistaken for
   /// each other at a glance even though they sit one or two lines apart and are
-  /// the same width. [selectionTint] is the palette's existing tint for "this is
-  /// the thing you are on", which is exactly what the name is.
+  /// the same width.
+  ///
+  /// The two brightnesses paint it differently on purpose. In light the tint is
+  /// the palette's near-white lavender (`selectionTint`) under near-black text
+  /// — barely a wash, which is all a heading needs there. In dark that same
+  /// token is a *solid, saturated* violet, and behind a 20px heading it reads
+  /// as a heavy block of colour that is louder than the product grid the card
+  /// exists to show. So dark paints a 20% tint of the brand accent over the
+  /// card instead — a soft indigo that still says "this is the heading" — with
+  /// the accent's own lavender for the text, which clears 5.7:1 on it. Same
+  /// shape, same meaning, no bruise.
   ///
   /// One line now that it shares a row with the count. Two lines were needed
   /// while the count sat underneath and the name had the full card width; on a
@@ -150,10 +159,16 @@ class CategoryShowcaseCard extends StatelessWidget {
   /// wrapping name would push the count off the end. A long name ellipsises
   /// instead, and the full text is one tap away on the category's own screen.
   Widget _nameChip(BuildContext context, AppPalette p) {
+    final onDark = context.isDark;
+    final background = onDark
+        ? p.primary.withValues(alpha: 0.2)
+        : p.selectionTint;
+    final foreground = onDark ? p.accentText : p.textPrimary;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: p.selectionTint,
+        color: background,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -164,7 +179,7 @@ class CategoryShowcaseCard extends StatelessWidget {
           fontSize: nameSize,
           height: 1.15,
           fontWeight: FontWeight.w900,
-          color: p.textPrimary,
+          color: foreground,
         ),
       ),
     );

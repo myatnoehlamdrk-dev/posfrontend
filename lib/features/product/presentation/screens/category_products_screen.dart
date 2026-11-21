@@ -1437,7 +1437,7 @@ class _VariantPickDialogState extends State<VariantPickDialog> {
                     vertical: 5,
                   ),
                   decoration: BoxDecoration(
-                    color: _p.selectionTint,
+                    color: _accentColor,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -1450,7 +1450,7 @@ class _VariantPickDialogState extends State<VariantPickDialog> {
                         style: TextStyle(
                           fontSize: AppTypography.labelSmallSize,
                           fontWeight: FontWeight.w700,
-                          color: _accentColor,
+                          color: Colors.white,
                         ),
                       ),
                     ],
@@ -1564,7 +1564,7 @@ class _VariantPickDialogState extends State<VariantPickDialog> {
                 decoration: BoxDecoration(
                   border: Border.all(color: _p.borderStrong),
                   borderRadius: BorderRadius.circular(8),
-                  color: Colors.white,
+                  color: _p.surfaceAlt,
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,

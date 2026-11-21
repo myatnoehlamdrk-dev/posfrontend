@@ -26,6 +26,7 @@ import 'package:posfrontend/features/product/presentation/widgets/catalog_footer
 import 'package:posfrontend/features/product/presentation/widgets/category_showcase_data.dart';
 import 'package:posfrontend/features/product/presentation/widgets/category_showcase_grid.dart';
 import 'package:posfrontend/features/product/presentation/widgets/category_skeleton.dart';
+import 'package:posfrontend/features/product/presentation/widgets/horizontal_accordion_slider.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_typography.dart';
@@ -63,6 +64,17 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
   /// offers the same action, so a floating button would be a second control for
   /// something the user can already reach.
   static const double backToTopThreshold = 400;
+
+  /// Index from which cards entrance-animate: the size of the grid before the
+  /// last reveal, so only the cards a press just added arrive with motion.
+  int _gridAnimateFrom = 0;
+
+  /// How far up the grid the "there is more" dissolve reaches.
+  ///
+  /// Fixed rather than a fraction of the grid: one row tall, it fades the lower
+  /// part of the last card; two rows tall, only the bottom row — a fraction
+  /// would swallow a single-row grid whole.
+  static const double _revealScrimHeight = 150;
 
   /// Drives the carousel's automatic advance. See [_startAutoScroll].
   Timer? _autoScrollTimer;
@@ -376,137 +388,149 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
       );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // The grid measures itself to choose how many cards fit on a row; the
+        // paging window has to agree with it, so both ask the same helper with
+        // the same width. Otherwise a four-column window shows two cards and
+        // leaves half the row blank.
+        final columns = categoryGridColumns(constraints.maxWidth);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (_viewModel.hotProducts.isNotEmpty) ...[
+              _hotAccordionSlider(_viewModel.hotProducts),
+              const SizedBox(height: 28),
+            ],
+            _categoryGrid(columns, isWide),
+            // The gap belongs to the section rather than sitting outside it: with no
+            // packages to show the section renders as nothing at all, and a spacer
+            // left behind would be a band of dead space above the footer.
+            if (_viewModel.packages.isNotEmpty) ...[
+              const SizedBox(height: 28),
+              ExplorePackagesSection(
+                packages: _viewModel.packages,
+                previewCount: ProductsCatalogViewModel.packagePreviewCount,
+                onPackageTap: _openPackage,
+              ),
+            ],
+            const CatalogFooter(),
+          ],
+        );
+      },
+    );
+  }
+
+  /// The category grid, with the dissolve and the pill that reveal the rest.
+  ///
+  /// Only the windowed slice — the first row — is rendered. While categories
+  /// are still hidden the bottom of the grid fades into the page and a glass
+  /// pill floats over that fade, so the control sits on the content it refers
+  /// to rather than in a bar parked below it: the fade says "more under here"
+  /// and the pill is already where the eye lands.
+  Widget _categoryGrid(int columns, bool isWide) {
+    final grid = CategoryShowcaseGrid(
+      // Only the windowed slice, not the whole catalogue.
+      categories: _viewModel.visibleCategories(columns),
+      animateFromIndex: _gridAnimateFrom,
+      // The window is wide, so the cards sit side by side and the outline is
+      // what separates them. On a phone they are one per row and the border
+      // would only draw a column of boxes.
+      showCardBorder: isWide,
+      onProductTap: _openProduct,
+      onProductLongPress: _showDeleteDialog,
+      onCategoryTap: (cat) => Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => CategoryProductsScreen(
+            categoryId: cat.id,
+            categoryName: cat.name,
+            uncategorized: cat.id.isEmpty,
+          ),
+        ),
+      ),
+    );
+
+    if (!_viewModel.hasMoreCategories(columns)) return grid;
+
+    return Stack(
       children: [
-        if (_viewModel.hotProducts.isNotEmpty) ...[
-          _hotCarousel(_viewModel.hotProducts),
-          const SizedBox(height: 28),
-        ],
-        CategoryShowcaseGrid(
-          // Only the windowed slice, not the whole catalogue. The first two
-          // categories are on screen and the rest wait behind the plus button
-          // below.
-          categories: _viewModel.visibleCategories,
-          // The window is wide, so the cards sit side by side and the outline is
-          // what separates them. On a phone they are one per row and the border
-          // would only draw a column of boxes.
-          showCardBorder: isWide,
-          onProductTap: _openProduct,
-          onProductLongPress: _showDeleteDialog,
-          onCategoryTap: (cat) => Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => CategoryProductsScreen(
-                categoryId: cat.id,
-                categoryName: cat.name,
-                uncategorized: cat.id.isEmpty,
+        grid,
+        // The dissolve. IgnorePointer because the faded cards underneath are
+        // still real content — dimmed, not disabled.
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: IgnorePointer(
+            child: SizedBox(
+              height: _revealScrimHeight,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      _p.scaffoldBg.withValues(alpha: 0),
+                      _p.scaffoldBg.withValues(alpha: 0.75),
+                      _p.scaffoldBg,
+                    ],
+                    stops: const [0, 0.5, 1],
+                  ),
+                ),
               ),
             ),
           ),
         ),
-        if (_viewModel.hasMoreCategories) ...[
-          const SizedBox(height: 20),
-          _loadMoreCategoriesButton(),
-        ],
-        // The gap belongs to the section rather than sitting outside it: with no
-        // packages to show the section renders as nothing at all, and a spacer
-        // left behind would be a band of dead space above the footer.
-        if (_viewModel.packages.isNotEmpty) ...[
-          const SizedBox(height: 28),
-          ExplorePackagesSection(
-            packages: _viewModel.packages,
-            previewCount: ProductsCatalogViewModel.packagePreviewCount,
-            onPackageTap: _openPackage,
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 18,
+          child: Center(
+            child: _MoreCategoriesPill(
+              label: context.l10n.t('Show more categories'),
+              // What the press actually reveals, not everything still hidden:
+              // a pill promising forty when the next row holds four lies.
+              badge: math.min(
+                _viewModel.remainingCategoryCount(columns),
+                ProductsCatalogViewModel.cardsPerReveal(columns),
+              ),
+              onTap: () => _revealMoreCategories(columns),
+            ),
           ),
-        ],
-        const CatalogFooter(),
+        ),
       ],
     );
   }
 
-  /// The plus control that reveals the next pair of categories.
+  /// Reveals the next row, and records where that row begins.
   ///
-  /// Deliberately a full-width bar with a glyph *and* a word, rather than a
-  /// bare circular `+` parked under the grid. A lone plus on a product
-  /// catalog reads as "add category" — a management action — which is not
-  /// what it does, and a control nobody can name is a control nobody presses.
-  /// The label says what the press achieves, the count says whether it is
-  /// worth pressing, and the whole bar is the target.
-  Widget _loadMoreCategoriesButton() {
-    final accent = brandPurple;
-    final remaining = _viewModel.remainingCategoryCount;
+  /// [_gridAnimateFrom] has to be the size of the grid *before* the press so
+  /// only the cards just added arrive with motion; the assignment needs no
+  /// `setState` because `loadMoreCategories` notifies, and that rebuild is the
+  /// one that reads it.
+  void _revealMoreCategories(int columns) {
+    if (!_viewModel.hasMoreCategories(columns)) return;
+    _gridAnimateFrom = _viewModel.visibleCategories(columns).length;
+    _viewModel.loadMoreCategories(columns);
+  }
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: _viewModel.loadMoreCategories,
-        child: Ink(
-          decoration: BoxDecoration(
-            color: _p.surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: _borderColor),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // The plus in a filled circle, so it holds its own against the
-                // category cards above instead of floating as loose line art.
-                Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: accent,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.add_rounded,
-                    size: 18,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Flexible(
-                  child: Text(
-                    context.l10n.t('Show more categories'),
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: AppTypography.bodySmallSize,
-                      fontWeight: FontWeight.w600,
-                      color: context.palette.textPrimary,
-                    ),
-                  ),
-                ),
-                if (remaining > 0) ...[
-                  const SizedBox(width: 8),
-                  // The exact remainder, so a shop with forty categories
-                  // isn't left counting presses to find the end.
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _p.chipBg,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '+$remaining',
-                      style: TextStyle(
-                        fontSize: AppTypography.labelSmallSize,
-                        fontWeight: FontWeight.w600,
-                        color: _p.textSecondary,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ),
+  Widget _hotAccordionSlider(List<CatalogProductView> items) {
+    final slides = items.take(7).map((p) {
+      return HorizontalAccordionSlide(
+        imageUrl: p.imageUrl ?? '',
+        title: p.name,
+        subtitle: p.category.isNotEmpty ? p.category : p.brand,
+        brand: p.brand.isNotEmpty ? p.brand : null,
+        price: p.price > 0 ? p.price : null,
+        onTap: () => _openProduct(p),
+      );
+    }).toList();
+
+    return HorizontalAccordionSlider(
+      items: slides,
+      height: 320,
+      initialActiveIndex: 0,
     );
   }
 
@@ -951,6 +975,124 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
         shadows: [
           Shadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 14),
         ],
+      ),
+    );
+  }
+}
+
+/// The glass pill that reveals the next row of categories.
+///
+/// Translucent surface over a backdrop blur, a hairline in the brand accent,
+/// and the count in an accent-filled badge — so it reads as a control floating
+/// *on* the faded content rather than as another card in the grid. Hover lifts
+/// the surface, sharpens the border and nudges the chevron down, which is the
+/// whole hover treatment: enough to say "press me" on a desktop, nothing that
+/// moves on its own for someone reading on a touch screen.
+class _MoreCategoriesPill extends StatefulWidget {
+  const _MoreCategoriesPill({
+    required this.label,
+    required this.badge,
+    required this.onTap,
+  });
+
+  final String label;
+  final int badge;
+  final VoidCallback onTap;
+
+  @override
+  State<_MoreCategoriesPill> createState() => _MoreCategoriesPillState();
+}
+
+class _MoreCategoriesPillState extends State<_MoreCategoriesPill> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(999),
+          hoverColor: p.primary.withValues(alpha: 0.1),
+          onTap: widget.onTap,
+          child: Ink(
+            decoration: BoxDecoration(
+              color: p.surface.withValues(alpha: _hovered ? 0.92 : 0.78),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: _hovered ? p.primary : p.primary.withValues(alpha: 0.45),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.25),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: BackdropFilter(
+                filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 11,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: p.primary,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          '${widget.badge}',
+                          style: const TextStyle(
+                            fontSize: AppTypography.labelSmallSize,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        widget.label,
+                        style: TextStyle(
+                          fontSize: AppTypography.labelMediumSize,
+                          fontWeight: FontWeight.w600,
+                          color: p.textPrimary,
+                        ),
+                      ),
+                      AnimatedSlide(
+                        offset: _hovered
+                            ? const Offset(0, 0.18)
+                            : Offset.zero,
+                        duration: const Duration(milliseconds: 160),
+                        curve: Curves.easeOut,
+                        child: Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          size: 20,
+                          color: p.accentText,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

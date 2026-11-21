@@ -240,45 +240,53 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
   Widget _searchBar() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
       child: ListenableBuilder(
         listenable: _search,
         builder: (context, _) {
           final p = context.palette;
-          return TextField(
-            controller: _search,
-            onChanged: _catalog.setSearchQuery,
-            style: TextStyle(fontSize: AppTypography.bodySmallSize, color: p.textPrimary),
-            decoration: InputDecoration(
-              hintText: context.l10n.t('Search products...'),
-              hintStyle: TextStyle(fontSize: AppTypography.bodySmallSize, color: p.textMuted),
-              prefixIcon: Icon(Icons.search, color: p.accentText, size: 20),
-              suffixIcon: _search.text.isEmpty
-                  ? null
-                  : IconButton(
-                      onPressed: () {
-                        _search.clear();
-                        _catalog.setSearchQuery('');
-                        setState(() {});
-                      },
-                      tooltip: 'Clear search',
-                      icon: Icon(Icons.close, size: 18, color: p.textSecondary),
-                    ),
-              isDense: true,
-              filled: true,
-              fillColor: p.surface,
-              contentPadding: const EdgeInsets.symmetric(vertical: 12),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: p.border),
+          return Container(
+            decoration: BoxDecoration(
+              color: p.surfaceAlt,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: p.border),
+            ),
+            child: TextField(
+              controller: _search,
+              onChanged: _catalog.setSearchQuery,
+              style: AppTypography.bodySmall.copyWith(
+                color: p.textPrimary,
               ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: p.border),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: p.primary),
+              decoration: InputDecoration(
+                hintText: context.l10n.t('Search products...'),
+                hintStyle: AppTypography.labelMedium.copyWith(
+                  color: p.textMuted,
+                ),
+                prefixIcon: Icon(Icons.search, color: p.accentText, size: 20),
+                suffixIcon: _search.text.isEmpty
+                    ? null
+                    : IconButton(
+                        onPressed: () {
+                          _search.clear();
+                          _catalog.setSearchQuery('');
+                          setState(() {});
+                        },
+                        tooltip: 'Clear search',
+                        icon: Icon(Icons.close, size: 18, color: p.textSecondary),
+                      ),
+                isDense: true,
+                filled: true,
+                fillColor: Colors.transparent,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                errorBorder: InputBorder.none,
+                focusedErrorBorder: InputBorder.none,
+                disabledBorder: InputBorder.none,
               ),
             ),
           );
@@ -292,10 +300,10 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
   Widget _categoryStrip() {
     final selected = _catalog.selected;
     return SizedBox(
-      height: 58,
+      height: 44,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
         children: [
           _chip(
             label: context.l10n.t('All'),
@@ -324,24 +332,31 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
       child: PressableCard(
         onTap: onTap,
         haptic: HapticFeedback.selectionClick,
-        pressedScale: 0.94,
+        pressedScale: 0.95,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          height: 30,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
           decoration: BoxDecoration(
-            color: selected ? AppColors.brandPurple : p.surface,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: selected ? AppColors.brandPurple : p.border,
-            ),
+            color: selected ? AppColors.brandPurple : p.surfaceAlt,
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: p.textPrimary, width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: p.textMuted,
+                offset: const Offset(4, 4),
+                blurRadius: 0,
+              ),
+            ],
           ),
-          child: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: AppTypography.labelMediumSize,
-              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-              color: selected ? Colors.white : p.textPrimary,
+          child: Center(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.labelMedium.copyWith(
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                color: selected ? Colors.white : p.textSecondary,
+              ),
             ),
           ),
         ),
@@ -432,7 +447,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
             controller: _scrollCtrl,
             // Always scrollable so pull-to-refresh works even on a short page.
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: crossAxisCount,
               // Rows breathe farther apart than the category grid's 12: the
@@ -442,7 +457,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
               crossAxisSpacing: 12,
               // Same aspect ratio as the category grid, so the shared skeleton
               // lands where the real cards will.
-              childAspectRatio: 0.72,
+              childAspectRatio: 1.0,
             ),
             itemCount: itemCount,
             itemBuilder: (context, index) {
@@ -738,81 +753,86 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
     final p = context.palette;
     final count = _sale.totalItems;
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+      height: 64,
       decoration: BoxDecoration(
         color: p.surface,
         border: Border(top: BorderSide(color: p.border)),
         boxShadow: [
           BoxShadow(
             color: p.cardShadow,
-            blurRadius: 10,
+            blurRadius: 12,
             offset: const Offset(0, -2),
           ),
         ],
       ),
       child: SafeArea(
         top: false,
-        child: Row(
-          children: [
-            Badge(
-              isLabelVisible: count > 0,
-              label: Text(count.toString()),
-              backgroundColor: AppColors.brandPurple,
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: p.selectionTint,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.shopping_cart_outlined,
-                  color: p.accentText,
-                  size: 20,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+          child: Row(
+            children: [
+              AnimatedScale(
+                scale: count > 0 ? 1.0 : 0.85,
+                duration: const Duration(milliseconds: 180),
+                child: Badge(
+                isLabelVisible: count > 0,
+                label: Text(count.toString()),
+                backgroundColor: AppColors.brandPurple,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: p.selectionTint,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.shopping_cart_outlined,
+                    color: p.accentText,
+                    size: 20,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    count > 0
-                        ? context.l10n
-                              .t('{v1} items')
-                              .replaceAll('{v1}', count.toString())
-                        : context.l10n.t('No items added yet.'),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: AppTypography.labelMediumSize,
-                      fontWeight: FontWeight.w600,
-                      color: p.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  PriceText(
-                    _sale.totalPayable,
-                    style: TextStyle(
-                      fontSize: AppTypography.bodyMediumSize,
-                      fontWeight: FontWeight.w800,
-                      color: p.accentText,
-                    ),
-                  ),
-                ],
               ),
-            ),
-            const SizedBox(width: 12),
-            PressableSaleButton(
-              enabled: true,
-              submitting: false,
-              label: context.l10n.t('View Cart'),
-              icon: Icons.shopping_cart_outlined,
-              onTap: _onOpenCartTap,
-            ),
-          ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      count > 0
+                          ? context.l10n
+                                .t('{v1} items')
+                                .replaceAll('{v1}', count.toString())
+                          : context.l10n.t('No items added yet.'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.labelMedium.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: p.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    PriceText(
+                      _sale.totalPayable,
+                      style: AppTypography.bodyMedium.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.brandPurple,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              PressableSaleButton(
+                enabled: count > 0,
+                submitting: false,
+                label: context.l10n.t('View Cart'),
+                icon: Icons.shopping_cart_outlined,
+                onTap: _onOpenCartTap,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -861,7 +881,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
 /// One product, tappable to add. The detail screen is demoted to its own
 /// button: on a till, "put it in the sale" is the default verb.
-class _QuickSaleCard extends StatelessWidget {
+class _QuickSaleCard extends StatefulWidget {
   final CatalogProductView product;
   final int qtyInCart;
   final VoidCallback onAdd;
@@ -874,199 +894,233 @@ class _QuickSaleCard extends StatelessWidget {
     required this.onOpen,
   });
 
-  double get _price => product.variants.isNotEmpty
-      ? product.variants.first.price
-      : product.price;
+  @override
+  State<_QuickSaleCard> createState() => _QuickSaleCardState();
+}
+
+class _QuickSaleCardState extends State<_QuickSaleCard> {
+  bool _hovered = false;
+
+  double get _price => widget.product.variants.isNotEmpty
+      ? widget.product.variants.first.price
+      : widget.product.price;
 
   bool get _outOfStock =>
-      product.stock <= 0 &&
-      (product.variants.isEmpty ||
-          product.variants.every((v) => v.quantity <= 0));
+      widget.product.stock <= 0 &&
+      (widget.product.variants.isEmpty ||
+          widget.product.variants.every((v) => v.quantity <= 0));
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    return PressableCard(
-      onTap: onAdd,
-      haptic: HapticFeedback.selectionClick,
-      child: Container(
-        decoration: BoxDecoration(
-          color: p.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: qtyInCart > 0 ? AppColors.brandPurple : p.border,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: p.cardShadow,
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Stack(
-                children: [
-                  Positioned.fill(child: _image(p)),
-                  Positioned(
-                    top: 8,
-                    left: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.6),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        _outOfStock
-                            ? context.l10n.t('Out of Stock')
-                            : context.l10n
-                                  .t('Stock: {v1}')
-                                  .replaceAll('{v1}', product.stock.toString()),
-                        style: const TextStyle(
-                          fontSize: AppTypography.labelSmallSize,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: 4,
-                    right: 4,
-                    child: IconButton(
-                      onPressed: onOpen,
-                      tooltip: context.l10n.t('View Details'),
-                      icon: Icon(
-                        Icons.visibility_outlined,
-                        size: 17,
-                        color: Colors.black.withValues(alpha: 0.55),
-                      ),
-                    ),
-                  ),
-                  if (qtyInCart > 0)
-                    Positioned(
-                      bottom: 8,
-                      left: 8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 7,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.brandPurple,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          context.l10n
-                              .t('×{v1}')
-                              .replaceAll('{v1}', qtyInCart.toString()),
-                          style: const TextStyle(
-                            fontSize: AppTypography.labelSmallSize,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
+    final inCart = widget.qtyInCart > 0;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: AnimatedScale(
+        scale: _hovered ? 1.04 : 1.0,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOutCubic,
+        child: AnimatedScale(
+          scale: inCart ? 1.05 : 1.0,
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+          child: PressableCard(
+          onTap: _outOfStock ? null : widget.onAdd,
+          haptic: HapticFeedback.selectionClick,
+          pressedScale: 0.96,
+          child: Container(
+            decoration: BoxDecoration(
+              color: p.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border(
+                top: BorderSide(
+                  color: inCart
+                      ? AppColors.brandPurple
+                      : _outOfStock
+                      ? p.dangerFg.withValues(alpha: 0.35)
+                      : p.border,
+                  width: inCart ? 1.5 : 1,
+                ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    product.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: AppTypography.labelMediumSize,
-                      fontWeight: FontWeight.w600,
-                      color: p.textPrimary,
-                    ),
+              boxShadow: [
+                ...p.cardElevation,
+                if (_hovered)
+                  BoxShadow(
+                    color: AppColors.brandPurple.withValues(alpha: 0.15),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
                   ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: PriceText(
-                          _price,
-                          style: const TextStyle(
-                            fontSize: AppTypography.bodyMediumSize,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.brandPurple,
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Image band — fills so product images keep a natural height.
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Folder-like box holding the image, with the product
+                        // name printed at its bottom edge inside the container.
+                        Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.fromLTRB(6, 0, 6, 6),
+                          decoration: BoxDecoration(
+                            color: p.chipBg,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: p.border),
+                            boxShadow: [
+                              BoxShadow(
+                                color: p.cardShadow,
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: Stack(
+                            children: [
+                              Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // Image fills the folder width at a natural ratio.
+                                  ClipRRect(
+                                    borderRadius: const BorderRadius.vertical(
+                                      top: Radius.circular(12),
+                                    ),
+                                    child: SizedBox(
+                                      height: 120,
+                                      width: double.infinity,
+                                      child: widget.product.imageUrl != null
+                                          ? CachedProductImage(
+                                              url: widget.product.imageUrl!,
+                                              fit: BoxFit.cover,
+                                              errorWidget: _fallback(),
+                                            )
+                                          : _fallback(),
+                                    ),
+                                  ),
+                                  // Name tab at the bottom of the folder box.
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 5,
+                                    ),
+                                    color: p.surface,
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            widget.product.name,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: AppTypography
+                                                .labelSmall.copyWith(
+                                              fontWeight: FontWeight.w700,
+                                              color: p.textPrimary,
+                                              height: 1.1,
+                                            ),
+                                          ),
+                                        ),
+                                        if (_outOfStock) ...[
+                                          const SizedBox(width: 6),
+                                          _badge(
+                                            label: context.l10n
+                                                .t('Out of Stock'),
+                                            color: p.dangerFg,
+                                            bg: p.dangerBg,
+                                          ),
+                                        ] else ...[
+                                          const SizedBox(width: 6),
+                                          _badge(
+                                            label:
+                                                'Stock: ${widget.product.stock}',
+                                            color: p.successFg,
+                                            bg: p.successBg,
+                                          ),
+                                        ],
+                                        if (inCart) ...[
+                                          const SizedBox(width: 6),
+                                          _badge(
+                                            label: '×${widget.qtyInCart}',
+                                            color: Colors.white,
+                                            bg: AppColors.brandPurple,
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              // View details — top-right floating over the
+                              // folder box.
+                              Positioned(
+                                top: 12,
+                                right: 12,
+                                child: _iconButton(
+                                  icon: Icons.visibility_outlined,
+                                  onTap: widget.onOpen,
+                                  tooltip: context.l10n.t('View Details'),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Details band.
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(7, 3, 7, 5),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        widget.product.brand,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.labelSmall.copyWith(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: p.textMuted,
+                          height: 1.0,
+                          letterSpacing: 0.6,
+                        ),
                       ),
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 9,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _outOfStock ? p.chipBg : p.selectionTint,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          _outOfStock
-                              ? Icons.remove_shopping_cart_outlined
-                              : Icons.add_shopping_cart_outlined,
-                          size: 14,
-                          color: _outOfStock ? p.textSecondary : p.accentText,
-                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: PriceText(
+                              _price,
+                              style: AppTypography.labelSmall.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.brandPurple,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 3),
+                          if (!_outOfStock)
+                            _addButton(p),
+                        ],
                       ),
                     ],
                   ),
-                  if (product.variants.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      context.l10n
-                          .t('{v1} variants')
-                          .replaceAll(
-                            '{v1}',
-                            product.variants.length.toString(),
-                          ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: AppTypography.labelSmallSize, color: p.textSecondary),
-                    ),
-                  ],
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
-    );
-  }
-
-  Widget _image(AppPalette p) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: p.chipBg,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
-      ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
-        child: product.imageUrl != null
-            ? CachedProductImage(
-                url: product.imageUrl!,
-                fit: BoxFit.cover,
-                errorWidget: _fallback(),
-              )
-            : _fallback(),
-      ),
-    );
+        ),
+      );
   }
 
   Widget _fallback() {
@@ -1074,14 +1128,78 @@ class _QuickSaleCard extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            product.color.withValues(alpha: 0.85),
-            product.color.withValues(alpha: 0.55),
+            widget.product.color.withValues(alpha: 0.9),
+            widget.product.color.withValues(alpha: 0.6),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
       ),
-      child: Center(child: Icon(product.icon, color: Colors.white, size: 34)),
+      child: Center(child: Icon(widget.product.icon, color: Colors.white, size: 24)),
+    );
+  }
+
+  /// Small pill badge floated over the image band.
+  Widget _badge({
+    required String label,
+    required Color color,
+    required Color bg,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(5),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+
+  /// Add-to-cart micro action on the product card.
+  Widget _addButton(AppPalette p) {
+    return Container(
+      width: 26,
+      height: 26,
+      decoration: BoxDecoration(
+        color: AppColors.brandPurple,
+        borderRadius: BorderRadius.circular(7),
+      ),
+      child: Icon(
+        Icons.add,
+        size: 14,
+        color: Colors.white,
+      ),
+    );
+  }
+
+  /// Tertiary icon button floated over the image.
+  Widget _iconButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    required String tooltip,
+  }) {
+    return Container(
+      width: 26,
+      height: 26,
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: IconButton(
+        onPressed: onTap,
+        tooltip: tooltip,
+        icon: Icon(icon, size: 13, color: Colors.white),
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
+        visualDensity: VisualDensity.compact,
+      ),
     );
   }
 }
