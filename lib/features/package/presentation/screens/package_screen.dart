@@ -134,7 +134,6 @@ class _PackageScreenState extends State<PackageScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final p = context.palette;
     return LayoutBuilder(
       builder: (ctx, constraints) {
         final isWide = constraints.maxWidth >= 768;
@@ -142,7 +141,7 @@ class _PackageScreenState extends State<PackageScreen> {
 
         if (isWide) {
           return Scaffold(
-            backgroundColor: p.surface,
+            backgroundColor: Colors.transparent,
             floatingActionButton: FloatingActionButton(
               onPressed: _openAddPackage,
               backgroundColor: AppColors.teal,
@@ -153,7 +152,7 @@ class _PackageScreenState extends State<PackageScreen> {
         }
 
         return Scaffold(
-          backgroundColor: p.surface,
+          backgroundColor: Colors.transparent,
           floatingActionButton: FloatingActionButton(
             onPressed: _openAddPackage,
             backgroundColor: AppColors.teal,

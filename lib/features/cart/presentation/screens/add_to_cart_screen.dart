@@ -221,7 +221,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
     return AppShell(
       active: DrawerDestination.addToCart,
       scaffoldKey: _scaffoldKey,
-      backgroundColor: context.palette.scaffoldBg,
+      backgroundColor: Colors.transparent,
       wrap: (_, shell) => shell,
       body: (context, isWide) => SafeArea(
         child: Column(

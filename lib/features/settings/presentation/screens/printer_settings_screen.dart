@@ -50,13 +50,12 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final p = context.palette;
     final printers = _printers;
 
     return AppShell(
       active: DrawerDestination.setting,
       scaffoldKey: _scaffoldKey,
-      backgroundColor: p.scaffoldBg,
+      backgroundColor: Colors.transparent,
       wrap: (_, shell) => shell,
       body: (context, isWide) => SafeArea(
         child: Column(

@@ -66,14 +66,13 @@ class _AddProductScreenState extends State<AddProductScreen> {
     return ListenableBuilder(
       listenable: _vm,
       builder: (context, _) {
-        final p = context.palette;
         // Dock the drawer beside the form on wide windows, the same as
         // quick add — both are "Add Product" entry points and should offer
         // the same navigation.
         return WideDrawerDock(
           active: DrawerDestination.addProduct,
           child: Scaffold(
-            backgroundColor: p.scaffoldBg,
+            backgroundColor: Colors.transparent,
             body: _content(),
             bottomNavigationBar: _addMode == 0 ? _createButton() : null,
           ),

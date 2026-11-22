@@ -202,7 +202,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
         return AppShell(
           active: DrawerDestination.quickSale,
           scaffoldKey: _scaffoldKey,
-          backgroundColor: context.palette.scaffoldBg,
+          backgroundColor: Colors.transparent,
           wrap: (_, shell) => shell,
           body: _content,
         );

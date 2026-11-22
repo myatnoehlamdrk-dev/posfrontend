@@ -32,6 +32,7 @@ import 'package:posfrontend/core/network/media_url.dart';
 import 'package:posfrontend/shared/widgets/price_text.dart';
 import 'package:posfrontend/shared/widgets/profile_image_notifier.dart';
 import 'package:posfrontend/shared/widgets/error_retry_view.dart';
+import 'package:posfrontend/shared/widgets/hover_spotlight.dart';
 import 'package:posfrontend/shared/widgets/shop_scope.dart';
 import 'package:posfrontend/shared/widgets/skeleton.dart';
 import 'package:posfrontend/features/sale/presentation/screens/quick_sale_screen.dart';
@@ -137,7 +138,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return AppShell(
       active: DrawerDestination.dashboard,
       scaffoldKey: _scaffoldKey,
-      backgroundColor: p.scaffoldBg,
+      backgroundColor: Colors.transparent,
       wrap: (_, shell) => shell,
       body: (context, isWide) => SafeArea(
         child: Column(
@@ -902,7 +903,9 @@ class _PanelCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    return Container(
+    return HoverSpotlight(
+      radius: BorderRadius.circular(DashboardStyle.cardRadius),
+      child: Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: p.surface,
@@ -955,6 +958,7 @@ class _PanelCard extends StatelessWidget {
           else
             Padding(padding: padding, child: child),
         ],
+      ),
       ),
     );
   }
@@ -1063,7 +1067,9 @@ class _SalesKpiCard extends StatelessWidget {
       _ => Icons.remove_rounded,
     };
 
-    return Container(
+    return HoverSpotlight(
+      radius: BorderRadius.circular(18),
+      child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: p.surface,
@@ -1172,6 +1178,7 @@ class _SalesKpiCard extends StatelessWidget {
             rightVisual!,
           ],
         ],
+      ),
       ),
     );
   }
@@ -1480,7 +1487,9 @@ class _HeroBentoContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    return Container(
+    return HoverSpotlight(
+      radius: BorderRadius.circular(DashboardStyle.cardRadius),
+      child: Container(
       decoration: BoxDecoration(
         color: p.surface,
         borderRadius: BorderRadius.circular(DashboardStyle.cardRadius),
@@ -1535,6 +1544,7 @@ class _HeroBentoContainer extends StatelessWidget {
             ),
           );
         },
+      ),
       ),
     );
   }
@@ -2013,7 +2023,9 @@ class _NestedMetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    return Container(
+    return HoverSpotlight(
+      radius: BorderRadius.circular(AppRadius.lg),
+      child: Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: p.surfaceAlt,
@@ -2084,6 +2096,7 @@ class _NestedMetricCard extends StatelessWidget {
           child,
           if (action != null) ...[const SizedBox(height: 10), action!],
         ],
+      ),
       ),
     );
   }

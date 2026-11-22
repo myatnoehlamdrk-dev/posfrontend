@@ -47,7 +47,7 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
     return WideDrawerDock(
       active: DrawerDestination.saleItem,
       child: Scaffold(
-        backgroundColor: context.palette.scaffoldBg,
+        backgroundColor: Colors.transparent,
         body: SafeArea(
           child: Column(
             children: [
@@ -300,8 +300,11 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        // Theme-aware: a hardcoded white card is invisible in dark mode
+        // against the deep canvas even when the text resolves light.
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: border),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -403,8 +406,10 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        // Theme-aware: hardcoded white breaks the light/dark surface contract.
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: border),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),

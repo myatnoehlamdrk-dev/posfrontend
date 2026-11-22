@@ -157,9 +157,9 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
         final body = _content(categoryLabels, selectedLabel);
 
         if (isWide) {
-          return Scaffold(backgroundColor: ctx.palette.scaffoldBg, body: body);
+          return Scaffold(backgroundColor: Colors.transparent, body: body);
         }
-        return Scaffold(backgroundColor: ctx.palette.scaffoldBg, body: body);
+        return Scaffold(backgroundColor: Colors.transparent, body: body);
       },
     );
   }

@@ -27,7 +27,7 @@ class LegalDocumentScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.palette;
     return Scaffold(
-      backgroundColor: p.scaffoldBg,
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Column(
           children: [

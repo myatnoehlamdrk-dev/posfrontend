@@ -416,7 +416,6 @@ class _ShopScreenState extends State<ShopScreen> {
     return ListenableBuilder(
       listenable: _viewModel,
       builder: (context, _) {
-        final p = context.palette;
         return PopScope(
           canPop: true,
           onPopInvokedWithResult: (didPop, _) {
@@ -426,7 +425,7 @@ class _ShopScreenState extends State<ShopScreen> {
             // Painted behind the scroll view so the bottom of the page, past the
             // last field and under the action buttons, is the same colour on
             // every step and the same colour as the register screen behind it.
-            backgroundColor: p.scaffoldBg,
+            backgroundColor: Colors.transparent,
             body: SafeArea(
               child: LayoutBuilder(
                 builder: (context, constraints) {

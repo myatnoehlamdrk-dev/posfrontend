@@ -243,7 +243,7 @@ class _ProductsCatalogScreenState extends State<ProductsCatalogScreen> {
           child: AppShell(
             active: DrawerDestination.product,
             scaffoldKey: _scaffoldKey,
-            backgroundColor: context.palette.scaffoldBg,
+            backgroundColor: Colors.transparent,
             wrap: (_, shell) => shell,
             floatingActionButton: _floatingActions(),
             body: _content,

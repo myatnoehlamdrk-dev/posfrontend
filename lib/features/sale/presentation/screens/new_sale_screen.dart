@@ -258,7 +258,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             final isWide = constraints.maxWidth >= 768;
             final body = _content(isWide);
 
-            return Scaffold(backgroundColor: _p.scaffoldBg, body: body);
+            return Scaffold(backgroundColor: Colors.transparent, body: body);
           },
         );
       },

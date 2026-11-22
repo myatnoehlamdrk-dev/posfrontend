@@ -65,7 +65,7 @@ class StockReportDetailScreen extends StatelessWidget {
     final packageOutCount = _count('package_out_count', packages.length);
 
     return Scaffold(
-      backgroundColor: p.scaffoldBg,
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Column(
           children: [

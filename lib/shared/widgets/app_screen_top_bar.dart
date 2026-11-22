@@ -28,11 +28,18 @@ class AppScreenTopBar extends StatelessWidget {
   /// second copy of the screen it is already showing.
   final bool showNotificationsButton;
 
-  /// Overrides the bar's fill. Defaults to the palette surface, which is right
-  /// for a page on the scaffold. A page that paints its own background wants
-  /// [Colors.transparent] instead, so the bar does not lay an opaque rectangle
-  /// across it.
+  /// Overrides the bar's fill. Defaults to transparent so the app-wide backdrop
+  /// shows through the bar on every screen, matching the Shop page. Pass an
+  /// opaque colour only for a page that paints its own background.
   final Color? backgroundColor;
+
+  /// Optional widget rendered below the bar, inside the same container, so a
+  /// filter or tab strip can sit in the app-bar band instead of the body.
+  final Widget? bottom;
+
+  /// Optional content rendered beside the title, e.g. a live record-count
+  /// badge. Null keeps the centered title clean.
+  final Widget? badge;
 
   const AppScreenTopBar({
     super.key,
@@ -44,6 +51,8 @@ class AppScreenTopBar extends StatelessWidget {
     this.leading,
     this.backgroundColor,
     this.showNotificationsButton = true,
+    this.bottom,
+    this.badge,
   });
 
   @override
@@ -56,103 +65,120 @@ class AppScreenTopBar extends StatelessWidget {
         vertical: AppSpacing.s12,
       ),
       decoration: BoxDecoration(
-        color: backgroundColor ?? p.surface,
+        color: backgroundColor ?? Colors.transparent,
         border: Border(bottom: BorderSide(color: p.border, width: 1)),
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          if (leading != null)
-            leading!
-          else if (showBackButton)
-            CustomBackButton(
-              onTap:
-                  onBackTap ??
-                  () {
-                    if (Navigator.of(context).canPop()) {
-                      Navigator.of(context).pop();
-                    } else {
-                      navigateToDashboard(context);
-                    }
-                  },
-            ),
-          if (leading == null && showMenuButton)
-            Builder(
-              builder: (ctx) => IconButton(
-                onPressed: onMenuTap ?? () => Scaffold.of(ctx).openDrawer(),
-                tooltip: 'Menu',
-                icon: const GradientIcon(icon: Icons.menu),
-              ),
-            ),
-          Expanded(
-            child: Center(
-              child: Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: p.textPrimary,
-                  fontSize: AppTypography.titleSmallSize,
-                  fontWeight: FontWeight.w600,
+          Row(
+            children: [
+              if (leading != null)
+                leading!
+              else if (showBackButton)
+                CustomBackButton(
+                  onTap:
+                      onBackTap ??
+                      () {
+                        if (Navigator.of(context).canPop()) {
+                          Navigator.of(context).pop();
+                        } else {
+                          navigateToDashboard(context);
+                        }
+                      },
+                ),
+              if (leading == null && showMenuButton)
+                Builder(
+                  builder: (ctx) => IconButton(
+                    onPressed: onMenuTap ?? () => Scaffold.of(ctx).openDrawer(),
+                    tooltip: 'Menu',
+                    icon: const GradientIcon(icon: Icons.menu),
+                  ),
+                ),
+              Expanded(
+                child: Center(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: p.textPrimary,
+                            fontSize: AppTypography.titleSmallSize,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      if (badge != null) ...[const SizedBox(width: 8), badge!],
+                    ],
+                  ),
                 ),
               ),
-            ),
+              // The bell that used to sit here wore a red "3 unread" dot no code
+              // ever incremented, and was removed rather than left dead. The live
+              // button is back: unread count comes from NotificationStore, which
+              // the FCM listener feeds.
+              if (showNotificationsButton) const NotificationBell(),
+              const SizedBox(width: AppSpacing.s4),
+              Semantics(
+                button: true,
+                label: 'Open profile',
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      AppPageTransitions.fadeSlide<void>(const ProfileScreen()),
+                    );
+                  },
+                  child: ValueListenableBuilder<String>(
+                    valueListenable: ProfileImageNotifier.instance,
+                    builder: (context, imageUrl, _) {
+                      return CircleAvatar(
+                        radius: 18,
+                        // Was `AppColors.teal`, which gives white initials only
+                        // 2.49:1 — below the 4.5:1 that text needs. The brand purple
+                        // gives white 5.19:1, and it is the same fill as the primary
+                        // button, so the avatar no longer introduces a second accent.
+                        backgroundColor: p.primary,
+                        backgroundImage: imageUrl.isNotEmpty
+                            ? CachedNetworkImageProvider(
+                                imageUrl,
+                                maxWidth: 224,
+                              )
+                            : null,
+                        // Deliberately no `onBackgroundImageError` handler.
+                        //
+                        // It used to call `ProfileImageNotifier.instance.update('')`,
+                        // which erased the shared avatar URL for the *whole app* on a
+                        // single failed load. Since nothing else refetches it (only
+                        // the dashboard's initState and the profile screen ever seed
+                        // it), one transient failure blanked the avatar everywhere
+                        // until the user happened to reopen the dashboard. A failed
+                        // render now just falls back to the initials below for this
+                        // frame, leaving the URL in place to retry.
+                        child: imageUrl.isEmpty
+                            ? Text(
+                                user?.fullName.trim().isNotEmpty == true
+                                    ? user!.fullName.trim()[0].toUpperCase()
+                                    : 'A',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: AppTypography.bodyMediumSize,
+                                ),
+                              )
+                            : null,
+                      );
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s8),
+            ],
           ),
-          // The bell that used to sit here wore a red "3 unread" dot no code
-          // ever incremented, and was removed rather than left dead. The live
-          // button is back: unread count comes from NotificationStore, which
-          // the FCM listener feeds.
-          if (showNotificationsButton) const NotificationBell(),
-          const SizedBox(width: AppSpacing.s4),
-          Semantics(
-            button: true,
-            label: 'Open profile',
-            child: GestureDetector(
-            onTap: () {
-              Navigator.of(
-                context,
-              ).push(AppPageTransitions.fadeSlide<void>(const ProfileScreen()));
-            },
-            child: ValueListenableBuilder<String>(
-              valueListenable: ProfileImageNotifier.instance,
-              builder: (context, imageUrl, _) {
-                return CircleAvatar(
-                  radius: 18,
-                  // Was `AppColors.teal`, which gives white initials only
-                  // 2.49:1 — below the 4.5:1 that text needs. The brand purple
-                  // gives white 5.19:1, and it is the same fill as the primary
-                  // button, so the avatar no longer introduces a second accent.
-                  backgroundColor: p.primary,
-                  backgroundImage: imageUrl.isNotEmpty
-                      ? CachedNetworkImageProvider(imageUrl, maxWidth: 224)
-                      : null,
-                  // Deliberately no `onBackgroundImageError` handler.
-                  //
-                  // It used to call `ProfileImageNotifier.instance.update('')`,
-                  // which erased the shared avatar URL for the *whole app* on a
-                  // single failed load. Since nothing else refetches it (only
-                  // the dashboard's initState and the profile screen ever seed
-                  // it), one transient failure blanked the avatar everywhere
-                  // until the user happened to reopen the dashboard. A failed
-                  // render now just falls back to the initials below for this
-                  // frame, leaving the URL in place to retry.
-                  child: imageUrl.isEmpty
-                      ? Text(
-                          user?.fullName.trim().isNotEmpty == true
-                              ? user!.fullName.trim()[0].toUpperCase()
-                              : 'A',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            fontSize: AppTypography.bodyMediumSize,
-                          ),
-                        )
-                      : null,
-                );
-              },
-            ),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.s8),
+          ?bottom,
         ],
       ),
     );

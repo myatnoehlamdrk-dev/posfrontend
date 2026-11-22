@@ -891,7 +891,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             // Painted behind the scroll view so the bottom of the page, past the
             // last field and under the action button, is the same colour on every
             // step and the same colour as the create-shop screen behind it.
-            backgroundColor: p.scaffoldBg,
+            backgroundColor: Colors.transparent,
             body: Stack(
               children: [
                 // Bloom anchored to the middle of the right edge here rather

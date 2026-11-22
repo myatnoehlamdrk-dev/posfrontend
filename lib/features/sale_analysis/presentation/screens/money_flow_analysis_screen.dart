@@ -105,11 +105,10 @@ class _MoneyFlowAnalysisScreenState extends State<MoneyFlowAnalysisScreen> {
         final content = _buildContent(context);
         if (widget.embedded) return content;
 
-        final p = context.palette;
         return AppShell(
           active: DrawerDestination.saleAnalysis,
           scaffoldKey: _scaffoldKey,
-          backgroundColor: p.scaffoldBg,
+          backgroundColor: Colors.transparent,
           wrap: (_, shell) => shell,
           body: (context, isWide) => SafeArea(
             child: Column(

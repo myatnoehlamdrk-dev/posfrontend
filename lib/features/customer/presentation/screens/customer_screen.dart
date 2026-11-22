@@ -40,17 +40,16 @@ class _CustomerScreenState extends State<CustomerScreen>
 
   @override
   Widget build(BuildContext context) {
-    final p = context.palette;
     return LayoutBuilder(
       builder: (ctx, constraints) {
         final isWide = constraints.maxWidth >= 768;
         final body = _buildContent(isWide: isWide);
 
         if (isWide) {
-          return Scaffold(backgroundColor: p.surface, body: body);
+          return Scaffold(backgroundColor: Colors.transparent, body: body);
         }
 
-        return Scaffold(backgroundColor: p.surface, body: body);
+        return Scaffold(backgroundColor: Colors.transparent, body: body);
       },
     );
   }

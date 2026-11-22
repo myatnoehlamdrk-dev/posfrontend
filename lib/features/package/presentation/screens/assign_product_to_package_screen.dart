@@ -85,7 +85,7 @@ class _AssignProductToPackageScreenState
       listenable: _viewModel,
       builder: (context, _) {
         return Scaffold(
-          backgroundColor: _p.scaffoldBg,
+          backgroundColor: Colors.transparent,
           body: Column(
             children: [
               _header(),

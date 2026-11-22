@@ -94,11 +94,10 @@ class _SaleAnalysisScreenState extends State<SaleAnalysisScreen>
     return ListenableBuilder(
       listenable: _vm,
       builder: (context, _) {
-        final p = context.palette;
         return AppShell(
           active: DrawerDestination.saleAnalysis,
           scaffoldKey: _scaffoldKey,
-          backgroundColor: p.scaffoldBg,
+          backgroundColor: Colors.transparent,
           wrap: (_, shell) => shell,
           body: (context, isWide) => SafeArea(
             child: Column(

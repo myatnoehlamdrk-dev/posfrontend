@@ -670,7 +670,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final errors = _viewModel.fieldErrors;
 
         return Scaffold(
-          backgroundColor: _p.scaffoldBg,
+          backgroundColor: Colors.transparent,
           body: SafeArea(
             child: loading && _viewModel.profile == null
                 ? Center(child: CircularProgressIndicator(color: primary))

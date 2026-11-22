@@ -28,6 +28,7 @@ import 'package:posfrontend/features/settings/presentation/screens/terms_of_serv
 import 'package:posfrontend/features/settings/presentation/viewmodels/settings_view_model.dart';
 import 'package:posfrontend/features/settings/presentation/widgets/settings_skeleton.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
+import 'package:posfrontend/shared/widgets/hover_spotlight.dart';
 import 'package:posfrontend/shared/widgets/premium_image_upload.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -89,7 +90,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       scaffoldKey: _scaffoldKey,
       // Page fill sits one step back from the cards, so the cards stay readable
       // in dark where there is no drop shadow to separate them.
-      backgroundColor: context.palette.scaffoldBg,
+      backgroundColor: Colors.transparent,
       wrap: (_, shell) => shell,
       body: (context, isWide) => SafeArea(
         child: Column(
@@ -179,19 +180,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _sectionHeader(String title) {
-    return Text(
-      title,
-      style: TextStyle(
-        fontSize: AppTypography.labelSmallSize,
-        fontWeight: FontWeight.bold,
-        color: sectionGray,
-        letterSpacing: 0.5,
+    return Padding(
+      padding: const EdgeInsets.only(left: 4),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: sectionGray,
+          letterSpacing: 1.1,
+        ),
       ),
     );
   }
 
   Widget _buildProfileCard() {
-    return GestureDetector(
+    return HoverSpotlight(
+      radius: BorderRadius.circular(16),
+      child: GestureDetector(
       onTap: () {},
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -209,15 +215,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         child: Row(
           children: [
-            CircleAvatar(
-              radius: 24,
-              backgroundColor: orange,
-              child: Text(
-                _initial(_userName(context)),
-                style: TextStyle(
-                  color: context.palette.surface,
-                  fontSize: AppTypography.titleSmallSize,
-                  fontWeight: FontWeight.w700,
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFFF97316), Color(0xFFD97706)],
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: orange.withValues(alpha: 0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  _initial(_userName(context)),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: AppTypography.titleSmallSize,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ),
@@ -226,15 +249,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    _userName(context),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: AppTypography.bodyLargeSize,
-                      fontWeight: FontWeight.w600,
-                      color: titleColor,
-                    ),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          _userName(context),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: AppTypography.bodyLargeSize,
+                            fontWeight: FontWeight.w700,
+                            color: titleColor,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.brandPurple.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: AppColors.brandPurple.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.check,
+                              size: 10,
+                              color: AppColors.brandPurple,
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              _userRole(context),
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.brandPurple,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -246,11 +308,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ],
               ),
             ),
+            const SizedBox(width: 2),
             Icon(Icons.chevron_right, color: gray, size: 24),
           ],
         ),
       ),
+      ),
     );
+  }
+
+  /// The signed-in user's role, from the session — not a hardcoded label.
+  String _userRole(BuildContext context) {
+    final user = AuthScope.userOf(context);
+    final role = user?.role.trim() ?? '';
+    if (role.isEmpty) return 'Owner';
+    return role[0].toUpperCase() + role.substring(1);
   }
 
   /// One explicit light/dark switch. Following the OS was removed: the server
@@ -263,6 +335,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: _settingsRow(
         icon: isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
         label: isDark ? 'Dark Mode' : 'Light Mode',
+        subtitle: isDark
+            ? 'Deep obsidian dark theme'
+            : 'Crisp daylight theme',
+        tint: AppColors.brandPurple,
         trailing: Switch(
           // No explicit thumb/track colours: the theme's switchTheme already
           // resolves them per brightness, and a hardcoded white thumb is
@@ -280,6 +356,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: _settingsRow(
         icon: Icons.language,
         label: context.l10n.t('Language'),
+        subtitle: 'Interface and receipt localization',
+        tint: const Color(0xFF38BDF8),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -301,6 +379,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: _settingsRow(
         icon: Icons.business_outlined,
         label: context.l10n.t('Shop Type'),
+        subtitle: 'Configure your storefront and inventory mode',
+        tint: AppColors.brandPurple,
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -326,6 +406,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: _settingsRow(
         icon: Icons.print_outlined,
         label: context.l10n.t('Printers'),
+        subtitle: 'ESC/POS thermal receipt printers',
+        tint: const Color(0xFF10B981),
         trailing: Icon(Icons.chevron_right, color: gray, size: 24),
         onTap: _openPrinterSettings,
       ),
@@ -350,16 +432,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             Row(
               children: [
-                Icon(Icons.image_outlined, color: titleColor, size: 22),
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF6366F1).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(11),
+                    border: Border.all(
+                      color: const Color(0xFF6366F1).withValues(alpha: 0.22),
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.image_outlined,
+                    color: Color(0xFF818CF8),
+                    size: 18,
+                  ),
+                ),
                 const SizedBox(width: 14),
                 Expanded(
-                  child: Text(
-                    context.l10n.t('Shop Image'),
-                    style: TextStyle(
-                      fontSize: AppTypography.bodyMediumSize,
-                      fontWeight: FontWeight.w500,
-                      color: titleColor,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        context.l10n.t('Shop Image'),
+                        style: TextStyle(
+                          fontSize: AppTypography.bodyMediumSize,
+                          fontWeight: FontWeight.w600,
+                          color: titleColor,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Storefront cover banner shown to visitors',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: AppTypography.labelSmallSize,
+                          color: gray,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 if (_viewModel.isUploadingImage)
@@ -434,6 +546,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _settingsRow(
             icon: Icons.feedback_outlined,
             label: context.l10n.t('Feedback'),
+            subtitle: 'Report an issue or request a new POS feature',
+            tint: const Color(0xFFF59E0B),
             trailing: Icon(Icons.chevron_right, color: gray, size: 24),
             onTap: _showFeedbackForm,
           ),
@@ -441,6 +555,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _settingsRow(
             icon: Icons.star_outline,
             label: context.l10n.t('Rate App'),
+            subtitle: 'Share your experience with our commerce suite',
+            tint: const Color(0xFFEAB308),
             trailing: Icon(Icons.chevron_right, color: gray, size: 24),
             onTap: _rateApp,
           ),
@@ -456,6 +572,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _settingsRow(
             icon: Icons.info_outline,
             label: context.l10n.t('About'),
+            subtitle: 'Version, release notes & system diagnostics',
+            tint: AppColors.brandPurple,
             trailing: Icon(Icons.chevron_right, color: gray, size: 24),
             onTap: _showAboutDialog,
           ),
@@ -463,6 +581,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _settingsRow(
             icon: Icons.privacy_tip_outlined,
             label: context.l10n.t('Privacy Policy'),
+            subtitle: 'How your inventory and customer data are protected',
+            tint: const Color(0xFF14B8A6),
             trailing: Icon(Icons.chevron_right, color: gray, size: 24),
             onTap: _showPrivacyPolicy,
           ),
@@ -470,6 +590,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _settingsRow(
             icon: Icons.description_outlined,
             label: context.l10n.t('Terms of Service'),
+            subtitle: 'Merchant agreement and marketplace guidelines',
+            tint: const Color(0xFF94A3B8),
             trailing: Icon(Icons.chevron_right, color: gray, size: 24),
             onTap: _showTermsOfService,
           ),
@@ -503,22 +625,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _settingsCard({required Widget child}) {
-    return Container(
-      decoration: BoxDecoration(
-        // Theme-aware: a hardcoded white card stayed white in dark mode while
-        // the label colours came from the palette, leaving white text on white.
-        color: context.palette.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: border),
-        boxShadow: [
-          BoxShadow(
-            color: context.palette.cardShadow,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+    return HoverSpotlight(
+      radius: BorderRadius.circular(16),
+      child: Container(
+        decoration: BoxDecoration(
+          // Theme-aware: a hardcoded white card stayed white in dark mode while
+          // the label colours came from the palette, leaving white text on white.
+          color: context.palette.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: border),
+          boxShadow: [
+            BoxShadow(
+              color: context.palette.cardShadow,
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: child,
       ),
-      child: child,
     );
   }
 
@@ -526,25 +651,56 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required IconData icon,
     required String label,
     required Widget trailing,
+    String? subtitle,
+    Color? tint,
     VoidCallback? onTap,
   }) {
+    // Tinted icon chip + bold label over a small subtitle, matching the
+    // mockup's `w-9 h-9 rounded-xl` row leading.
+    final accent = tint ?? titleColor;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
           children: [
-            Icon(icon, color: titleColor, size: 22),
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(11),
+                border: Border.all(color: accent.withValues(alpha: 0.22)),
+              ),
+              child: Icon(icon, color: accent, size: 18),
+            ),
             const SizedBox(width: 14),
             Expanded(
-              child: Text(
-                context.l10n.t(label),
-                style: TextStyle(
-                  fontSize: AppTypography.bodyMediumSize,
-                  fontWeight: FontWeight.w500,
-                  color: titleColor,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    context.l10n.t(label),
+                    style: TextStyle(
+                      fontSize: AppTypography.bodyMediumSize,
+                      fontWeight: FontWeight.w600,
+                      color: titleColor,
+                    ),
+                  ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: AppTypography.labelSmallSize,
+                        color: gray,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
             trailing,

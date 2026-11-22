@@ -140,7 +140,7 @@ class _AddInventoryStoreScreenState extends State<AddInventoryStoreScreen> {
   Widget build(BuildContext context) {
     final p = context.palette;
     return Scaffold(
-      backgroundColor: p.scaffoldBg,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text(context.l10n.t('Add inventory item')),
         backgroundColor: p.surface,

@@ -46,7 +46,7 @@ class FeedbackThankYouDetailScreen extends StatelessWidget {
             .replaceFirst('{v1}', userName);
 
     return Scaffold(
-      backgroundColor: p.scaffoldBg,
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Column(
           children: [

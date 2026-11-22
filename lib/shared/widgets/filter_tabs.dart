@@ -23,10 +23,10 @@ class FilterTabs extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: p.surface,
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: p.border),
       ),
-      padding: const EdgeInsets.all(AppSpacing.s4),
+      padding: const EdgeInsets.all(6),
       child: Row(
         children: List.generate(tabs.length, (i) {
           final active = i == selectedIndex;
@@ -36,8 +36,31 @@ class FilterTabs extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.s12),
                 decoration: BoxDecoration(
-                  color: active ? AppColors.brandPurple : p.surface,
+                  // Gradient pill with an outer violet bloom, matching the
+                  // segmented control in the sales mockup. A flat fill read as
+                  // disabled next to the glassy cards; the two-stop sweep plus
+                  // the shadow is what makes the selected tab look raised.
+                  gradient: active
+                      ? const LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Color(0xFF7C3AED), Color(0xFF6D28D9)],
+                        )
+                      : null,
+                  color: active ? null : p.surface,
                   borderRadius: BorderRadius.circular(AppRadius.md),
+                  boxShadow: active
+                      ? [
+                          BoxShadow(
+                            color: AppColors.brandPurpleDark.withValues(
+                              alpha: 0.6,
+                            ),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
+                            spreadRadius: -6,
+                          ),
+                        ]
+                      : null,
                 ),
                 child: Center(
                   child: Text(

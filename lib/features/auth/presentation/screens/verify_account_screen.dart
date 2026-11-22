@@ -99,7 +99,6 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final p = context.palette;
     return ListenableBuilder(
       listenable: _viewModel,
       builder: (context, _) {
@@ -107,7 +106,7 @@ class _VerifyAccountScreenState extends State<VerifyAccountScreen> {
         final loading = _viewModel.isLoading;
 
         return Scaffold(
-          backgroundColor: p.scaffoldBg,
+          backgroundColor: Colors.transparent,
           body: SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {

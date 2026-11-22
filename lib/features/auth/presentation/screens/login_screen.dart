@@ -158,7 +158,7 @@ class _LoginScreenState extends State<LoginScreen> {
       listenable: _viewModel,
       builder: (context, _) {
         return Scaffold(
-          backgroundColor: p.scaffoldBg,
+          backgroundColor: Colors.transparent,
           body: Stack(
             children: [
               // Violet bloom anchored to the top-right corner. It sits behind

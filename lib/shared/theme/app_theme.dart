@@ -46,7 +46,10 @@ class AppTheme {
       fontFamily: GoogleFonts.poppins().fontFamily,
       fontFamilyFallback: fallbacks,
       extensions: <ThemeExtension<dynamic>>[palette],
-      scaffoldBackgroundColor: palette.scaffoldBg,
+      // Transparent so the root [AppPageBackdrop] shows through every screen.
+      // The branded onboarding and splash routes set their own opaque
+      // background and cover it.
+      scaffoldBackgroundColor: Colors.transparent,
       canvasColor: palette.surface,
       appBarTheme: AppBarTheme(
         backgroundColor: palette.surface,

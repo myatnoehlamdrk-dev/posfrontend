@@ -129,12 +129,12 @@ class _ProductCardScreenState extends State<ProductCardScreen> {
               final isWide = constraints.maxWidth >= 768;
               if (isWide) {
                 return Scaffold(
-                  backgroundColor: palette.scaffoldBg,
+                  backgroundColor: Colors.transparent,
                   body: SafeArea(child: _buildContent(filtered, palette)),
                 );
               }
               return Scaffold(
-                backgroundColor: palette.scaffoldBg,
+                backgroundColor: Colors.transparent,
                 body: SafeArea(child: _buildContent(filtered, palette)),
               );
             },

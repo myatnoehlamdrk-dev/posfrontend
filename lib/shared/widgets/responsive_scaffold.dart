@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 
@@ -50,7 +49,7 @@ class ResponsiveScaffold extends StatelessWidget {
   /// Owns the floating drawer so a caller can still open it programmatically.
   final GlobalKey<ScaffoldState>? scaffoldKey;
 
-  /// Page fill. Defaults to the active palette's scaffold colour.
+  /// Page fill. Defaults to transparent so the app-wide backdrop shows through.
   final Color? backgroundColor;
 
   /// Title bar fill. Leave null for the usual opaque bar; a page that paints
@@ -68,7 +67,7 @@ class ResponsiveScaffold extends StatelessWidget {
 
         return Scaffold(
           key: scaffoldKey,
-          backgroundColor: backgroundColor ?? context.palette.scaffoldBg,
+          backgroundColor: backgroundColor ?? Colors.transparent,
           // A docked drawer is a child of the body below, not a drawer the
           // Scaffold manages, so the two must never be wired up at once.
           drawer: isWide ? null : drawer,

@@ -116,12 +116,12 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
 
             if (isWide) {
               return Scaffold(
-                backgroundColor: ctx.palette.scaffoldBg,
+                backgroundColor: Colors.transparent,
                 body: body,
               );
             }
             return Scaffold(
-              backgroundColor: ctx.palette.scaffoldBg,
+              backgroundColor: Colors.transparent,
               body: body,
             );
           },

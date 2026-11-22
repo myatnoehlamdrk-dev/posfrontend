@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings — Account, Storefront & Hardware Preferences</title>
+  <!-- Google Fonts: Plus Jakarta Sans, Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            display: ['Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            obsidian: {
+              950: '#0B0D14',
+              900: '#0E111A',
+              850: '#121521',
+              800: '#181C2B',
+              border: '#1F2433',
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      --bg-canvas: #0B0D14;
+      --grid-line: rgba(255, 255, 255, 0.032);
+      --card-bg: rgba(18, 21, 33, 0.92);
+      --card-hover: rgba(24, 28, 43, 0.96);
+      --border-subtle: #1F2433;
+      --text-primary: #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted: #64748B;
+      --header-bg: rgba(11, 13, 20, 0.84);
+    }
+
+    html.light-theme {
+      --bg-canvas: #F4F6FA;
+      --grid-line: rgba(15, 23, 42, 0.045);
+      --card-bg: rgba(255, 255, 255, 0.94);
+      --card-hover: rgba(248, 250, 252, 1);
+      --border-subtle: #E2E8F0;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-muted: #64748B;
+      --header-bg: rgba(244, 246, 250, 0.86);
+    }
+
+    body {
+      background-color: var(--bg-canvas);
+      color: var(--text-primary);
+      transition: background-color 0.35s cubic-bezier(0.22, 1, 0.36, 1), color 0.3s ease;
+      overflow-x: hidden;
+    }
+
+    /* Faint Architectural Grid Lines matching Screenshots 5 & 6 */
+    .bg-architectural-grid {
+      background-image:
+        linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    /* Elevated Surface Card */
+    .surface-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-subtle);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease;
+    }
+
+    .surface-row {
+      transition: background-color 0.2s ease, transform 0.18s ease;
+    }
+    .surface-row:hover {
+      background-color: var(--card-hover);
+    }
+
+    /* Adaptive Text Helpers */
+    .text-adapt-primary { color: var(--text-primary); }
+    .text-adapt-secondary { color: var(--text-secondary); }
+    .text-adapt-muted { color: var(--text-muted); }
+    .border-adapt { border-color: var(--border-subtle); }
+
+    /* Electric Violet Toggle Switch */
+    .toggle-track {
+      transition: background-color 0.28s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.28s ease;
+    }
+    .toggle-thumb {
+      transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* Modal & Drawer Transitions */
+    .modal-backdrop {
+      animation: fadeIn 0.2s ease-out forwards;
+    }
+    .modal-panel {
+      animation: scaleUp 0.24s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    .drawer-panel {
+      animation: slideLeft 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes scaleUp {
+      from { opacity: 0; transform: scale(0.96) translateY(8px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @keyframes slideLeft {
+      from { opacity: 0; transform: translateX(24px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(124, 58, 237, 0.28); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(124, 58, 237, 0.5); }
+  </style>
+</head>
+<body class="min-h-screen antialiased selection:bg-violet-500/30 selection:text-violet-200 bg-architectural-grid relative">
+
+  <!-- Ambient Top-Right Violet Glow -->
+  <div class="pointer-events-none fixed inset-0 overflow-hidden z-0" aria-hidden="true">
+    <div class="absolute -top-36 right-[10%] w-[560px] h-[360px] rounded-full bg-violet-600/[0.11] blur-[140px]"></div>
+    <div class="absolute bottom-12 left-[6%] w-[420px] h-[320px] rounded-full bg-indigo-600/[0.07] blur-[130px]"></div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- STICKY TOP HEADER BAR                                                 -->
+  <!-- ===================================================================== -->
+  <header class="sticky top-0 z-30 border-b border-adapt backdrop-blur-xl" style="background-color: var(--header-bg);">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      
+      <!-- Left Title & Breadcrumb -->
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-violet-600/15 border border-violet-500/30 flex items-center justify-center text-violet-400">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="font-display text-base sm:text-lg font-bold tracking-tight text-adapt-primary leading-tight">Settings</h1>
+          <p class="text-[11px] text-adapt-muted hidden sm:block">Workspace, storefront banner & POS hardware preferences</p>
+        </div>
+      </div>
+
+      <!-- Right Command Search Bar (Cmd/Ctrl + K) -->
+      <div class="flex items-center gap-2.5">
+        <div class="relative w-48 sm:w-64 md:w-72">
+          <svg class="w-3.5 h-3.5 text-adapt-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input 
+            id="settingsSearchInput" 
+            type="text" 
+            placeholder="Filter settings..." 
+            class="w-full h-9 pl-9 pr-14 rounded-xl surface-card text-xs text-adapt-primary placeholder:text-slate-500 focus:outline-none focus:border-violet-500/60 focus:ring-2 focus:ring-violet-500/20 transition"
+          />
+          <kbd class="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded bg-white/[0.06] border border-adapt font-mono text-[10px] text-adapt-muted absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+            ⌘K
+          </kbd>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- RESPONSIVE 2-COLUMN SPLIT LAYOUT (Left Rail + 840px Settings Stream)  -->
+  <!-- ===================================================================== -->
+  <div class="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-24">
+    <div class="flex flex-col lg:flex-row items-start gap-6 lg:gap-8">
+
+      <!-- LEFT STICKY QUICK-JUMP NAVIGATION RAIL -->
+      <aside class="w-full lg:w-60 shrink-0 lg:sticky lg:top-24 space-y-4">
+        <nav class="surface-card rounded-2xl p-2 flex lg:flex-col gap-1 overflow-x-auto no-scrollbar" aria-label="Settings Categories">
+          <button type="button" data-filter="all" class="rail-btn active flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold bg-violet-600/15 text-violet-400 border border-violet-500/25 whitespace-nowrap transition cursor-pointer">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <span>All Settings</span>
+          </button>
+
+          <button type="button" data-filter="appearance" class="rail-btn flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-adapt-secondary hover:text-adapt-primary hover:bg-white/[0.04] border border-transparent whitespace-nowrap transition cursor-pointer">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+            <span>Appearance</span>
+          </button>
+
+          <button type="button" data-filter="regional" class="rail-btn flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-adapt-secondary hover:text-adapt-primary hover:bg-white/[0.04] border border-transparent whitespace-nowrap transition cursor-pointer">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            <span>Regional</span>
+          </button>
+
+          <button type="button" data-filter="shop" class="rail-btn flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-adapt-secondary hover:text-adapt-primary hover:bg-white/[0.04] border border-transparent whitespace-nowrap transition cursor-pointer">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <span>Shop &amp; Storefront</span>
+          </button>
+
+          <button type="button" data-filter="printer" class="rail-btn flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-adapt-secondary hover:text-adapt-primary hover:bg-white/[0.04] border border-transparent whitespace-nowrap transition cursor-pointer">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            <span>Hardware &amp; Printers</span>
+          </button>
+
+          <button type="button" data-filter="support-legal" class="rail-btn flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-adapt-secondary hover:text-adapt-primary hover:bg-white/[0.04] border border-transparent whitespace-nowrap transition cursor-pointer">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>Support &amp; Legal</span>
+          </button>
+        </nav>
+
+        <!-- Compact System Status Card on Desktop -->
+        <div class="hidden lg:block surface-card rounded-2xl p-4 space-y-2.5">
+          <div class="flex items-center justify-between text-[11px]">
+            <span class="font-medium text-adapt-secondary">POS Sync Status</span>
+            <span class="inline-flex items-center gap-1.5 text-emerald-400 font-medium">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>Live
+            </span>
+          </div>
+          <p class="text-[11px] text-adapt-muted leading-relaxed">
+            Changes sync automatically across your Self Store and Public Store terminals.
+          </p>
+          <div class="pt-1 border-t border-adapt flex items-center justify-between text-[10px] font-mono text-adapt-muted">
+            <span>Build v2.4.0</span>
+            <span>MMK • Yangon</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- RIGHT CENTERED SETTINGS STREAM (Max-Width 840px — Zero Awkward Stretching) -->
+      <main class="w-full max-w-[840px] space-y-6" id="settingsStream">
+
+        <!-- =============================================================== -->
+        <!-- 1. TOP PROFILE CARD (Myat Noe Hla)                              -->
+        <!-- =============================================================== -->
+        <section class="settings-block" data-category="all" data-keywords="profile account myat noe hla email owner">
+          <button 
+            type="button" 
+            onclick="openModal('profileModal')"
+            class="w-full surface-card surface-row rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4 text-left group cursor-pointer hover:border-violet-500/40"
+          >
+            <div class="flex items-center gap-3.5 sm:gap-4 min-w-0">
+              <!-- Circular Orange/Amber Avatar with 'M' -->
+              <div id="profileAvatarBadge" class="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center text-white font-display font-bold text-lg sm:text-xl shrink-0 shadow-lg shadow-orange-500/25 ring-2 ring-orange-400/20">
+                M
+              </div>
+              <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                  <h2 id="profileDisplayName" class="font-display text-sm sm:text-base font-bold text-adapt-primary truncate">
+                    Myat Noe Hla
+                  </h2>
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-violet-500/15 text-violet-300 border border-violet-500/30">
+                    <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    Owner
+                  </span>
+                </div>
+                <p id="profileDisplayEmail" class="text-xs text-adapt-secondary truncate mt-0.5">
+                  mgmyatnoehia@gmail.com
+                </p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="hidden sm:inline text-xs font-medium text-adapt-muted group-hover:text-violet-400 transition">Manage</span>
+              <svg class="w-4 h-4 text-adapt-muted group-hover:text-adapt-primary group-hover:translate-x-0.5 transition-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </div>
+          </button>
+        </section>
+
+        <!-- =============================================================== -->
+        <!-- 2. APPEARANCE SECTION (Dark Mode Toggle)                        -->
+        <!-- =============================================================== -->
+        <section class="settings-block space-y-2.5" data-category="appearance" data-keywords="appearance dark mode theme light obsidian daylight">
+          <h3 class="px-1 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-adapt-muted">
+            APPEARANCE
+          </h3>
+          <div class="surface-card rounded-2xl overflow-hidden">
+            <div 
+              onclick="toggleDarkMode()" 
+              role="switch" 
+              aria-checked="true" 
+              id="darkModeRow"
+              tabindex="0"
+              class="surface-row p-4 sm:px-5 sm:py-4 flex items-center justify-between gap-4 cursor-pointer select-none"
+            >
+              <div class="flex items-center gap-3.5 min-w-0">
+                <div class="w-9 h-9 rounded-xl bg-violet-500/12 border border-violet-500/20 flex items-center justify-center text-violet-400 shrink-0">
+                  <svg id="themeIconSvg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+                  </svg>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-sm font-semibold text-adapt-primary">Dark Mode</p>
+                  <p class="text-xs text-adapt-secondary mt-0.5">Switch between deep obsidian dark mode and crisp daylight theme</p>
+                </div>
+              </div>
+
+              <!-- Electric Violet Toggle Switch -->
+              <button 
+                type="button" 
+                id="darkModeToggleBtn" 
+                aria-label="Toggle Dark Mode"
+                class="toggle-track relative inline-flex h-7 w-12 shrink-0 items-center rounded-full bg-violet-600 p-1 shadow-[0_0_16px_rgba(124,58,237,0.45)] cursor-pointer"
+              >
+                <span id="darkModeThumb" class="toggle-thumb inline-block h-5 w-5 rounded-full bg-white shadow-md translate-x-5"></span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- =============================================================== -->
+        <!-- 3. REGIONAL SECTION (Language Selector)                         -->
+        <!-- =============================================================== -->
+        <section class="settings-block space-y-2.5" data-category="regional" data-keywords="regional language english burmese myanmar japanese localization">
+          <h3 class="px-1 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-adapt-muted">
+            REGIONAL
+          </h3>
+          <div class="surface-card rounded-2xl overflow-hidden">
+            <button 
+              type="button" 
+              onclick="openModal('languageModal')" 
+              class="w-full surface-row p-4 sm:px-5 sm:py-4 flex items-center justify-between gap-4 text-left group cursor-pointer"
+            >
+              <div class="flex items-center gap-3.5 min-w-0">
+                <div class="w-9 h-9 rounded-xl bg-sky-500/12 border border-sky-500/20 flex items-center justify-center text-sky-400 shrink-0">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                  </svg>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-sm font-semibold text-adapt-primary">Language</p>
+                  <p class="text-xs text-adapt-secondary mt-0.5">Interface and receipt localization</p>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2 shrink-0">
+                <span id="currentLanguageLabel" class="text-xs sm:text-sm font-medium text-adapt-secondary group-hover:text-adapt-primary transition">English</span>
+                <svg class="w-4 h-4 text-adapt-muted group-hover:text-adapt-primary group-hover:translate-x-0.5 transition-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </div>
+            </button>
+          </div>
+        </section>
+
+        <!-- =============================================================== -->
+        <!-- 4. SHOP SECTION (Shop Image Banner + Shop Type)                 -->
+        <!-- =============================================================== -->
+        <section class="settings-block space-y-2.5" data-category="shop" data-keywords="shop image photo banner cover shop type storefront wholesale service">
+          <h3 class="px-1 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-adapt-muted">
+            SHOP
+          </h3>
+          
+          <div class="space-y-3">
+            <!-- Card A: Shop Image with Uncropped 16:5 3D Isometric Retail Banner & Floating 'Change photo' Pill -->
+            <div class="surface-card rounded-2xl p-4 sm:p-5 space-y-3.5">
+              <div class="flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-xl bg-indigo-500/12 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="text-sm font-semibold text-adapt-primary">Shop Image</p>
+                    <p class="text-xs text-adapt-secondary">Storefront cover banner displayed to Public Store visitors</p>
+                  </div>
+                </div>
+                <span class="hidden sm:inline-flex px-2 py-0.5 rounded-md bg-white/[0.04] border border-adapt font-mono text-[10px] text-adapt-muted">
+                  16:5 Cover
+                </span>
+              </div>
+
+              <!-- 16:5 Widescreen Banner Frame -->
+              <div class="relative w-full aspect-[16/5] min-h-[145px] sm:min-h-[175px] rounded-xl overflow-hidden border border-white/15 shadow-inner bg-[#0E1322] group">
+                
+                <!-- Custom Uploaded Image Layer (Hidden until user uploads a real photo) -->
+                <img id="customBannerImg" src="" alt="Custom Shop Cover" class="hidden w-full h-full object-cover" />
+
+                <!-- Crisp Uncropped 3D Isometric Retail Package & Checklist SVG Illustration (Default Preset) -->
+                <div id="presetBannerCanvas" class="w-full h-full">
+                  <svg id="presetBannerSvg" viewBox="0 0 960 300" class="w-full h-full object-cover" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <linearGradient id="bgSplitLeft" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#0B1120"/>
+                        <stop offset="100%" stop-color="#132238"/>
+                      </linearGradient>
+                      <linearGradient id="bgSplitRight" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#E2E8F0"/>
+                        <stop offset="100%" stop-color="#CBD5E1"/>
+                      </linearGradient>
+                      <linearGradient id="boxTop" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#38BDF8"/>
+                        <stop offset="100%" stop-color="#0284C7"/>
+                      </linearGradient>
+                      <linearGradient id="boxLeft" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#0369A1"/>
+                        <stop offset="100%" stop-color="#0C4A6E"/>
+                      </linearGradient>
+                      <linearGradient id="boxRight" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#0EA5E9"/>
+                        <stop offset="100%" stop-color="#0369A1"/>
+                      </linearGradient>
+                      <filter id="softShadow" x="-15%" y="-15%" width="130%" height="130%">
+                        <feDropShadow dx="0" dy="14" stdDeviation="12" flood-color="#020617" flood-opacity="0.45"/>
+                      </filter>
+                    </defs>
+
+                    <!-- Left Obsidian Studio Backdrop -->
+                    <rect x="0" y="0" width="960" height="300" fill="url(#bgSplitLeft)"/>
+                    <!-- Right Bright Studio Backdrop with Architectural Diagonal -->
+                    <polygon points="465,0 960,0 960,300 415,300" fill="url(#bgSplitRight)"/>
+
+                    <!-- Subtle Ambient Glow Behind Isometric Boxes -->
+                    <circle cx="315" cy="155" r="120" fill="#38BDF8" opacity="0.14"/>
+
+                    <!-- Bottom Larger 3D Isometric Retail Box -->
+                    <g filter="url(#softShadow)">
+                      <!-- Top Face -->
+                      <polygon points="295,128 395,168 295,212 195,168" fill="url(#boxTop)"/>
+                      <!-- Left Face -->
+                      <polygon points="195,168 295,212 295,282 195,238" fill="url(#boxLeft)"/>
+                      <!-- Right Face -->
+                      <polygon points="295,212 395,168 395,238 295,282" fill="url(#boxRight)"/>
+                      <!-- White Packaging Ribbon -->
+                      <polygon points="240,148 258,155 258,265 240,257" fill="#F8FAFC" opacity="0.92"/>
+                      <polygon points="240,148 340,190 356,183 258,141" fill="#E0F2FE" opacity="0.95"/>
+                    </g>
+
+                    <!-- Top Stacked 3D Isometric Retail Box -->
+                    <g filter="url(#softShadow)">
+                      <!-- Top Face -->
+                      <polygon points="315,48 398,82 315,118 232,82" fill="url(#boxTop)"/>
+                      <!-- Left Face -->
+                      <polygon points="232,82 315,118 315,176 232,140" fill="url(#boxLeft)"/>
+                      <!-- Right Face -->
+                      <polygon points="315,118 398,82 398,140 315,176" fill="url(#boxRight)"/>
+                      <!-- Crisp White Packaging Tape -->
+                      <polygon points="270,65 285,71 285,163 270,156" fill="#FFFFFF" opacity="0.95"/>
+                      <polygon points="270,65 352,100 366,94 285,59" fill="#F1F5F9" opacity="0.95"/>
+                    </g>
+
+                    <!-- Right 3D Isometric Checklist Board -->
+                    <g filter="url(#softShadow)" transform="translate(530, 32)">
+                      <!-- Clipboard 3D Depth Edge -->
+                      <rect x="10" y="10" width="235" height="224" rx="22" fill="#0284C7"/>
+                      <!-- Main White Checklist Card -->
+                      <rect x="0" y="0" width="235" height="224" rx="22" fill="#F8FAFC" stroke="#BAE6FD" stroke-width="2"/>
+
+                      <!-- Row 1: Checked Box + Lines -->
+                      <rect x="28" y="34" width="38" height="38" rx="9" fill="#E0F2FE" stroke="#0369A1" stroke-width="3.5"/>
+                      <polyline points="37,53 45,61 59,44" fill="none" stroke="#0284C7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      <rect x="82" y="42" width="118" height="8" rx="4" fill="#94A3B8"/>
+                      <rect x="82" y="57" width="84" height="7" rx="3.5" fill="#CBD5E1"/>
+
+                      <!-- Row 2: Checked Box + Lines -->
+                      <rect x="28" y="93" width="38" height="38" rx="9" fill="#E0F2FE" stroke="#0369A1" stroke-width="3.5"/>
+                      <polyline points="37,112 45,120 59,103" fill="none" stroke="#0284C7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      <rect x="82" y="101" width="124" height="8" rx="4" fill="#94A3B8"/>
+                      <rect x="82" y="116" width="92" height="7" rx="3.5" fill="#CBD5E1"/>
+
+                      <!-- Row 3: Checked Box + Lines -->
+                      <rect x="28" y="152" width="38" height="38" rx="9" fill="#E0F2FE" stroke="#0369A1" stroke-width="3.5"/>
+                      <polyline points="37,171 45,179 59,162" fill="none" stroke="#0284C7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      <rect x="82" y="160" width="108" height="8" rx="4" fill="#94A3B8"/>
+                      <rect x="82" y="175" width="76" height="7" rx="3.5" fill="#CBD5E1"/>
+                    </g>
+                  </svg>
+                </div>
+
+                <!-- Floating White 'Change photo' Pill Button (Bottom-Right matching Screenshot 6) -->
+                <button 
+                  type="button" 
+                  onclick="openModal('bannerModal')" 
+                  class="absolute bottom-3 right-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-slate-50 text-violet-700 font-display text-xs font-semibold shadow-lg shadow-black/40 hover:scale-[1.03] active:scale-[0.98] transition cursor-pointer"
+                >
+                  <svg class="w-3.5 h-3.5 text-violet-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+                  </svg>
+                  <span>Change photo</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Card B: Shop Type Row -->
+            <div class="surface-card rounded-2xl overflow-hidden">
+              <button 
+                type="button" 
+                onclick="openModal('shopTypeModal')" 
+                class="w-full surface-row p-4 sm:px-5 sm:py-4 flex items-center justify-between gap-4 text-left group cursor-pointer"
+              >
+                <div class="flex items-center gap-3.5 min-w-0">
+                  <div class="w-9 h-9 rounded-xl bg-violet-500/12 border border-violet-500/20 flex items-center justify-center text-violet-400 shrink-0">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/>
+                    </svg>
+                  </div>
+                  <div class="min-w-0">
+                    <p class="text-sm font-semibold text-adapt-primary">Shop Type</p>
+                    <p class="text-xs text-adapt-secondary mt-0.5">Configure your storefront and inventory mode</p>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2 shrink-0">
+                  <span id="currentShopTypeLabel" class="text-xs sm:text-sm font-medium text-adapt-secondary group-hover:text-adapt-primary transition">Shop</span>
+                  <svg class="w-4 h-4 text-adapt-muted group-hover:text-adapt-primary group-hover:translate-x-0.5 transition-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                </div>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- =============================================================== -->
+        <!-- 5. PRINTER SECTION (Thermal Receipt Printer Setup Drawer)       -->
+        <!-- =============================================================== -->
+        <section class="settings-block space-y-2.5" data-category="printer" data-keywords="printer thermal esc pos 58mm 80mm bluetooth receipt hardware">
+          <h3 class="px-1 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-adapt-muted">
+            PRINTER
+          </h3>
+          <div class="surface-card rounded-2xl overflow-hidden">
+            <button 
+              type="button" 
+              onclick="openDrawer('printerDrawer')" 
+              class="w-full surface-row p-4 sm:px-5 sm:py-4 flex items-center justify-between gap-4 text-left group cursor-pointer"
+            >
+              <div class="flex items-center gap-3.5 min-w-0">
+                <div class="w-9 h-9 rounded-xl bg-emerald-500/12 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+                  </svg>
+                </div>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2">
+                    <p class="text-sm font-semibold text-adapt-primary">Printers</p>
+                    <span id="printerStatusBadge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-500/15 text-slate-400 border border-slate-500/25">
+                      Offline
+                    </span>
+                  </div>
+                  <p id="printerSubtitleText" class="text-xs text-adapt-secondary mt-0.5 truncate">
+                    No thermal printer connected • ESC/POS 58mm / 80mm
+                  </p>
+                </div>
+              </div>
+
+              <svg class="w-4 h-4 text-adapt-muted group-hover:text-adapt-primary group-hover:translate-x-0.5 transition-all shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+          </div>
+        </section>
+
+        <!-- =============================================================== -->
+        <!-- 6. SUPPORT SECTION (Feedback & Rate App)                        -->
+        <!-- =============================================================== -->
+        <section class="settings-block space-y-2.5" data-category="support-legal" data-keywords="support feedback rate app star review help">
+          <h3 class="px-1 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-adapt-muted">
+            SUPPORT
+          </h3>
+          <div class="surface-card rounded-2xl divide-y divide-adapt overflow-hidden">
+            
+            <!-- Feedback Row -->
+            <button 
+              type="button" 
+              onclick="openDrawer('feedbackDrawer')" 
+              class="w-full surface-row p-4 sm:px-5 sm:py-4 flex items-center justify-between gap-4 text-left group cursor-pointer"
+            >
+              <div class="flex items-center gap-3.5 min-w-0">
+                <div class="w-9 h-9 rounded-xl bg-amber-500/12 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-sm font-semibold text-adapt-primary">Feedback</p>
+                  <p class="text-xs text-adapt-secondary mt-0.5">Report an issue or request a new POS feature</p>
+                </div>
+              </div>
+              <svg class="w-4 h-4 text-adapt-muted group-hover:text-adapt-primary group-hover:translate-x-0.5 transition-all shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+
+            <!-- Rate App Row -->
+            <button 
+              type="button" 
+              onclick="openModal('rateModal')" 
+              class="w-full surface-row p-4 sm:px-5 sm:py-4 flex items-center justify-between gap-4 text-left group cursor-pointer"
+            >
+              <div class="flex items-center gap-3.5 min-w-0">
+                <div class="w-9 h-9 rounded-xl bg-yellow-500/12 border border-yellow-500/20 flex items-center justify-center text-yellow-400 shrink-0">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-sm font-semibold text-adapt-primary">Rate App</p>
+                  <p id="rateAppSubtitle" class="text-xs text-adapt-secondary mt-0.5">Share your experience with our commerce suite</p>
+                </div>
+              </div>
+              <svg class="w-4 h-4 text-adapt-muted group-hover:text-adapt-primary group-hover:translate-x-0.5 transition-all shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+          </div>
+        </section>
+
+        <!-- =============================================================== -->
+        <!-- 7. ABOUT SECTION (About, Privacy Policy, Terms of Service)      -->
+        <!-- =============================================================== -->
+        <section class="settings-block space-y-2.5" data-category="support-legal" data-keywords="about version privacy policy terms of service legal">
+          <h3 class="px-1 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-adapt-muted">
+            ABOUT
+          </h3>
+          <div class="surface-card rounded-2xl divide-y divide-adapt overflow-hidden">
+            
+            <!-- About Row -->
+            <button 
+              type="button" 
+              onclick="openModal('aboutModal')" 
+              class="w-full surface-row p-4 sm:px-5 sm:py-4 flex items-center justify-between gap-4 text-left group cursor-pointer"
+            >
+              <div class="flex items-center gap-3.5 min-w-0">
+                <div class="w-9 h-9 rounded-xl bg-violet-500/12 border border-violet-500/20 flex items-center justify-center text-violet-400 shrink-0">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+                  </svg>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-sm font-semibold text-adapt-primary">About</p>
+                  <p class="text-xs text-adapt-secondary mt-0.5">Application version v2.4.0, release notes &amp; system diagnostics</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <span class="font-mono text-[11px] text-adapt-muted">v2.4.0</span>
+                <svg class="w-4 h-4 text-adapt-muted group-hover:text-adapt-primary group-hover:translate-x-0.5 transition-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </div>
+            </button>
+
+            <!-- Privacy Policy Row -->
+            <button 
+              type="button" 
+              onclick="openLegalReader('privacy')" 
+              class="w-full surface-row p-4 sm:px-5 sm:py-4 flex items-center justify-between gap-4 text-left group cursor-pointer"
+            >
+              <div class="flex items-center gap-3.5 min-w-0">
+                <div class="w-9 h-9 rounded-xl bg-teal-500/12 border border-teal-500/20 flex items-center justify-center text-teal-400 shrink-0">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  </svg>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-sm font-semibold text-adapt-primary">Privacy Policy</p>
+                  <p class="text-xs text-adapt-secondary mt-0.5">How your store inventory and customer ledger data are protected</p>
+                </div>
+              </div>
+              <svg class="w-4 h-4 text-adapt-muted group-hover:text-adapt-primary group-hover:translate-x-0.5 transition-all shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+
+            <!-- Terms of Service Row -->
+            <button 
+              type="button" 
+              onclick="openLegalReader('terms')" 
+              class="w-full surface-row p-4 sm:px-5 sm:py-4 flex items-center justify-between gap-4 text-left group cursor-pointer"
+            >
+              <div class="flex items-center gap-3.5 min-w-0">
+                <div class="w-9 h-9 rounded-xl bg-slate-500/15 border border-slate-500/25 flex items-center justify-center text-slate-300 shrink-0">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+                  </svg>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-sm font-semibold text-adapt-primary">Terms of Service</p>
+                  <p class="text-xs text-adapt-secondary mt-0.5">Merchant agreement and Public Store marketplace guidelines</p>
+                </div>
+              </div>
+              <svg class="w-4 h-4 text-adapt-muted group-hover:text-adapt-primary group-hover:translate-x-0.5 transition-all shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+
+          </div>
+        </section>
+
+        <!-- Empty Search State -->
+        <div id="emptySearchState" class="hidden surface-card rounded-2xl p-10 text-center space-y-2">
+          <p class="font-display text-sm font-bold text-adapt-primary">No matching settings found</p>
+          <p class="text-xs text-adapt-secondary">Try searching for "Dark Mode", "Language", "Printer", or "Shop Image".</p>
+          <button type="button" onclick="resetSearchFilter()" class="mt-2 inline-flex items-center px-3.5 py-1.5 rounded-xl bg-violet-600 text-white text-xs font-semibold hover:bg-violet-500 transition cursor-pointer">
+            Clear filter
+          </button>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- INTERACTIVE MODALS & SLIDE-OVER DRAWERS                               -->
+  <!-- ===================================================================== -->
+  <div id="overlayBackdrop" onclick="closeAllOverlays()" class="hidden fixed inset-0 z-40 bg-black/70 backdrop-blur-sm modal-backdrop"></div>
+
+  <!-- 1. ACCOUNT PROFILE MODAL -->
+  <div id="profileModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+    <div class="modal-panel pointer-events-auto w-full max-w-md rounded-2xl bg-obsidian-850 border border-white/12 p-6 shadow-2xl space-y-5 text-white">
+      <div class="flex items-center justify-between">
+        <h3 class="font-display text-base font-bold">Account Profile</h3>
+        <button type="button" onclick="closeAllOverlays()" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer">✕</button>
+      </div>
+      <div class="flex items-center gap-4 p-3.5 rounded-xl bg-obsidian-950/70 border border-white/[0.07]">
+        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center text-white font-display font-bold text-lg shrink-0">M</div>
+        <div>
+          <p class="text-sm font-bold text-white">Myat Noe Hla</p>
+          <p class="text-xs text-slate-400">Primary Store Owner • Verified</p>
+        </div>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-[11px] font-medium text-slate-400 mb-1">Display Name</label>
+          <input id="inputProfileName" type="text" value="Myat Noe Hla" class="w-full h-10 px-3.5 rounded-xl bg-obsidian-950 border border-white/10 text-xs text-white focus:outline-none focus:border-violet-500" />
+        </div>
+        <div>
+          <label class="block text-[11px] font-medium text-slate-400 mb-1">Email Address</label>
+          <input id="inputProfileEmail" type="email" value="mgmyatnoehia@gmail.com" class="w-full h-10 px-3.5 rounded-xl bg-obsidian-950 border border-white/10 text-xs text-white focus:outline-none focus:border-violet-500" />
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-2.5 pt-2">
+        <button type="button" onclick="closeAllOverlays()" class="px-4 py-2 rounded-xl text-xs font-medium text-slate-300 hover:bg-white/[0.06] transition cursor-pointer">Cancel</button>
+        <button type="button" onclick="saveProfileChanges()" class="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-xs font-semibold text-white shadow-lg shadow-violet-600/30 transition cursor-pointer">Save Profile</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. LANGUAGE SELECTOR MODAL -->
+  <div id="languageModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+    <div class="modal-panel pointer-events-auto w-full max-w-md rounded-2xl bg-obsidian-850 border border-white/12 p-6 shadow-2xl space-y-4 text-white">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="font-display text-base font-bold">Select Language</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Interface &amp; thermal receipt language</p>
+        </div>
+        <button type="button" onclick="closeAllOverlays()" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer">✕</button>
+      </div>
+      <div class="space-y-2" id="languageOptionsList">
+        <button type="button" onclick="selectLanguage('English')" class="lang-choice w-full p-3.5 rounded-xl border border-violet-500/50 bg-violet-500/12 flex items-center justify-between text-left transition cursor-pointer">
+          <div>
+            <p class="text-xs font-semibold text-white">English</p>
+            <p class="text-[11px] text-slate-400">Default • International POS &amp; Analytics</p>
+          </div>
+          <span class="w-2 h-2 rounded-full bg-violet-400 shadow-[0_0_8px_#a78bfa]"></span>
+        </button>
+        <button type="button" onclick="selectLanguage('မြန်မာ (Burmese)')" class="lang-choice w-full p-3.5 rounded-xl border border-white/[0.08] bg-obsidian-950/60 hover:bg-white/[0.05] flex items-center justify-between text-left transition cursor-pointer">
+          <div>
+            <p class="text-xs font-semibold text-white">မြန်မာ (Burmese)</p>
+            <p class="text-[11px] text-slate-400">Myanmar Unicode • MMK Receipt Labels</p>
+          </div>
+        </button>
+        <button type="button" onclick="selectLanguage('日本語 (Japanese)')" class="lang-choice w-full p-3.5 rounded-xl border border-white/[0.08] bg-obsidian-950/60 hover:bg-white/[0.05] flex items-center justify-between text-left transition cursor-pointer">
+          <div>
+            <p class="text-xs font-semibold text-white">日本語 (Japanese)</p>
+            <p class="text-[11px] text-slate-400">Japanese Storefront &amp; Inventory UI</p>
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. SHOP IMAGE / COVER BANNER PICKER & UPLOADER MODAL -->
+  <div id="bannerModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+    <div class="modal-panel pointer-events-auto w-full max-w-lg rounded-2xl bg-obsidian-850 border border-white/12 p-6 shadow-2xl space-y-5 text-white">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="font-display text-base font-bold">Change Shop Image</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Choose a 3D studio banner or upload your own storefront photo</p>
+        </div>
+        <button type="button" onclick="closeAllOverlays()" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer">✕</button>
+      </div>
+
+      <!-- Preset Options -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <button type="button" onclick="applyBannerPreset('default')" class="p-3 rounded-xl border border-violet-500/50 bg-violet-500/10 text-left space-y-2 hover:bg-violet-500/15 transition cursor-pointer">
+          <div class="h-14 rounded-lg bg-gradient-to-r from-sky-900 via-sky-600 to-slate-200 flex items-center justify-center text-[11px] font-semibold text-white shadow-inner">
+            3D Retail &amp; Checklist
+          </div>
+          <p class="text-xs font-semibold text-white">Studio Cyan (Default)</p>
+        </button>
+
+        <button type="button" onclick="applyBannerPreset('violet')" class="p-3 rounded-xl border border-white/10 bg-obsidian-950/70 text-left space-y-2 hover:border-violet-500/40 transition cursor-pointer">
+          <div class="h-14 rounded-lg bg-gradient-to-r from-[#130929] via-violet-700 to-indigo-400 flex items-center justify-center text-[11px] font-semibold text-white shadow-inner">
+            3D Electric Commerce
+          </div>
+          <p class="text-xs font-semibold text-white">Obsidian Violet Edition</p>
+        </button>
+      </div>
+
+      <!-- Upload Real Image File -->
+      <label class="flex flex-col items-center justify-center gap-2 p-5 rounded-xl border border-dashed border-white/20 hover:border-violet-400 bg-obsidian-950/50 hover:bg-violet-500/5 transition cursor-pointer">
+        <svg class="w-6 h-6 text-violet-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <span class="text-xs font-semibold text-white">Upload custom banner image</span>
+        <span class="text-[11px] text-slate-400">PNG, JPG or WEBP • Recommended 16:5 ratio</span>
+        <input type="file" accept="image/*" onchange="handleBannerFileUpload(event)" class="hidden" />
+      </label>
+    </div>
+  </div>
+
+  <!-- 4. SHOP TYPE SELECTOR MODAL -->
+  <div id="shopTypeModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+    <div class="modal-panel pointer-events-auto w-full max-w-md rounded-2xl bg-obsidian-850 border border-white/12 p-6 shadow-2xl space-y-4 text-white">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="font-display text-base font-bold">Shop Type</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Select how inventory and checkout behave</p>
+        </div>
+        <button type="button" onclick="closeAllOverlays()" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer">✕</button>
+      </div>
+      <div class="space-y-2.5">
+        <button type="button" onclick="selectShopType('Shop')" class="w-full p-3.5 rounded-xl border border-violet-500/50 bg-violet-500/12 text-left transition cursor-pointer">
+          <p class="text-xs font-bold text-white">Shop (Retail &amp; POS)</p>
+          <p class="text-[11px] text-slate-400 mt-0.5">Standard unit stock tracking, quick cart, and instant receipts.</p>
+        </button>
+        <button type="button" onclick="selectShopType('Wholesale')" class="w-full p-3.5 rounded-xl border border-white/10 bg-obsidian-950/60 hover:border-violet-500/40 text-left transition cursor-pointer">
+          <p class="text-xs font-bold text-white">Wholesale &amp; Bulk</p>
+          <p class="text-[11px] text-slate-400 mt-0.5">Tiered carton pricing, bulk invoice numbering, and merchant orders.</p>
+        </button>
+        <button type="button" onclick="selectShopType('Service & Digital')" class="w-full p-3.5 rounded-xl border border-white/10 bg-obsidian-950/60 hover:border-violet-500/40 text-left transition cursor-pointer">
+          <p class="text-xs font-bold text-white">Service &amp; Digital</p>
+          <p class="text-[11px] text-slate-400 mt-0.5">Unlimited non-physical items without stock deduction alerts.</p>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. RATE APP MODAL -->
+  <div id="rateModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+    <div class="modal-panel pointer-events-auto w-full max-w-sm rounded-2xl bg-obsidian-850 border border-white/12 p-6 shadow-2xl space-y-5 text-center text-white">
+      <div class="flex justify-end">
+        <button type="button" onclick="closeAllOverlays()" class="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer">✕</button>
+      </div>
+      <div class="space-y-1.5 -mt-3">
+        <h3 class="font-display text-base font-bold">Rate Your Experience</h3>
+        <p class="text-xs text-slate-400">How is your shop running with our POS &amp; Analytics suite?</p>
+      </div>
+      <div class="flex items-center justify-center gap-2 py-2" id="starRatingRow">
+        <button type="button" onclick="setStarRating(1)" class="star-btn text-2xl text-amber-400 hover:scale-125 transition cursor-pointer">★</button>
+        <button type="button" onclick="setStarRating(2)" class="star-btn text-2xl text-amber-400 hover:scale-125 transition cursor-pointer">★</button>
+        <button type="button" onclick="setStarRating(3)" class="star-btn text-2xl text-amber-400 hover:scale-125 transition cursor-pointer">★</button>
+        <button type="button" onclick="setStarRating(4)" class="star-btn text-2xl text-amber-400 hover:scale-125 transition cursor-pointer">★</button>
+        <button type="button" onclick="setStarRating(5)" class="star-btn text-2xl text-amber-400 hover:scale-125 transition cursor-pointer">★</button>
+      </div>
+      <button type="button" onclick="submitStarRating()" class="w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-xs font-semibold text-white shadow-lg shadow-violet-600/30 transition cursor-pointer">
+        Submit Rating
+      </button>
+    </div>
+  </div>
+
+  <!-- 6. ABOUT MODAL -->
+  <div id="aboutModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+    <div class="modal-panel pointer-events-auto w-full max-w-md rounded-2xl bg-obsidian-850 border border-white/12 p-6 shadow-2xl space-y-4 text-white">
+      <div class="flex items-center justify-between">
+        <h3 class="font-display text-base font-bold">About Commerce POS</h3>
+        <button type="button" onclick="closeAllOverlays()" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer">✕</button>
+      </div>
+      <div class="p-4 rounded-xl bg-obsidian-950/70 border border-white/[0.08] space-y-2 text-xs">
+        <div class="flex justify-between"><span class="text-slate-400">Version</span><span class="font-mono text-violet-300">v2.4.0 (Build 2026.11)</span></div>
+        <div class="flex justify-between"><span class="text-slate-400">Default Currency</span><span class="font-mono text-white">MMK (Myanmar Kyat)</span></div>
+        <div class="flex justify-between"><span class="text-slate-400">Receipt Engine</span><span class="font-mono text-emerald-400">ESC/POS Thermal Ready</span></div>
+      </div>
+      <p class="text-xs text-slate-400 leading-relaxed">
+        Built for fast retail checkout, Self Store &amp; Public Store inventory sync, and real-time net profit analytics.
+      </p>
+    </div>
+  </div>
+
+  <!-- 7. SLIDE-OVER DRAWER: THERMAL PRINTER SETUP -->
+  <div id="printerDrawer" class="hidden fixed inset-y-0 right-0 z-50 w-full max-w-md bg-obsidian-850 border-l border-white/12 p-6 shadow-2xl flex flex-col justify-between drawer-panel text-white">
+    <div class="space-y-5 overflow-y-auto pr-1">
+      <div class="flex items-center justify-between border-b border-white/[0.08] pb-4">
+        <div>
+          <h3 class="font-display text-base font-bold">Thermal Printers</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Bluetooth &amp; LAN ESC/POS receipt setup</p>
+        </div>
+        <button type="button" onclick="closeAllOverlays()" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer">✕</button>
+      </div>
+
+      <!-- Paper Width Selector -->
+      <div class="space-y-2">
+        <label class="text-xs font-semibold text-slate-300">Paper Roll Width</label>
+        <div class="grid grid-cols-2 gap-2.5">
+          <button type="button" onclick="selectPaperSize('58mm')" id="paper58Btn" class="py-2.5 px-3 rounded-xl border border-violet-500/50 bg-violet-500/15 text-xs font-semibold text-white transition cursor-pointer">
+            58mm Compact
+          </button>
+          <button type="button" onclick="selectPaperSize('80mm')" id="paper80Btn" class="py-2.5 px-3 rounded-xl border border-white/10 bg-obsidian-950/60 text-xs font-medium text-slate-300 hover:border-white/25 transition cursor-pointer">
+            80mm Standard
+          </button>
+        </div>
+      </div>
+
+      <!-- Discovered Printers -->
+      <div class="space-y-2.5">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-slate-300">Available Devices</span>
+          <span class="text-[11px] text-violet-400 font-mono">Scanning...</span>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-obsidian-950/70 border border-white/[0.08] flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-white">XP-58IIH Bluetooth Thermal</p>
+            <p class="text-[11px] text-slate-400 font-mono">MAC: 00:11:22:33:44:55 • ESC/POS</p>
+          </div>
+          <button type="button" onclick="connectThermalPrinter('XP-58IIH Bluetooth')" class="px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-xs font-semibold text-white transition cursor-pointer">
+            Connect
+          </button>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-obsidian-950/70 border border-white/[0.08] flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-white">Epson TM-T20III Network</p>
+            <p class="text-[11px] text-slate-400 font-mono">IP: 192.168.1.108:9100</p>
+          </div>
+          <button type="button" onclick="connectThermalPrinter('Epson TM-T20III LAN')" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-xs font-semibold text-white transition cursor-pointer">
+            Connect
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="pt-4 border-t border-white/[0.08] flex items-center gap-3">
+      <button type="button" onclick="showToast('Sample test receipt sent to printer queue')" class="flex-1 py-2.5 rounded-xl bg-white/[0.07] hover:bg-white/[0.12] text-xs font-semibold text-white transition cursor-pointer">
+        Print Test Receipt
+      </button>
+      <button type="button" onclick="closeAllOverlays()" class="px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-xs font-semibold text-white transition cursor-pointer">
+        Done
+      </button>
+    </div>
+  </div>
+
+  <!-- 8. SLIDE-OVER DRAWER: FEEDBACK SUBMISSION -->
+  <div id="feedbackDrawer" class="hidden fixed inset-y-0 right-0 z-50 w-full max-w-md bg-obsidian-850 border-l border-white/12 p-6 shadow-2xl flex flex-col justify-between drawer-panel text-white">
+    <div class="space-y-4">
+      <div class="flex items-center justify-between border-b border-white/[0.08] pb-4">
+        <div>
+          <h3 class="font-display text-base font-bold">Send Feedback</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Direct message to the product engineering team</p>
+        </div>
+        <button type="button" onclick="closeAllOverlays()" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer">✕</button>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-slate-300 mb-1.5">Topic</label>
+        <select class="w-full h-10 px-3 rounded-xl bg-obsidian-950 border border-white/10 text-xs text-white focus:outline-none focus:border-violet-500">
+          <option>Feature Request</option>
+          <option>Receipt &amp; Printer Bug</option>
+          <option>Sales Analytics &amp; Reports</option>
+          <option>General Question</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-slate-300 mb-1.5">Message</label>
+        <textarea id="feedbackTextarea" rows="5" placeholder="Describe what would make your daily shop workflow faster..." class="w-full p-3.5 rounded-xl bg-obsidian-950 border border-white/10 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-violet-500"></textarea>
+      </div>
+    </div>
+    <div class="pt-4 border-t border-white/[0.08] flex justify-end gap-2.5">
+      <button type="button" onclick="closeAllOverlays()" class="px-4 py-2 rounded-xl text-xs font-medium text-slate-300 hover:bg-white/[0.06] transition cursor-pointer">Cancel</button>
+      <button type="button" onclick="submitFeedback()" class="px-5 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-xs font-semibold text-white transition cursor-pointer">Submit Feedback</button>
+    </div>
+  </div>
+
+  <!-- 9. SLIDE-OVER DRAWER: LEGAL READER (Privacy Policy & Terms) -->
+  <div id="legalDrawer" class="hidden fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-obsidian-850 border-l border-white/12 p-6 shadow-2xl flex flex-col justify-between drawer-panel text-white">
+    <div class="space-y-4 overflow-y-auto pr-2">
+      <div class="flex items-center justify-between border-b border-white/[0.08] pb-4">
+        <h3 id="legalDrawerTitle" class="font-display text-base font-bold">Privacy Policy</h3>
+        <button type="button" onclick="closeAllOverlays()" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer">✕</button>
+      </div>
+      <div id="legalDrawerBody" class="space-y-3 text-xs text-slate-300 leading-relaxed"></div>
+    </div>
+    <div class="pt-4 border-t border-white/[0.08] flex justify-end">
+      <button type="button" onclick="closeAllOverlays()" class="px-5 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-xs font-semibold text-white transition cursor-pointer">Close</button>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- FLOATING TOAST NOTIFICATION                                           -->
+  <!-- ===================================================================== -->
+  <div id="toastNotification" class="pointer-events-none fixed bottom-6 right-6 z-50 translate-y-6 opacity-0 transition-all duration-300">
+    <div class="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-obsidian-850/95 backdrop-blur-xl border border-violet-500/40 shadow-2xl shadow-black/80 text-xs font-medium text-white">
+      <span class="w-2 h-2 rounded-full bg-violet-400 shadow-[0_0_8px_#a78bfa]"></span>
+      <span id="toastMessage">Settings saved</span>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. STATE & THEME TOGGLE (Deep Obsidian Dark Mode <-> Crisp Daylight Theme)
+    // =========================================================================
+    let isDarkMode = true;
+    let selectedStarCount = 5;
+    let selectedPaperWidth = '58mm';
+
+    function toggleDarkMode() {
+      isDarkMode = !isDarkMode;
+      const html = document.documentElement;
+      const toggleBtn = document.getElementById('darkModeToggleBtn');
+      const thumb = document.getElementById('darkModeThumb');
+      const row = document.getElementById('darkModeRow');
+
+      if (isDarkMode) {
+        html.classList.remove('light-theme');
+        html.classList.add('dark');
+        toggleBtn.classList.remove('bg-slate-300');
+        toggleBtn.classList.add('bg-violet-600', 'shadow-[0_0_16px_rgba(124,58,237,0.45)]');
+        thumb.classList.add('translate-x-5');
+        thumb.classList.remove('translate-x-0');
+        row.setAttribute('aria-checked', 'true');
+        showToast('Switched to Deep Obsidian Dark Mode');
+      } else {
+        html.classList.remove('dark');
+        html.classList.add('light-theme');
+        toggleBtn.classList.remove('bg-violet-600', 'shadow-[0_0_16px_rgba(124,58,237,0.45)]');
+        toggleBtn.classList.add('bg-slate-300');
+        thumb.classList.remove('translate-x-5');
+        thumb.classList.add('translate-x-0');
+        row.setAttribute('aria-checked', 'false');
+        showToast('Switched to Crisp Daylight Theme');
+      }
+    }
+
+    // =========================================================================
+    // 2. LEFT RAIL CATEGORY FILTER & CMD/CTRL+K LIVE SEARCH
+    // =========================================================================
+    const railButtons = document.querySelectorAll('.rail-btn');
+    const settingsBlocks = document.querySelectorAll('.settings-block');
+    const searchInput = document.getElementById('settingsSearchInput');
+    const emptySearchState = document.getElementById('emptySearchState');
+
+    let activeCategory = 'all';
+
+    railButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        activeCategory = btn.dataset.filter;
+
+        railButtons.forEach(b => {
+          b.classList.remove('bg-violet-600/15', 'text-violet-400', 'font-semibold', 'border-violet-500/25');
+          b.classList.add('text-adapt-secondary', 'font-medium', 'border-transparent');
+        });
+        btn.classList.add('bg-violet-600/15', 'text-violet-400', 'font-semibold', 'border-violet-500/25');
+        btn.classList.remove('text-adapt-secondary', 'font-medium', 'border-transparent');
+
+        applyVisibilityFilters();
+      });
+    });
+
+    searchInput.addEventListener('input', applyVisibilityFilters);
+
+    function applyVisibilityFilters() {
+      const query = searchInput.value.trim().toLowerCase();
+      let visibleCount = 0;
+
+      settingsBlocks.forEach(block => {
+        const cat = block.dataset.category;
+        const keywords = (block.dataset.keywords || '').toLowerCase() + ' ' + block.textContent.toLowerCase();
+
+        const matchesCategory = activeCategory === 'all' || cat === activeCategory || cat === 'all';
+        const matchesQuery = !query || keywords.includes(query);
+
+        if (matchesCategory && matchesQuery) {
+          block.classList.remove('hidden');
+          visibleCount++;
+        } else {
+          block.classList.add('hidden');
+        }
+      });
+
+      emptySearchState.classList.toggle('hidden', visibleCount > 0);
+    }
+
+    function resetSearchFilter() {
+      searchInput.value = '';
+      activeCategory = 'all';
+      railButtons[0].click();
+    }
+
+    // Keyboard Shortcuts: Cmd/Ctrl + K focuses search, Escape closes modals/drawers
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        searchInput.focus();
+      } else if (e.key === 'Escape') {
+        closeAllOverlays();
+      }
+    });
+
+    // =========================================================================
+    // 3. MODALS & DRAWERS MANAGEMENT
+    // =========================================================================
+    function closeAllOverlays() {
+      document.getElementById('overlayBackdrop').classList.add('hidden');
+      ['profileModal', 'languageModal', 'bannerModal', 'shopTypeModal', 'rateModal', 'aboutModal', 'printerDrawer', 'feedbackDrawer', 'legalDrawer']
+        .forEach(id => document.getElementById(id).classList.add('hidden'));
+    }
+
+    function openModal(modalId) {
+      closeAllOverlays();
+      document.getElementById('overlayBackdrop').classList.remove('hidden');
+      document.getElementById(modalId).classList.remove('hidden');
+    }
+
+    function openDrawer(drawerId) {
+      closeAllOverlays();
+      document.getElementById('overlayBackdrop').classList.remove('hidden');
+      document.getElementById(drawerId).classList.remove('hidden');
+    }
+
+    // =========================================================================
+    // 4. INTERACTIVE SETTING ACTIONS
+    // =========================================================================
+    function saveProfileChanges() {
+      const nameVal = document.getElementById('inputProfileName').value.trim() || 'Myat Noe Hla';
+      const emailVal = document.getElementById('inputProfileEmail').value.trim() || 'mgmyatnoehia@gmail.com';
+      document.getElementById('profileDisplayName').textContent = nameVal;
+      document.getElementById('profileDisplayEmail').textContent = emailVal;
+      document.getElementById('profileAvatarBadge').textContent = nameVal.charAt(0).toUpperCase();
+      closeAllOverlays();
+      showToast('Account profile updated');
+    }
+
+    function selectLanguage(lang) {
+      document.getElementById('currentLanguageLabel').textContent = lang;
+      closeAllOverlays();
+      showToast(`Language updated to ${lang}`);
+    }
+
+    function selectShopType(type) {
+      document.getElementById('currentShopTypeLabel').textContent = type;
+      closeAllOverlays();
+      showToast(`Shop Type set to ${type}`);
+    }
+
+    // Shop Cover Banner Preset & File Uploader
+    function applyBannerPreset(preset) {
+      const customImg = document.getElementById('customBannerImg');
+      const presetCanvas = document.getElementById('presetBannerCanvas');
+      const stopTop = document.querySelector('#boxTop stop:first-child');
+      const stopLeft = document.querySelector('#bgSplitLeft stop:first-child');
+
+      customImg.classList.add('hidden');
+      presetCanvas.classList.remove('hidden');
+
+      if (preset === 'violet') {
+        stopTop.setAttribute('stop-color', '#A78BFA');
+        stopLeft.setAttribute('stop-color', '#130929');
+      } else {
+        stopTop.setAttribute('stop-color', '#38BDF8');
+        stopLeft.setAttribute('stop-color', '#0B1120');
+      }
+      closeAllOverlays();
+      showToast('Shop cover banner updated');
+    }
+
+    function handleBannerFileUpload(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const customImg = document.getElementById('customBannerImg');
+        customImg.src = e.target.result;
+        customImg.classList.remove('hidden');
+        document.getElementById('presetBannerCanvas').classList.add('hidden');
+        closeAllOverlays();
+        showToast(`Uploaded "${file.name}" as Shop Image`);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Printer Actions
+    function selectPaperSize(size) {
+      selectedPaperWidth = size;
+      const b58 = document.getElementById('paper58Btn');
+      const b80 = document.getElementById('paper80Btn');
+      if (size === '58mm') {
+        b58.className = 'py-2.5 px-3 rounded-xl border border-violet-500/50 bg-violet-500/15 text-xs font-semibold text-white transition cursor-pointer';
+        b80.className = 'py-2.5 px-3 rounded-xl border border-white/10 bg-obsidian-950/60 text-xs font-medium text-slate-300 hover:border-white/25 transition cursor-pointer';
+      } else {
+        b80.className = 'py-2.5 px-3 rounded-xl border border-violet-500/50 bg-violet-500/15 text-xs font-semibold text-white transition cursor-pointer';
+        b58.className = 'py-2.5 px-3 rounded-xl border border-white/10 bg-obsidian-950/60 text-xs font-medium text-slate-300 hover:border-white/25 transition cursor-pointer';
+      }
+      showToast(`Thermal receipt paper set to ${size}`);
+    }
+
+    function connectThermalPrinter(printerName) {
+      const badge = document.getElementById('printerStatusBadge');
+      badge.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
+      badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>Connected';
+      document.getElementById('printerSubtitleText').textContent = `${printerName} • Ready (${selectedPaperWidth})`;
+      closeAllOverlays();
+      showToast(`Connected to ${printerName}`);
+    }
+
+    // Rate App & Feedback
+    function setStarRating(count) {
+      selectedStarCount = count;
+      document.querySelectorAll('.star-btn').forEach((btn, i) => {
+        btn.classList.toggle('text-amber-400', i < count);
+        btn.classList.toggle('text-slate-600', i >= count);
+      });
+    }
+
+    function submitStarRating() {
+      document.getElementById('rateAppSubtitle').textContent = `Thank you! You rated us ${selectedStarCount}.0 / 5.0 ★`;
+      closeAllOverlays();
+      showToast(`Thank you for your ${selectedStarCount}-star rating!`);
+    }
+
+    function submitFeedback() {
+      const txt = document.getElementById('feedbackTextarea');
+      txt.value = '';
+      closeAllOverlays();
+      showToast('Feedback sent to engineering team');
+    }
+
+    // Legal Reader Drawer
+    function openLegalReader(docType) {
+      const title = document.getElementById('legalDrawerTitle');
+      const body = document.getElementById('legalDrawerBody');
+      if (docType === 'privacy') {
+        title.textContent = 'Privacy Policy';
+        body.innerHTML = `
+          <p class="text-slate-400 font-mono text-[11px]">Last updated: November 2026</p>
+          <p><strong>1. Store &amp; Inventory Isolation:</strong> Products marked under <em>Self Store</em> remain strictly private to your merchant account and are never exposed to external buyers.</p>
+          <p><strong>2. Sales &amp; Financial Records:</strong> All MMK revenue, cost of goods, and operation fee entries are encrypted in transit and at rest.</p>
+          <p><strong>3. Receipt &amp; Customer Data:</strong> Customer names and invoice identifiers (INV-XXXX) are stored solely for order fulfillment and ledger reconciliation.</p>
+        `;
+      } else {
+        title.textContent = 'Terms of Service';
+        body.innerHTML = `
+          <p class="text-slate-400 font-mono text-[11px]">Effective: November 2026</p>
+          <p><strong>1. Merchant Responsibility:</strong> Store owners are responsible for accurate stock counts, MMK pricing, and tax compliance on published Public Store listings.</p>
+          <p><strong>2. Hardware Compatibility:</strong> ESC/POS thermal receipt printing supports standard 58mm and 80mm Bluetooth and local network printers.</p>
+          <p><strong>3. Service Availability:</strong> Offline cart caching ensures uninterrupted checkout even during temporary network interruptions.</p>
+        `;
+      }
+      openDrawer('legalDrawer');
+    }
+
+    // Toast Helper
+    let toastTimer = null;
+    function showToast(message) {
+      const toast = document.getElementById('toastNotification');
+      document.getElementById('toastMessage').textContent = message;
+      toast.classList.remove('translate-y-6', 'opacity-0');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.add('translate-y-6', 'opacity-0');
+      }, 2800);
+    }
+  </script>
+</body>
+</html>

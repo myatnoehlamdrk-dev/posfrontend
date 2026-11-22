@@ -78,7 +78,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         return WideDrawerDock(
           active: DrawerDestination.product,
           child: Scaffold(
-            backgroundColor: _p.scaffoldBg,
+            backgroundColor: Colors.transparent,
             body: SafeArea(child: _content(isWide: isWide)),
           ),
         );

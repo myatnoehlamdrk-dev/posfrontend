@@ -137,7 +137,7 @@ class _DashboardTableScreenState extends State<DashboardTableScreen> {
     final p = context.palette;
 
     return Scaffold(
-      backgroundColor: p.scaffoldBg,
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Column(
           children: [

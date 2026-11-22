@@ -286,11 +286,10 @@ class _QuickAddProductScreenState extends State<QuickAddProductScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final p = context.palette;
     return WideDrawerDock(
       active: DrawerDestination.addProduct,
       child: Scaffold(
-        backgroundColor: p.scaffoldBg,
+        backgroundColor: Colors.transparent,
         body: SafeArea(
           child: Column(
             children: [

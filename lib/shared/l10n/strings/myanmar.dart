@@ -98,7 +98,6 @@ const Map<String, String> myStrings = {
   "Here's what's happening with your store today.":
       'သင့်ဆိုင်၏ ယနေ့အခြေအနေကို အောက်တွင် ကြည့်နိုင်ပါသည်။',
   'Overview': 'အကျဉ်းချုပ်',
-  'Sales': 'ရောင်းချမှု',
   'Monthly': 'လစဉ်',
   'Quarterly': 'သုံးလတစ်ကြိမ်',
   'Yearly': 'နှစ်စဉ်',
@@ -255,6 +254,13 @@ const Map<String, String> myStrings = {
   'Proceed to Checkout': 'ငွေပေးချေမူ လုပ်ဆောင်ရန်',
   'Checkout': 'ငွေရှင်းရန်',
   'No more items': 'နောက်ထပ်ပစ္စည်းမရှိပါ',
+  'No matching transactions found': 'ကိုက်ညီသော အရောင်းမှတ်တမ်း မတွေ့ပါ',
+  'Try clearing your search filter or switching between All, Sold, and Order tabs.':
+      'ရှာဖွေမှုကို ရှင်းလင်းပြီး အားလုံး၊ ရောင်းပြီး၊ မှာယူမှု စာမျက်နှာများကြား ပြောင်းကြည့်ပါ။',
+  'Reset Filters': 'စစ်ထုတ်မှုများ ပြန်ဖျက်ရန်',
+  'Try clearing your filter or switching between All, Shop, and Inventory tabs.':
+      'စစ်ထုတ်မှုကို ရှင်းလင်းပြီး အားလုံး၊ ဆိုင်၊ ကုန်သိုလှောင်ရုံ စာမျက်နှာများကြား ပြောင်းကြည့်ပါ။',
+  'Copied {v1}': '{v1} ကို ကူးယူပြီးပါပြီ',
   'Fill all stock': 'တန်ဖိုးအားလုံးဖြည့်ပါ',
   'Create a new cart card for these items':
       'ဤပစ္စည်းများအတွက် cart အသစ်ဖန်တီးပါ',
@@ -330,6 +336,7 @@ const Map<String, String> myStrings = {
   'New Sale': 'အသစ်ရောင်းရန်',
   'Sale Detail': 'မှတ်တမ်းအသေးစိတ်',
   'Sales Items': 'ရောင်းထားသည့် မှတ်တမ်း',
+  'Sale Items': 'ရောင်းချသည့် မှတ်တမ်းများ',
   'Items': 'ပစ္စည်းများ',
   'No items added yet.': 'ပစ္စည်းများမထည့်သေးပါ',
   'Total Amount': 'စုစုပေါင်းငွေကြေး',

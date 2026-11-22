@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/count_up_text.dart';
+import 'package:posfrontend/shared/widgets/hover_spotlight.dart';
 
 import '../operation_fee_style.dart';
 
@@ -68,7 +69,10 @@ class OfSummaryCard extends StatelessWidget {
         ? Colors.white.withValues(alpha: 0.7)
         : p.textMuted;
 
-    return Material(
+    return HoverSpotlight(
+      radius: BorderRadius.circular(12),
+      onTap: onTap,
+      child: Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
@@ -134,6 +138,7 @@ class OfSummaryCard extends StatelessWidget {
             ),
           ),
         ),
+      ),
       ),
     );
   }

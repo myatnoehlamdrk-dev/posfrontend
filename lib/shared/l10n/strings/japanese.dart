@@ -202,6 +202,13 @@ const Map<String, String> japaneseStrings = {
   'Proceed to Checkout': 'レジに進む',
   'Checkout': 'レジ',
   'No more items': 'これ以上の商品はありません',
+  'No matching transactions found': '一致する取引が見つかりません',
+  'Try clearing your search filter or switching between All, Sold, and Order tabs.':
+      '検索条件をクリアするか、「すべて」「売上済み」「注文」タブを切り替えてみてください。',
+  'Reset Filters': 'フィルターをリセット',
+  'Try clearing your filter or switching between All, Shop, and Inventory tabs.':
+      'フィルターをクリアするか、「すべて」「店舗」「在庫」タブを切り替えてみてください。',
+  'Copied {v1}': '{v1} をコピーしました',
   'Fill all stock': '全在庫を入力',
   'Create a new cart card for these items': 'これらの商品の新しいカードを作成',
   'New Card': '新しいカード',
@@ -276,6 +283,7 @@ const Map<String, String> japaneseStrings = {
   'New Sale': '新規販売',
   'Sale Detail': '販売詳細',
   'Sales Items': '販売アイテム',
+  'Sale Items': '販売アイテム',
   'Items': 'アイテム',
   'No items added yet.': 'アイテムが追加されていません',
   'Total Amount': '合計金額',

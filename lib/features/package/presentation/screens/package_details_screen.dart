@@ -132,7 +132,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
 
             if (isWide) {
               return Scaffold(
-                backgroundColor: context.palette.surface,
+                backgroundColor: Colors.transparent,
                 floatingActionButton: FloatingActionButton.extended(
                   onPressed: _openAddProduct,
                   backgroundColor: AppColors.teal,
@@ -146,7 +146,7 @@ class _PackageDetailsScreenState extends State<PackageDetailsScreen> {
               );
             }
             return Scaffold(
-              backgroundColor: context.palette.surface,
+              backgroundColor: Colors.transparent,
               floatingActionButton: FloatingActionButton.extended(
                 onPressed: _openAddProduct,
                 backgroundColor: AppColors.teal,

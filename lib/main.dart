@@ -19,6 +19,7 @@ import 'package:posfrontend/shared/services/profile_image_service.dart';
 import 'package:posfrontend/shared/theme/app_theme.dart';
 import 'package:posfrontend/shared/theme/theme_mode_notifier.dart';
 import 'package:posfrontend/shared/widgets/app_drawer.dart';
+import 'package:posfrontend/shared/widgets/app_page_backdrop.dart';
 import 'package:posfrontend/shared/widgets/auth_scope.dart';
 import 'package:posfrontend/shared/widgets/shop_scope.dart';
 import 'package:posfrontend/shared/widgets/sync_status_pill.dart';
@@ -54,14 +55,16 @@ Future<void> main() async {
   await init(); //wait app load
   await ConnectivityService.instance.start(); // checking internect conectivity
   SyncManager.instance.start(); //checking internet local storage to backend
-  unawaited(SyncManager.instance.loadPersistedSyncTime()); //Restore the last synchronization time
+  unawaited(
+    SyncManager.instance.loadPersistedSyncTime(),
+  ); //Restore the last synchronization time
   unawaited(OutboxQueue.instance.refreshCounts()); //Restore queued-write counts
   // Seed the shared avatar for the whole app. Without this the app bar, screen
   // top bar and drawer stay blank until the user happens to open the dashboard,
   // because that was the only screen that ever fetched it.
   unawaited(ProfileImageService.warmUp());
   try {
-    await getIt<FcmService>().setup(); // Initialize Firebase Cloud Messaging 
+    await getIt<FcmService>().setup(); // Initialize Firebase Cloud Messaging
   } catch (e) {
     // FCM initialization failure should not block app startup
   }
@@ -127,15 +130,20 @@ class MyApp extends StatelessWidget {
                         ? Brightness.light
                         : Brightness.dark,
                   ),
-                  // Floating sync status pill at top-right. Uses Stack so it
-                  // floats above content without taking layout space.
-                  child: Stack(
-                    children: [
-                      // Main app content
-                      child ?? const SizedBox.shrink(),
-                      // Sync status pill (top-right, below status bar)
-                      const SyncStatusPill(),
-                    ],
+                  // One shared backdrop for the whole app. Screens that want
+                  // the grid and ambient blooms leave their Scaffold fill
+                  // transparent; branded pages cover it with their own colour.
+                  child: AppPageBackdrop(
+                    // Floating sync status pill at top-right. Uses Stack so it
+                    // floats above content without taking layout space.
+                    child: Stack(
+                      children: [
+                        // Main app content
+                        child ?? const SizedBox.shrink(),
+                        // Sync status pill (top-right, below status bar)
+                        const SyncStatusPill(),
+                      ],
+                    ),
                   ),
                 );
               },

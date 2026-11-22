@@ -70,7 +70,7 @@ class _CartCardScreenState extends State<CartCardScreen> {
     return WideDrawerDock(
       active: DrawerDestination.addToCart,
       child: Scaffold(
-        backgroundColor: p.scaffoldBg,
+        backgroundColor: Colors.transparent,
         body: SafeArea(
           child: Column(
             children: [

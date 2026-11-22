@@ -166,7 +166,7 @@ class _EditInventoryStoreScreenState extends State<EditInventoryStoreScreen> {
   Widget build(BuildContext context) {
     final p = context.palette;
     return Scaffold(
-      backgroundColor: p.scaffoldBg,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text(context.l10n.t('Edit inventory item')),
         backgroundColor: p.surface,

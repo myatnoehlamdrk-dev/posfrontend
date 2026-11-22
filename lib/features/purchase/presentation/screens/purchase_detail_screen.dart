@@ -37,7 +37,7 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
     return WideDrawerDock(
       active: DrawerDestination.purchaseItem,
       child: Scaffold(
-        backgroundColor: p.scaffoldBg,
+        backgroundColor: Colors.transparent,
         body: SafeArea(
           child: Column(
             children: [

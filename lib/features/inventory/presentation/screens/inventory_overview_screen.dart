@@ -71,7 +71,7 @@ class _InventoryOverviewScreenState extends State<InventoryOverviewScreen> {
       child: AppShell(
         active: DrawerDestination.inventoryOverview,
         scaffoldKey: _scaffoldKey,
-        backgroundColor: p.scaffoldBg,
+        backgroundColor: Colors.transparent,
         wrap: (_, shell) => shell,
         body: (context, isWide) => SafeArea(
           child: Column(

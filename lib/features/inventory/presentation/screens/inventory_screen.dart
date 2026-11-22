@@ -51,7 +51,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = _InventoryColors.of(context);
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -59,18 +58,15 @@ class _InventoryScreenState extends State<InventoryScreen> {
           navigateToDashboard(context);
         }
       },
-      // The gradient is painted behind the Scaffold rather than set as its
-      // backgroundColor, so it runs under the top bar too. The bar's own fill
-      // would otherwise cut a hard horizontal seam across the gradient.
-      child: DecoratedBox(
-        decoration: BoxDecoration(gradient: colors.pageGradient),
-          child: AppShell(
-            active: DrawerDestination.inventory,
-            scaffoldKey: _scaffoldKey,
-            backgroundColor: Colors.transparent,
-            wrap: (_, shell) => shell,
-            body: (context, isWide) => _buildContent(isWide: isWide),
-          ),
+      // The page fill stays transparent so the app-wide backdrop — the same
+      // grid and ambient blooms as the Add Product page — shows through,
+      // including behind the top bar.
+      child: AppShell(
+        active: DrawerDestination.inventory,
+        scaffoldKey: _scaffoldKey,
+        backgroundColor: Colors.transparent,
+        wrap: (_, shell) => shell,
+        body: (context, isWide) => _buildContent(isWide: isWide),
       ),
     );
   }
@@ -217,9 +213,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
           const SizedBox(height: 6),
           _bullet(
             colors,
-            context.l10n.t(
-              'Public Store: Shared and visible to other users.',
-            ),
+            context.l10n.t('Public Store: Shared and visible to other users.'),
           ),
         ],
       ),
@@ -230,11 +224,21 @@ class _InventoryScreenState extends State<InventoryScreen> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('•  ', style: TextStyle(fontSize: AppTypography.labelMediumSize, color: colors.muted)),
+        Text(
+          '•  ',
+          style: TextStyle(
+            fontSize: AppTypography.labelMediumSize,
+            color: colors.muted,
+          ),
+        ),
         Expanded(
           child: Text(
             text,
-            style: TextStyle(fontSize: AppTypography.labelMediumSize, color: colors.muted, height: 1.6),
+            style: TextStyle(
+              fontSize: AppTypography.labelMediumSize,
+              color: colors.muted,
+              height: 1.6,
+            ),
           ),
         ),
       ],
@@ -327,7 +331,11 @@ class _InventoryOptionCardState extends State<_InventoryOptionCard> {
                 Text(
                   context.l10n.t(widget.option.description),
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: AppTypography.labelMediumSize, color: c.muted, height: 1.6),
+                  style: TextStyle(
+                    fontSize: AppTypography.labelMediumSize,
+                    color: c.muted,
+                    height: 1.6,
+                  ),
                 ),
                 const SizedBox(height: 24),
                 _OpenButton(
@@ -473,14 +481,11 @@ enum _OptionLook {
 
 /// The colours for this page, per brightness.
 ///
-/// These are deliberately not [AppPalette] tokens. The palette is the app's
-/// neutral ramp, and this page is specified as a violet-tinted gradient rather
-/// than a step off the scaffold: overriding `scaffoldBg` here would change what
-/// every other widget on the page draws against. So the values live here, and
-/// the light set is a straight inversion of the dark one rather than a
-/// reinterpretation.
+/// These are deliberately not [AppPalette] tokens: the page sits on the shared
+/// app backdrop, so its cards, links and borders are tuned against that canvas
+/// rather than a step off the scaffold. The light set is a straight inversion of
+/// the dark one rather than a reinterpretation.
 class _InventoryColors {
-  final Gradient pageGradient;
   final Color link;
   final Color linkHover;
   final Color separator;
@@ -512,7 +517,6 @@ class _InventoryColors {
   final Color infoIcon;
 
   const _InventoryColors({
-    required this.pageGradient,
     required this.link,
     required this.linkHover,
     required this.separator,
@@ -540,12 +544,6 @@ class _InventoryColors {
   });
 
   static const _dark = _InventoryColors(
-    // topLeft to bottomRight, as specified.
-    pageGradient: LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: [Color(0xFF12152A), Color(0xFF1E1630)],
-    ),
     link: AppColors.violet300,
     linkHover: AppColors.lavender,
     separator: Color(0x33FFFFFF),
@@ -592,11 +590,6 @@ class _InventoryColors {
   /// simply reduced: a 4% white overlay is invisible on a near-white card, so
   /// the light values are opaque tints of the same hues.
   static const _light = _InventoryColors(
-    pageGradient: LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: [Color(0xFFFAFAFE), Color(0xFFF3EFFB)],
-    ),
     link: AppColors.purple700,
     linkHover: AppColors.violet400,
     separator: Color(0x59000000),

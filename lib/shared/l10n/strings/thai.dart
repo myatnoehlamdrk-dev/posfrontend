@@ -206,6 +206,13 @@ const Map<String, String> thaiStrings = {
   'Proceed to Checkout': 'ดำเนินการชำระเงิน',
   'Checkout': 'ชำระเงิน',
   'No more items': 'ไม่มีสินค้าเพิ่มเติม',
+  'No matching transactions found': 'ไม่พบรายการที่ตรงกัน',
+  'Try clearing your search filter or switching between All, Sold, and Order tabs.':
+      'ลองล้างตัวกรองการค้นหา หรือสลับไปแท็บทั้งหมด ขายแล้ว หรือออเดอร์',
+  'Reset Filters': 'ล้างตัวกรอง',
+  'Try clearing your filter or switching between All, Shop, and Inventory tabs.':
+      'ลองล้างตัวกรอง หรือสลับไปแท็บทั้งหมด ร้านค้า และคลังสินค้า',
+  'Copied {v1}': 'คัดลอก {v1} แล้ว',
   'Fill all stock': 'กรอกสต็อกทั้งหมด',
   'Create a new cart card for these items':
       'สร้างรายการใหม่สำหรับสินค้าเหล่านี้',
@@ -281,6 +288,7 @@ const Map<String, String> thaiStrings = {
   'New Sale': 'ขายใหม่',
   'Sale Detail': 'รายละเอียดการขาย',
   'Sales Items': 'รายการขาย',
+  'Sale Items': 'รายการขาย',
   'Items': 'รายการ',
   'No items added yet.': 'ยังไม่มีรายการ',
   'Total Amount': 'จำนวนเงินรวม',

@@ -99,7 +99,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         final otpSent = _viewModel.otpSent;
 
         return Scaffold(
-          backgroundColor: p.scaffoldBg,
+          backgroundColor: Colors.transparent,
           body: Stack(
             children: [
               // Same violet bloom as the login screen, anchored to the

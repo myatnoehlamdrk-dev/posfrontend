@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sales & Orders — Transaction & Invoice History</title>
+  <!-- Google Fonts: Plus Jakarta Sans, Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            display: ['Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            obsidian: {
+              950: '#090A0F',
+              900: '#0D0F17',
+              850: '#11131D',
+              800: '#171A28',
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      background-color: #090A0F;
+      color: #F8FAFC;
+      overflow-x: hidden;
+    }
+
+    /* Ultra-fine dot grid background */
+    .bg-dot-matrix {
+      background-image: radial-gradient(rgba(255, 255, 255, 0.065) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+
+    /* Glassmorphic layered surfaces with cursor spotlight */
+    .spotlight-card {
+      position: relative;
+      background: linear-gradient(180deg, rgba(17, 19, 29, 0.78) 0%, rgba(12, 14, 22, 0.90) 100%);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.24s ease, box-shadow 0.24s ease, opacity 0.25s ease;
+    }
+
+    .spotlight-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      background: radial-gradient(
+        480px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        rgba(139, 92, 246, 0.42),
+        transparent 45%
+      );
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.28s ease;
+    }
+
+    .spotlight-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: radial-gradient(
+        440px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        rgba(124, 58, 237, 0.085),
+        transparent 60%
+      );
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.28s ease;
+    }
+
+    .spotlight-card:hover::before,
+    .spotlight-card:hover::after {
+      opacity: 1;
+    }
+
+    .spotlight-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(139, 92, 246, 0.28);
+      box-shadow: 0 18px 40px -15px rgba(0, 0, 0, 0.65);
+    }
+
+    /* Active purple gradient pill with specular top highlight */
+    .active-tab-pill {
+      background: linear-gradient(180deg, #7C3AED 0%, #6D28D9 100%);
+      box-shadow:
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.28),
+        0 8px 20px -6px rgba(124, 58, 237, 0.6);
+    }
+
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Sleek custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(13, 15, 23, 0.5);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.24);
+    }
+  </style>
+</head>
+<body class="min-h-screen antialiased selection:bg-violet-500/30 selection:text-violet-200 bg-dot-matrix relative">
+
+  <!-- Ambient Indigo / Violet Top Radial Mesh Glow -->
+  <div class="pointer-events-none fixed inset-0 overflow-hidden z-0" aria-hidden="true">
+    <div class="absolute -top-44 left-1/2 -translate-x-1/2 w-[760px] h-[420px] rounded-full bg-violet-600/15 blur-[140px]"></div>
+    <div class="absolute top-24 -left-32 w-[420px] h-[420px] rounded-full bg-indigo-600/10 blur-[130px]"></div>
+    <div class="absolute bottom-0 right-0 w-[440px] h-[440px] rounded-full bg-purple-600/[0.07] blur-[140px]"></div>
+  </div>
+
+  <!-- Top Sticky Header -->
+  <header class="sticky top-0 z-30 border-b border-white/[0.07] bg-obsidian-950/80 backdrop-blur-xl">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+      
+      <!-- Left: Page Title & Live Record Pulse -->
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500/20 to-indigo-500/10 border border-violet-400/25 flex items-center justify-center text-violet-300 shadow-inner shrink-0">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+        </div>
+        <div class="flex items-center gap-2.5 min-w-0">
+          <h1 class="font-display font-bold text-base sm:text-lg tracking-tight text-white truncate">
+            Sales & Orders
+          </h1>
+          <span class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-white/[0.04] border border-white/[0.08] text-slate-300 shrink-0">
+            <span class="relative flex h-1.5 w-1.5">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400"></span>
+            </span>
+            <span id="headerTotalBadge" class="tabular-nums">12 Total Records</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Right: Live Search, Timeframe Dropdown ('All v'), Export CSV -->
+      <div class="flex items-center gap-2 sm:gap-2.5">
+        <!-- Search Input with '/' shortcut -->
+        <div class="relative hidden md:block w-60 lg:w-72">
+          <svg class="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input 
+            id="searchInput" 
+            type="text" 
+            placeholder="Search invoice, item, customer..." 
+            class="w-full pl-8 pr-8 py-1.5 rounded-xl bg-white/[0.035] hover:bg-white/[0.05] focus:bg-obsidian-850 border border-white/[0.08] focus:border-violet-500/45 text-xs text-white placeholder-slate-500 outline-none transition"
+          />
+          <kbd id="searchShortcutHint" class="absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.2 text-[10px] font-mono text-slate-400 bg-white/[0.05] border border-white/10 rounded pointer-events-none">/</kbd>
+        </div>
+
+        <!-- Timeframe / Sort Dropdown matching Screenshot's top-right 'All v' -->
+        <div class="relative" id="filterDropdownWrapper">
+          <button 
+            id="filterDropdownBtn" 
+            type="button" 
+            class="h-9 px-3.5 rounded-xl bg-obsidian-850/90 hover:bg-obsidian-800 border border-white/[0.1] hover:border-violet-400/35 text-xs font-medium text-slate-200 flex items-center gap-2 transition shadow-sm"
+            aria-haspopup="listbox"
+            aria-expanded="false"
+          >
+            <span id="selectedFilterLabel">All</span>
+            <svg class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" id="filterChevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+
+          <!-- Dropdown Menu -->
+          <div id="filterDropdownMenu" class="hidden absolute right-0 mt-2 w-44 rounded-xl bg-obsidian-850/95 backdrop-blur-2xl border border-white/12 shadow-2xl shadow-black/80 py-1.5 z-50">
+            <button type="button" data-filter="all" class="filter-option w-full px-3.5 py-2 text-left text-xs text-violet-300 bg-violet-500/10 font-medium flex items-center justify-between">
+              <span>All</span>
+              <span class="w-1.5 h-1.5 rounded-full bg-violet-400"></span>
+            </button>
+            <button type="button" data-filter="today" class="filter-option w-full px-3.5 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.06] flex items-center justify-between transition">
+              <span>Today</span>
+            </button>
+            <button type="button" data-filter="7days" class="filter-option w-full px-3.5 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.06] flex items-center justify-between transition">
+              <span>Last 7 Days</span>
+            </button>
+            <button type="button" data-filter="month" class="filter-option w-full px-3.5 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.06] flex items-center justify-between transition">
+              <span>This Month</span>
+            </button>
+            <div class="my-1 border-t border-white/[0.07]"></div>
+            <button type="button" data-filter="highest" class="filter-option w-full px-3.5 py-2 text-left text-xs text-slate-300 hover:bg-white/[0.06] flex items-center justify-between transition">
+              <span>Highest Value</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Subtle Ghost Export CSV Button -->
+        <button 
+          type="button" 
+          onclick="exportCSV()" 
+          class="h-9 px-3 rounded-xl bg-white/[0.025] hover:bg-white/[0.07] border border-white/[0.08] hover:border-white/[0.16] text-xs font-medium text-slate-300 hover:text-white inline-flex items-center gap-1.5 transition shrink-0"
+          title="Export filtered records to CSV"
+        >
+          <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span class="hidden sm:inline">Export CSV</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-24 space-y-5 sm:space-y-6">
+
+    <!-- Mobile Search Bar -->
+    <div class="md:hidden relative">
+      <svg class="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input 
+        id="mobileSearchInput" 
+        type="text" 
+        placeholder="Search invoice, item, customer..." 
+        class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-obsidian-850/80 border border-white/[0.08] focus:border-violet-500/45 text-xs text-white placeholder-slate-500 outline-none transition"
+      />
+    </div>
+
+    <!-- KPI Summary Strip (3 Compact Bento Mini-Cards) -->
+    <section class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4" aria-label="Sales Summary Metrics">
+      <!-- Total Revenue -->
+      <div class="rounded-2xl bg-obsidian-850/75 backdrop-blur-xl border border-white/[0.08] px-4 py-3.5 flex items-center justify-between">
+        <div>
+          <span class="text-[11px] font-medium uppercase tracking-wider text-slate-400">Total Revenue</span>
+          <p id="kpiRevenue" class="font-mono text-lg sm:text-xl font-semibold text-white tabular-nums mt-0.5">MMK 93,234</p>
+        </div>
+        <div class="w-9 h-9 rounded-xl bg-violet-500/12 border border-violet-400/20 flex items-center justify-center text-violet-300">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Completed Sales -->
+      <div class="rounded-2xl bg-obsidian-850/75 backdrop-blur-xl border border-white/[0.08] px-4 py-3.5 flex items-center justify-between">
+        <div>
+          <span class="text-[11px] font-medium uppercase tracking-wider text-slate-400">Completed Sales</span>
+          <div class="flex items-baseline gap-2 mt-0.5">
+            <p id="kpiSoldCount" class="font-mono text-lg sm:text-xl font-semibold text-emerald-300 tabular-nums">10</p>
+            <span class="text-[11px] text-emerald-400/80 font-medium">Already Sale</span>
+          </div>
+        </div>
+        <div class="w-9 h-9 rounded-xl bg-emerald-500/12 border border-emerald-400/20 flex items-center justify-center text-emerald-300">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Pending Orders -->
+      <div class="rounded-2xl bg-obsidian-850/75 backdrop-blur-xl border border-white/[0.08] px-4 py-3.5 flex items-center justify-between">
+        <div>
+          <span class="text-[11px] font-medium uppercase tracking-wider text-slate-400">Pending Orders</span>
+          <div class="flex items-baseline gap-2 mt-0.5">
+            <p id="kpiOrderCount" class="font-mono text-lg sm:text-xl font-semibold text-amber-300 tabular-nums">2</p>
+            <span class="text-[11px] text-amber-400/80 font-medium">Awaiting Fulfillment</span>
+          </div>
+        </div>
+        <div class="w-9 h-9 rounded-xl bg-amber-500/12 border border-amber-400/20 flex items-center justify-center text-amber-300">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- Segmented Pill Tab Bar: All (12) | Sold (10) | Order (2) -->
+    <nav class="p-1.5 rounded-2xl bg-obsidian-850/90 backdrop-blur-xl border border-white/[0.08] grid grid-cols-3 gap-1.5 shadow-lg shadow-black/40" aria-label="Transaction Status Tabs">
+      <button 
+        type="button" 
+        data-tab="all" 
+        id="tab-all"
+        class="tab-btn active-tab-pill py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold text-white transition-all duration-200 tabular-nums"
+      >
+        All (12)
+      </button>
+      <button 
+        type="button" 
+        data-tab="sold" 
+        id="tab-sold"
+        class="tab-btn py-2.5 px-3 rounded-xl text-xs sm:text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-white/[0.03] transition-all duration-200 tabular-nums"
+      >
+        Sold (10)
+      </button>
+      <button 
+        type="button" 
+        data-tab="order" 
+        id="tab-order"
+        class="tab-btn py-2.5 px-3 rounded-xl text-xs sm:text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-white/[0.03] transition-all duration-200 tabular-nums"
+      >
+        Order (2)
+      </button>
+    </nav>
+
+    <!-- Transaction / Invoice Cards Container -->
+    <section id="transactionsList" class="space-y-3" aria-label="Transaction Records">
+      <!-- Populated dynamically via JS -->
+    </section>
+
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- INVOICE / RECEIPT DETAIL SLIDE-OVER DRAWER                            -->
+  <!-- ===================================================================== -->
+  <div id="receiptBackdrop" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity duration-300" onclick="closeReceiptDrawer()"></div>
+  
+  <aside id="receiptDrawer" class="fixed top-0 right-0 h-full w-full max-w-md bg-obsidian-900/95 backdrop-blur-2xl border-l border-white/12 shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-out flex flex-col" aria-hidden="true">
+    <div id="receiptDrawerHeader" class="px-6 py-5 border-b border-white/[0.08] flex items-center justify-between"></div>
+    <div id="receiptDrawerBody" class="flex-1 overflow-y-auto p-6 space-y-5"></div>
+    <div id="receiptDrawerFooter" class="px-6 py-4 border-t border-white/[0.08] bg-obsidian-950/70 flex items-center justify-between gap-3"></div>
+  </aside>
+
+  <!-- ===================================================================== -->
+  <!-- TOAST NOTIFICATION CONTAINER (Copy feedback & Delete Undo)            -->
+  <!-- ===================================================================== -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 pointer-events-none"></div>
+
+  <script>
+    // --- 12 Realistic Records (Starting with the exact 4 visible in the screenshot) ---
+    let transactions = [
+      {
+        id: 'INV-3185390-81027',
+        item: 'T Shirt',
+        customerType: 'Customer',
+        staff: 'Myat Noe Hla',
+        qty: 1,
+        timestamp: 'Nov 21, 2026 7:36 PM',
+        dateBucket: '7days',
+        amount: 5000,
+        status: 'sold', // 'Already Sale'
+        iconType: 'drink',
+        notes: 'Counter walk-in sale • Paid in cash'
+      },
+      {
+        id: 'INV-3155390-52427',
+        item: 'Myat',
+        customerType: 'Customer',
+        staff: 'Myat Noe Hla',
+        qty: 1,
+        timestamp: 'Nov 17, 2026 3:08 PM',
+        dateBucket: '7days',
+        amount: 1000,
+        status: 'sold',
+        iconType: 'drink',
+        notes: 'Quick counter checkout'
+      },
+      {
+        id: 'INV-3125398-92377',
+        item: 'bbc',
+        customerType: 'Customer',
+        staff: 'Myat Noe Hla',
+        qty: 1,
+        timestamp: 'Nov 17, 2026 2:49 PM',
+        dateBucket: '7days',
+        amount: 2234,
+        status: 'sold',
+        iconType: 'drink',
+        notes: 'Express POS item entry'
+      },
+      {
+        id: 'INV-3125397-25397',
+        item: 'Cotton Hoodie',
+        customerType: 'Customer',
+        staff: 'Myat Noe Hla',
+        qty: 1,
+        timestamp: 'Nov 17, 2026 2:45 PM',
+        dateBucket: '7days',
+        amount: 18500,
+        status: 'sold',
+        iconType: 'bag',
+        notes: 'Charcoal Black • Size L'
+      },
+      {
+        id: 'INV-3190442-61890',
+        item: 'Iced Caramel Latte & Croissant',
+        customerType: 'Customer',
+        staff: 'Myat Noe Hla',
+        qty: 2,
+        timestamp: 'Nov 22, 2026 11:15 AM',
+        dateBucket: 'today',
+        amount: 9500,
+        status: 'order', // Pending Order #1
+        iconType: 'drink',
+        notes: 'Delivery rider pickup scheduled • Yangon Downtown'
+      },
+      {
+        id: 'INV-3189910-44102',
+        item: 'Linen Oversized Shirt',
+        customerType: 'Customer',
+        staff: 'Myat Noe Hla',
+        qty: 1,
+        timestamp: 'Nov 22, 2026 10:04 AM',
+        dateBucket: 'today',
+        amount: 24000,
+        status: 'order', // Pending Order #2
+        iconType: 'bag',
+        notes: 'Reserved via Viber • Awaiting KBZPay confirmation'
+      },
+      {
+        id: 'INV-3119820-77411',
+        item: 'Canvas Tote Bag',
+        customerType: 'Customer',
+        staff: 'Myat Noe Hla',
+        qty: 2,
+        timestamp: 'Nov 15, 2026 5:19 PM',
+        dateBucket: 'month',
+        amount: 7000,
+        status: 'sold',
+        iconType: 'bag',
+        notes: 'Natural ecru edition'
+      },
+      {
+        id: 'INV-3108411-30918',
+        item: 'Cold Brew Bottle (500ml)',
+        customerType: 'Customer',
+        staff: 'Myat Noe Hla',
+        qty: 3,
+        timestamp: 'Nov 14, 2026 1:42 PM',
+        dateBucket: 'month',
+        amount: 10500,
+        status: 'sold',
+        iconType: 'drink',
+        notes: 'Chilled pack x3'
+      },
+      {
+        id: 'INV-3094120-66503',
+        item: 'Minimalist Cap — Obsidian',
+        customerType: 'Customer',
+        staff: 'Myat Noe Hla',
+        qty: 1,
+        timestamp: 'Nov 12, 2026 4:10 PM',
+        dateBucket: 'month',
+        amount: 6500,
+        status: 'sold',
+        iconType: 'package',
+        notes: 'Adjustable strap'
+      },
+      {
+        id: 'INV-3081192-19482',
+        item: 'Matcha Espresso Fusion',
+        customerType: 'Customer',
+        staff: 'Myat Noe Hla',
+        qty: 1,
+        timestamp: 'Nov 10, 2026 6:22 PM',
+        dateBucket: 'month',
+        amount: 4200,
+        status: 'sold',
+        iconType: 'drink',
+        notes: 'Less ice'
+      },
+      {
+        id: 'INV-3069201-55210',
+        item: 'Denim Utility Jacket',
+        customerType: 'Customer',
+        staff: 'Myat Noe Hla',
+        qty: 1,
+        timestamp: 'Nov 08, 2026 2:05 PM',
+        dateBucket: 'month',
+        amount: 32000,
+        status: 'sold',
+        iconType: 'bag',
+        notes: 'In-store fitting room sale'
+      },
+      {
+        id: 'INV-3051109-88341',
+        item: 'Ceramic Travel Tumbler',
+        customerType: 'Customer',
+        staff: 'Myat Noe Hla',
+        qty: 1,
+        timestamp: 'Nov 05, 2026 11:50 AM',
+        dateBucket: 'month',
+        amount: 12800,
+        status: 'sold',
+        iconType: 'package',
+        notes: 'Gift boxed'
+      }
+    ];
+
+    // Calculate initial exact KPI totals
+    // Keep exact values dynamic as items are added/modified/deleted
+    let activeTab = 'all';
+    let activeDropdownFilter = 'all';
+    let searchQuery = '';
+    let lastDeletedRecord = null;
+    let lastDeletedIndex = -1;
+
+    // --- SVG Icons Matching Screenshot Aesthetic ---
+    function getItemIconSVG(type, status) {
+      const colorClass = status === 'sold' ? 'text-violet-300' : 'text-amber-300';
+      if (type === 'bag') {
+        return `<svg class="w-5 h-5 ${colorClass}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>
+        </svg>`;
+      }
+      if (type === 'package') {
+        return `<svg class="w-5 h-5 ${colorClass}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>
+        </svg>`;
+      }
+      // Default cup/straw icon matching the screenshot's left icon badge
+      return `<svg class="w-5 h-5 ${colorClass}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M6 8h11v9a4 4 0 0 1-4 4h-3a4 4 0 0 1-4-4Z"/><line x1="6" y1="2" x2="10" y2="8"/><line x1="6" y1="12" x2="17" y2="12"/>
+      </svg>`;
+    }
+
+    function formatMMK(num) {
+      return `MMK ${num.toLocaleString('en-US')}`;
+    }
+
+    // --- Update Live Counters & KPI Cards ---
+    function updateCountersAndKPIs() {
+      const totalCount = transactions.length;
+      const soldItems = transactions.filter(t => t.status === 'sold');
+      const orderItems = transactions.filter(t => t.status === 'order');
+
+      const totalRevenue = transactions.reduce((acc, t) => acc + t.amount, 0);
+
+      document.getElementById('tab-all').textContent = `All (${totalCount})`;
+      document.getElementById('tab-sold').textContent = `Sold (${soldItems.length})`;
+      document.getElementById('tab-order').textContent = `Order (${orderItems.length})`;
+
+      document.getElementById('headerTotalBadge').textContent = `${totalCount} Total Record${totalCount === 1 ? '' : 's'}`;
+      document.getElementById('kpiRevenue').textContent = formatMMK(totalRevenue);
+      document.getElementById('kpiSoldCount').textContent = soldItems.length;
+      document.getElementById('kpiOrderCount').textContent = orderItems.length;
+    }
+
+    // --- Filter & Render Transaction Cards ---
+    function renderTransactions() {
+      updateCountersAndKPIs();
+
+      let filtered = [...transactions];
+
+      // 1. Tab filter
+      if (activeTab === 'sold') {
+        filtered = filtered.filter(t => t.status === 'sold');
+      } else if (activeTab === 'order') {
+        filtered = filtered.filter(t => t.status === 'order');
+      }
+
+      // 2. Dropdown timeframe / sort filter
+      if (activeDropdownFilter === 'today') {
+        filtered = filtered.filter(t => t.dateBucket === 'today');
+      } else if (activeDropdownFilter === '7days') {
+        filtered = filtered.filter(t => t.dateBucket === 'today' || t.dateBucket === '7days');
+      } else if (activeDropdownFilter === 'month') {
+        filtered = filtered.filter(t => ['today', '7days', 'month'].includes(t.dateBucket));
+      } else if (activeDropdownFilter === 'highest') {
+        filtered.sort((a, b) => b.amount - a.amount);
+      }
+
+      // 3. Live Search filter
+      if (searchQuery.trim() !== '') {
+        const q = searchQuery.toLowerCase();
+        filtered = filtered.filter(t =>
+          t.id.toLowerCase().includes(q) ||
+          t.item.toLowerCase().includes(q) ||
+          t.staff.toLowerCase().includes(q) ||
+          t.customerType.toLowerCase().includes(q)
+        );
+      }
+
+      const container = document.getElementById('transactionsList');
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="rounded-2xl bg-obsidian-850/70 border border-white/[0.08] py-14 px-6 text-center space-y-3">
+            <div class="w-11 h-11 mx-auto rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-slate-400">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+            </div>
+            <p class="font-display text-sm font-semibold text-white">No matching transactions found</p>
+            <p class="text-xs text-slate-400 max-w-sm mx-auto">Try clearing your search filter or switching between All, Sold, and Order tabs.</p>
+            <button type="button" onclick="resetFilters()" class="mt-1 px-4 py-2 rounded-xl bg-violet-600/20 hover:bg-violet-600/30 border border-violet-500/30 text-xs font-medium text-violet-200 transition">
+              Reset Filters
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map((tx) => {
+        const isSold = tx.status === 'sold';
+        const statusBadge = isSold
+          ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shadow-[0_0_15px_-3px_rgba(16,185,129,0.35)]">
+               <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]"></span>
+               Already Sale
+             </span>`
+          : `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30 shadow-[0_0_15px_-3px_rgba(245,158,11,0.3)]">
+               <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+               Order
+             </span>`;
+
+        const iconBoxGradient = isSold
+          ? 'from-violet-500/15 via-slate-800/40 to-obsidian-900 border-violet-400/25'
+          : 'from-amber-500/15 via-slate-800/40 to-obsidian-900 border-amber-400/25';
+
+        return `
+          <article 
+            onclick="openReceiptDrawer('${tx.id}')"
+            class="spotlight-card group cursor-pointer rounded-2xl border border-white/[0.08] p-4 sm:px-5 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+            role="button"
+            tabindex="0"
+            aria-label="Invoice ${tx.id} for ${tx.item}"
+          >
+            <!-- Left & Primary Info Block -->
+            <div class="flex items-start sm:items-center gap-3.5 sm:gap-4 min-w-0">
+              <!-- Glass Icon Container -->
+              <div class="w-12 h-12 rounded-xl bg-gradient-to-br ${iconBoxGradient} border flex items-center justify-center shrink-0 shadow-inner group-hover:scale-105 transition-transform">
+                ${getItemIconSVG(tx.iconType, tx.status)}
+              </div>
+
+              <!-- Details Stack -->
+              <div class="min-w-0 space-y-1">
+                <!-- Invoice ID Pill with One-Click Copy -->
+                <div class="flex items-center gap-2">
+                  <button 
+                    type="button" 
+                    onclick="copyInvoiceId(event, '${tx.id}')" 
+                    class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/[0.04] hover:bg-violet-500/20 border border-white/[0.07] hover:border-violet-400/35 font-mono text-[11px] text-slate-400 hover:text-violet-200 tabular-nums transition"
+                    title="Click to copy Invoice ID"
+                  >
+                    <span>${tx.id}</span>
+                    <svg class="w-3 h-3 opacity-60 group-hover:opacity-100" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                    </svg>
+                  </button>
+                </div>
+
+                <!-- Product Title -->
+                <h2 class="font-display text-base font-bold text-white group-hover:text-violet-200 transition-colors truncate">
+                  ${tx.item}
+                </h2>
+
+                <!-- Inline Metadata: Customer badge • by Myat Noe Hla -->
+                <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-400">
+                  <span class="inline-flex items-center px-1.5 py-0.2 rounded bg-white/[0.05] border border-white/[0.07] text-[11px] font-medium text-slate-300">
+                    ${tx.customerType}
+                  </span>
+                  <span class="text-slate-600">•</span>
+                  <span class="italic text-slate-400">by ${tx.staff}</span>
+                </div>
+
+                <!-- Bottom Row: x1 Quantity Chip + Calendar Timestamp -->
+                <div class="flex flex-wrap items-center gap-2.5 pt-0.5 text-xs text-slate-400">
+                  <span class="px-1.5 py-0.5 rounded bg-violet-500/10 border border-violet-400/20 font-mono text-[11px] font-medium text-violet-300 tabular-nums">
+                    x${tx.qty}
+                  </span>
+                  <span class="inline-flex items-center gap-1.5 font-mono text-[11px] text-slate-400 tabular-nums">
+                    <svg class="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                    <span>${tx.timestamp}</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Financial & Action Column -->
+            <div class="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-3 pt-3 sm:pt-0 border-t sm:border-t-0 border-white/[0.06] shrink-0">
+              <!-- Top Right: Status Badge + Inspect Chevron + Delete Trash Action -->
+              <div class="flex items-center gap-2 order-2 sm:order-1">
+                ${statusBadge}
+                <span class="hidden sm:inline-flex w-7 h-7 rounded-lg bg-white/[0.03] group-hover:bg-white/[0.08] border border-white/[0.06] items-center justify-center text-slate-400 group-hover:text-white transition" title="Inspect Receipt">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                </span>
+                <button 
+                  type="button" 
+                  onclick="deleteTransaction(event, '${tx.id}')" 
+                  class="w-7 h-7 rounded-lg bg-rose-500/[0.06] hover:bg-rose-500/20 border border-rose-500/15 hover:border-rose-500/40 text-rose-400 hover:text-rose-300 flex items-center justify-center transition"
+                  title="Delete Record"
+                  aria-label="Delete ${tx.id}"
+                >
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Prominent Tabular MMK Currency Value -->
+              <div class="order-1 sm:order-2 font-mono text-base sm:text-lg font-semibold text-violet-300 group-hover:text-white tabular-nums tracking-tight transition-colors">
+                ${formatMMK(tx.amount)}
+              </div>
+            </div>
+          </article>
+        `;
+      }).join('');
+
+      attachSpotlightListeners();
+    }
+
+    // --- Cursor-Tracking Radial Spotlight Glow ---
+    function attachSpotlightListeners() {
+      document.querySelectorAll('.spotlight-card').forEach(card => {
+        card.addEventListener('mousemove', (e) => {
+          const rect = card.getBoundingClientRect();
+          card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+          card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+        });
+        card.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            card.click();
+          }
+        });
+      });
+    }
+
+    // --- Tab Switching Logic ---
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        activeTab = btn.dataset.tab;
+        document.querySelectorAll('.tab-btn').forEach(b => {
+          b.classList.remove('active-tab-pill', 'text-white', 'font-semibold');
+          b.classList.add('text-slate-400', 'font-medium');
+        });
+        btn.classList.add('active-tab-pill', 'text-white', 'font-semibold');
+        btn.classList.remove('text-slate-400', 'font-medium');
+        renderTransactions();
+      });
+    });
+
+    // --- Top-Right 'All v' Dropdown Logic ---
+    const filterDropdownBtn = document.getElementById('filterDropdownBtn');
+    const filterDropdownMenu = document.getElementById('filterDropdownMenu');
+    const filterChevron = document.getElementById('filterChevron');
+
+    filterDropdownBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isHidden = filterDropdownMenu.classList.contains('hidden');
+      filterDropdownMenu.classList.toggle('hidden');
+      filterChevron.classList.toggle('rotate-180', isHidden);
+    });
+
+    document.querySelectorAll('.filter-option').forEach(option => {
+      option.addEventListener('click', () => {
+        activeDropdownFilter = option.dataset.filter;
+        document.getElementById('selectedFilterLabel').textContent = option.querySelector('span').textContent;
+
+        document.querySelectorAll('.filter-option').forEach(opt => {
+          opt.classList.remove('text-violet-300', 'bg-violet-500/10', 'font-medium');
+          opt.classList.add('text-slate-300');
+          const dot = opt.querySelector('span:nth-child(2)');
+          if (dot) dot.remove();
+        });
+
+        option.classList.add('text-violet-300', 'bg-violet-500/10', 'font-medium');
+        option.classList.remove('text-slate-300');
+        option.insertAdjacentHTML('beforeend', '<span class="w-1.5 h-1.5 rounded-full bg-violet-400"></span>');
+
+        filterDropdownMenu.classList.add('hidden');
+        filterChevron.classList.remove('rotate-180');
+        renderTransactions();
+      });
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!document.getElementById('filterDropdownWrapper').contains(e.target)) {
+        filterDropdownMenu.classList.add('hidden');
+        filterChevron.classList.remove('rotate-180');
+      }
+    });
+
+    // --- Live Search & '/' Keyboard Shortcut ---
+    const searchInput = document.getElementById('searchInput');
+    const mobileSearchInput = document.getElementById('mobileSearchInput');
+
+    searchInput.addEventListener('input', (e) => {
+      searchQuery = e.target.value;
+      mobileSearchInput.value = searchQuery;
+      renderTransactions();
+    });
+
+    mobileSearchInput.addEventListener('input', (e) => {
+      searchQuery = e.target.value;
+      searchInput.value = searchQuery;
+      renderTransactions();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === '/' && document.activeElement !== searchInput && document.activeElement !== mobileSearchInput) {
+        e.preventDefault();
+        searchInput.focus();
+      }
+      if (e.key === 'Escape') {
+        closeReceiptDrawer();
+        filterDropdownMenu.classList.add('hidden');
+        filterChevron.classList.remove('rotate-180');
+      }
+    });
+
+    function resetFilters() {
+      activeTab = 'all';
+      activeDropdownFilter = 'all';
+      searchQuery = '';
+      searchInput.value = '';
+      mobileSearchInput.value = '';
+      document.getElementById('selectedFilterLabel').textContent = 'All';
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('active-tab-pill', 'text-white', 'font-semibold');
+        b.classList.add('text-slate-400', 'font-medium');
+      });
+      const allTab = document.getElementById('tab-all');
+      allTab.classList.add('active-tab-pill', 'text-white', 'font-semibold');
+      allTab.classList.remove('text-slate-400', 'font-medium');
+      renderTransactions();
+    }
+
+    // --- One-Click Copy Invoice ID (Using execCommand fallback for iFrames) ---
+    function copyInvoiceId(event, invoiceId) {
+      event.stopPropagation();
+      const tempInput = document.createElement('textarea');
+      tempInput.value = invoiceId;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      try {
+        document.execCommand('copy');
+        showToast(`Copied ${invoiceId}`, 'info');
+      } catch (err) {
+        showToast(`Invoice ID: ${invoiceId}`, 'info');
+      }
+      document.body.removeChild(tempInput);
+    }
+
+    // --- Delete Transaction with Undo Toast ---
+    function deleteTransaction(event, invoiceId) {
+      event.stopPropagation();
+      const idx = transactions.findIndex(t => t.id === invoiceId);
+      if (idx === -1) return;
+
+      lastDeletedRecord = transactions[idx];
+      lastDeletedIndex = idx;
+      transactions.splice(idx, 1);
+
+      renderTransactions();
+      showUndoToast(`Deleted ${invoiceId}`);
+    }
+
+    function undoLastDelete() {
+      if (!lastDeletedRecord) return;
+      const insertAt = Math.min(Math.max(0, lastDeletedIndex), transactions.length);
+      transactions.splice(insertAt, 0, lastDeletedRecord);
+      const restoredId = lastDeletedRecord.id;
+      lastDeletedRecord = null;
+      lastDeletedIndex = -1;
+      renderTransactions();
+      showToast(`Restored ${restoredId}`, 'success');
+    }
+
+    // --- Digital Receipt Slide-Over Drawer ---
+    const receiptBackdrop = document.getElementById('receiptBackdrop');
+    const receiptDrawer = document.getElementById('receiptDrawer');
+
+    function openReceiptDrawer(invoiceId) {
+      const tx = transactions.find(t => t.id === invoiceId);
+      if (!tx) return;
+
+      const isSold = tx.status === 'sold';
+      const unitPrice = Math.round(tx.amount / tx.qty);
+
+      document.getElementById('receiptDrawerHeader').innerHTML = `
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-violet-500/15 border border-violet-400/30 flex items-center justify-center text-violet-300">
+            ${getItemIconSVG(tx.iconType, tx.status)}
+          </div>
+          <div>
+            <span class="font-mono text-[11px] text-slate-400">${tx.id}</span>
+            <h3 class="font-display font-bold text-base text-white">Digital Receipt</h3>
+          </div>
+        </div>
+        <button type="button" onclick="closeReceiptDrawer()" class="p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] text-slate-400 hover:text-white transition">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      `;
+
+      document.getElementById('receiptDrawerBody').innerHTML = `
+        <!-- Status Banner -->
+        <div class="rounded-2xl p-4 border ${isSold ? 'bg-emerald-500/[0.07] border-emerald-500/25' : 'bg-amber-500/[0.07] border-amber-500/25'} flex items-center justify-between">
+          <div>
+            <span class="text-[11px] uppercase tracking-wider font-semibold ${isSold ? 'text-emerald-300' : 'text-amber-300'}">Transaction Status</span>
+            <p class="text-sm font-semibold text-white mt-0.5">${isSold ? 'Already Sale (Settled)' : 'Pending Order'}</p>
+          </div>
+          <button 
+            type="button" 
+            onclick="toggleTransactionStatus('${tx.id}')" 
+            class="px-3 py-1.5 rounded-xl text-xs font-semibold ${isSold ? 'bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/10' : 'bg-emerald-500 hover:bg-emerald-400 text-obsidian-950 shadow-lg shadow-emerald-500/20'} transition"
+          >
+            ${isSold ? 'Revert to Order' : 'Mark as Already Sale'}
+          </button>
+        </div>
+
+        <!-- Line Item Breakdown -->
+        <div class="rounded-2xl bg-white/[0.03] border border-white/[0.08] p-4 space-y-3.5">
+          <div class="flex items-start justify-between gap-3 pb-3 border-b border-white/[0.07]">
+            <div>
+              <p class="text-xs text-slate-400">Item Name</p>
+              <p class="font-display text-base font-bold text-white mt-0.5">${tx.item}</p>
+            </div>
+            <span class="px-2 py-0.5 rounded bg-violet-500/15 border border-violet-400/25 font-mono text-xs text-violet-200 tabular-nums">
+              x${tx.qty}
+            </span>
+          </div>
+
+          <div class="space-y-2 text-xs">
+            <div class="flex justify-between">
+              <span class="text-slate-400">Unit Price</span>
+              <span class="font-mono text-slate-200 tabular-nums">${formatMMK(unitPrice)}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">Quantity</span>
+              <span class="font-mono text-slate-200 tabular-nums">${tx.qty}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">Customer Type</span>
+              <span class="text-slate-200 font-medium">${tx.customerType}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">Recorded By</span>
+              <span class="text-slate-200 italic">by ${tx.staff}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">Timestamp</span>
+              <span class="font-mono text-slate-300 tabular-nums">${tx.timestamp}</span>
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-white/[0.08] flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Amount</span>
+            <span class="font-mono text-xl font-bold text-violet-300 tabular-nums">${formatMMK(tx.amount)}</span>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="rounded-2xl bg-white/[0.02] border border-white/[0.07] p-4">
+          <span class="text-[11px] font-medium uppercase tracking-wider text-slate-400">Order Notes</span>
+          <p class="text-xs text-slate-300 mt-1 leading-relaxed">${tx.notes}</p>
+        </div>
+      `;
+
+      document.getElementById('receiptDrawerFooter').innerHTML = `
+        <button type="button" onclick="copyInvoiceId(event, '${tx.id}')" class="px-4 py-2.5 rounded-xl text-xs font-medium text-slate-200 bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 transition">
+          Copy Invoice ID
+        </button>
+        <button type="button" onclick="closeReceiptDrawer(); showToast('Receipt formatted for thermal printer', 'success')" class="px-5 py-2.5 rounded-xl text-xs font-semibold text-white active-tab-pill transition">
+          Print Receipt
+        </button>
+      `;
+
+      receiptBackdrop.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        receiptBackdrop.classList.remove('opacity-0');
+        receiptDrawer.classList.remove('translate-x-full');
+        receiptDrawer.setAttribute('aria-hidden', 'false');
+      });
+    }
+
+    function toggleTransactionStatus(invoiceId) {
+      const tx = transactions.find(t => t.id === invoiceId);
+      if (!tx) return;
+      tx.status = tx.status === 'sold' ? 'order' : 'sold';
+      renderTransactions();
+      openReceiptDrawer(invoiceId);
+      showToast(`${tx.id} updated to ${tx.status === 'sold' ? 'Already Sale' : 'Order'}`, 'success');
+    }
+
+    function closeReceiptDrawer() {
+      receiptBackdrop.classList.add('opacity-0');
+      receiptDrawer.classList.add('translate-x-full');
+      receiptDrawer.setAttribute('aria-hidden', 'true');
+      setTimeout(() => {
+        receiptBackdrop.classList.add('hidden');
+      }, 300);
+    }
+
+    // --- Export CSV Action ---
+    function exportCSV() {
+      const headers = ['Invoice ID', 'Item', 'Customer Type', 'Staff', 'Quantity', 'Timestamp', 'Amount (MMK)', 'Status'];
+      const rows = transactions.map(t => [
+        t.id,
+        `"${t.item.replace(/"/g, '""')}"`,
+        t.customerType,
+        `"${t.staff}"`,
+        t.qty,
+        `"${t.timestamp}"`,
+        t.amount,
+        t.status === 'sold' ? 'Already Sale' : 'Order'
+      ]);
+      const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'sales_orders_history.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      showToast(`Exported ${transactions.length} records to CSV`, 'success');
+    }
+
+    // --- Non-Blocking Toast Feedback & Undo Toast ---
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      const dotColor = type === 'success' ? 'bg-emerald-400' : 'bg-violet-400';
+
+      toast.className = 'pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl bg-obsidian-850/95 backdrop-blur-xl border border-white/15 shadow-2xl text-xs font-medium text-slate-100 transform translate-y-2 opacity-0 transition-all duration-300';
+      toast.innerHTML = `
+        <span class="w-2 h-2 rounded-full ${dotColor} shrink-0"></span>
+        <span>${message}</span>
+      `;
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => toast.classList.remove('translate-y-2', 'opacity-0'));
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    function showUndoToast(message) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+
+      toast.className = 'pointer-events-auto flex items-center justify-between gap-4 px-4 py-3 rounded-xl bg-obsidian-850/95 backdrop-blur-xl border border-rose-500/30 shadow-2xl text-xs font-medium text-slate-100 transform translate-y-2 opacity-0 transition-all duration-300';
+      toast.innerHTML = `
+        <div class="flex items-center gap-2.5">
+          <span class="w-2 h-2 rounded-full bg-rose-400 shrink-0"></span>
+          <span>${message}</span>
+        </div>
+        <button type="button" class="px-2.5 py-1 rounded-lg bg-violet-500/20 hover:bg-violet-500/35 border border-violet-400/30 text-violet-200 font-semibold transition">
+          Undo
+        </button>
+      `;
+
+      toast.querySelector('button').addEventListener('click', () => {
+        undoLastDelete();
+        toast.remove();
+      });
+
+      container.appendChild(toast);
+      requestAnimationFrame(() => toast.classList.remove('translate-y-2', 'opacity-0'));
+
+      setTimeout(() => {
+        if (toast.parentElement) {
+          toast.classList.add('opacity-0', 'translate-y-2');
+          setTimeout(() => toast.remove(), 300);
+        }
+      }, 4500);
+    }
+
+    // Initial Render
+    renderTransactions();
+  </script>
+</body>
+</html>

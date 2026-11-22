@@ -139,7 +139,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final p = context.palette;
     return LayoutBuilder(
       builder: (ctx, constraints) {
         final isWide = constraints.maxWidth >= 768;
@@ -147,7 +146,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
         if (isWide) {
           return Scaffold(
-            backgroundColor: p.surface,
+            backgroundColor: Colors.transparent,
             floatingActionButton: FloatingActionButton(
               onPressed: _openAddCategory,
               backgroundColor: AppColors.teal,
@@ -158,7 +157,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
         }
 
         return Scaffold(
-          backgroundColor: p.surface,
+          backgroundColor: Colors.transparent,
           floatingActionButton: FloatingActionButton(
             onPressed: _openAddCategory,
             backgroundColor: AppColors.teal,
