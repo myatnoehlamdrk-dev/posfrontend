@@ -1,0 +1,6 @@
+"$schema" = "https://open-api.netlify.com/netlify.schema.json"
+
+[build]
+  base = "."
+  publish = "build/web"
+  command = "bash ./build.sh"
