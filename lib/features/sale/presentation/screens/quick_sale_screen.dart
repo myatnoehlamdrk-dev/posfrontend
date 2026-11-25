@@ -1153,10 +1153,12 @@ class _QuickSaleCardState extends State<_QuickSaleCard> {
       ),
       child: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w700,
-          color: Colors.white,
+          // Use the caller's foreground. Hardcoding white made the stock badge
+          // unreadable in light mode, where the pill sits on a pale green fill.
+          color: color,
         ),
       ),
     );

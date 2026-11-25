@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:posfrontend/shared/theme/palette_x.dart';
 
 /// Product/category image that survives app restarts *and* flaky networks.
 ///
@@ -108,8 +109,17 @@ class _CachedProductImageState extends State<CachedProductImage> {
     }
   }
 
-  Widget _fallback() =>
-      widget.errorWidget ?? const Icon(Icons.broken_image_outlined);
+  /// The last-resort placeholder. Dark mode keeps the theme default; in light
+  /// mode the glyph is pinned to the palette's secondary text so it cannot be
+  /// washed out by a pale surrounding chip.
+  Widget _fallback(BuildContext context) =>
+      widget.errorWidget ??
+      (context.isDark
+          ? const Icon(Icons.broken_image_outlined)
+          : Icon(
+              Icons.broken_image_outlined,
+              color: context.palette.textSecondary,
+            ));
 
   @override
   Widget build(BuildContext context) {
@@ -130,7 +140,7 @@ class _CachedProductImageState extends State<CachedProductImage> {
         cacheWidth: widget.memCacheWidth ?? 400,
         errorBuilder: (_, _, _) {
           _scheduleRetry();
-          return _fallback();
+          return _fallback(context);
         },
       );
     }
@@ -156,7 +166,7 @@ class _CachedProductImageState extends State<CachedProductImage> {
               ),
       errorWidget: (_, _, _) {
         _scheduleRetry();
-        return _fallback();
+        return _fallback(context);
       },
     );
   }

@@ -126,7 +126,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
   /// that `appInputDecoration` also uses it for input outlines, which *are*
   /// components — see the note on that widget.
   static const AppPalette light = AppPalette(
-    scaffoldBg: Color(0xFFF8F9FC),
+    scaffoldBg: Color(0xFFE9ECEF),
     surface: Color(0xFFFFFFFF),
     surfaceAlt: Color(0xFFF9FAFB),
     chipBg: Color(0xFFF3F4F6),

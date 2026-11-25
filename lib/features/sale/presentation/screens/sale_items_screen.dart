@@ -14,6 +14,7 @@ import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/app_shell.dart';
 import 'package:posfrontend/shared/widgets/error_retry_view.dart';
 import 'package:posfrontend/shared/widgets/filter_tabs.dart';
+import 'package:posfrontend/shared/widgets/filter_transition.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
@@ -131,7 +132,10 @@ class _SaleItemScreenState extends State<SaleItemScreen>
                 ),
               ),
               Expanded(
-                child: _buildBody(),
+                child: FilterTransition(
+                  filterKey: '${_viewModel.selectedTab}_${_viewModel.selectedYear}',
+                  child: _buildBody(),
+                ),
               ),
             ],
           ),

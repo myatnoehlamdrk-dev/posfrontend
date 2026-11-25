@@ -30,6 +30,17 @@ class HorizontalAccordionSlider extends StatefulWidget {
   final ValueChanged<int>? onActiveChanged;
   final int maxItems;
 
+  /// Hide the "1 / 1" counter when one image is shown as a hero rather than as
+  /// part of a real carousel (the product detail page).
+  final bool showSlideIndicator;
+
+  /// Paint the dark photographic scrim. Product detail shows the original,
+  /// undimmed image and uses themed text panels instead.
+  final bool dimImage;
+
+  /// Override the active slide's button label, e.g. "Update" on product detail.
+  final String? actionLabel;
+
   const HorizontalAccordionSlider({
     super.key,
     required this.items,
@@ -37,6 +48,9 @@ class HorizontalAccordionSlider extends StatefulWidget {
     this.initialActiveIndex = 0,
     this.onActiveChanged,
     this.maxItems = 7,
+    this.showSlideIndicator = true,
+    this.dimImage = true,
+    this.actionLabel,
   });
 
   @override
@@ -99,22 +113,65 @@ class _HorizontalAccordionSliderState
           )
         : _errorTile(accent);
 
-    final overlayFill = Positioned.fill(
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.transparent,
-              Colors.black.withValues(alpha: active ? 0.75 : 0.55),
-              Colors.black.withValues(alpha: active ? 0.85 : 0.65),
-            ],
-            stops: const [0.0, 0.6, 1.0],
-          ),
-        ),
-      ),
-    );
+    final overlayFill = widget.dimImage
+        ? Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: active ? 0.75 : 0.55),
+                    Colors.black.withValues(alpha: active ? 0.85 : 0.65),
+                  ],
+                  stops: const [0.0, 0.6, 1.0],
+                ),
+              ),
+            ),
+          )
+        : const SizedBox.shrink();
+
+    // Without the scrim the brand reads straight off the photo, with a soft
+    // shadow for contrast instead of a block covering part of the image.
+    final brand = widget.dimImage
+        ? ShaderMask(
+            shaderCallback: (bounds) => LinearGradient(
+              colors: [accent, Colors.white],
+            ).createShader(bounds),
+            child: Text(
+              item.brand ?? 'Brand',
+              style: GoogleFonts.pacifico(
+                fontSize: 18,
+                fontWeight: FontWeight.w400,
+                color: Colors.white,
+                letterSpacing: 0.8,
+                shadows: [
+                  Shadow(
+                    color: Colors.black.withValues(alpha: 0.5),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+            ),
+          )
+        : Text(
+            item.brand ?? 'Brand',
+            style: GoogleFonts.pacifico(
+              fontSize: 18,
+              fontWeight: FontWeight.w400,
+              letterSpacing: 0.8,
+              color: context.isDark ? Colors.white : const Color(0xFF111827),
+              shadows: [
+                Shadow(
+                  color: Colors.black.withValues(alpha: 0.55),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+          );
 
     return Container(
       decoration: BoxDecoration(
@@ -148,75 +205,60 @@ class _HorizontalAccordionSliderState
             image,
             overlayFill,
             // Top-right: branch name + slide indicator
-            Positioned(
-              top: 16,
-              right: 16,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  // Branch signature
-                  ShaderMask(
-                    shaderCallback: (bounds) => LinearGradient(
-                      colors: [accent, Colors.white],
-                    ).createShader(bounds),
-                    child: Text(
-                      item.brand ?? 'Brand',
-                      style: GoogleFonts.pacifico(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.white,
-                        letterSpacing: 0.8,
-                        shadows: [
-                          Shadow(
-                            color: Colors.black.withValues(alpha: 0.5),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+            if (item.brand != null || widget.dimImage || widget.showSlideIndicator)
+              Positioned(
+                top: 16,
+                right: 16,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    brand,
+                    if (widget.showSlideIndicator) ...[
+                      const SizedBox(height: 10),
+                      // Slide indicator: 1 / 3
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: accent.withValues(alpha: 0.6)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '${index + 1}',
+                              style: GoogleFonts.spaceGrotesk(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: accent,
+                                letterSpacing: 0.4,
+                              ),
+                            ),
+                            Text(
+                              ' / $totalItems',
+                              style: GoogleFonts.spaceGrotesk(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white.withValues(alpha: 0.8),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  // Slide indicator: 1 / 3
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: accent.withValues(alpha: 0.6)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '${index + 1}',
-                          style: GoogleFonts.spaceGrotesk(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                            color: accent,
-                            letterSpacing: 0.4,
-                          ),
-                        ),
-                        Text(
-                          ' / $totalItems',
-                          style: GoogleFonts.spaceGrotesk(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white.withValues(alpha: 0.8),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                    ],
+                  ],
+                ),
               ),
-            ),
             if (active)
               Positioned(
                 left: 20,
                 right: 20,
                 bottom: 20,
-                child: _activeOverlay(item, accent),
+                child: _activeOverlay(item, accent, !widget.dimImage),
               ),
           ],
         ),
@@ -224,20 +266,77 @@ class _HorizontalAccordionSliderState
     );
   }
 
+  /// Stand-in for a slide with no photo.
+  ///
+  /// Dark mode already read well, so it keeps its original treatment. In light
+  /// mode the same faint accent tint made the glyph almost invisible; there it
+  /// gets a solid contrasting badge and a darkened accent icon.
   Widget _errorTile(Color accent) {
+    if (context.isDark) {
+      return Container(
+        color: accent.withValues(alpha: 0.12),
+        child: Center(
+          child: Icon(
+            Icons.image_not_supported_outlined,
+            color: accent.withValues(alpha: 0.8),
+            size: 44,
+          ),
+        ),
+      );
+    }
+
+    final iconColor = Color.lerp(accent, Colors.black, 0.6)!;
     return Container(
-      color: accent.withValues(alpha: 0.12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Color.lerp(accent, Colors.white, 0.9)!,
+            Color.lerp(accent, Colors.white, 0.78)!,
+          ],
+        ),
+      ),
       child: Center(
-        child: Icon(
-          Icons.image_not_supported_outlined,
-          color: accent.withValues(alpha: 0.8),
-          size: 44,
+        child: Container(
+          width: 76,
+          height: 76,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.9),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: accent.withValues(alpha: 0.7)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 14,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Icon(
+            Icons.image_not_supported_outlined,
+            color: iconColor,
+            size: 40,
+          ),
         ),
       ),
     );
   }
 
-Widget _activeOverlay(HorizontalAccordionSlide item, Color accent) {
+  Widget _activeOverlay(
+    HorizontalAccordionSlide item,
+    Color accent,
+    bool plain,
+  ) {
+    final p = context.palette;
+    final subtitleColor = plain ? p.accentText : accent;
+    final titleColor = plain ? p.textPrimary : Colors.white;
+    final priceColor = plain ? p.primary : Colors.white;
+    final onImageShadows = <Shadow>[
+      Shadow(
+        color: Colors.black.withValues(alpha: 0.7),
+        blurRadius: 6,
+        offset: const Offset(0, 3),
+      ),
+    ];
     final children = <Widget>[
       if (item.subtitle != null && item.subtitle!.isNotEmpty) ...[
         SlideTransition(
@@ -260,8 +359,9 @@ Widget _activeOverlay(HorizontalAccordionSlide item, Color accent) {
               style: GoogleFonts.spaceGrotesk(
                 fontSize: AppTypography.labelSmallSize,
                 fontWeight: FontWeight.w700,
-                color: accent,
+                color: subtitleColor,
                 letterSpacing: 0.8,
+                shadows: plain ? onImageShadows : null,
               ),
             ),
           ),
@@ -288,16 +388,10 @@ Widget _activeOverlay(HorizontalAccordionSlide item, Color accent) {
             style: GoogleFonts.bebasNeue(
               fontSize: AppTypography.titleLargeSize + 4,
               fontWeight: FontWeight.w900,
-              color: Colors.white,
+              color: titleColor,
               height: 1.05,
               letterSpacing: 1.2,
-              shadows: [
-                Shadow(
-                  color: Colors.black.withValues(alpha: 0.7),
-                  blurRadius: 6,
-                  offset: const Offset(0, 3),
-                ),
-              ],
+              shadows: onImageShadows,
             ),
           ),
         ),
@@ -322,14 +416,8 @@ Widget _activeOverlay(HorizontalAccordionSlide item, Color accent) {
               style: GoogleFonts.spaceMono(
                 fontSize: AppTypography.titleLargeSize + 2,
                 fontWeight: FontWeight.w700,
-                color: Colors.white,
-                shadows: [
-                  Shadow(
-                    color: Colors.black.withValues(alpha: 0.7),
-                    blurRadius: 6,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
+                color: priceColor,
+                shadows: onImageShadows,
               ),
             ),
           ),
@@ -366,18 +454,21 @@ Widget _activeOverlay(HorizontalAccordionSlide item, Color accent) {
                   letterSpacing: 0.8,
                 ),
               ),
-              child: const Text('View Details'),
+              child: Text(widget.actionLabel ?? 'View Details'),
             ),
           ),
         ),
       ),
     ];
 
-    return Column(
+    final overlay = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: children,
     );
+    // No panel behind the copy: the photo stays fully visible, and contrast
+    // comes from the text colours and their soft shadows instead.
+    return overlay;
   }
 
   @override

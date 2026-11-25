@@ -94,9 +94,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
           ),
           if (widget.existingProduct == null) ...[
             const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: _modeSwitch(),
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1120),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: _modeSwitch(),
+                ),
+              ),
             ),
           ],
           const SizedBox(height: 16),
@@ -182,34 +187,41 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   Widget _purchasePage() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            context.l10n.t('Search Purchase Item'),
-            style: TextStyle(
-              fontSize: AppTypography.bodyLargeSize,
-              fontWeight: FontWeight.w600,
-              color: context.palette.textPrimary,
-            ),
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1120),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                context.l10n.t('Search Purchase Item'),
+                style: TextStyle(
+                  fontSize: AppTypography.bodyLargeSize,
+                  fontWeight: FontWeight.w600,
+                  color: context.palette.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                context.l10n.t(
+                  'Pick a pending purchase item to copy its name, stock, price and supplier into the form. It is marked completed once the product is created.',
+                ),
+                style: TextStyle(
+                  fontSize: AppTypography.labelMediumSize,
+                  color: context.palette.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: PurchaseItemPickerView(
+                  onSelected: _onPurchaseItemSelected,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            context.l10n.t(
-              'Pick a pending purchase item to copy its name, stock, price and supplier into the form. It is marked completed once the product is created.',
-            ),
-            style: TextStyle(
-              fontSize: AppTypography.labelMediumSize,
-              color: context.palette.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: PurchaseItemPickerView(onSelected: _onPurchaseItemSelected),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -240,48 +252,99 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   Widget _normalForm() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          FormCard(
-            label: context.l10n.t('Inventory Type'),
-            helper: context.l10n.t(
-              'Choose which inventory this product belongs to.',
-            ),
-            child: _inventoryTypeDropdown(),
-          ),
-          const SizedBox(height: 16),
-          FormCard(
-            label: context.l10n.t('Product Image'),
-            helper: context.l10n.t('Upload a product photo from your device.'),
-            child: _imageSection(),
-          ),
-          const SizedBox(height: 16),
-          FormCard(label: context.l10n.t('Basic Info'), child: _basicInfo()),
-          const SizedBox(height: 16),
-          FormCard(
-            label: context.l10n.t('Category & Package'),
-            child: _categoryPackage(),
-          ),
-          const SizedBox(height: 16),
-          FormCard(
-            label: context.l10n.t('Variants, Stock & Price'),
-            helper: context.l10n.t(
-              'Split total stock into sizes and colors. Each variant has its own quantity, cost and price.',
-            ),
-            child: _variantsSection(),
-          ),
-          const SizedBox(height: 16),
-          FormCard(
-            label: context.l10n.t('Supply Chain'),
-            helper: context.l10n.t('Supplier is optional.'),
-            child: _supplyChain(),
-          ),
-          const SizedBox(height: 100),
-        ],
+    final cards = <Widget>[
+      FormCard(
+        label: context.l10n.t('Inventory Type'),
+        helper: context.l10n.t(
+          'Choose which inventory this product belongs to.',
+        ),
+        child: _inventoryTypeDropdown(),
       ),
+      FormCard(
+        label: context.l10n.t('Product Image'),
+        helper: context.l10n.t('Upload a product photo from your device.'),
+        child: _imageSection(),
+      ),
+      FormCard(label: context.l10n.t('Basic Info'), child: _basicInfo()),
+      FormCard(
+        label: context.l10n.t('Category & Package'),
+        child: _categoryPackage(),
+      ),
+      FormCard(
+        label: context.l10n.t('Variants, Stock & Price'),
+        helper: context.l10n.t(
+          'Split total stock into sizes and colors. Each variant has its own quantity, cost and price.',
+        ),
+        child: _variantsSection(),
+      ),
+      FormCard(
+        label: context.l10n.t('Supply Chain'),
+        helper: context.l10n.t('Supplier is optional.'),
+        child: _supplyChain(),
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Desktop: two balanced columns inside a capped width, so the form
+        // reads as a modern settings page instead of a mobile strip stretched
+        // across the monitor. Narrow windows keep the single scrolling column.
+        final wide = constraints.maxWidth >= 900;
+        if (!wide) {
+          return SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final card in cards) ...[
+                  card,
+                  const SizedBox(height: 16),
+                ],
+                const SizedBox(height: 84),
+              ],
+            ),
+          );
+        }
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1120),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        cards[0],
+                        const SizedBox(height: 20),
+                        cards[1],
+                        const SizedBox(height: 20),
+                        cards[2],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        cards[3],
+                        const SizedBox(height: 20),
+                        cards[4],
+                        const SizedBox(height: 20),
+                        cards[5],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 

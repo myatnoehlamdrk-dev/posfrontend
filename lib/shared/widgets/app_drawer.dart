@@ -126,10 +126,35 @@ enum DrawerDestination {
   };
 }
 
-class AppDrawer extends StatelessWidget {
+class AppDrawer extends StatefulWidget {
   final DrawerDestination active;
 
   const AppDrawer({super.key, this.active = DrawerDestination.dashboard});
+
+  @override
+  State<AppDrawer> createState() => _AppDrawerState();
+}
+
+class _AppDrawerState extends State<AppDrawer>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  DrawerDestination get active => widget.active;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 480),
+    )..forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -142,80 +167,160 @@ class AppDrawer extends StatelessWidget {
           children: [
             Container(
               width: double.infinity,
-              padding: EdgeInsets.fromLTRB(
-                20,
-                MediaQuery.of(context).padding.top + 16,
-                20,
-                20,
-              ),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
                   colors: AppColors.brandRamp,
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(24),
+                  bottomRight: Radius.circular(24),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.brandPurple.withValues(alpha: 0.35),
+                    blurRadius: 24,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
               ),
-              child: Row(
+              child: Stack(
                 children: [
-                  const Icon(Icons.storefront_rounded, color: Colors.white, size: 42),
-                  const SizedBox(width: 8),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text.rich(
-                        TextSpan(
+                  Positioned(
+                    right: -30,
+                    top: -40,
+                    child: Container(
+                      width: 130,
+                      height: 130,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.10),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    right: 24,
+                    bottom: -50,
+                    child: Container(
+                      width: 90,
+                      height: 90,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.06),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      20,
+                      MediaQuery.of(context).padding.top + 20,
+                      20,
+                      22,
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.25),
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.storefront_rounded,
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            TextSpan(
-                              text: 'smart',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
+                            Text.rich(
+                              TextSpan(
+                                children: [
+                                  TextSpan(
+                                    text: 'smart',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text: 'pos',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const TextSpan(
+                                    text: '.',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ],
+                              ),
+                              style: const TextStyle(
+                                fontSize: AppTypography.titleLargeSize,
+                                letterSpacing: -1,
+                                height: 1,
                               ),
                             ),
-                            TextSpan(
-                              text: 'pos',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white,
+                            const SizedBox(height: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
                               ),
-                            ),
-                            const TextSpan(
-                              text: '.',
-                              style: TextStyle(color: Colors.white),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.16),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                active.localized(context.l10n),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: AppTypography.labelSmallSize,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
                           ],
                         ),
-                        style: const TextStyle(
-                          fontSize: AppTypography.titleLargeSize,
-                          letterSpacing: -1,
-                          height: 1,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        active.label,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: AppTypography.labelSmallSize,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 8,
-                  horizontal: 12,
-                ),
-                child: Column(
-                  children: [
-                    for (final destination in DrawerDestination.values)
-                      if (destination.showInDrawer)
-                        _navItem(context, destination),
-                  ],
+              child: Scrollbar(
+                child: SingleChildScrollView(
+                  // Extra room at the bottom so the last destination can scroll
+                  // fully clear of the divider instead of being clipped against
+                  // the Logout row.
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8, bottom: 6),
+                        child: Text(
+                          'MENU',
+                          style: TextStyle(
+                            color: p.textMuted,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.4,
+                          ),
+                        ),
+                      ),
+                      ..._buildNavItems(context),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -228,6 +333,37 @@ class AppDrawer extends StatelessWidget {
     );
   }
 
+  /// Builds the visible destinations, each fading and sliding in a little
+  /// after the one above it so the drawer opens with a gentle cascade rather
+  /// than all at once.
+  List<Widget> _buildNavItems(BuildContext context) {
+    final visible = DrawerDestination.values
+        .where((d) => d.showInDrawer)
+        .toList();
+    final items = <Widget>[];
+    for (var i = 0; i < visible.length; i++) {
+      final start = (i * 0.06).clamp(0.0, 0.5);
+      final animation = CurvedAnimation(
+        parent: _controller,
+        curve: Interval(start, (start + 0.5).clamp(0.0, 1.0),
+            curve: Curves.easeOutCubic),
+      );
+      items.add(
+        FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(-0.12, 0),
+              end: Offset.zero,
+            ).animate(animation),
+            child: _navItem(context, visible[i]),
+          ),
+        ),
+      );
+    }
+    return items;
+  }
+
   Widget _navItem(BuildContext context, DrawerDestination destination) {
     final p = context.palette;
     final active = destination == this.active;
@@ -235,48 +371,99 @@ class AppDrawer extends StatelessWidget {
     // spent on the active row only. See [DrawerDestination] for why the eight
     // per-item hues that preceded [DrawerDestination.quickSale] went.
     final idleIcon = p.textSecondary;
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.s4),
-      decoration: active
-          ? BoxDecoration(
-              color: p.selectionTint,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            )
-          : null,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
+      margin: const EdgeInsets.only(bottom: 2),
+      decoration: BoxDecoration(
+        gradient: active
+            ? LinearGradient(
+                colors: [
+                  p.primary.withValues(alpha: 0.16),
+                  p.primary.withValues(alpha: 0.04),
+                ],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              )
+            : null,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: active ? p.primary.withValues(alpha: 0.35) : Colors.transparent,
+        ),
+      ),
       child: Material(
         // The tint belongs to the Container, so the tile needs its own
         // (transparent) Material to paint pressed feedback on — otherwise the
         // tint hides the ink and Flutter flags the tile in debug builds.
         type: MaterialType.transparency,
-        child: ListTile(
-          leading: Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: active ? p.primary : p.chipBg,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
-            child: Icon(
-              destination.icon,
-              color: active ? Colors.white : idleIcon,
-              size: AppIconSize.md,
-            ),
-          ),
-          title: Text(
-            destination.localized(context.l10n),
-            style: TextStyle(
-              // `accentText`, not `primary`: this is text on the page, not a
-              // fill, and on a dark surface the fill value only reaches
-              // 2.54:1.
-              color: active ? p.accentText : p.textPrimary,
-              fontWeight: active ? FontWeight.w600 : FontWeight.w500,
-              fontSize: AppTypography.bodyMediumSize,
-            ),
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-          ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
           onTap: () => _onTap(context, destination),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            child: Row(
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    gradient: active
+                        ? const LinearGradient(
+                            colors: AppColors.brandRamp,
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          )
+                        : null,
+                    color: active ? null : p.chipBg,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: active
+                        ? [
+                            BoxShadow(
+                              color: p.primary.withValues(alpha: 0.35),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Icon(
+                    destination.icon,
+                    color: active ? Colors.white : idleIcon,
+                    size: AppIconSize.md,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    destination.localized(context.l10n),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      // `accentText`, not `primary`: this is text on the page,
+                      // not a fill, and on a dark surface the fill value only
+                      // reaches 2.54:1.
+                      color: active ? p.accentText : p.textPrimary,
+                      fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                      fontSize: AppTypography.bodyMediumSize,
+                    ),
+                  ),
+                ),
+                AnimatedOpacity(
+                  duration: const Duration(milliseconds: 200),
+                  opacity: active ? 1 : 0,
+                  child: Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: p.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -433,9 +620,39 @@ void navigateToDestination(
     return;
   }
 
-  final route = MaterialPageRoute<void>(
+  final route = PageRouteBuilder<void>(
     settings: RouteSettings(name: name),
-    builder: (_) => destination.screen,
+    transitionDuration: const Duration(milliseconds: 320),
+    reverseTransitionDuration: const Duration(milliseconds: 260),
+    pageBuilder: (_, _, _) => destination.screen,
+    transitionsBuilder: (_, animation, secondaryAnimation, child) {
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      );
+      final incoming = Tween<Offset>(
+        begin: const Offset(0.04, 0.02),
+        end: Offset.zero,
+      ).animate(curved);
+      final outgoing = Tween<Offset>(
+        begin: Offset.zero,
+        end: const Offset(-0.02, 0),
+      ).animate(
+        CurvedAnimation(
+          parent: secondaryAnimation,
+          curve: Curves.easeOutCubic,
+          reverseCurve: Curves.easeInCubic,
+        ),
+      );
+      return SlideTransition(
+        position: outgoing,
+        child: FadeTransition(
+          opacity: curved,
+          child: SlideTransition(position: incoming, child: child),
+        ),
+      );
+    },
   );
   if (replace) {
     navigator.pushReplacement(route);

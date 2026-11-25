@@ -228,6 +228,10 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
           children: [
             AppScreenTopBar(
               title: context.l10n.t('Add to Cart'),
+              // The same branded chevron used on the detail screens. It pops
+              // when this page was pushed, and falls back to the dashboard
+              // when it was opened directly from the drawer.
+              showBackButton: true,
               // No hamburger on a wide window: the sidebar is already on screen.
               showMenuButton: !isWide,
               onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),

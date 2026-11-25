@@ -14,6 +14,8 @@ import 'package:posfrontend/shared/theme/app_dimens.dart';
 import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
+import 'package:posfrontend/shared/widgets/filter_tabs.dart';
+import 'package:posfrontend/shared/widgets/filter_transition.dart';
 import 'package:posfrontend/shared/widgets/refreshable_body.dart';
 
 /// In-app history of pushed notifications, reached from the bell in the
@@ -27,109 +29,69 @@ class NotificationsScreen extends StatefulWidget {
   State<NotificationsScreen> createState() => _NotificationsScreenState();
 }
 
-class _NotificationsScreenState extends State<NotificationsScreen>
-    with SingleTickerProviderStateMixin {
+class _NotificationsScreenState extends State<NotificationsScreen> {
   final NotificationStore _store = NotificationStore.instance;
-  late final TabController _tabController;
 
-  /// Which tab is showing: `system` | `alert` | `news`. Opens on Alert —
-  /// most pushes are still alerts (stock, packages, daily report), so a
-  /// fresh install should not land on a System tab with one entry in it.
-  String _category = 'alert';
+  /// Which filter is showing. Opens on Alert — most pushes are still alerts
+  /// (stock, packages, daily report), so a fresh install should not land on a
+  /// System tab with one entry in it.
+  int _selectedTab = AppNotification.categories.indexOf('alert');
 
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(
-      length: AppNotification.categories.length,
-      vsync: this,
-      initialIndex: AppNotification.categories.indexOf('alert'),
-    );
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
+  String get _category => AppNotification.categories[_selectedTab];
 
   Future<void> _refresh() => _store.refresh();
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
-        child: Column(
-          children: [
-            AppScreenTopBar(
-              title: context.l10n.notifications,
-              showBackButton: true,
-              showMenuButton: false,
-              showNotificationsButton: false,
+    return ListenableBuilder(
+      listenable: _store,
+      builder: (context, _) {
+        final items = _store.value
+            .where((n) => n.category == _category)
+            .toList();
+        return Scaffold(
+          backgroundColor: Colors.transparent,
+          body: SafeArea(
+            child: Column(
+              children: [
+                AppScreenTopBar(
+                  title: context.l10n.notifications,
+                  showBackButton: true,
+                  showMenuButton: false,
+                  showNotificationsButton: false,
+                  // Same pill filter strip as Purchase Items: each tab carries
+                  // its live count, and the selected one gets the gradient pill.
+                  bottom: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                    child: FilterTabs(
+                      tabs: [
+                        ('System', _countFor('system')),
+                        ('Alert', _countFor('alert')),
+                        ('News', _countFor('news')),
+                      ],
+                      selectedIndex: _selectedTab,
+                      onTabChanged: (i) => setState(() => _selectedTab = i),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: FilterTransition(
+                    filterKey: _selectedTab,
+                    child: items.isEmpty
+                        ? _buildEmpty(context)
+                        : _buildList(context, items),
+                  ),
+                ),
+              ],
             ),
-            _buildCategoryBar(context),
-            Expanded(
-              child: ListenableBuilder(
-                listenable: _store,
-                builder: (context, _) {
-                  final items = _store.value
-                      .where((n) => n.category == _category)
-                      .toList();
-                  if (items.isEmpty) return _buildEmpty(context);
-                  return _buildList(context, items);
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
-  /// Segmented System / Alert / News selector, styled after the tab bar on
-  /// the customer page (chip surface, solid purple indicator).
-  Widget _buildCategoryBar(BuildContext context) {
-    final p = context.palette;
-    return Container(
-      margin: const EdgeInsets.fromLTRB(
-        AppSpacing.s16,
-        AppSpacing.s8,
-        AppSpacing.s16,
-        0,
-      ),
-      decoration: BoxDecoration(
-        color: p.chipBg,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: TabBar(
-        controller: _tabController,
-        onTap: (index) => setState(
-          () => _category = AppNotification.categories[index],
-        ),
-        labelColor: Colors.white,
-        unselectedLabelColor: p.textSecondary,
-        indicator: BoxDecoration(
-          color: AppColors.brandPurpleDark,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        indicatorSize: TabBarIndicatorSize.tab,
-        labelStyle: const TextStyle(
-          fontSize: AppTypography.labelMediumSize,
-          fontWeight: FontWeight.w600,
-        ),
-        unselectedLabelStyle: const TextStyle(
-          fontSize: AppTypography.labelMediumSize,
-          fontWeight: FontWeight.w500,
-        ),
-        tabs: [
-          Tab(text: context.l10n.t('System')),
-          Tab(text: context.l10n.t('Alert')),
-          Tab(text: context.l10n.t('News')),
-        ],
-      ),
-    );
-  }
+  int _countFor(String category) =>
+      _store.value.where((n) => n.category == category).length;
 
   Widget _buildEmpty(BuildContext context) {
     final p = context.palette;

@@ -15,6 +15,7 @@ import 'package:posfrontend/shared/widgets/app_screen_top_bar.dart';
 import 'package:posfrontend/shared/widgets/app_shell.dart';
 import 'package:posfrontend/shared/widgets/error_retry_view.dart';
 import 'package:posfrontend/shared/widgets/filter_tabs.dart';
+import 'package:posfrontend/shared/widgets/filter_transition.dart';
 import 'package:posfrontend/shared/widgets/snackbar_helper.dart';
 import 'package:posfrontend/shared/theme/app_colors.dart';
 import 'package:posfrontend/shared/theme/app_palette.dart';
@@ -149,7 +150,10 @@ class _PurchaseItemsScreenState extends State<PurchaseItemsScreen>
                 ),
               ),
               Expanded(
-                child: _buildBody(context),
+                child: FilterTransition(
+                  filterKey: _selectedTab,
+                  child: _buildBody(context),
+                ),
               ),
             ],
           ),

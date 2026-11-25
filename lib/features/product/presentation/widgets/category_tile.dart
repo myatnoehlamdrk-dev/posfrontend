@@ -46,9 +46,9 @@ class CategoryTile extends StatelessWidget {
                         ? CachedProductImage(
                             url: product.imageUrl!,
                             memCacheWidth: 640,
-                            errorWidget: _fallback(),
+                            errorWidget: _fallback(context),
                           )
-                        : _fallback(),
+                        : _fallback(context),
                   ),
                 ),
               ),
@@ -70,19 +70,25 @@ class CategoryTile extends StatelessWidget {
     );
   }
 
-  Widget _fallback() {
+  /// Product-tinted placeholder. Dark mode keeps its white glyph; in light
+  /// mode a pale product colour used to swallow that glyph, so it flips to the
+  /// dark foreground when the tint is too light to carry white.
+  Widget _fallback(BuildContext context) {
+    final paleTint =
+        !context.isDark && product.color.computeLuminance() > 0.42;
+    final iconColor = paleTint ? context.palette.textPrimary : Colors.white;
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            product.color.withValues(alpha: 0.85),
-            product.color.withValues(alpha: 0.55),
+            product.color.withValues(alpha: paleTint ? 0.95 : 0.85),
+            product.color.withValues(alpha: paleTint ? 0.8 : 0.55),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
       ),
-      child: Center(child: Icon(product.icon, color: Colors.white, size: 28)),
+      child: Center(child: Icon(product.icon, color: iconColor, size: 28)),
     );
   }
 }

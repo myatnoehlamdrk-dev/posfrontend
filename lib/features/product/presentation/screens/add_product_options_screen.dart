@@ -304,7 +304,7 @@ class _AddProductOptionsScreenState extends State<AddProductOptionsScreen> {
                     ],
                   ),
                 ),
-                label: context.l10n.t('Catalog API'),
+                label: context.l10n.t('Catalog'),
                 value: online
                     ? context.l10n.t('Operational')
                     : context.l10n.t('Offline'),

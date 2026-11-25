@@ -107,12 +107,12 @@ class SalePreviewScreen extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: p.surface,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: p.border),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: p.cardShadow,
                     blurRadius: 10,
                     offset: const Offset(0, 2),
                   ),

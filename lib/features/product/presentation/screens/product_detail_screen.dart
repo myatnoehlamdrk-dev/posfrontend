@@ -209,6 +209,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       items: slides,
       height: 320,
       initialActiveIndex: 0,
+      // This is a single hero image, not a carousel: no "1 / 1" counter, no
+      // dark scrim over the original photo, and the action edits the product.
+      showSlideIndicator: false,
+      dimImage: false,
+      actionLabel: context.l10n.update,
     );
   }
 

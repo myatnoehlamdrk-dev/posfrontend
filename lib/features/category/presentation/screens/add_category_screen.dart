@@ -142,12 +142,15 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
             showBackButton: true,
           ),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Breadcrumb([
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 760),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Breadcrumb([
                     BreadcrumbItem(context.l10n.t('Inventory'), false),
                     const BreadcrumbItem('Categories', false),
                     BreadcrumbItem(
@@ -219,7 +222,9 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                     loading: _viewModel.isSaving,
                   ),
                   const SizedBox(height: 16),
-                ],
+                    ],
+                  ),
+                ),
               ),
             ),
           ),

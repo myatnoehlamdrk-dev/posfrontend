@@ -7,6 +7,7 @@ import 'package:posfrontend/shared/theme/app_typography.dart';
 import 'package:posfrontend/shared/theme/palette_x.dart';
 import 'package:posfrontend/shared/l10n/app_strings.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
+import 'package:posfrontend/shared/widgets/hover_spotlight.dart';
 
 /// One category: its name, its description, and a preview of its products.
 ///
@@ -48,41 +49,47 @@ class CategoryShowcaseCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    return Container(
-      decoration: BoxDecoration(
-        color: p.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: showBorder ? Border.all(color: p.border) : null,
-        boxShadow: showBorder
-            ? [
-                BoxShadow(
-                  color: p.cardShadow,
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ]
-            : null,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
+    // Same pointer treatment as the dashboard cards: a soft violet spotlight
+    // that tracks the cursor, a small lift and a brighter border. Touch never
+    // enters the region, so phones keep the resting card exactly as before.
+    return HoverSpotlight(
+      radius: BorderRadius.circular(16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: p.surface,
           borderRadius: BorderRadius.circular(16),
-          onTap: onSeeAll,
-          hoverColor: p.surfaceAlt,
-          child: Padding(
-            // A borderless card gets more room: with no outline to set it off,
-            // the padding is the only thing separating this card from the last,
-            // so it carries more of the gap on its own.
-            padding: EdgeInsets.all(showBorder ? 16 : 14),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _header(context, p),
-                const SizedBox(height: 14),
-                _productGrid(p),
-              ],
+          border: showBorder ? Border.all(color: p.border) : null,
+          boxShadow: showBorder
+              ? [
+                  BoxShadow(
+                    color: p.cardShadow,
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: onSeeAll,
+            hoverColor: p.surfaceAlt,
+            child: Padding(
+              // A borderless card gets more room: with no outline to set it off,
+              // the padding is the only thing separating this card from the last,
+              // so it carries more of the gap on its own.
+              padding: EdgeInsets.all(showBorder ? 16 : 14),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _header(context, p),
+                  const SizedBox(height: 14),
+                  _productGrid(p),
+                ],
+              ),
             ),
           ),
         ),

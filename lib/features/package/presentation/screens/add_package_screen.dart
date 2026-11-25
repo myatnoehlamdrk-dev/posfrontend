@@ -176,12 +176,15 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
             showBackButton: true,
           ),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Breadcrumb([
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 760),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Breadcrumb([
                     BreadcrumbItem(context.l10n.t('Inventory'), false),
                     const BreadcrumbItem('Packages', false),
                     BreadcrumbItem(
@@ -287,7 +290,9 @@ class _AddPackageScreenState extends State<AddPackageScreen> {
                     loading: _saving,
                   ),
                   const SizedBox(height: 16),
-                ],
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
