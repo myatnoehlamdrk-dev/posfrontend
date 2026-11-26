@@ -1,6 +1,40 @@
-"$schema" = "https://open-api.netlify.com/netlify.schema.json"
+# Links this repo checkout to the Netlify project so CLI deploys resolve it
+site_id = "a3f525d0-a5ea-4e41-90d7-ab534cf254db"
 
+# The site's API settings force base = "build/web", so the build command must
+# return to the repo root before building, and publish from the resulting
+# build/web output. Flutter is installed at /opt/buildhome/flutter in this
+# environment; other environments bootstrap it into HOME.
 [build]
-  base = "."
-  publish = "build/web"
-  command = "bash ./build.sh"
+  command = "if ! command -v flutter >/dev/null 2>&1; then if [ -x /opt/buildhome/flutter/bin/flutter ]; then export PATH=\"/opt/buildhome/flutter/bin:$PATH\"; else git clone --depth 1 -b stable https://github.com/flutter/flutter.git \"$HOME/flutter-sdk\" && export PATH=\"$HOME/flutter-sdk/bin:$PATH\"; fi; fi && cd ../.. && flutter build web && touch build/web/.gitkeep"
+  publish = "."
+
+# Headers for the Flutter web build output (publish dir: build/web)
+
+# Keep index.html fresh so users always get the latest app shell
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Flutter assets are fingerprinted, cache them aggressively
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.wasm"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Service worker must never be cached
+[[headers]]
+  for = "/flutter_service_worker.js"
+  [headers.values]
+    Cache-Control = "no-cache"
