@@ -1,13 +1,16 @@
 # Links this repo checkout to the Netlify project so CLI deploys resolve it
 site_id = "a3f525d0-a5ea-4e41-90d7-ab534cf254db"
 
-# The site's API settings force base = "build/web", so the build command must
-# return to the repo root before building, and publish from the resulting
-# build/web output. Flutter is installed at /opt/buildhome/flutter in this
-# environment; other environments bootstrap it into HOME.
+# The base directory must be the repo root. build/ is gitignored, so
+# build/web never exists in a fresh clone, and Netlify validates the base
+# directory BEFORE running the build command -> "Base directory does not
+# exist" and the build dies at the config-parsing stage.
+# Setting base here overrides the "build/web" value stored in the site's UI
+# settings, so the repo is self-contained.
 [build]
-  command = "if ! command -v flutter >/dev/null 2>&1; then if [ -x /opt/buildhome/flutter/bin/flutter ]; then export PATH=\"/opt/buildhome/flutter/bin:$PATH\"; else git clone --depth 1 -b stable https://github.com/flutter/flutter.git \"$HOME/flutter-sdk\" && export PATH=\"$HOME/flutter-sdk/bin:$PATH\"; fi; fi && cd ../.. && flutter build web && touch build/web/.gitkeep"
-  publish = "."
+  base = "/"
+  command = "bash build.sh"
+  publish = "build/web"
 
 # Headers for the Flutter web build output (publish dir: build/web)
 
