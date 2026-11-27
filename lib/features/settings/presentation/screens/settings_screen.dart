@@ -50,6 +50,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   /// when the signed-in role cannot manage the team), which is why the row can
   /// show a badge only when there is something real to count.
   int? _pendingCount;
+  bool _pendingCountRequested = false;
 
   // Orange and red are mid-tone brand accents that read correctly on both
   // light and dark surfaces, so they stay const. The neutrals have to track
@@ -83,10 +84,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.initState();
     _viewModel = SettingsViewModel();
     _viewModel.loadSettings();
+  }
 
-    // The Team row is owner/manager-only. Reading the cached session here is
-    // safe: it was restored before the app reached Settings. A failed count is
-    // swallowed on purpose -- the row still works, it just has no badge.
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // AuthScope is an InheritedWidget: reading it in initState throws
+    // "dependOnInheritedWidgetOfExactType() called before initState completed".
+    // The team badge only needs the role once, so guard against the repeated
+    // calls didChangeDependencies gets on theme/locale changes.
+    if (_pendingCountRequested) return;
+    _pendingCountRequested = true;
     if (AuthScope.userOf(context)?.canManageTeam ?? false) {
       _loadPendingCount();
     }

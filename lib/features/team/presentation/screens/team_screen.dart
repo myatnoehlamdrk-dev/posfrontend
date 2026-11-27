@@ -32,6 +32,7 @@ class TeamScreen extends StatefulWidget {
 class _TeamScreenState extends State<TeamScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late final TeamViewModel _viewModel;
+  bool _viewModelInitialized = false;
   int _tab = 0;
 
   static const List<String> _assignableRoles = ['cashier', 'manager', 'viewer'];
@@ -39,6 +40,16 @@ class _TeamScreenState extends State<TeamScreen> {
   @override
   void initState() {
     super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // AuthScope is an InheritedWidget, so it cannot be read from initState.
+    // Build the owner-scoped view model on the first dependency pass instead;
+    // later theme/locale changes do not need a fresh TeamViewModel.
+    if (_viewModelInitialized) return;
+    _viewModelInitialized = true;
     final user = AuthScope.userOf(context);
     _viewModel = TeamViewModel(
       getMembers: getIt<GetTeamMembersUseCase>(),

@@ -230,8 +230,53 @@
     background-repeat:repeat, no-repeat, no-repeat;
     background-position:0 0, 0 0, 50% 100%;
   }
+
+  /* Dark bento mosaic, faded out with a mask so the copy stays readable. */
+  .heroBento{
+    position:absolute; inset:0; z-index:0; pointer-events:none;
+    display:grid; grid-template-columns:repeat(6,1fr); grid-template-rows:repeat(5,1fr);
+    gap:clamp(6px,1vw,12px); padding:clamp(1rem,4vw,3rem);
+    opacity:.72;
+    -webkit-mask-image:linear-gradient(180deg,#000 0%,rgba(0,0,0,.82) 42%,transparent 88%);
+    mask-image:linear-gradient(180deg,#000 0%,rgba(0,0,0,.82) 42%,transparent 88%);
+  }
+  .heroBento i{
+    border-radius:18px;
+    background:linear-gradient(145deg,rgba(20,18,32,.16),rgba(20,18,32,.025));
+    border:1px solid rgba(20,18,32,.06);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.75), 0 14px 30px rgba(20,18,32,.045);
+    backdrop-filter:blur(10px);
+  }
+  .heroBento i:nth-child(1){grid-column:1/3; grid-row:1/3}
+  .heroBento i:nth-child(2){grid-column:3/5; grid-row:1/2}
+  .heroBento i:nth-child(3){grid-column:5/7; grid-row:1/3}
+  .heroBento i:nth-child(4){grid-column:3/4; grid-row:2/4}
+  .heroBento i:nth-child(5){grid-column:4/6; grid-row:2/4}
+  .heroBento i:nth-child(6){grid-column:1/2; grid-row:3/5}
+  .heroBento i:nth-child(7){grid-column:2/4; grid-row:4/6}
+  .heroBento i:nth-child(8){grid-column:4/7; grid-row:4/6}
+  .heroBento i.ink{
+    background:linear-gradient(145deg,rgba(121,82,219,.22),rgba(20,18,32,.05));
+    border-color:rgba(121,82,219,.13);
+  }
+
+  /* Architectural ribbed glass over the mosaic: alternating soft white ribs
+     and hairline shadows, blurred together by backdrop-filter. */
+  .heroFlutes{
+    position:absolute; inset:0; z-index:1; pointer-events:none;
+    opacity:.46;
+    background:repeating-linear-gradient(90deg,
+      rgba(255,255,255,.44) 0 7px,
+      rgba(255,255,255,.10) 7px 15px,
+      rgba(20,18,32,.03) 15px 17px);
+    -webkit-backdrop-filter:blur(18px) saturate(1.12);
+    backdrop-filter:blur(18px) saturate(1.12);
+    /* One continuous sheet across the whole hero, with no side seams. */
+    -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 88%,transparent 100%);
+    mask-image:linear-gradient(180deg,#000 0%,#000 88%,transparent 100%);
+  }
   .hero{
-    position:sticky; top:0; height:100vh; min-height:640px;
+    position:sticky; top:0; height:100vh; min-height:640px; z-index:2;
     display:grid; grid-template-columns:1.02fr .98fr; align-items:center;
     gap:clamp(1rem,2vw,1.8rem);
     max-width:1120px; margin:0 auto;
@@ -269,42 +314,55 @@
   }
   /* Same accent, darkened so it holds on the light stage. */
   .hero .grad{background-image:linear-gradient(100deg,#6D28D9,#9B7BF0 52%,#6D28D9)}
+  .headlineStage{position:relative; width:100%}
+  .heroTitle{position:relative; z-index:1; transition:opacity .25s linear, filter .25s linear}
+  /* A second line ghosted over the first while the pinned hero scrubs. */
+  .heroEcho{
+    position:absolute; inset:0; z-index:2; margin:0; pointer-events:none;
+    font-size:clamp(2.3rem,4.9vw,4.1rem); line-height:1; letter-spacing:-.035em;
+    font-weight:800; color:var(--stage-ink); text-wrap:balance;
+    opacity:0; transform:translate3d(0,12px,0); filter:blur(7px);
+  }
+  .heroEcho span{background:linear-gradient(100deg,#6D28D9,#9B7BF0 52%,#6D28D9); -webkit-background-clip:text; background-clip:text; color:transparent}
   .lead{color:var(--stage-muted); font-size:clamp(.96rem,1.35vw,1.08rem); line-height:1.6; max-width:480px; margin:0}
   .actions{display:flex; gap:.7rem; flex-wrap:wrap; justify-content:flex-start}
 
   /* ---------- 3D phone scene ---------- */
   .scene{
+    --phone-shift:clamp(10px,1.6vw,28px);
     position:relative; display:flex; align-items:center; justify-content:center;
     width:100%; height:100%; min-height:0; perspective:1400px;
     transition:opacity .45s ease;
   }
   .scene::before{
     content:""; position:absolute; width:min(58vh,520px); height:min(58vh,520px); border-radius:50%;
-    background:radial-gradient(circle,rgba(121,82,219,.23),transparent 66%); filter:blur(36px);
+    background:radial-gradient(circle,rgba(24,20,40,.08),transparent 66%); filter:blur(36px);
     animation:breathe 8s ease-in-out infinite; pointer-events:none;
   }
   @keyframes breathe{0%,100%{transform:scale(1); opacity:.9}50%{transform:scale(1.08); opacity:1}}
-  /* Soft contact shadow so the device stands on the plate instead of floating. */
+  /* A small, tight shadow directly below the phone — not a wide dark band. */
   .scene::after{
-    content:""; position:absolute; bottom:2%; width:min(42vh,360px); height:30px; border-radius:50%;
-    background:radial-gradient(50% 50% at 50% 50%, rgba(24,20,40,.26), transparent 72%);
-    filter:blur(12px); pointer-events:none; z-index:1;
+    content:""; position:absolute; bottom:10%; width:min(18vh,150px); height:12px; border-radius:50%;
+    background:radial-gradient(50% 50% at 50% 50%, rgba(24,20,40,.12), transparent 70%);
+    filter:blur(9px); pointer-events:none; z-index:1;
+    transform:translateX(var(--phone-shift,0px));
   }
   #phone3d{
-    position:relative; z-index:2; display:block; height:min(86vh,820px); width:auto;
+    position:relative; z-index:2; display:block; height:min(93vh,890px); width:auto;
     aspect-ratio:62/100; opacity:0; transition:opacity .6s ease;
-    filter:drop-shadow(0 34px 54px rgba(30,24,60,.32)); touch-action:pan-y;
+    filter:drop-shadow(0 12px 22px rgba(30,24,60,.14)); touch-action:pan-y;
+    transform:translateX(var(--phone-shift,0px));
   }
   .scene.has3d #phone3d{opacity:1}
 
   /* Shown until the model is ready, and kept if WebGL or the asset fails. */
   .phoneFallback{
-    position:absolute; z-index:1; height:min(82vh,800px); aspect-ratio:49/100; width:auto;
+    position:absolute; z-index:1; height:min(89vh,870px); aspect-ratio:49/100; width:auto;
     padding:10px; border-radius:44px;
     background:linear-gradient(155deg,#4a3f66,#171122 62%,#0d0916);
     border:1px solid rgba(180,155,255,.28);
-    box-shadow:0 40px 70px -30px #000, inset 0 1px 0 rgba(255,255,255,.16);
-    transform:rotate(-8deg);
+    box-shadow:0 34px 74px -30px rgba(8,5,16,.55), inset 0 1px 0 rgba(255,255,255,.16);
+    transform:translateX(var(--phone-shift,0px)) rotate(-8deg);
   }
   .phoneFallback .pfScreen{
     width:100%; height:100%; border-radius:34px; overflow:hidden;
@@ -336,6 +394,69 @@
   .fc-sales{left:-1.6rem; top:12%}
   .fc-receipt{right:-2.2rem; top:42%}
   .fc-stock{left:-1rem; bottom:11%}
+
+  /* The floating smartpos card: dark neumorphism with a real pointer tilt.
+     The hovered edge sinks away while the opposite edge lifts toward you. */
+  .posPrompt{
+    --rx:0deg; --ry:0deg;
+    width:min(100%,420px); padding:1rem 1.05rem .85rem; border-radius:18px;
+    background:linear-gradient(145deg,#100B1C,#08050F);
+    border:1px solid rgba(180,155,255,.08);
+    box-shadow:-6px 8px 18px rgba(0,0,0,.46),
+               6px -6px 16px rgba(180,155,255,.05),
+               inset -2px 2px 4px rgba(255,255,255,.06),
+               inset 2px -2px 4px rgba(0,0,0,.48);
+    color:#F4F0FF;
+    transform-style:preserve-3d;
+    transform:perspective(900px) rotateX(var(--rx)) rotateY(var(--ry));
+    transition:transform .18s ease-out, box-shadow .3s ease, border-color .3s ease;
+    will-change:transform;
+  }
+  .posPrompt:hover{
+    border-color:rgba(180,155,255,.18);
+    box-shadow:-10px 12px 26px rgba(0,0,0,.52),
+               8px -8px 20px rgba(180,155,255,.07),
+               inset -2px 2px 4px rgba(255,255,255,.08),
+               inset 2px -2px 4px rgba(0,0,0,.42);
+  }
+  .posPrompt:active{
+    transform:perspective(900px) rotateX(var(--rx)) rotateY(var(--ry)) scale(.97);
+    box-shadow:inset 6px 6px 13px rgba(0,0,0,.62),
+               inset -4px -4px 10px rgba(180,155,255,.07);
+  }
+  .posPrompt > *{transform:translateZ(10px)}
+  .posPromptHead{display:flex; align-items:center; gap:.5rem; font-size:.72rem}
+  .posPromptMark{
+    width:16px; height:16px; border-radius:5px; flex:0 0 auto;
+    background:linear-gradient(135deg,#8B62F0,#5B34C0); box-shadow:0 0 0 3px rgba(121,82,219,.18);
+  }
+  .posPromptHead b{font-size:.82rem; letter-spacing:-.02em}
+  .posPromptHead span:last-child{margin-left:auto; color:#A99DC4}
+  .posPromptLabel{
+    margin:.85rem 0 .45rem; font-size:.58rem; font-weight:700;
+    letter-spacing:.14em; text-transform:uppercase; color:#A99DC4;
+  }
+  .posPromptRow{
+    display:flex; align-items:center; justify-content:space-between; gap:.7rem;
+    padding:.5rem .65rem; border-radius:10px;
+    background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(0,0,0,.2));
+    border:1px solid rgba(180,155,255,.09); font-size:.76rem;
+    box-shadow:inset 2px 2px 5px rgba(0,0,0,.5), inset -2px -2px 5px rgba(180,155,255,.07);
+  }
+  .posPromptRow b{color:#B49BFF}
+  .posPromptCompose{
+    display:flex; align-items:center; justify-content:space-between; gap:.7rem;
+    margin-top:.65rem; padding:.5rem .6rem .5rem .75rem; border-radius:999px;
+    background:linear-gradient(145deg,rgba(255,255,255,.05),rgba(0,0,0,.2));
+    border:1px solid rgba(180,155,255,.09);
+    box-shadow:inset 2px 2px 5px rgba(0,0,0,.5), inset -2px -2px 5px rgba(180,155,255,.07);
+    color:var(--muted); font-size:.73rem;
+  }
+  .posPromptSend{
+    width:24px; height:24px; border-radius:50%; display:grid; place-items:center;
+    background:linear-gradient(135deg,#8B62F0,#5B34C0); color:#fff; font-size:.8rem;
+    box-shadow:4px 4px 8px rgba(0,0,0,.5), -3px -3px 8px rgba(180,155,255,.12);
+  }
   @media (max-width:1080px){ .floatCard{display:none} }
 
   /* Sale / print / analysis guide, one row under the copy. */
@@ -478,17 +599,102 @@
     will-change:transform;
   }
   .hcard{
-    position:relative; flex:0 0 auto; width:clamp(310px,30vw,460px); height:320px; padding:1.8rem;
+    position:relative; flex:0 0 auto; width:clamp(310px,30vw,460px); height:320px; padding:1.5rem 1.6rem 1.6rem;
     border-radius:22px; border:1px solid rgba(180,155,255,.07); overflow:hidden;
     background:var(--bg); box-shadow:var(--shadow-card);
-    display:flex; flex-direction:column; justify-content:space-between;
+    display:flex; flex-direction:column; gap:.95rem;
     transition:border-color .3s ease, box-shadow .3s ease, transform .3s ease;
   }
   .hcard::after{content:""; position:absolute; inset:0; border-radius:inherit; box-shadow:var(--edge-light); pointer-events:none}
   .hcard:hover{border-color:rgba(180,155,255,.42); transform:translateY(-5px); box-shadow:-16px 22px 34px rgba(0,0,0,.64), inset -2px 2px 4px rgba(255,255,255,.12)}
-  .hcard .num{font-size:.68rem; font-weight:700; letter-spacing:.24em; color:var(--p2)}
+  .hcard .num{font-size:.68rem; font-weight:700; letter-spacing:.24em; color:var(--p2); flex:0 0 auto}
+  .hcard .hBody{margin-top:auto; flex:0 0 auto}
   .hcard h3{margin:0 0 .55rem; font-size:1.35rem; letter-spacing:-.02em}
   .hcard p{margin:0; color:var(--muted); font-size:.9rem; line-height:1.6; max-width:33ch}
+
+  /* Pure-CSS UI snippets for the closer-look cards. No screenshots: each one
+     is a tiny interaction drawn from the same counter language as the app. */
+  .hVisual{
+    position:relative; flex:0 0 auto; height:112px; border-radius:14px; overflow:hidden;
+    background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(0,0,0,.16));
+    border:1px solid rgba(180,155,255,.09);
+    box-shadow:inset 3px 3px 8px rgba(0,0,0,.5), inset -3px -3px 8px rgba(180,155,255,.06);
+  }
+  .hvTag{
+    position:absolute; z-index:2; padding:.28rem .5rem; border-radius:999px;
+    background:rgba(8,5,15,.82); border:1px solid rgba(180,155,255,.18);
+    font-size:.55rem; font-weight:800; letter-spacing:.14em; color:#B49BFF;
+  }
+  .hvScreen{
+    position:absolute; inset:10px 12px; border-radius:10px;
+    background:rgba(5,3,10,.58); border:1px solid rgba(180,155,255,.12);
+  }
+  .hvRow{position:absolute; left:12px; right:12px; display:flex; align-items:center; gap:8px}
+  .hvRow i{width:16px; height:16px; border-radius:5px; background:linear-gradient(135deg,#7952DB,#5B34C0); flex:0 0 auto}
+  .hvRow b{height:5px; border-radius:999px; background:rgba(244,240,255,.28); flex:1}
+  .hvRow b.short{width:42%; flex:0 0 42%}
+  .hvRow.r1{top:14px}.hvRow.r2{top:40px}
+  .hvTotal{position:absolute; left:12px; bottom:10px; font-size:.72rem; font-weight:800; color:#F4F0FF}
+
+  /* 01 — checkout: a framed tap ripple on the active cart row. */
+  .hv-checkout .hvScreen{right:54px}
+  .hvTap{
+    position:absolute; z-index:3; right:26px; top:42px; width:20px; height:20px; border-radius:50%;
+    background:linear-gradient(135deg,#8B62F0,#5B34C0); box-shadow:0 0 0 3px rgba(139,98,240,.2);
+  }
+  .hvTap::before,.hvTap::after{content:""; position:absolute; inset:-8px; border-radius:50%; border:1px solid rgba(180,155,255,.5)}
+  .hvTap::after{inset:-15px; border-color:rgba(180,155,255,.22)}
+  .hv-checkout .hvTag{right:12px; bottom:10px}
+
+  /* 02 — stock: a shelf of fill bars with one low bar called out. */
+  .hvShelf{position:absolute; left:16px; right:16px; bottom:14px; height:64px; display:flex; align-items:flex-end; gap:8px}
+  .hvShelf i{flex:1; border-radius:5px 5px 2px 2px; background:rgba(244,240,255,.16); box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
+  .hvShelf i.s1{height:48%}.hvShelf i.s2{height:74%}.hvShelf i.s3{height:34%; background:linear-gradient(180deg,#B49BFF,#7952DB)}
+  .hvShelf i.s4{height:60%}.hvShelf i.s5{height:86%}
+  .hv-stock .hvTag{right:12px; top:10px}
+
+  /* 03 — receipt: a thermal slip with a torn foot and a printed stamp. */
+  .hvSlip{
+    position:absolute; left:50%; top:10px; transform:translateX(-50%); width:104px; height:98px; padding:12px 10px 0;
+    border-radius:4px 4px 0 0; background:#F7F3FF;
+    box-shadow:0 10px 18px rgba(0,0,0,.5);
+    -webkit-mask-image:linear-gradient(#000 0 0); mask-image:linear-gradient(#000 0 0);
+  }
+  .hvSlip::after{
+    content:""; position:absolute; left:0; right:0; bottom:-1px; height:8px;
+    background:repeating-linear-gradient(135deg,#F7F3FF 0 5px,transparent 5px 10px);
+  }
+  .hvSlip i{display:block; height:4px; margin-bottom:7px; border-radius:999px; background:rgba(36,26,56,.28)}
+  .hvSlip i:nth-child(2){width:70%}.hvSlip i:nth-child(3){width:84%}
+  .hvSlip b{display:block; margin-top:10px; font-size:.72rem; color:#241A38; letter-spacing:-.02em}
+  .hv-receipt .hvTag{right:12px; bottom:10px}
+
+  /* 04 — offline: queued rows inside a device with a slow sync ring. */
+  .hvDevice{
+    position:absolute; left:18px; top:14px; width:116px; height:84px; border-radius:10px;
+    background:rgba(5,3,10,.58); border:1px solid rgba(180,155,255,.12); padding:12px;
+  }
+  .hvDevice i{display:block; height:5px; margin-bottom:9px; border-radius:999px; background:rgba(244,240,255,.24)}
+  .hvDevice i:nth-child(2){width:64%}.hvDevice i:nth-child(3){width:80%}
+  .hvSync{position:absolute; right:26px; top:36px; width:26px; height:26px; border-radius:50%; border:1px dashed rgba(180,155,255,.55); animation:hv-spin 9s linear infinite}
+  .hvSync::after{content:""; position:absolute; inset:8px; border-radius:50%; background:#B49BFF; box-shadow:0 0 12px rgba(180,155,255,.7)}
+  @keyframes hv-spin{to{transform:rotate(360deg)}}
+  .hv-offline .hvTag{right:12px; bottom:10px}
+
+  /* 05 — insight: five quiet bars and one highlighted best seller. */
+  .hvChart{position:absolute; left:18px; right:18px; bottom:14px; height:66px; display:flex; align-items:flex-end; gap:7px}
+  .hvChart i{flex:1; border-radius:4px 4px 1px 1px; background:rgba(244,240,255,.16)}
+  .hvChart i:nth-child(1){height:34%}.hvChart i:nth-child(2){height:52%}
+  .hvChart i:nth-child(3){height:44%}.hvChart i:nth-child(4){height:82%; background:linear-gradient(180deg,#B49BFF,#7952DB)}
+  .hvChart i:nth-child(5){height:64%}
+  .hv-insight .hvTag{right:12px; top:10px}
+
+  /* 06 — setup: three connected steps, all ticked. */
+  .hvSteps{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; gap:12px}
+  .hvSteps span{position:relative; z-index:2; width:30px; height:30px; border-radius:50%; display:grid; place-items:center; background:#120C20; border:1px solid rgba(180,155,255,.24)}
+  .hvSteps span::after{content:""; width:9px; height:5px; border-left:2px solid #B49BFF; border-bottom:2px solid #B49BFF; transform:rotate(-45deg) translateY(-1px)}
+  .hvSteps::before{content:""; position:absolute; left:calc(50% - 42px); right:calc(50% - 42px); height:1px; background:rgba(180,155,255,.24)}
+  .hv-setup .hvTag{right:12px; bottom:10px}
   .hcard .ghost{
     position:absolute; right:.35rem; bottom:-2.7rem; pointer-events:none;
     font-size:8.5rem; font-weight:800; line-height:1; letter-spacing:-.06em;
@@ -511,7 +717,10 @@
   .hscroll.no-pin .hcard{scroll-snap-align:center}
 
   @media (max-height:640px) and (min-width:901px){
-    .hcard{height:250px; padding:1.4rem}
+    .hcard{height:250px; padding:1.4rem; gap:.7rem}
+    .hVisual{height:78px}
+    .hvSlip{top:6px; height:76px; transform:translateX(-50%) scale(.88)}
+    .hv-stock .hvShelf,.hv-insight .hvChart{height:48px; bottom:8px}
     .hscroll-head h2{font-size:1.55rem}
     .hscroll-track{gap:1rem}
   }
@@ -525,7 +734,7 @@
      every section, the dark palette is re-declared on one wrapper that slides
      up with rounded corners, the way xenea hands the hero over to its content. */
   .contentSheet{
-    position:relative; z-index:3; margin-top:2.5rem;
+    position:relative; z-index:3; margin-top:-100vh;
     background:#08050F; color:#F4F0FF;
     border-radius:34px 34px 0 0;
     box-shadow:0 -30px 70px -40px rgba(20,16,40,.55);
@@ -542,6 +751,209 @@
     pointer-events:none;
   }
   .contentSheet > *{position:relative; z-index:1}
+
+  /* Light landing, between the sticky hero and the dark sheet. This is
+     xenea's "network that keeps AI accountable" moment, told with POS data. */
+  .landing{
+    position:relative; z-index:2; min-height:260vh; background:var(--bg);
+    background-image:radial-gradient(circle, rgba(24,22,38,.10) .9px, transparent 1px);
+    background-size:16px 16px;
+  }
+  .landingInner{
+    position:sticky; top:0; min-height:100vh;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:clamp(1.4rem,3vw,2.4rem);
+    width:min(100%,1180px); margin:0 auto;
+    padding:7rem clamp(1.1rem,4vw,2.2rem) 4rem; text-align:center;
+  }
+  .landing .kicker{color:#7952DB}
+  .landingHeading{
+    margin:0; color:var(--stage-ink); font-size:clamp(2.1rem,5.4vw,4.4rem);
+    line-height:1.08; letter-spacing:-.045em; max-width:960px;
+  }
+  .landingAccent{
+    background:linear-gradient(120deg,#7952DB,#B49BFF);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .landingCopy{margin:0; max-width:640px; color:var(--stage-muted); font-size:clamp(1rem,1.5vw,1.22rem); line-height:1.7}
+  .landingVisual{
+    position:relative; flex:0 0 auto; width:min(100%,660px);
+    height:clamp(300px,42vh,440px);
+  }
+  /* A real card object: recessed image well, hairline grid, quiet footer.
+     Swiss layout, soft-UI depth, still one surface on the page colour. */
+  .landingCard{
+    --rx:0deg; --ry:0deg;
+    position:absolute; inset:0; border-radius:22px; overflow:hidden;
+    display:grid; grid-template-rows:1fr 38px; gap:10px;
+    padding:14px; background:#EDEEF2; border:1px solid rgba(20,18,32,.06);
+    box-shadow:-12px 16px 34px rgba(20,18,38,.14),
+               12px -12px 26px rgba(255,255,255,.95),
+               inset -1px 1px 2px rgba(255,255,255,.95),
+               inset 1px -1px 2px rgba(20,18,38,.04);
+    transform:perspective(1100px) rotateX(var(--rx)) rotateY(var(--ry));
+    transition:transform .2s ease-out, box-shadow .3s ease, border-color .3s ease;
+    will-change:transform;
+  }
+  .landingCard:hover{
+    border-color:rgba(20,18,32,.09);
+    box-shadow:-14px 19px 40px rgba(20,18,38,.16),
+               14px -14px 30px rgba(255,255,255,1),
+               inset -1px 1px 2px rgba(255,255,255,1),
+               inset 1px -1px 2px rgba(20,18,38,.045);
+  }
+  .landingCard:active{
+    transform:perspective(1100px) rotateX(var(--rx)) rotateY(var(--ry)) scale(.995);
+    box-shadow:inset 6px 6px 14px rgba(20,18,38,.1),
+               inset -6px -6px 14px rgba(255,255,255,.92);
+  }
+  .landingCard::after{
+    content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.55);
+  }
+  .landingCardStage{
+    position:relative; min-height:0; border-radius:14px; overflow:hidden;
+    background:linear-gradient(145deg,#F5F5F8,#E7E8ED);
+    box-shadow:inset 3px 3px 8px rgba(20,18,38,.07),
+               inset -3px -3px 8px rgba(255,255,255,.92);
+  }
+  .landingCardStage img{
+    width:100%; height:100%; object-fit:contain; object-position:center;
+    display:block; opacity:.96; padding:.5rem;
+  }
+  .landingCardFoot{
+    display:flex; align-items:center; gap:.5rem; padding:0 .35rem;
+    font-size:.68rem; font-weight:700; letter-spacing:.12em;
+    text-transform:uppercase; color:#6B6478;
+  }
+  .landingCardFoot b{margin-left:auto; color:#5B34C0; font-size:.78rem; letter-spacing:-.01em}
+  .landingCardDot{width:7px; height:7px; border-radius:50%; background:#2E7D4F; box-shadow:0 0 0 3px rgba(46,125,79,.12)}
+  .landingBadge{
+    position:absolute; z-index:2; right:calc(14px + 5%); top:calc(14px + 9%);
+    padding:.8rem 1.05rem; border-radius:14px;
+    background:#EDEEF2; border:1px solid rgba(20,18,32,.06);
+    box-shadow:-5px 6px 14px rgba(20,18,38,.10),
+               5px -5px 12px rgba(255,255,255,.85),
+               inset -1px 1px 2px rgba(255,255,255,.95);
+    color:var(--stage-ink); font-size:.82rem; font-weight:700;
+  }
+  .landingBadge b{display:block; font-size:1.05rem; color:#5B34C0}
+
+  /* First dark section: the POS answer to "Live, Verifiable Storage for AI". */
+  .liveIntro h2{max-width:760px}
+  .liveIntro .reveal{transition-delay:.25s}
+  .liveGrid{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+    gap:1rem; margin-top:2.4rem;
+  }
+  .liveCard{
+    position:relative; padding:1.5rem; border-radius:18px; background:var(--bg);
+    border:1px solid rgba(180,155,255,.08); box-shadow:var(--shadow-card);
+    overflow:hidden; transition:transform .35s ease, border-color .35s ease;
+  }
+  .liveCard:hover{transform:translateY(-4px); border-color:rgba(180,155,255,.3)}
+  .liveCard::after{content:""; position:absolute; inset:0; border-radius:inherit; box-shadow:var(--edge-light); pointer-events:none}
+  .liveNum{font-size:.7rem; letter-spacing:.14em; color:var(--p2)}
+  .liveCard h3{margin:.7rem 0 .45rem; font-size:1.02rem}
+  .liveCard p{margin:0; color:var(--muted); font-size:.86rem; line-height:1.6}
+
+  /* How it works: a pinned three-step scrub, like xenea's how rail. */
+  .howSection{position:relative; height:320vh; padding:0; z-index:1}
+  .howPin{
+    position:sticky; top:0; height:100vh; min-height:640px;
+    display:flex; flex-direction:column; justify-content:center;
+    max-width:1180px; margin:0 auto;
+    padding:6rem clamp(1.1rem,4vw,2.2rem) 3rem;
+  }
+  .howHead h2{margin-bottom:.8rem}
+  .howHead .section-lead{margin:0}
+  .howBody{
+    display:grid; grid-template-columns:1.08fr .92fr; gap:clamp(2rem,4vw,3.5rem);
+    align-items:center; margin-top:clamp(1.8rem,4vh,3rem);
+  }
+  .howVisual{
+    position:relative; aspect-ratio:16/10; border-radius:24px; overflow:hidden; background:var(--bg);
+    border:1px solid rgba(180,155,255,.1); box-shadow:var(--shadow-card);
+    transition:transform .25s ease;
+  }
+  /* Three real screens crossfade inside the same dark, softly lit card. */
+  .howShot{
+    position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+    opacity:0; transform:scale(1.05);
+    transition:opacity .5s ease, transform .8s cubic-bezier(.2,.8,.2,1);
+  }
+  .howShot.is-active{opacity:.92; transform:none}
+  .howVisual .howHalo{
+    position:absolute; inset:-25%; pointer-events:none;
+    background:radial-gradient(45% 45% at 30% 30%, rgba(121,82,219,.28), transparent 70%),
+               radial-gradient(40% 40% at 78% 68%, rgba(56,189,248,.14), transparent 72%);
+  }
+  .howVisual::after{content:""; position:absolute; z-index:4; inset:0; border-radius:inherit; box-shadow:var(--edge-light); pointer-events:none}
+  .howVisual::before{
+    content:""; position:absolute; z-index:2; left:6%; right:6%; height:1px;
+    background:linear-gradient(90deg,transparent,rgba(180,155,255,.8),transparent);
+    animation:howScan 5s ease-in-out infinite;
+  }
+  @keyframes howScan{0%,100%{top:12%; opacity:.25}50%{top:88%; opacity:.55}}
+  .howFloat{
+    position:absolute; z-index:3; min-width:118px; padding:.75rem .9rem; border-radius:14px;
+    background:rgba(8,5,15,.86); border:1px solid rgba(180,155,255,.14);
+    box-shadow:var(--shadow-card); backdrop-filter:blur(10px);
+    opacity:.28; filter:blur(.5px);
+    transition:opacity .35s ease, filter .35s ease;
+  }
+  .howFloat.is-focus{opacity:1; filter:none}
+  .howFloat span{display:block; font-size:.62rem; letter-spacing:.12em; text-transform:uppercase; color:var(--muted)}
+  .howFloat b{display:block; margin-top:.3rem; font-size:1rem; color:var(--ink)}
+  .howFloat--sale{top:12%; right:6%; transform:rotate(5deg)}
+  .howFloat--receipt{left:6%; bottom:12%; transform:rotate(-6deg)}
+  .howFloat--stock{right:6%; bottom:10%; transform:rotate(4deg)}
+  .howLines{margin-top:.5rem; display:flex; flex-direction:column; gap:4px}
+  .howLines i{display:block; height:3px; border-radius:2px; background:rgba(180,155,255,.28)}
+  .howLines i:nth-child(2){width:72%}
+  .howLines i:nth-child(3){width:86%}
+
+  .howPanel{min-width:0}
+  .howStepViews{position:relative; min-height:220px}
+  .howStepView{
+    position:absolute; inset:0; opacity:0; transform:translateY(16px); filter:blur(5px);
+    pointer-events:none; transition:opacity .42s ease, transform .42s ease, filter .42s ease;
+  }
+  .howStepView.is-active{opacity:1; transform:none; filter:none; pointer-events:auto}
+  .howStepNum{font-size:.68rem; font-weight:700; letter-spacing:.16em; color:var(--p2)}
+  .howStepView h3{margin:.7rem 0 .55rem; font-size:clamp(1.8rem,3vw,2.5rem); line-height:1.1; letter-spacing:-.035em}
+  .howStepView p{margin:0; color:var(--muted); font-size:.98rem; line-height:1.7; max-width:420px}
+  .howStepTag{
+    display:inline-flex; margin-top:1.1rem; padding:.45rem .8rem; border-radius:999px;
+    background:var(--bg); border:1px solid rgba(180,155,255,.1); box-shadow:var(--shadow-card);
+    color:var(--ink); font-size:.72rem; font-weight:650;
+  }
+  /* Step rail with a scrubbed connector fill, like xenea's side dots. */
+  .howRail{display:flex; flex-direction:column; margin-top:1rem}
+  .howRailItem{
+    position:relative; display:grid; grid-template-columns:16px 1fr auto;
+    align-items:center; gap:.75rem; padding:.55rem 0;
+    color:rgba(244,240,255,.35); transition:color .3s ease;
+  }
+  .howRailItem.is-active,.howRailItem.is-done{color:#F4F0FF}
+  .howRailItem::after,.howRailItem::before{
+    content:""; position:absolute; left:7px; top:28px; bottom:-12px; width:1px;
+  }
+  .howRailItem::after{background:rgba(180,155,255,.14)}
+  .howRailItem::before{
+    background:linear-gradient(180deg,#7952DB,#B49BFF);
+    transform:scaleY(var(--fill,0)); transform-origin:top; transition:transform .2s linear;
+  }
+  .howRailItem:last-child::before,.howRailItem:last-child::after{display:none}
+  .howDot{
+    width:15px; height:15px; border-radius:50%; display:grid; place-items:center;
+    border:1px solid rgba(180,155,255,.35); background:var(--bg);
+  }
+  .howRailItem.is-active .howDot{border-color:#B49BFF; box-shadow:0 0 0 5px rgba(121,82,219,.18)}
+  .howRailItem.is-done .howDot{background:linear-gradient(135deg,#7952DB,#B49BFF); border-color:transparent}
+  .howRailName{font-size:.9rem; font-weight:650}
+  .howRailNum{font-size:.65rem; letter-spacing:.12em; color:rgba(244,240,255,.4)}
+  .howRailItem.is-active .howRailNum{color:var(--p2)}
 
   /* A quiet section index beside the dark story, borrowed from xenea's
      sticky side TOC. Only wide screens have room for it. */
@@ -690,7 +1102,9 @@
     .lead{font-size:.94rem; max-width:470px; line-height:1.5}
     .btn{padding:.8rem 1.4rem; font-size:.92rem}
     .storyStep{font-size:.72rem; padding:.42rem .45rem}
-    .scene,#phone3d,.phoneFallback{height:min(78vh,700px)}
+    .posPrompt{padding:.7rem .85rem .65rem}
+    .posPromptLabel{margin:.55rem 0 .3rem}
+    .scene,#phone3d,.phoneFallback{height:min(84vh,760px)}
     .floatCard{display:none}
   }
   @media (max-width:880px){
@@ -708,9 +1122,9 @@
     .story{margin-inline:auto; max-width:440px; width:100%}
     .storyStep{font-size:.7rem; padding:.45rem .35rem; gap:.28rem}
     .storyStep i{display:none}
-    .scene{height:min(48vh,430px); min-height:min(48vh,430px)}
-    #phone3d{height:min(46vh,410px)}
-    .phoneFallback{height:min(42vh,380px)}
+    .scene{--phone-shift:0px; height:min(48vh,430px); min-height:min(48vh,430px)}
+    #phone3d{height:min(50vh,445px)}
+    .phoneFallback{height:min(46vh,415px)}
     .siteHeader{padding-top:0}
     .headerShell{width:100%; height:44px; border-radius:0; padding:0 8px 0 12px}
     .headerLogo{width:auto}
@@ -718,6 +1132,31 @@
     .headerToggle{display:inline-flex}
     .headerMobile{width:calc(100% - 32px)}
     .siteHeader.is-open .headerMobile{display:block}
+    .heroBento{grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(4,1fr); opacity:.5; padding:1rem}
+    .heroFlutes{opacity:.35}
+    .heroEcho{font-size:clamp(2rem,8vw,3rem)}
+    .posPrompt{margin-inline:auto}
+    .landing{min-height:0}
+    .landingInner{position:relative; min-height:0; padding:5.5rem 1.2rem 3rem}
+    .landingHeading{font-size:clamp(2rem,8vw,3rem)}
+    .landingVisual{height:310px}
+    .hcard{height:340px; gap:.7rem}
+    .hVisual{height:96px}
+    .hvSlip{top:7px; height:84px; transform:translateX(-50%) scale(.9)}
+    .hv-stock .hvShelf,.hv-insight .hvChart{height:54px; bottom:10px}
+    .contentSheet{margin-top:2.5rem}
+    .howSection{height:auto; padding:4rem 0}
+    .howPin{position:static; height:auto; min-height:0; padding:0 1.2rem}
+    .howBody{grid-template-columns:1fr; margin-top:2rem}
+    .howStepViews{min-height:0; display:flex; flex-direction:column; gap:1rem}
+    .howStepView{
+      position:relative; inset:auto; opacity:1; transform:none; filter:none; pointer-events:auto;
+      padding:1.2rem 1.4rem; border-radius:18px; background:var(--bg);
+      border:1px solid rgba(180,155,255,.07); box-shadow:var(--shadow-card);
+    }
+    .howRail{display:none}
+    .howFloat{min-width:102px; padding:.6rem .7rem}
+    .howFloat b{font-size:.85rem}
   }
   @media (prefers-reduced-motion: reduce){
     html{scroll-behavior:auto}
@@ -731,12 +1170,30 @@
        block and the phone renders one still frame. */
     .heroStage{height:auto}
     .hero{position:relative; height:auto; min-height:100vh}
+    .landing{min-height:0}
+    .landingInner{position:relative; min-height:0}
+    .contentSheet{margin-top:2.5rem}
+    .howSection{height:auto; padding:4rem 0}
+    .howPin{position:static; height:auto; min-height:0}
+    .howBody{grid-template-columns:1fr}
+    .howStepViews{min-height:0; display:flex; flex-direction:column; gap:1rem}
+    .howStepView{position:relative; inset:auto; opacity:1; transform:none; filter:none; pointer-events:auto}
+    .howRail{display:none}
   }
 </style>
 <noscript>
   <style>
     .heroStage{height:auto}
     .hero{position:relative; height:auto; min-height:100vh}
+    .landing{min-height:0}
+    .landingInner{position:relative; min-height:0}
+    .contentSheet{margin-top:2.5rem}
+    .howSection{height:auto; padding:4rem 0}
+    .howPin{position:static; height:auto; min-height:0}
+    .howBody{grid-template-columns:1fr}
+    .howStepViews{min-height:0; display:flex; flex-direction:column; gap:1rem}
+    .howStepView{position:relative; inset:auto; opacity:1; transform:none; filter:none; pointer-events:auto}
+    .howRail{display:none}
     .scrolly{height:auto}
     .scrolly-inner{position:static; min-height:0}
     .scrolly-text{color:#F4F0FF}
@@ -781,8 +1238,8 @@
       </a>
       <nav class="headerNav" aria-label="Section navigation">
         <ul class="headerList">
-          <li><a href="#live"><span class="headerLabel">Live numbers</span></a></li>
-          <li><a href="#scrolly"><span class="headerLabel">How it works</span></a></li>
+          <li><a href="#trust"><span class="headerLabel">Features</span></a></li>
+          <li><a href="#how"><span class="headerLabel">How it works</span></a></li>
           <li><a href="#hscroll"><span class="headerLabel">Walkthrough</span></a></li>
         </ul>
         <a class="headerCta" href="#start" data-get-started>Get started</a>
@@ -793,8 +1250,8 @@
     </nav>
     <div class="headerMobile" id="headerMobile">
       <ul class="headerMobileList">
-        <li><a href="#live">Live numbers</a></li>
-        <li><a href="#scrolly">How it works</a></li>
+        <li><a href="#trust">Features</a></li>
+        <li><a href="#how">How it works</a></li>
         <li><a href="#hscroll">Walkthrough</a></li>
         <li><a href="#start">Get started</a></li>
       </ul>
@@ -803,14 +1260,27 @@
   </header>
 
   <section class="heroStage" id="heroStage">
+    <div class="heroBento" aria-hidden="true">
+      <i></i><i></i><i></i><i></i><i></i><i></i><i class="ink"></i><i></i>
+    </div>
+    <div class="heroFlutes" aria-hidden="true"></div>
     <section class="hero" id="hero">
       <div class="heroHead">
         <p class="eyebrow">Point of sale for small shops</p>
-        <h1 class="heroTitle" id="heroTitle" aria-label="Ring it up. Print it out. Know your shop.">
-          <span class="w">Ring it up.</span> <span class="w">Print it out.</span><br>
-          <span class="w grad">Know your shop.</span>
-        </h1>
+        <div class="headlineStage">
+          <h1 class="heroTitle" id="heroTitle" aria-label="Ring it up. Print it out. Know your shop.">
+            <span class="w">Ring it up.</span> <span class="w">Print it out.</span><br>
+            <span class="w grad">Know your shop.</span>
+          </h1>
+          <p class="heroEcho" id="heroEcho" aria-hidden="true">Every sale.<br>Every receipt.<br><span>Accountable by default.</span></p>
+        </div>
         <p class="lead">One app for the counter, the shelf and the books &mdash; ring up a sale, hand over the receipt and read today&rsquo;s numbers before the customer leaves.</p>
+        <div class="posPrompt" aria-hidden="true">
+          <div class="posPromptHead"><span class="posPromptMark"></span><b>smartpos.</b><span>Now</span></div>
+          <p class="posPromptLabel">Current counter</p>
+          <div class="posPromptRow"><span>Receipt #1042</span><b>Printed</b></div>
+          <div class="posPromptCompose"><span>Charge 9,500 MMK</span><span class="posPromptSend">&#8599;</span></div>
+        </div>
         <div class="actions">
           <a class="btn primary" href="#start" data-get-started>
             Get started
@@ -834,7 +1304,7 @@
           <div class="pfScreen">
             <b>smartpos.</b>
             <span>Today&rsquo;s sales</span>
-            <em>Charge 8,000</em>
+            <em>Charge 9,500</em>
           </div>
         </div>
         <canvas id="phone3d"></canvas>
@@ -859,20 +1329,62 @@
     </section>
   </section>
 
+  <!-- Section 2: the light landing statement, before the black sheet. -->
+  <section class="landing" id="trust" aria-label="The foundation">
+    <div class="landingInner">
+      <div class="reveal">
+        <p class="kicker">THE FOUNDATION</p>
+        <h2 class="landingHeading" aria-label="The app that keeps every sale accountable at counter speed.">The app that keeps every sale<br><span class="landingAccent">accountable</span> at counter speed.</h2>
+        <p class="landingCopy">Verifies in real time so every payment comes with a receipt, and every receipt matches the stock on the shelf.</p>
+      </div>
+      <div class="landingVisual reveal">
+        <div class="landingCard">
+          <div class="landingCardStage">
+            <img src="assets/receipt.png" alt="Receipt printed from the POS app">
+            <span class="landingBadge"><b>MMK 24,860</b>today, verified</span>
+          </div>
+          <div class="landingCardFoot">
+            <span class="landingCardDot"></span>
+            <span>Receipt preview</span>
+            <b>Verified · #1042</b>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <div class="contentSheet">
 
   <aside class="sectionRail" id="sectionRail" aria-label="Page sections">
-    <a class="railLink is-on" href="#live"><span>Overview</span></a>
+    <a class="railLink is-on" href="#trust"><span>Features</span></a>
+    <a class="railLink" href="#liveStore"><span>Live sales</span></a>
+    <a class="railLink" href="#live"><span>Live numbers</span></a>
     <a class="railLink" href="#scrolly"><span>Why it&rsquo;s fast</span></a>
+    <a class="railLink" href="#how"><span>How it works</span></a>
     <a class="railLink" href="#features"><span>Everyday tools</span></a>
     <a class="railLink" href="#hscroll"><span>Walkthrough</span></a>
     <a class="railLink" href="#result"><span>Built for shops</span></a>
     <a class="railLink" href="#start"><span>Get started</span></a>
   </aside>
 
+  <!-- Section 3: the black sheet, with our "Live, Verifiable Storage for AI". -->
+  <section class="section liveIntro" id="liveStore">
+    <div class="reveal">
+      <p class="kicker">LIVE, VERIFIABLE SALES</p>
+      <h2>Live, verifiable sales for your shop.</h2>
+      <p class="section-lead">We are building the everyday foundation for trustworthy sales &mdash; real-time, high-integrity counter work with cloud-like speed.</p>
+    </div>
+    <div class="liveGrid reveal">
+      <article class="liveCard"><span class="liveNum">01</span><h3>Real-time sync</h3><p>Totals change the moment a sale closes, not at the end of the day.</p></article>
+      <article class="liveCard"><span class="liveNum">02</span><h3>A receipt for every payment</h3><p>Each 80mm slip proves exactly what the customer was charged.</p></article>
+      <article class="liveCard"><span class="liveNum">03</span><h3>Stock that follows the sale</h3><p>The shelf updates with the basket, so the next count is already right.</p></article>
+      <article class="liveCard"><span class="liveNum">04</span><h3>One source of truth</h3><p>Counter, receipt and books stay in agreement, sale after sale.</p></article>
+    </div>
+  </section>
+
   <section class="section" id="live">
     <div class="reveal">
-      <p class="kicker">Estimate at the app</p>
+      <p class="kicker">Estimate at the shop</p>
       <h2>Numbers that move as fast as you do.</h2>
     </div>
     <div class="stats reveal" id="stats">
@@ -899,6 +1411,54 @@
     </div>
   </section>
 
+  <section class="howSection" id="how">
+    <div class="howPin">
+      <header class="howHead">
+        <p class="kicker">HOW IT WORKS</p>
+        <h2>From tap to truth in three moves.</h2>
+        <p class="section-lead">One quiet flow behind the counter. No double entry, no guessing.</p>
+      </header>
+      <div class="howBody">
+        <div class="howVisual" id="howVisual">
+          <span class="howHalo" aria-hidden="true"></span>
+          <img class="howShot is-active" data-step="0" src="assets/checkout.png" alt="Checkout screen">
+          <img class="howShot" data-step="1" src="assets/receipt.png" alt="Printed receipt screen">
+          <img class="howShot" data-step="2" src="assets/insight.png" alt="Sales insight screen">
+          <div class="howFloat howFloat--sale is-focus" data-float="0" aria-hidden="true"><span>Live sale</span><b>MMK 24,860</b></div>
+          <div class="howFloat howFloat--receipt" data-float="1" aria-hidden="true"><span>Receipt #1042</span><b>Printed</b><div class="howLines"><i></i><i></i><i></i></div></div>
+          <div class="howFloat howFloat--stock" data-float="2" aria-hidden="true"><span>Low stock</span><b>7 items</b><div class="howLines"><i></i><i></i><i></i></div></div>
+        </div>
+        <div class="howPanel">
+          <div class="howStepViews" id="howStepViews">
+            <article class="howStepView is-active" data-step="0">
+              <span class="howStepNum">01 / 03</span>
+              <h3>Ring it up</h3>
+              <p>Pick the item, take the payment, close the sale. The cart becomes a sale in one move.</p>
+              <span class="howStepTag">Checkout screen</span>
+            </article>
+            <article class="howStepView" data-step="1">
+              <span class="howStepNum">02 / 03</span>
+              <h3>Print it out</h3>
+              <p>An 80mm receipt lands in the customer&rsquo;s hand before they ask for it.</p>
+              <span class="howStepTag">Receipt #1042</span>
+            </article>
+            <article class="howStepView" data-step="2">
+              <span class="howStepNum">03 / 03</span>
+              <h3>Read it back</h3>
+              <p>Stock and totals update before the next customer, so the numbers stay honest.</p>
+              <span class="howStepTag">Daily insight</span>
+            </article>
+          </div>
+          <div class="howRail" id="howRail" aria-hidden="true">
+            <div class="howRailItem is-active" data-step="0"><span class="howDot"></span><span class="howRailName">Ring it up</span><span class="howRailNum">01</span></div>
+            <div class="howRailItem" data-step="1"><span class="howDot"></span><span class="howRailName">Print it out</span><span class="howRailNum">02</span></div>
+            <div class="howRailItem" data-step="2"><span class="howDot"></span><span class="howRailName">Read it back</span><span class="howRailNum">03</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="section" id="features" style="padding-top:0">
     <div class="reveal">
       <p class="kicker">LESS FRICTION. MORE FLOW.</p>
@@ -922,11 +1482,6 @@
         <p>Turn your daily sales into clear insights and smarter decisions.</p>
       </article>
       <article class="card reveal" style="transition-delay:.3s">
-        <div class="cardImg"><img src="assets/receipt.png" alt="Printed receipt"></div>
-        <h3>Receipt in hand</h3>
-        <p>An 80mm slip prints the moment the sale closes &mdash; no extra taps.</p>
-      </article>
-      <article class="card reveal" style="transition-delay:.4s">
         <div class="cardImg"><img src="assets/setup.png" alt="Setup"></div>
         <h3>Quick setup</h3>
         <p>Get started in minutes. No training, no hassle.</p>
@@ -963,7 +1518,16 @@
       <div class="hscroll-track" id="hTrack">
         <article class="hcard">
           <span class="num">01 &mdash; CHECKOUT</span>
-          <div>
+          <div class="hVisual hv-checkout" aria-hidden="true">
+            <div class="hvScreen">
+              <span class="hvRow r1"><i></i><b></b></span>
+              <span class="hvRow r2"><i></i><b class="short"></b></span>
+              <span class="hvTotal">9,500</span>
+            </div>
+            <span class="hvTap"></span>
+            <span class="hvTag">TAP PAID</span>
+          </div>
+          <div class="hBody">
             <h3>Tap. Sell. Done.</h3>
             <p>A cart that keeps up with a lunch rush, quantities that never fight back, totals that are always right.</p>
           </div>
@@ -971,7 +1535,11 @@
         </article>
         <article class="hcard">
           <span class="num">02 &mdash; INVENTORY</span>
-          <div>
+          <div class="hVisual hv-stock" aria-hidden="true">
+            <div class="hvShelf"><i class="s1"></i><i class="s2"></i><i class="s3"></i><i class="s4"></i><i class="s5"></i></div>
+            <span class="hvTag">7 LOW</span>
+          </div>
+          <div class="hBody">
             <h3>Shelves that count themselves.</h3>
             <p>Every sale moves the stock. Every delivery adds to it. You see the truth without touching a clipboard.</p>
           </div>
@@ -979,7 +1547,11 @@
         </article>
         <article class="hcard">
           <span class="num">03 &mdash; RECEIPTS</span>
-          <div>
+          <div class="hVisual hv-receipt" aria-hidden="true">
+            <div class="hvSlip"><i></i><i></i><i></i><b>9,500</b></div>
+            <span class="hvTag">PRINTED</span>
+          </div>
+          <div class="hBody">
             <h3>Printed before they look up.</h3>
             <p>80mm thermal receipts, sent the moment the sale closes &mdash; no extra taps and no waiting at the counter.</p>
           </div>
@@ -987,7 +1559,12 @@
         </article>
         <article class="hcard">
           <span class="num">04 &mdash; OFFLINE</span>
-          <div>
+          <div class="hVisual hv-offline" aria-hidden="true">
+            <div class="hvDevice"><i></i><i></i><i></i></div>
+            <span class="hvSync"></span>
+            <span class="hvTag">QUEUED</span>
+          </div>
+          <div class="hBody">
             <h3>No signal? No problem.</h3>
             <p>Sales are saved on the device and sync themselves when the connection returns. The queue keeps moving.</p>
           </div>
@@ -995,7 +1572,11 @@
         </article>
         <article class="hcard">
           <span class="num">05 &mdash; INSIGHTS</span>
-          <div>
+          <div class="hVisual hv-insight" aria-hidden="true">
+            <div class="hvChart"><i></i><i></i><i></i><i></i><i></i></div>
+            <span class="hvTag">TODAY</span>
+          </div>
+          <div class="hBody">
             <h3>Yesterday, explained simply.</h3>
             <p>Daily totals, best sellers and trends in plain language, so tomorrow&rsquo;s order almost writes itself.</p>
           </div>
@@ -1003,7 +1584,11 @@
         </article>
         <article class="hcard">
           <span class="num">06 &mdash; SETUP</span>
-          <div>
+          <div class="hVisual hv-setup" aria-hidden="true">
+            <div class="hvSteps"><span></span><span></span><span></span></div>
+            <span class="hvTag">READY</span>
+          </div>
+          <div class="hBody">
             <h3>Ready in five minutes.</h3>
             <p>Add your products, connect a printer and start selling. No consultant, no spreadsheet, no drama.</p>
           </div>
@@ -1152,15 +1737,28 @@
       els.forEach(function (el) { el.classList.add('in'); });
       return;
     }
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('in');
-          io.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.16, rootMargin: '0px 0px -50px 0px' });
-    els.forEach(function (el) { io.observe(el); });
+
+    function observe(list, options) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('in');
+            io.unobserve(entry.target);
+          }
+        });
+      }, options);
+      list.forEach(function (el) { io.observe(el); });
+    }
+
+    var intro = [], rest = [];
+    els.forEach(function (el) {
+      if (el.closest('.liveIntro')) intro.push(el); else rest.push(el);
+    });
+
+    // The dark sheet's title waits until the sheet has clearly arrived, so it
+    // does not flash past while the rounded edge is still covering the screen.
+    observe(rest, { threshold: 0.16, rootMargin: '0px 0px -50px 0px' });
+    observe(intro, { threshold: 0.1, rootMargin: '0px 0px -66% 0px' });
   })();
 
   /* ---------- 4. Animated counters ---------- */
@@ -1314,6 +1912,81 @@
     window.addEventListener('resize', queue, { passive: true });
   })();
 
+  /* ---------- 5c. Overlapping headline crossfade ---------- */
+  // A second statement fades in over the written one while the hero is pinned,
+  // the same crossfade idea xenea uses for its "VERIFY" headline.
+  (function heroEcho() {
+    var stage = document.getElementById('heroStage');
+    var echo = document.getElementById('heroEcho');
+    var title = document.getElementById('heroTitle');
+    if (!stage || !echo || !title || reduceMotion) return;
+    var ticking = false;
+
+    function paint() {
+      ticking = false;
+      var span = Math.max(1, stage.offsetHeight - window.innerHeight);
+      var p = (window.scrollY - stage.offsetTop) / span;
+      var mix = Math.max(0, Math.min(1, (p - .24) / .22));
+      if (p > .62) mix = Math.max(0, 1 - (p - .62) / .14);
+      echo.style.opacity = mix.toFixed(3);
+      echo.style.transform = 'translate3d(0,' + (12 - mix * 12).toFixed(1) + 'px,0)';
+      echo.style.filter = 'blur(' + (7 - mix * 7).toFixed(1) + 'px)';
+      title.style.opacity = (1 - mix * .58).toFixed(3);
+      title.style.filter = 'blur(' + (mix * 2.4).toFixed(1) + 'px)';
+    }
+    function queue() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(paint);
+    }
+    window.addEventListener('scroll', queue, { passive: true });
+    window.addEventListener('resize', queue, { passive: true });
+    paint();
+  })();
+
+  /* ---------- 5d. smartpos pointer tilt ---------- */
+  // Left edge sinks and right edge lifts when the pointer is on the left;
+  // move right and the opposite happens. The same vertical tilt follows Y.
+  (function smartposTilt() {
+    var card = document.querySelector('.posPrompt');
+    if (!card || reduceMotion) return;
+
+    function move(event) {
+      var box = card.getBoundingClientRect();
+      var x = ((event.clientX - box.left) / box.width - .5) * 2;
+      var y = ((event.clientY - box.top) / box.height - .5) * 2;
+      card.style.setProperty('--ry', (x * 13).toFixed(2) + 'deg');
+      card.style.setProperty('--rx', (-y * 10).toFixed(2) + 'deg');
+    }
+    function reset() {
+      card.style.setProperty('--ry', '0deg');
+      card.style.setProperty('--rx', '0deg');
+    }
+    card.addEventListener('mousemove', move);
+    card.addEventListener('mouseleave', reset);
+  })();
+
+  /* ---------- 5e. foundation card pointer tilt ---------- */
+  // Same edge behaviour, with a much smaller range so the card barely moves.
+  (function foundationTilt() {
+    var card = document.querySelector('.landingCard');
+    if (!card || reduceMotion) return;
+
+    function move(event) {
+      var box = card.getBoundingClientRect();
+      var x = ((event.clientX - box.left) / box.width - .5) * 2;
+      var y = ((event.clientY - box.top) / box.height - .5) * 2;
+      card.style.setProperty('--ry', (x * 4).toFixed(2) + 'deg');
+      card.style.setProperty('--rx', (-y * 3).toFixed(2) + 'deg');
+    }
+    function reset() {
+      card.style.setProperty('--ry', '0deg');
+      card.style.setProperty('--rx', '0deg');
+    }
+    card.addEventListener('mousemove', move);
+    card.addEventListener('mouseleave', reset);
+  })();
+
   /* ---------- 6. Button ripple ---------- */
   document.querySelectorAll('.btn').forEach(function (btn) {
     btn.addEventListener('click', function (event) {
@@ -1462,6 +2135,60 @@
     frame();
   })();
 
+  /* ---------- 8a. How-it-works pinned sequence ---------- */
+  // Xenea pins its how section and scrubs a side rail through three steps.
+  // Here the same scroll drives our checkout / receipt / insight screens and
+  // swaps the copy, tag and focused data chip for each move.
+  (function howSequence() {
+    var sec = document.getElementById('how');
+    var visual = document.getElementById('howVisual');
+    if (!sec || !visual) return;
+    var views = sec.querySelectorAll('.howStepView');
+    var shots = sec.querySelectorAll('.howShot');
+    var floats = sec.querySelectorAll('.howFloat');
+    var railItems = sec.querySelectorAll('.howRailItem');
+    if (!views.length) return;
+    var ticking = false;
+    var clamp = function (v) { return Math.max(0, Math.min(1, v)); };
+
+    function setStep(index, local) {
+      for (var i = 0; i < views.length; i++) views[i].classList.toggle('is-active', i === index);
+      for (var s = 0; s < shots.length; s++) shots[s].classList.toggle('is-active', s === index);
+      for (var f = 0; f < floats.length; f++) floats[f].classList.toggle('is-focus', f === index);
+      for (var r = 0; r < railItems.length; r++) {
+        var fill = r < index ? 1 : (r === index ? local : 0);
+        railItems[r].style.setProperty('--fill', fill.toFixed(3));
+        railItems[r].classList.toggle('is-active', r === index);
+        railItems[r].classList.toggle('is-done', r < index);
+      }
+    }
+
+    function paint() {
+      ticking = false;
+      if (reduceMotion || window.innerWidth <= 880) {
+        setStep(0, 0);
+        visual.style.transform = '';
+        return;
+      }
+      var top = sec.getBoundingClientRect().top + window.scrollY;
+      var span = Math.max(1, sec.offsetHeight - window.innerHeight);
+      var p = clamp((window.scrollY - top) / span);
+      var raw = Math.min(2.999, p * 3);
+      var index = Math.floor(raw);
+      var local = raw - index;
+      setStep(index, local);
+      visual.style.transform = 'translate3d(0,' + ((0.5 - local) * 8).toFixed(1) + 'px,0)';
+    }
+    function queue() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(paint);
+    }
+    window.addEventListener('scroll', queue, { passive: true });
+    window.addEventListener('resize', queue, { passive: true });
+    paint();
+  })();
+
   /* ---------- 8b. Image card tilt ---------- */
   // Same idea as xenea's tilted comparison tile, driven by our own images.
   (function cardTilt() {
@@ -1489,10 +2216,9 @@
   })();
 
   /* ---------- 8b. White-to-black mosaic wipe ---------- */
-  // Xenea hands the light hero to its dark content with a masked, staggered
-  // eight-column wipe. This mirrors that handoff: the black sheet is painted
-  // over the light stage bottom-up as the hero ends, then the real dark sheet
-  // takes over once it reaches the top of the viewport.
+  // Xenea hands the light landing to its dark content with a masked, staggered
+  // eight-column wipe. Here the black sheet is painted over the last viewport
+  // of the light statement, then the real dark sheet takes over from below.
   (function themeWipe() {
     var wipe = document.getElementById('themeWipe');
     var sheet = document.querySelector('.contentSheet');
@@ -1503,7 +2229,10 @@
 
     function paint() {
       ticking = false;
-      var end = sheet.getBoundingClientRect().top + window.scrollY;
+      // Clear the mask just before the sheet reaches the top so the dark
+      // heading is not hidden behind the wipe as it scrolls into view.
+      var clearEarly = window.innerWidth <= 880 ? .34 : .2;
+      var end = sheet.getBoundingClientRect().top + window.scrollY - window.innerHeight * clearEarly;
       var start = end - window.innerHeight * .9;
       var p = (window.scrollY - start) / Math.max(1, end - start);
       p = Math.max(0, Math.min(1, p));
