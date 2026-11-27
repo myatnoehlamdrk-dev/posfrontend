@@ -11,6 +11,7 @@ import 'package:posfrontend/features/auth/domain/usecases/login.dart';
 import 'package:posfrontend/features/auth/domain/usecases/register.dart';
 import 'package:posfrontend/features/auth/domain/usecases/verify_account.dart';
 import 'package:posfrontend/features/auth/domain/usecases/forgot_password.dart';
+import 'package:posfrontend/features/auth/domain/usecases/withdraw_membership_request.dart';
 
 // Product
 import 'package:posfrontend/features/product/data/datasources/product_remote_data_source.dart';
@@ -90,6 +91,13 @@ import 'package:posfrontend/features/purchase/data/datasources/purchase_remote_d
 import 'package:posfrontend/features/purchase/data/repositories/purchase_repository_impl.dart';
 import 'package:posfrontend/features/purchase/domain/repositories/purchase_repository.dart';
 
+// Team & Access
+import 'package:posfrontend/features/team/data/datasources/team_remote_data_source.dart';
+import 'package:posfrontend/features/team/data/repositories/team_repository_impl.dart';
+import 'package:posfrontend/features/team/domain/repositories/team_repository.dart'
+    as team;
+import 'package:posfrontend/features/team/domain/usecases/team_usecases.dart';
+
 // Shared
 import 'package:posfrontend/shared/repositories/imgbb_repository.dart';
 import 'package:posfrontend/shared/repositories/imgbb_repository_impl.dart';
@@ -130,6 +138,9 @@ Future<void> init() async {
   );
   getIt.registerLazySingleton<ResetPasswordUseCase>(
     () => ResetPasswordUseCase(getIt<auth.AuthRepository>()),
+  );
+  getIt.registerLazySingleton<WithdrawMembershipRequestUseCase>(
+    () => WithdrawMembershipRequestUseCase(getIt<auth.AuthRepository>()),
   );
 
   // Product
@@ -288,6 +299,29 @@ Future<void> init() async {
   getIt.registerLazySingleton<ShopApiRepository>(() => ShopApiRepositoryImpl());
   getIt.registerLazySingleton<ShopLocalRepository>(
     () => ShopLocalRepositoryImpl(),
+  );
+
+  // Team & Access
+  getIt.registerLazySingleton<TeamRemoteDataSource>(
+    () => TeamRemoteDataSource(),
+  );
+  getIt.registerLazySingleton<team.TeamRepository>(
+    () => TeamRepositoryImpl(remoteDataSource: getIt()),
+  );
+  getIt.registerLazySingleton<GetTeamMembersUseCase>(
+    () => GetTeamMembersUseCase(getIt<team.TeamRepository>()),
+  );
+  getIt.registerLazySingleton<ApproveMemberUseCase>(
+    () => ApproveMemberUseCase(getIt<team.TeamRepository>()),
+  );
+  getIt.registerLazySingleton<RejectMemberUseCase>(
+    () => RejectMemberUseCase(getIt<team.TeamRepository>()),
+  );
+  getIt.registerLazySingleton<UpdateMemberUseCase>(
+    () => UpdateMemberUseCase(getIt<team.TeamRepository>()),
+  );
+  getIt.registerLazySingleton<RemoveMemberUseCase>(
+    () => RemoveMemberUseCase(getIt<team.TeamRepository>()),
   );
 
   // Package

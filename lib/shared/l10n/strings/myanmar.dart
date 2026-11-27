@@ -772,4 +772,47 @@ const Map<String, String> myStrings = {
       'ဤကွန်ပျူတာအတွက် USB တပ်ဆင်ရေးကို ဒေါင်းလုဒ်လုပ်ပါ',
   'The download could not be started. Try again.':
       'ဒေါင်းလုဒ်စတင်၍ မရပါ။ ထပ်ကြိုးစားကြည့်ပါ။',
+
+  // Shop membership approval
+  'The shop owner must approve your request before you can sign in.':
+      'ဆိုင်ပိုင်ရှင်က သင့်လျှောက်လွှာကို အတည်ပြုမှသာ ဝင်ရောက်နိုင်ပါမည်။',
+  'Waiting for Approval': 'အတည်ပြုချက်စောင့်ဆိုင်းနေသည်',
+  'Request Not Approved': 'လျှောက်လွှာ အတည်မပြုပါ',
+  'The shop declined your request. You can withdraw it and register again with this email.':
+      'ဆိုင်က သင့်လျှောက်လွှာကို ငြင်းပယ်ပါသည်။ ရုပ်သိမ်းပြီး အီးမေးလ်ဖြင့် ပြန်လည်စာရင်းသွင်းနိုင်ပါသည်။',
+  'Your account is linked to this shop but is not active yet. You will be able to sign in once the owner or a manager approves it.':
+      'သင့်အကောင့်က ဤဆိုင်နှင့် ချိတ်ဆက်ထားသော်လည်း မပြတ်တမ်းဖြစ်သေးသည်။ ပိုင်ရှင် သို့မဟုတ် မန်နေဂျာ အတည်ပြုပြီးနောက် ဝင်ရောက်နိုင်ပါမည်။',
+  'Your shop': 'သင့်ဆိုင်',
+  'Try Again': 'ပြန်ကြိုးစားရန်',
+  'Cancel Request': 'လျှောက်လွှာ ရုပ်သိမ်းရန်',
+  'Request cancelled. You can register again.':
+      'လျှောက်လွှာ ရုပ်သိမ်းပြီးပါပြီ။ ပြန်လည်စာရင်းသွင်းနိုင်ပါပြီ။',
+  'Team & Access': 'အဖွဲ့နှင့် ဝင်ခွင့်',
+  'Only the shop owner or a manager can view this page.':
+      'ဆိုင်ပိုင်ရှင် သို့မဟုတ် မန်နေဂျာသာ ဤစာမျက်နှာကို ကြည့်နိုင်ပါသည်။',
+  'No pending requests.': 'စောင့်ဆိုင်းနေသော လျှောက်လွှာ မရှိပါ။',
+  'No members yet.': 'အဖွဲ့ဝင် မရှိသေးပါ။',
+  'Shop access is managed here.': 'ဆိုင်ဝင်ခွင့်ကို ဤနေရာတွင် စီမံပါသည်။',
+  'Pending requests': 'စောင့်ဆိုင်း လျှောက်လွှာများ',
+  'Approve people joining this shop': 'ဤဆိုင်သို့ ဝင်ရောက်သူများကို အတည်ပြုပါ',
+  'Members': 'အဖွဲ့ဝင်များ',
+  'Approve as': 'ဤအခန်းကဏ္ဍဖြင့် အတည်ပြုရန်',
+  'Cashier': 'ငွေကောက်သူ',
+  'Manager': 'မန်နေဂျာ',
+  'Viewer': 'ကြည့်ရှုသူ',
+  'Approve': 'အတည်ပြုရန်',
+  'Decline': 'ငြင်းပယ်ရန်',
+  'Disabled': 'ပိတ်ထားသည်',
+  'Disable': 'ပိတ်ရန်',
+  'Enable': 'ဖွင့်ရန်',
+  'Joined': 'စာရင်းဝင်သည့်နေ့',
+  'Decline request?': 'လျှောက်လွှာကို ငြင်းပယ်မည်လား?',
+  'Remove member?': 'အဖွဲ့ဝင်ကို ဖယ်ရှားမည်လား?',
+  'Confirm': 'အတည်ပြုရန်',
+  'Role updated.': 'အခန်းကဏ္ဍ ပြင်ဆင်ပြီးပါပြီ။',
+  'Request declined.': 'လျှောက်လွှာ ငြင်းပယ်ပြီးပါပြီ။',
+  'Member enabled.': 'အဖွဲ့ဝင်ကို ပြန်ဖွင့်ပြီးပါပြီ။',
+  'Member disabled.': 'အဖွဲ့ဝင်ကို ပိတ်ထားပါသည်။',
+  'Member removed.': 'အဖွဲ့ဝင်ကို ဖယ်ရှားပြီးပါပြီ။',
+  'Back': 'ပြန်သွားရန်',
 };

@@ -8,6 +8,7 @@ class LoginResponseModel {
   final String tokenType;
   final String shopId;
   final String role;
+  final String membershipStatus;
 
   const LoginResponseModel({
     required this.id,
@@ -17,6 +18,7 @@ class LoginResponseModel {
     required this.tokenType,
     this.shopId = '',
     this.role = '',
+    this.membershipStatus = '',
   });
 
   factory LoginResponseModel.fromJson(Map<String, dynamic> json) {
@@ -28,6 +30,10 @@ class LoginResponseModel {
       tokenType: json['token_type'] as String? ?? 'Bearer',
       shopId: (json['shopId'] ?? json['shop_id'] ?? '').toString(),
       role: json['role'] as String? ?? '',
+      // `status` is the raw column; `membershipStatus` is the normalised value
+      // the backend adds. Legacy rows have a null status and are active.
+      membershipStatus:
+          (json['membershipStatus'] ?? json['status'] ?? 'active').toString(),
     );
   }
 
@@ -38,6 +44,7 @@ class LoginResponseModel {
       email: email,
       shopId: shopId,
       role: role,
+      membershipStatus: membershipStatus,
     );
   }
 }

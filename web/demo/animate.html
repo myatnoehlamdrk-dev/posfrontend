@@ -7,8 +7,11 @@
 <title>smartpos. — Create your own business.</title>
 <style>
   :root{
-    --bg:#08050F; --ink:#F4F0FF; --muted:#A99DC4; --p:#7952DB; --p2:#B49BFF;
+    --bg:#EDEEF2; --ink:#F4F0FF; --muted:#A99DC4; --p:#7952DB; --p2:#B49BFF;
     --line:rgba(180,155,255,.14); --panel:rgba(255,255,255,.035);
+    /* Light stage tokens for the first screen. The dark sections below the
+       hero re-declare these inside .contentSheet. */
+    --stage-ink:#15131C; --stage-muted:#5F5A6E; --stage-line:rgba(20,18,32,.10);
   }
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
@@ -30,6 +33,9 @@
       radial-gradient(34% 34% at 82% 26%, rgba(180,155,255,.22), transparent 62%),
       radial-gradient(46% 46% at 58% 88%, rgba(84,44,180,.34), transparent 62%);
     animation:drift 24s ease-in-out infinite alternate;
+    /* The first screen is a light stage now; the fog only belonged to the
+       dark treatment and muddies #EDEEF2. */
+    display:none;
   }
   @keyframes drift{to{transform:translate3d(4%,-3%,0) scale(1.12) rotate(6deg)}}
   .grid-lines{
@@ -38,19 +44,115 @@
     background-size:64px 64px;
     -webkit-mask-image:radial-gradient(circle at 50% 15%,#000,transparent 72%);
     mask-image:radial-gradient(circle at 50% 15%,#000,transparent 72%);
-  }
-  .glow{
-    position:fixed; left:0; top:0; width:520px; height:520px; border-radius:50%; z-index:1; pointer-events:none;
-    background:radial-gradient(circle,rgba(140,100,255,.16),transparent 62%);
-    transform:translate3d(-50%,-50%,0); will-change:transform;
+    /* Replaced by the dotted stage grid on #hero. */
+    display:none;
   }
   main{position:relative; z-index:2}
 
   /* ---------- chrome ---------- */
-  .top{
-    position:absolute; top:0; left:0; right:0; z-index:10;
-    display:flex; align-items:center; justify-content:space-between; gap:1rem;
-    padding:1.2rem clamp(1.1rem,4vw,2.2rem);
+  /* Adaptive xenea-style header: starts as a full-width light bar, morphs
+     into an inset pill while the hero is pinned, then inverts to dark when the
+     dark sheet takes over. Same palette tokens as xenea, our own brand/links. */
+  .siteHeader{
+    --hdrPhase:0;
+    position:fixed; top:0; left:0; right:0; z-index:120;
+    display:block; padding-top:calc(16px * var(--hdrPhase));
+    pointer-events:none;
+    transition:padding-top .5s cubic-bezier(.22,.68,.36,1);
+  }
+  .headerShell{
+    position:relative; z-index:2; pointer-events:auto;
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    width:calc(100% - 88px * var(--hdrPhase)); height:56px; margin:0 auto;
+    padding:0 8px 0 20px; border-radius:calc(80px * var(--hdrPhase));
+    border:1px solid rgba(255,255,255,.56);
+    background-color:#EDEEF2; color:var(--stage-ink);
+    -webkit-backdrop-filter:blur(24px) saturate(1.4); backdrop-filter:blur(24px) saturate(1.4);
+    box-shadow:0 4px 24px rgba(0,0,0,.06), inset 0 1px 0 rgba(255,255,255,.70);
+    transition:width .5s cubic-bezier(.22,.68,.36,1), border-radius .5s cubic-bezier(.22,.68,.36,1), background-color .28s ease, border-color .28s ease, box-shadow .28s ease, color .28s ease;
+  }
+  .siteHeader.is-invert .headerShell{
+    background-color:#09090F; border-color:rgba(255,255,255,.16); color:#fff;
+    box-shadow:0 4px 24px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.10);
+  }
+  .headerLogo{
+    display:flex; align-items:center; gap:9px; flex-shrink:0; width:108px; height:32px;
+    color:inherit; text-decoration:none; font-size:1.05rem; font-weight:800; letter-spacing:-.035em; white-space:nowrap;
+  }
+  .logoMark{width:26px; height:26px; flex:0 0 auto; color:inherit}
+  .logoMark svg{width:100%; height:100%; display:block}
+  .logoText b{color:var(--p)}
+  .siteHeader.is-invert .logoText b{color:#B49BFF}
+  .headerNav{display:flex; align-items:center; gap:8px}
+  .headerList{display:flex; align-items:center; gap:2px; list-style:none; margin:0; padding:0}
+  .headerList a{
+    position:relative; display:inline-flex; align-items:center; padding:12px 16px;
+    border-radius:999px; color:rgba(21,19,28,.58); font-size:.88rem; font-weight:600;
+    text-decoration:none; transition:color .25s ease;
+  }
+  .headerList a::before{
+    content:""; position:absolute; inset:0; border-radius:inherit;
+    background:rgba(0,0,0,.06); opacity:0; transition:opacity .25s ease;
+  }
+  .headerList a:hover{color:inherit}
+  .headerList a:hover::before{opacity:1}
+  .headerLabel{position:relative; z-index:1}
+  .siteHeader.is-invert .headerList a{color:rgba(255,255,255,.78)}
+  .siteHeader.is-invert .headerList a::before{background:rgba(255,255,255,.12)}
+  .headerCta{
+    display:inline-flex; align-items:center; justify-content:center; padding:12px 16px;
+    border-radius:999px; background:#0A0A0F; color:#fff; text-decoration:none;
+    font-size:.88rem; font-weight:700; white-space:nowrap;
+    transition:transform .25s ease, box-shadow .25s ease, background-color .28s ease, color .28s ease;
+  }
+  .headerCta:hover{transform:translateY(-1px); box-shadow:0 10px 22px rgba(0,0,0,.2)}
+  .siteHeader.is-invert .headerCta{background:#fff; color:#0A0A0F}
+  .headerToggle{
+    display:none; position:relative; flex:0 0 auto; width:32px; height:32px;
+    cursor:pointer; background:transparent; border:0; border-radius:999px; color:inherit;
+    transition:background-color .25s ease;
+  }
+  .headerToggle span{
+    position:absolute; top:50%; left:50%; width:16px; height:2px; margin:-1px 0 0 -8px;
+    border-radius:2px; background:currentColor; transition:transform .25s ease, opacity .25s ease;
+  }
+  .headerToggle span:nth-child(1){transform:translateY(-5px)}
+  .headerToggle span:nth-child(3){transform:translateY(5px)}
+  .siteHeader.is-open .headerToggle span:nth-child(1){transform:translateY(0) rotate(45deg)}
+  .siteHeader.is-open .headerToggle span:nth-child(2){opacity:0}
+  .siteHeader.is-open .headerToggle span:nth-child(3){transform:translateY(0) rotate(-45deg)}
+  .headerOverlay{
+    position:fixed; inset:0; z-index:1; background:rgba(0,0,0,.42);
+    opacity:0; visibility:hidden; pointer-events:none;
+    transition:opacity .25s ease, visibility .25s ease;
+  }
+  .siteHeader.is-open .headerOverlay{opacity:1; visibility:visible; pointer-events:auto}
+  .headerMobile{
+    display:none; position:relative; z-index:2; width:calc(100% - 88px); margin:16px auto 0;
+    padding:20px; border-radius:22px; border:1px solid rgba(255,255,255,.56);
+    background:#EDEEF2; color:var(--stage-ink);
+    box-shadow:0 4px 24px rgba(0,0,0,.06), inset 0 1px 0 rgba(255,255,255,.70);
+    transition:background-color .28s ease, border-color .28s ease, box-shadow .28s ease;
+  }
+  .siteHeader.is-invert .headerMobile{
+    background:#09090F; border-color:rgba(255,255,255,.16); color:#fff;
+    box-shadow:0 4px 24px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.10);
+  }
+  .headerMobileList{display:flex; flex-direction:column; gap:20px; list-style:none; margin:0; padding:0}
+  .headerMobileList a{color:inherit; font-size:.95rem; font-weight:650; text-decoration:none; display:inline-flex}
+  .siteHeader.is-invert .headerMobileList a{color:rgba(255,255,255,.92)}
+  .headerMobileCta{
+    display:block; margin-top:32px; padding:14px 16px; border-radius:999px;
+    background:#0A0A0F; color:#fff; text-align:center; text-decoration:none; font-size:.95rem; font-weight:700;
+  }
+  .siteHeader.is-invert .headerMobileCta{background:#fff; color:#0A0A0F}
+
+  /* Scroll-driven white -> black handoff. Eight staggered columns are masked
+     in bottom-up as the hero ends, then the real dark sheet takes over. */
+  .themeWipe{
+    position:fixed; inset:0; z-index:50; pointer-events:none;
+    background:#08050F; visibility:hidden; opacity:0;
+    -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
   }
   .brand{
     position:fixed; top:1.2rem; left:clamp(1.1rem,4vw,2.2rem); z-index:40;
@@ -103,8 +205,8 @@
   }
   .btn.primary:hover::after{transform:translateX(130%)}
   .btn.primary:hover{transform:translateY(-2px); box-shadow:0 22px 54px -14px rgba(140,100,255,.95)}
-  .btn.ghost{color:var(--ink); border-color:var(--line); background:rgba(255,255,255,.04); backdrop-filter:blur(8px)}
-  .btn.ghost:hover{transform:translateY(-2px); border-color:rgba(180,155,255,.45); background:rgba(255,255,255,.07)}
+  .btn.ghost{color:var(--stage-ink); border-color:var(--stage-line); background:rgba(255,255,255,.7); backdrop-filter:blur(8px)}
+  .btn.ghost:hover{transform:translateY(-2px); border-color:rgba(20,18,32,.2); background:#fff}
   .btn:active{transform:translateY(0) scale(.98)}
   .btn:focus-visible{outline:3px solid rgba(180,155,255,.5); outline-offset:3px}
   .btn svg{width:17px; height:17px}
@@ -112,57 +214,92 @@
   @keyframes ripple{to{transform:scale(1); opacity:0}}
 
   /* ---------- hero stage ---------- */
-  /* The hero is pinned for roughly three screens: the phone turns and its
-     screen moves sale -> print -> analysis while the copy stays put. */
-  .heroStage{position:relative; height:280vh}
+  /* The first screen takes xenea's stage idea: one full-viewport plate, a
+     dotted grid, a headline stacked in the middle and the product floating
+     below it. The phone is still ours, and still turns on scroll. */
+  .heroStage{
+    position:relative; height:280vh;
+    /* No solid plate: body already supplies #EDEEF2, and keeping the stage
+       transparent lets the pointer-reactive particles show through. */
+    background-color:transparent;
+    background-image:
+      radial-gradient(circle, rgba(24,22,38,.13) .9px, transparent 1px),
+      radial-gradient(80% 55% at 50% 0%, rgba(255,255,255,.62), rgba(255,255,255,0) 68%),
+      radial-gradient(60% 42% at 50% 102%, rgba(121,82,219,.12), transparent 72%);
+    background-size:16px 16px, auto, auto;
+    background-repeat:repeat, no-repeat, no-repeat;
+    background-position:0 0, 0 0, 50% 100%;
+  }
   .hero{
-    position:sticky; top:0; height:100vh; min-height:620px;
-    display:grid; grid-template-columns:1.05fr .95fr; align-items:center;
-    gap:clamp(2rem,5vw,4rem); max-width:1180px; margin:0 auto;
-    padding:5.5rem clamp(1.1rem,4vw,2.2rem) 2.5rem;
+    position:sticky; top:0; height:100vh; min-height:640px;
+    display:grid; grid-template-columns:1.02fr .98fr; align-items:center;
+    gap:clamp(1rem,2vw,1.8rem);
+    max-width:1120px; margin:0 auto;
+    padding:5.6rem clamp(1.1rem,4vw,2.2rem) 2rem;
+    text-align:left;
   }
+  .heroHead{display:flex; flex-direction:column; align-items:flex-start; gap:clamp(.65rem,1.3vh,.95rem); max-width:560px}
   .eyebrow{
-    display:inline-flex; align-items:center; gap:.6rem; margin:0 0 1.4rem;
-    font-size:.72rem; font-weight:700; letter-spacing:.24em; color:var(--p2);
+    display:inline-flex; align-items:center; gap:.5rem; margin:0;
+    padding:.4rem .85rem .4rem .6rem; border-radius:999px;
+    border:1px solid var(--stage-line); background:rgba(255,255,255,.6);
+    font-size:.66rem; font-weight:700; letter-spacing:.16em; text-transform:uppercase;
+    color:#5A5270;
   }
-  .eyebrow::before{content:""; width:26px; height:1px; background:linear-gradient(90deg,var(--p2),transparent)}
-  h1{font-size:clamp(2.3rem,4.9vw,4.1rem); line-height:.98; letter-spacing:-.035em; margin:0 0 1.3rem; font-weight:800}
-  .w{display:inline-block; opacity:0; transform:translateY(42px) rotate(2deg); animation:rise .95s cubic-bezier(.2,.8,.2,1) forwards}
-  .w:nth-child(1){animation-delay:.1s}
-  .w:nth-child(2){animation-delay:.2s}
-  .w:nth-child(3){animation-delay:.34s}
-  .w:nth-child(4){animation-delay:.44s}
-  .w:nth-child(5){animation-delay:.56s}
-  @keyframes rise{to{opacity:1; transform:none}}
+  .eyebrow::before{content:""; width:6px; height:6px; border-radius:50%; background:var(--p); box-shadow:0 0 0 4px rgba(121,82,219,.14)}
+  h1{font-size:clamp(2.3rem,4.9vw,4.1rem); line-height:1; letter-spacing:-.035em; margin:0; font-weight:800; color:var(--stage-ink); text-wrap:balance}
+  /* Xenea-style write-on headline. Each character is drawn in on load and a
+     short blur/lift window is scrubbed across the line as the hero scrolls. */
+  .w{display:inline-block}
+  .w .ch{
+    display:inline-block; white-space:pre; opacity:0;
+    transform:translate3d(0,16px,0) rotate(2deg); filter:blur(6px);
+    transition:opacity .42s ease, transform .55s cubic-bezier(.2,.8,.2,1), filter .42s ease;
+    transition-delay:calc(var(--ci,0) * 24ms);
+  }
+  .w .ch.on{opacity:1; transform:none; filter:none}
+  .w .ch.drawing{
+    opacity:.2; transform:translate3d(0,-7px,0) rotate(-1deg); filter:blur(4px);
+    transition-delay:0s;
+  }
+  .w.grad .ch,.w.grad .ch.drawing{filter:none}
   .grad{
     background:linear-gradient(100deg,#B49BFF,#7CE7FF 52%,#B49BFF);
     -webkit-background-clip:text; background-clip:text; color:transparent;
-    filter:drop-shadow(0 0 22px rgba(140,100,255,.35));
   }
-  .lead{color:var(--muted); font-size:clamp(1rem,1.5vw,1.12rem); line-height:1.65; max-width:480px; margin:0 0 2rem}
-  .actions{display:flex; gap:.8rem; flex-wrap:wrap}
+  /* Same accent, darkened so it holds on the light stage. */
+  .hero .grad{background-image:linear-gradient(100deg,#6D28D9,#9B7BF0 52%,#6D28D9)}
+  .lead{color:var(--stage-muted); font-size:clamp(.96rem,1.35vw,1.08rem); line-height:1.6; max-width:480px; margin:0}
+  .actions{display:flex; gap:.7rem; flex-wrap:wrap; justify-content:flex-start}
 
   /* ---------- 3D phone scene ---------- */
   .scene{
     position:relative; display:flex; align-items:center; justify-content:center;
-    height:100%; min-height:0; perspective:1400px;
+    width:100%; height:100%; min-height:0; perspective:1400px;
     transition:opacity .45s ease;
   }
   .scene::before{
     content:""; position:absolute; width:min(58vh,520px); height:min(58vh,520px); border-radius:50%;
-    background:radial-gradient(circle,rgba(121,82,219,.46),transparent 66%); filter:blur(36px);
+    background:radial-gradient(circle,rgba(121,82,219,.23),transparent 66%); filter:blur(36px);
     animation:breathe 8s ease-in-out infinite; pointer-events:none;
   }
+  @keyframes breathe{0%,100%{transform:scale(1); opacity:.9}50%{transform:scale(1.08); opacity:1}}
+  /* Soft contact shadow so the device stands on the plate instead of floating. */
+  .scene::after{
+    content:""; position:absolute; bottom:2%; width:min(42vh,360px); height:30px; border-radius:50%;
+    background:radial-gradient(50% 50% at 50% 50%, rgba(24,20,40,.26), transparent 72%);
+    filter:blur(12px); pointer-events:none; z-index:1;
+  }
   #phone3d{
-    position:relative; z-index:2; display:block; height:min(84vh,820px); width:auto;
+    position:relative; z-index:2; display:block; height:min(86vh,820px); width:auto;
     aspect-ratio:62/100; opacity:0; transition:opacity .6s ease;
-    filter:drop-shadow(0 34px 54px rgba(0,0,0,.6)); touch-action:pan-y;
+    filter:drop-shadow(0 34px 54px rgba(30,24,60,.32)); touch-action:pan-y;
   }
   .scene.has3d #phone3d{opacity:1}
 
   /* Shown until the model is ready, and kept if WebGL or the asset fails. */
   .phoneFallback{
-    position:absolute; z-index:1; height:min(80vh,780px); aspect-ratio:49/100; width:auto;
+    position:absolute; z-index:1; height:min(82vh,800px); aspect-ratio:49/100; width:auto;
     padding:10px; border-radius:44px;
     background:linear-gradient(155deg,#4a3f66,#171122 62%,#0d0916);
     border:1px solid rgba(180,155,255,.28);
@@ -182,36 +319,58 @@
   }
   .scene.has3d .phoneFallback{display:none}
 
-  /* Sale / print / analysis guide, one row beside the copy. */
+  /* Receipt-style data chips floating beside the device, the way xenea hangs
+     its chat card under the headline. Values are the shop's own numbers. */
+  .floatCard{
+    position:absolute; z-index:3; pointer-events:none; text-align:left;
+    display:flex; flex-direction:column; gap:.1rem;
+    padding:.65rem .9rem; border-radius:14px;
+    background:rgba(255,255,255,.86);
+    -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
+    border:1px solid rgba(20,18,32,.07);
+    box-shadow:0 10px 32px rgba(16,16,24,.10), inset 0 1px 0 rgba(255,255,255,.9);
+  }
+  .floatCard .fcLabel{font-size:.58rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#6B6478}
+  .floatCard .fcValue{font-size:1.02rem; font-weight:800; letter-spacing:-.02em; color:var(--stage-ink); font-variant-numeric:tabular-nums}
+  .floatCard .fcSub{font-size:.68rem; font-weight:600; color:#2E7D4F}
+  .fc-sales{left:-1.6rem; top:12%}
+  .fc-receipt{right:-2.2rem; top:42%}
+  .fc-stock{left:-1rem; bottom:11%}
+  @media (max-width:1080px){ .floatCard{display:none} }
+
+  /* Sale / print / analysis guide, one row under the copy. */
   .story{
-    display:flex; flex-direction:row; gap:.35rem; margin-top:1.7rem;
-    max-width:600px;
+    display:flex; flex-direction:row; gap:.2rem; margin-top:.2rem;
+    padding:.28rem; max-width:560px;
+    border-radius:999px; border:1px solid rgba(20,18,32,.08);
+    background:rgba(255,255,255,.55);
+    box-shadow:0 6px 20px rgba(16,16,24,.05);
   }
   .storyStep{
     flex:1 1 0; min-width:0;
-    display:flex; align-items:center; gap:.45rem;
-    background:none; border:1px solid transparent; color:var(--muted);
-    font:inherit; font-size:.82rem; line-height:1.25; cursor:pointer;
-    padding:.5rem .5rem; text-align:left; border-radius:10px;
-    opacity:.45; transition:opacity .3s ease, color .3s ease,
-      background .3s ease, border-color .3s ease;
+    display:flex; align-items:center; justify-content:center; gap:.4rem;
+    background:none; border:1px solid transparent; color:var(--stage-muted);
+    font:inherit; font-size:.78rem; line-height:1.2; cursor:pointer;
+    padding:.5rem .6rem; text-align:center; border-radius:999px;
+    opacity:.62; transition:opacity .3s ease, color .3s ease,
+      background .3s ease, border-color .3s ease, box-shadow .3s ease;
   }
   .storyStep i{
     flex:0 0 auto;
-    font-style:normal; font-size:.58rem; font-weight:700; letter-spacing:.1em;
-    border:1px solid var(--line); border-radius:999px; padding:.14rem .38rem;
+    font-style:normal; font-size:.55rem; font-weight:700; letter-spacing:.08em;
+    border:1px solid rgba(20,18,32,.14); border-radius:999px; padding:.12rem .34rem;
     transition:.3s ease;
   }
-  .storyStep span{font-weight:600}
+  .storyStep span{font-weight:600; white-space:nowrap}
   .storyStep.is-on{
-    opacity:1; color:var(--ink);
-    background:rgba(121,82,219,.10); border-color:rgba(180,155,255,.18);
+    opacity:1; color:var(--stage-ink);
+    background:#fff; border-color:rgba(20,18,32,.07);
+    box-shadow:0 4px 12px rgba(16,16,24,.08);
   }
   .storyStep.is-on i{
-    background:linear-gradient(135deg,#8B62F0,#5B34C0); color:#fff; border-color:transparent;
-    box-shadow:0 0 0 3px rgba(121,82,219,.16);
+    background:var(--p); color:#fff; border-color:transparent;
   }
-  .storyStep:focus-visible{outline:2px solid rgba(180,155,255,.6); outline-offset:4px; border-radius:8px}
+  .storyStep:focus-visible{outline:2px solid rgba(121,82,219,.55); outline-offset:4px; border-radius:999px}
   /* Shared 3D phone for the hscroll cards (one renderer, swapped per card). */
   .sharedCardPhone{
     position:fixed; left:50%; top:35%; transform:translate(-50%,-50%);
@@ -281,6 +440,22 @@
     font-size:.68rem; font-weight:700; letter-spacing:.24em; color:var(--muted);
   }
   .scrolly-tip::before{content:""; width:34px; height:1px; background:linear-gradient(90deg,var(--p2),transparent)}
+  /* Pinned step rail: fills as the paragraph is scrubbed, the way xenea's
+     how-it-works rail advances through its steps. */
+  .flowRail{display:flex; align-items:center; gap:1rem; margin:1.8rem 0 0; max-width:560px}
+  .flowTrack{
+    position:relative; flex:1; height:4px; border-radius:999px; overflow:hidden;
+    background:rgba(255,255,255,.06); box-shadow:inset 0 1px 3px rgba(0,0,0,.6);
+  }
+  .flowTrack i{
+    position:absolute; inset:0; border-radius:inherit; transform-origin:left center; transform:scaleX(0);
+    background:linear-gradient(90deg,#7952DB,#B49BFF); box-shadow:0 0 14px rgba(121,82,219,.7);
+  }
+  .flowSteps{display:flex; gap:1.4rem}
+  .flowSteps b{
+    font-size:.66rem; letter-spacing:.1em; color:rgba(244,240,255,.28); transition:color .3s ease, text-shadow .3s ease;
+  }
+  .flowSteps b.on{color:#F4F0FF; text-shadow:0 0 14px rgba(180,155,255,.6)}
 
   /* ---------- pinned horizontal gallery ---------- */
   .hscroll{position:relative; height:300vh}
@@ -290,18 +465,27 @@
   }
   .hscroll-head{max-width:1120px; width:100%; margin:0 auto; padding:0 clamp(1.1rem,4vw,2.2rem)}
   .hscroll-head h2{margin:0; font-size:clamp(1.7rem,3.2vw,2.5rem); letter-spacing:-.03em; line-height:1.12}
+  .hscrollBar{
+    position:relative; height:3px; margin-top:1.1rem; border-radius:999px; overflow:hidden;
+    background:rgba(255,255,255,.06); box-shadow:inset 0 1px 3px rgba(0,0,0,.6);
+  }
+  .hscrollBar i{
+    position:absolute; inset:0; transform-origin:left center; transform:scaleX(0); border-radius:inherit;
+    background:linear-gradient(90deg,#7952DB,#B49BFF);
+  }
   .hscroll-track{
     display:flex; gap:1.2rem; width:max-content; padding:0 clamp(1.1rem,4vw,2.2rem);
     will-change:transform;
   }
   .hcard{
     position:relative; flex:0 0 auto; width:clamp(310px,30vw,460px); height:320px; padding:1.8rem;
-    border-radius:22px; border:1px solid var(--line); overflow:hidden;
-    background:linear-gradient(155deg,rgba(255,255,255,.08),rgba(255,255,255,.015) 62%);
+    border-radius:22px; border:1px solid rgba(180,155,255,.07); overflow:hidden;
+    background:var(--bg); box-shadow:var(--shadow-card);
     display:flex; flex-direction:column; justify-content:space-between;
-    transition:border-color .3s ease, background .3s ease;
+    transition:border-color .3s ease, box-shadow .3s ease, transform .3s ease;
   }
-  .hcard:hover{border-color:rgba(180,155,255,.42); background:linear-gradient(155deg,rgba(255,255,255,.1),rgba(255,255,255,.03) 62%)}
+  .hcard::after{content:""; position:absolute; inset:0; border-radius:inherit; box-shadow:var(--edge-light); pointer-events:none}
+  .hcard:hover{border-color:rgba(180,155,255,.42); transform:translateY(-5px); box-shadow:-16px 22px 34px rgba(0,0,0,.64), inset -2px 2px 4px rgba(255,255,255,.12)}
   .hcard .num{font-size:.68rem; font-weight:700; letter-spacing:.24em; color:var(--p2)}
   .hcard h3{margin:0 0 .55rem; font-size:1.35rem; letter-spacing:-.02em}
   .hcard p{margin:0; color:var(--muted); font-size:.9rem; line-height:1.6; max-width:33ch}
@@ -336,6 +520,54 @@
   .reveal{opacity:0; transform:translateY(34px); transition:opacity .9s cubic-bezier(.2,.8,.2,1), transform .9s cubic-bezier(.2,.8,.2,1)}
   .reveal.in{opacity:1; transform:none}
 
+  /* ---------- dark sheet under the light stage ---------- */
+  /* The stage is light; the story below it is dark. Rather than repainting
+     every section, the dark palette is re-declared on one wrapper that slides
+     up with rounded corners, the way xenea hands the hero over to its content. */
+  .contentSheet{
+    position:relative; z-index:3; margin-top:2.5rem;
+    background:#08050F; color:#F4F0FF;
+    border-radius:34px 34px 0 0;
+    box-shadow:0 -30px 70px -40px rgba(20,16,40,.55);
+    --ink:#F4F0FF; --muted:#A99DC4; --p2:#B49BFF;
+    --line:rgba(180,155,255,.14); --panel:rgba(255,255,255,.035); --bg:#08050F;
+    /* Neumorphic surface: same colour as the sheet, one dark drop shadow and
+       a thin inset light edge, like the raised cards on xenea.io. */
+    --shadow-card:-12px 16px 24px rgba(0,0,0,.55), inset -2px 2px 4px rgba(255,255,255,.075);
+    --edge-light:inset -2px 2px 4px rgba(255,255,255,.06);
+  }
+  .contentSheet::before{
+    content:""; position:absolute; inset:0 0 auto; height:340px; border-radius:inherit;
+    background:radial-gradient(60% 100% at 50% 0%, rgba(121,82,219,.24), transparent 72%);
+    pointer-events:none;
+  }
+  .contentSheet > *{position:relative; z-index:1}
+
+  /* A quiet section index beside the dark story, borrowed from xenea's
+     sticky side TOC. Only wide screens have room for it. */
+  .sectionRail{
+    position:fixed; left:clamp(.7rem,1.8vw,1.8rem); top:50%; transform:translateY(-50%);
+    z-index:6; display:flex; flex-direction:column; gap:.12rem;
+    opacity:0; pointer-events:none; transition:opacity .35s ease;
+  }
+  .sectionRail.on{opacity:1; pointer-events:auto}
+  .railLink{
+    display:flex; align-items:center; gap:.5rem; padding:.3rem .1rem;
+    color:rgba(244,240,255,.4); text-decoration:none;
+    font-size:.66rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+    transition:color .25s ease;
+  }
+  .railLink::before{
+    content:""; width:16px; height:1px; flex:0 0 auto; background:currentColor;
+    opacity:.55; transition:width .25s ease, opacity .25s ease, background .25s ease;
+  }
+  .railLink span{opacity:0; transform:translateX(-4px); white-space:nowrap; transition:.25s ease}
+  .railLink:hover span,.railLink.is-on span{opacity:1; transform:none}
+  .railLink:hover,.railLink.is-on{color:#F4F0FF}
+  .railLink.is-on::before{width:30px; opacity:1; background:linear-gradient(90deg,#7952DB,#B49BFF)}
+  .railLink:focus-visible{outline:2px solid rgba(180,155,255,.7); outline-offset:3px}
+  @media (max-width:1300px){ .sectionRail{display:none} }
+
   /* ---------- sections ---------- */
   .section{max-width:1120px; margin:0 auto; padding:clamp(3rem,7vw,5rem) clamp(1.1rem,4vw,2.2rem)}
   .kicker{font-size:.72rem; font-weight:700; letter-spacing:.24em; color:var(--p2); margin:0 0 .9rem}
@@ -343,8 +575,8 @@
 
   /* counters */
   .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:1rem}
-  .stat{padding:1.5rem 1.4rem; border:1px solid var(--line); border-radius:18px; background:var(--panel); transition:.35s ease}
-  .stat:hover{border-color:rgba(180,155,255,.4); transform:translateY(-4px); background:rgba(255,255,255,.055)}
+  .stat{padding:1.5rem 1.4rem; border:1px solid rgba(180,155,255,.07); border-radius:18px; background:var(--bg); box-shadow:var(--shadow-card); transition:.35s ease}
+  .stat:hover{border-color:rgba(180,155,255,.36); transform:translateY(-4px); box-shadow:-14px 20px 30px rgba(0,0,0,.62), inset -2px 2px 4px rgba(255,255,255,.12)}
   .stat b{
     display:block; font-size:clamp(1.9rem,3.4vw,2.6rem); font-weight:800; letter-spacing:-.03em; line-height:1.1;
     background:linear-gradient(120deg,#fff,#B49BFF); -webkit-background-clip:text; background-clip:text; color:transparent;
@@ -353,16 +585,19 @@
   .stat span{display:block; margin-top:.35rem; font-size:.85rem; color:var(--muted)}
 
   /* feature cards */
-  .cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:1rem}
+  .cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:1rem; counter-reset:feature}
   .card{
-    position:relative; padding:1.7rem 1.6rem; border-radius:20px; background:var(--panel);
-    border:1px solid var(--line); overflow:hidden; transition:transform .4s cubic-bezier(.2,.8,.2,1), border-color .4s ease, background .4s ease;
+    position:relative; padding:1.7rem 1.6rem; border-radius:20px; background:var(--bg);
+    border:1px solid rgba(180,155,255,.07); box-shadow:var(--shadow-card);
+    overflow:hidden; perspective:900px; counter-increment:feature;
+    transition:transform .4s cubic-bezier(.2,.8,.2,1), border-color .4s ease, box-shadow .4s ease;
   }
   .card::before{
     content:""; position:absolute; width:180px; height:180px; right:-70px; top:-80px; border-radius:50%;
     background:radial-gradient(circle,rgba(140,100,255,.35),transparent 70%); opacity:0; transition:opacity .4s ease;
   }
-  .card:hover{transform:translateY(-7px); border-color:rgba(180,155,255,.42); background:rgba(255,255,255,.06)}
+  .card::after{content:""; position:absolute; inset:0; border-radius:inherit; box-shadow:var(--edge-light); pointer-events:none}
+  .card:hover{transform:translateY(-7px); border-color:rgba(180,155,255,.42); box-shadow:-16px 22px 34px rgba(0,0,0,.64), inset -2px 2px 4px rgba(255,255,255,.13)}
   .card:hover::before{opacity:1}
   .card .icon{
     width:44px; height:44px; border-radius:13px; display:grid; place-items:center; margin-bottom:1.1rem;
@@ -371,11 +606,28 @@
   }
   .card .icon svg{width:21px; height:21px}
   .card .cardImg{
-    width:100%; height:150px; border-radius:12px; overflow:hidden; margin-bottom:1rem;
+    position:relative; width:100%; height:150px; border-radius:12px; overflow:hidden; margin-bottom:1rem;
     background:rgba(255,255,255,.04); border:1px solid var(--line);
+    transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));
+    transform-style:preserve-3d; transition:transform .35s ease;
   }
-  .card .cardImg img{width:100%; height:100%; object-fit:cover; display:block; transition:transform .4s ease}
-  .card:hover .cardImg img{transform:scale(1.06)}
+  .card .cardImg img{
+    width:100%; height:100%; object-fit:cover; display:block;
+    transform:translate3d(0,var(--py,0px),0) scale(1.12); will-change:transform;
+  }
+  .card .cardImg::before{
+    /* Numbered glass badge, like xenea's 01-04 about grid, on our own screenshots. */
+    content:counter(feature,decimal-leading-zero); position:absolute; z-index:2; left:12px; top:12px;
+    padding:.28rem .5rem; border-radius:8px; color:#D8C9FF; font-size:.68rem; font-weight:800; letter-spacing:.12em;
+    background:rgba(8,5,15,.62); border:1px solid rgba(180,155,255,.3);
+    box-shadow:inset -2px 2px 4px rgba(255,255,255,.08); backdrop-filter:blur(8px);
+  }
+  .card .cardImg::after{
+    content:""; position:absolute; z-index:3; inset:0; pointer-events:none; opacity:0;
+    background:linear-gradient(105deg,transparent 32%,rgba(255,255,255,.18) 50%,transparent 68%);
+    transform:translateX(-45%); transition:opacity .35s ease, transform .45s ease;
+  }
+  .card:hover .cardImg::after{opacity:1; transform:translateX(45%)}
   .card p{margin:0; color:var(--muted); font-size:.92rem; line-height:1.62}
   .section-lead{margin:-1rem 0 2rem; max-width:640px; color:var(--muted); font-size:clamp(.95rem,1.6vw,1.05rem); line-height:1.65}
 
@@ -429,28 +681,49 @@
   footer a{color:var(--p2); text-decoration:none}
   footer a:hover{text-decoration:underline}
 
+  /* Laptop screens are shorter than they are wide; the stage has to lose
+     height in the headline and the device before the story chips. */
+  @media (max-height:780px) and (min-width:881px){
+    .hero{padding-top:4.6rem; gap:.55rem}
+    .heroHead{gap:.5rem}
+    h1{font-size:clamp(1.75rem,3.4vw,2.85rem)}
+    .lead{font-size:.94rem; max-width:470px; line-height:1.5}
+    .btn{padding:.8rem 1.4rem; font-size:.92rem}
+    .storyStep{font-size:.72rem; padding:.42rem .45rem}
+    .scene,#phone3d,.phoneFallback{height:min(78vh,700px)}
+    .floatCard{display:none}
+  }
   @media (max-width:880px){
     /* No pinning on phones: the hero is a normal block and the screen cycles
        on a timer instead of on scroll. */
     .heroStage{height:auto}
     .hero{
       position:relative; height:auto; min-height:0; grid-template-columns:1fr;
-      text-align:center; padding-top:6rem; padding-bottom:3rem; gap:2rem;
+      text-align:center; padding-top:6.4rem; padding-bottom:3rem; gap:1.3rem;
     }
-    .eyebrow{justify-content:center}
+    .heroHead{align-items:center; gap:.8rem}
     .eyebrow::before{display:none}
-    .lead{margin-inline:auto}
-    .actions{justify-content:center}
-    .story{margin-inline:auto; max-width:440px}
+    .lead{max-width:440px; margin-inline:auto}
+    .actions{justify-content:center; gap:.55rem}
+    .story{margin-inline:auto; max-width:440px; width:100%}
+    .storyStep{font-size:.7rem; padding:.45rem .35rem; gap:.28rem}
+    .storyStep i{display:none}
     .scene{height:min(48vh,430px); min-height:min(48vh,430px)}
     #phone3d{height:min(46vh,410px)}
     .phoneFallback{height:min(42vh,380px)}
+    .siteHeader{padding-top:0}
+    .headerShell{width:100%; height:44px; border-radius:0; padding:0 8px 0 12px}
+    .headerLogo{width:auto}
+    .headerNav{display:none}
+    .headerToggle{display:inline-flex}
+    .headerMobile{width:calc(100% - 32px)}
+    .siteHeader.is-open .headerMobile{display:block}
   }
   @media (prefers-reduced-motion: reduce){
     html{scroll-behavior:auto}
     *,*::before,*::after{animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important}
     .reveal{opacity:1; transform:none}
-    .w{opacity:1; transform:none}
+    .w .ch{opacity:1; transform:none; filter:none; transition:none}
     .scrolly{height:auto}
     .scrolly-inner{position:static; min-height:0; padding-top:4rem; padding-bottom:4rem}
     .scrolly-tip{display:none}
@@ -479,8 +752,6 @@
 <canvas id="fx" aria-hidden="true"></canvas>
 <div class="aurora" aria-hidden="true"></div>
 <div class="grid-lines" aria-hidden="true"></div>
-<div class="glow" id="glow" aria-hidden="true"></div>
-<a class="brand" href="#top"><span class="brandFloat"><span class="brandScale">smartpos<b>.</b></span></span></a>
 <div class="sharedPhones" id="sharedPhones" aria-hidden="true">
   <canvas id="sharedPhone1"></canvas>
   <canvas id="sharedPhone2"></canvas>
@@ -493,28 +764,62 @@
 </div>
 
 <main>
-  <nav class="top">
-    <a class="back" href="#start" style="margin-left:auto">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-      Get started
-    </a>
-  </nav>
+  <div class="themeWipe" id="themeWipe" aria-hidden="true"></div>
+  <header class="siteHeader" id="siteHeader">
+    <div class="headerOverlay" id="headerOverlay" aria-hidden="true"></div>
+    <nav class="headerShell" aria-label="Primary">
+      <a class="headerLogo" href="#top" aria-label="smartpos home">
+        <span class="logoMark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="none">
+            <rect x="2" y="2" width="12" height="12" rx="4" fill="currentColor"/>
+            <rect x="18" y="2" width="12" height="12" rx="4" fill="currentColor" opacity=".45"/>
+            <rect x="2" y="18" width="12" height="12" rx="4" fill="currentColor" opacity=".45"/>
+            <path d="M18 24h5l3 3 3-3h3" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span class="logoText">smartpos<b>.</b></span>
+      </a>
+      <nav class="headerNav" aria-label="Section navigation">
+        <ul class="headerList">
+          <li><a href="#live"><span class="headerLabel">Live numbers</span></a></li>
+          <li><a href="#scrolly"><span class="headerLabel">How it works</span></a></li>
+          <li><a href="#hscroll"><span class="headerLabel">Walkthrough</span></a></li>
+        </ul>
+        <a class="headerCta" href="#start" data-get-started>Get started</a>
+      </nav>
+      <button class="headerToggle" type="button" aria-label="Toggle menu" aria-expanded="false" aria-controls="headerMobile">
+        <span></span><span></span><span></span>
+      </button>
+    </nav>
+    <div class="headerMobile" id="headerMobile">
+      <ul class="headerMobileList">
+        <li><a href="#live">Live numbers</a></li>
+        <li><a href="#scrolly">How it works</a></li>
+        <li><a href="#hscroll">Walkthrough</a></li>
+        <li><a href="#start">Get started</a></li>
+      </ul>
+      <a class="headerMobileCta" href="#start" data-get-started>Get started</a>
+    </div>
+  </header>
 
   <section class="heroStage" id="heroStage">
     <section class="hero" id="hero">
-      <div class="hero-copy">
-        <p class="eyebrow">WELCOME TO THE EXPERIENCE</p>
-        <h1>
-          <span class="w">Create</span> <span class="w">your</span><br>
-          <span class="w grad">own</span> <span class="w grad">business.</span>
+      <div class="heroHead">
+        <p class="eyebrow">Point of sale for small shops</p>
+        <h1 class="heroTitle" id="heroTitle" aria-label="Ring it up. Print it out. Know your shop.">
+          <span class="w">Ring it up.</span> <span class="w">Print it out.</span><br>
+          <span class="w grad">Know your shop.</span>
         </h1>
-        <p class="lead">Run the shop your way &mdash; ring up a sale, print the receipt and read the numbers, all from the phone in your hand.</p>
+        <p class="lead">One app for the counter, the shelf and the books &mdash; ring up a sale, hand over the receipt and read today&rsquo;s numbers before the customer leaves.</p>
         <div class="actions">
-          <button class="btn primary" id="demoBtn" type="button">
+          <a class="btn primary" href="#start" data-get-started>
+            Get started
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+          <button class="btn ghost" id="demoBtn" type="button">
             See it in action
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
           </button>
-          <a class="btn ghost" href="#scrolly">See how it feels</a>
         </div>
 
         <div class="story" id="story" aria-label="What the phone is showing">
@@ -533,9 +838,37 @@
           </div>
         </div>
         <canvas id="phone3d"></canvas>
+
+        <!-- Live figures from the shop, not decoration. -->
+        <div class="floatCard fc-sales" aria-hidden="true">
+          <span class="fcLabel">Today&rsquo;s sales</span>
+          <span class="fcValue">MMK 24,860</span>
+          <span class="fcSub">&uarr; 12.4% vs. yesterday</span>
+        </div>
+        <div class="floatCard fc-receipt" aria-hidden="true">
+          <span class="fcLabel">Receipt #1042</span>
+          <span class="fcValue">Printed</span>
+          <span class="fcSub" style="color:#5F5A6E">80mm &middot; Bluetooth</span>
+        </div>
+        <div class="floatCard fc-stock" aria-hidden="true">
+          <span class="fcLabel">Low stock</span>
+          <span class="fcValue">7 items</span>
+          <span class="fcSub" style="color:#B45309">reorder before Friday</span>
+        </div>
       </div>
     </section>
   </section>
+
+  <div class="contentSheet">
+
+  <aside class="sectionRail" id="sectionRail" aria-label="Page sections">
+    <a class="railLink is-on" href="#live"><span>Overview</span></a>
+    <a class="railLink" href="#scrolly"><span>Why it&rsquo;s fast</span></a>
+    <a class="railLink" href="#features"><span>Everyday tools</span></a>
+    <a class="railLink" href="#hscroll"><span>Walkthrough</span></a>
+    <a class="railLink" href="#result"><span>Built for shops</span></a>
+    <a class="railLink" href="#start"><span>Get started</span></a>
+  </aside>
 
   <section class="section" id="live">
     <div class="reveal">
@@ -558,11 +891,15 @@
         Every tap is answered instantly. Every sale updates the shelf. Every receipt prints before the customer looks up.
       </blockquote>
       <p class="scrolly-sub" id="scrollySub">Because the app does the waiting, not you.</p>
+      <div class="flowRail" aria-hidden="true">
+        <span class="flowTrack"><i id="flowFill"></i></span>
+        <span class="flowSteps"><b>01</b><b>02</b><b>03</b></span>
+      </div>
       <p class="scrolly-tip">Scroll to read</p>
     </div>
   </section>
 
-  <section class="section" style="padding-top:0">
+  <section class="section" id="features" style="padding-top:0">
     <div class="reveal">
       <p class="kicker">LESS FRICTION. MORE FLOW.</p>
       <h2>Everything you need. Nothing you don&rsquo;t.</h2>
@@ -585,6 +922,11 @@
         <p>Turn your daily sales into clear insights and smarter decisions.</p>
       </article>
       <article class="card reveal" style="transition-delay:.3s">
+        <div class="cardImg"><img src="assets/receipt.png" alt="Printed receipt"></div>
+        <h3>Receipt in hand</h3>
+        <p>An 80mm slip prints the moment the sale closes &mdash; no extra taps.</p>
+      </article>
+      <article class="card reveal" style="transition-delay:.4s">
         <div class="cardImg"><img src="assets/setup.png" alt="Setup"></div>
         <h3>Quick setup</h3>
         <p>Get started in minutes. No training, no hassle.</p>
@@ -616,6 +958,7 @@
       <div class="hscroll-head">
         <p class="kicker">A CLOSER LOOK</p>
         <h2>Let&rsquo;s see how the shop works.</h2>
+        <div class="hscrollBar" aria-hidden="true"><i id="hBar"></i></div>
       </div>
       <div class="hscroll-track" id="hTrack">
         <article class="hcard">
@@ -709,6 +1052,7 @@
     <span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-.15em;margin-right:.35rem"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>myatnoehla.mdrk@gmail.com</span>
     <a href="#top">Back to top &uarr;</a>
   </footer>
+  </div>
 </main>
 
 <script>
@@ -763,7 +1107,7 @@
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(196,170,255,.7)';
+        ctx.fillStyle = 'rgba(109,40,217,.38)';
         ctx.fill();
 
         for (var j = i + 1; j < parts.length; j++) {
@@ -772,7 +1116,7 @@
           if (Math.abs(ax) > link || Math.abs(ay) > link) continue;
           var dist = Math.hypot(ax, ay);
           if (dist < link) {
-            ctx.strokeStyle = 'rgba(150,115,255,' + ((1 - dist / link) * 0.2).toFixed(3) + ')';
+            ctx.strokeStyle = 'rgba(109,40,217,' + ((1 - dist / link) * 0.16).toFixed(3) + ')';
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
@@ -869,26 +1213,7 @@
     });
   })();
 
-  /* ---------- 5. Cursor glow ---------- */
-  (function pointerFeel() {
-    if (reduceMotion) return;
-    var glow = document.getElementById('glow');
-    var fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-    if (!fine) { if (glow) glow.style.display = 'none'; return; }
-
-    var gx = -600, gy = -600, raf = 0;
-    function paint() {
-      raf = 0;
-      if (glow) glow.style.transform = 'translate3d(' + (gx - 260) + 'px,' + (gy - 260) + 'px,0)';
-    }
-    window.addEventListener('pointermove', function (e) {
-      gx = e.clientX;
-      gy = e.clientY;
-      if (!raf) raf = requestAnimationFrame(paint);
-    }, { passive: true });
-  })();
-
-  /* ---------- 6. Typewriter ---------- */
+  /* ---------- 5. Typewriter ---------- */
   (function typewriter() {
     var el = document.getElementById('typed');
     if (!el) return;
@@ -924,7 +1249,72 @@
     setTimeout(tick, 600);
   })();
 
-  /* ---------- 7. Button ripple ---------- */
+  /* ---------- 5b. Hero headline draw ---------- */
+  // Xenea writes its headline in letter by letter. Our headline is split into
+  // characters, drawn on load, then a blurred "ink" window is scrubbed across
+  // it while the hero is pinned so the scroll itself feels like it is writing.
+  (function heroDraw() {
+    var title = document.getElementById('heroTitle');
+    var stage = document.getElementById('heroStage');
+    if (!title || !stage) return;
+
+    var words = title.querySelectorAll('.w');
+    var chars = [];
+    for (var w = 0; w < words.length; w++) {
+      var text = words[w].textContent;
+      words[w].textContent = '';
+      for (var c = 0; c < text.length; c++) {
+        var span = document.createElement('span');
+        span.className = 'ch';
+        span.textContent = text.charAt(c) === ' ' ? '\u00A0' : text.charAt(c);
+        span.style.setProperty('--ci', chars.length);
+        words[w].appendChild(span);
+        chars.push(span);
+      }
+    }
+
+    if (reduceMotion) {
+      for (var r = 0; r < chars.length; r++) chars[r].classList.add('on');
+      return;
+    }
+
+    // Two frames let the browser paint the hidden state before staggering in.
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        for (var i = 0; i < chars.length; i++) chars[i].classList.add('on');
+      });
+    });
+
+    var ticking = false, lastKey = '';
+    function paint() {
+      ticking = false;
+      var span = Math.max(1, stage.offsetHeight - window.innerHeight);
+      var p = (window.scrollY - stage.offsetTop) / span;
+      if (p < 0.015 || p > 0.62) {
+        if (lastKey) {
+          for (var i = 0; i < chars.length; i++) chars[i].classList.remove('drawing');
+          lastKey = '';
+        }
+        return;
+      }
+      var head = (p / 0.62) * (chars.length + 10) - 5;
+      var from = Math.max(0, Math.floor(head - 4));
+      var to = Math.min(chars.length, Math.ceil(head + 1));
+      var key = from + ':' + to;
+      if (key === lastKey) return;
+      lastKey = key;
+      for (var i = 0; i < chars.length; i++) chars[i].classList.toggle('drawing', i >= from && i < to);
+    }
+    function queue() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(paint);
+    }
+    window.addEventListener('scroll', queue, { passive: true });
+    window.addEventListener('resize', queue, { passive: true });
+  })();
+
+  /* ---------- 6. Button ripple ---------- */
   document.querySelectorAll('.btn').forEach(function (btn) {
     btn.addEventListener('click', function (event) {
       if (reduceMotion) return;
@@ -940,7 +1330,7 @@
     });
   });
 
-  /* ---------- 8. Smooth scroll to the demo ---------- */
+  /* ---------- 7. Smooth scroll to the demo ---------- */
   var demoBtn = document.getElementById('demoBtn');
   if (demoBtn) {
     demoBtn.addEventListener('click', function () {
@@ -950,7 +1340,7 @@
     });
   }
 
-  /* ---------- 9. Scroll-driven effects ---------- */
+  /* ---------- 8. Scroll-driven effects ---------- */
   (function scrollEffects() {
     var clamp01 = function (value) {
       return Math.min(1, Math.max(0, value));
@@ -959,8 +1349,12 @@
     var scrolly = document.getElementById('scrolly');
     var scrollyEl = document.getElementById('scrollyText');
     var scrollySub = document.getElementById('scrollySub');
+    var flowFill = document.getElementById('flowFill');
+    var flowSteps = document.querySelectorAll('.flowSteps b');
     var hscroll = document.getElementById('hscroll');
     var track = document.getElementById('hTrack');
+    var hBar = document.getElementById('hBar');
+    var cardImgs = document.querySelectorAll('.cardImg img');
     var words = [];
     var hMax = 0;
     var ticking = false;
@@ -984,6 +1378,9 @@
     if (reduceMotion) {
       words.forEach(function (word) { word.classList.add('lit'); });
       if (scrollySub) scrollySub.classList.add('lit');
+      if (flowFill) flowFill.style.transform = 'scaleX(1)';
+      for (var s = 0; s < flowSteps.length; s++) flowSteps[s].classList.add('on');
+      if (hBar) hBar.style.transform = 'scaleX(1)';
       if (hscroll) hscroll.classList.add('no-pin');
       return;
     }
@@ -1013,6 +1410,10 @@
           }
         }
         if (scrollySub) scrollySub.classList.toggle('lit', progress > 0.82);
+        if (flowFill) flowFill.style.transform = 'scaleX(' + progress.toFixed(3) + ')';
+        for (var s = 0; s < flowSteps.length; s++) {
+          flowSteps[s].classList.toggle('on', progress >= (s + 0.4) / flowSteps.length);
+        }
       }
 
       // Pinned gallery: vertical scroll drives the horizontal track.
@@ -1025,9 +1426,20 @@
             : 0;
           track.style.transform =
             'translate3d(' + (-galleryProgress * hMax).toFixed(1) + 'px,0,0)';
+          if (hBar) hBar.style.transform = 'scaleX(' + galleryProgress.toFixed(3) + ')';
         } else {
           track.style.transform = '';
+          if (hBar) hBar.style.transform = 'scaleX(0)';
         }
+      }
+
+      // Our screenshots parallax inside their neumorphic frames as they pass.
+      for (var c = 0; c < cardImgs.length; c++) {
+        var img = cardImgs[c];
+        var r = img.parentNode.getBoundingClientRect();
+        if (r.bottom < -100 || r.top > window.innerHeight + 100) continue;
+        var p = (r.top + r.height / 2 - window.innerHeight / 2) / window.innerHeight;
+        img.style.setProperty('--py', (-p * 18).toFixed(1) + 'px');
       }
     }
 
@@ -1048,6 +1460,192 @@
     });
     measure();
     frame();
+  })();
+
+  /* ---------- 8b. Image card tilt ---------- */
+  // Same idea as xenea's tilted comparison tile, driven by our own images.
+  (function cardTilt() {
+    if (reduceMotion) return;
+    var fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    if (!fine) return;
+    var cards = document.querySelectorAll('.card');
+    for (var i = 0; i < cards.length; i++) {
+      (function (card) {
+        var frame = card.querySelector('.cardImg');
+        if (!frame) return;
+        card.addEventListener('pointermove', function (e) {
+          var r = frame.getBoundingClientRect();
+          var x = (e.clientX - r.left) / r.width - 0.5;
+          var y = (e.clientY - r.top) / r.height - 0.5;
+          frame.style.setProperty('--rx', (-y * 8).toFixed(2) + 'deg');
+          frame.style.setProperty('--ry', (x * 8).toFixed(2) + 'deg');
+        }, { passive: true });
+        card.addEventListener('pointerleave', function () {
+          frame.style.setProperty('--rx', '0deg');
+          frame.style.setProperty('--ry', '0deg');
+        });
+      })(cards[i]);
+    }
+  })();
+
+  /* ---------- 8b. White-to-black mosaic wipe ---------- */
+  // Xenea hands the light hero to its dark content with a masked, staggered
+  // eight-column wipe. This mirrors that handoff: the black sheet is painted
+  // over the light stage bottom-up as the hero ends, then the real dark sheet
+  // takes over once it reaches the top of the viewport.
+  (function themeWipe() {
+    var wipe = document.getElementById('themeWipe');
+    var sheet = document.querySelector('.contentSheet');
+    if (!wipe || !sheet) return;
+
+    var order = [0, 7, 3, 4, 1, 6, 2, 5];
+    var ticking = false, lastP = -1;
+
+    function paint() {
+      ticking = false;
+      var end = sheet.getBoundingClientRect().top + window.scrollY;
+      var start = end - window.innerHeight * .9;
+      var p = (window.scrollY - start) / Math.max(1, end - start);
+      p = Math.max(0, Math.min(1, p));
+
+      if (p <= 0 || p >= 1 || reduceMotion) {
+        wipe.style.visibility = 'hidden';
+        wipe.style.opacity = '0';
+        lastP = p;
+        return;
+      }
+
+      wipe.style.visibility = 'visible';
+      wipe.style.opacity = '1';
+      if (Math.abs(p - lastP) < .002) return;
+      lastP = p;
+
+      var width = window.innerWidth || 1;
+      var colWidth = width / 8;
+      var gradients = [], sizes = [], positions = [];
+
+      for (var c = 0; c < 8; c++) {
+        var delay = (order[c] / 7) * .32;
+        var q = Math.max(0, Math.min(1, (p - delay) / (1 - .32)));
+        var edge = 1.12 - q * 1.24;
+        var stops = [];
+        for (var i = 0; i <= 32; i++) {
+          var y = i / 32;
+          var alpha = Math.max(0, Math.min(1, (y - (edge - .06)) / .12));
+          stops.push('rgba(255,255,255,' + alpha.toFixed(2) + ') ' + (y * 100).toFixed(1) + '%');
+        }
+        gradients.push('linear-gradient(180deg,' + stops.join(',') + ')');
+        sizes.push((colWidth + 1).toFixed(2) + 'px 100%');
+        positions.push((c * colWidth).toFixed(2) + 'px 0px');
+      }
+
+      var mask = gradients.join(',');
+      wipe.style.maskImage = mask;
+      wipe.style.webkitMaskImage = mask;
+      wipe.style.maskSize = sizes.join(',');
+      wipe.style.webkitMaskSize = sizes.join(',');
+      wipe.style.maskPosition = positions.join(',');
+      wipe.style.webkitMaskPosition = positions.join(',');
+    }
+
+    function queue() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(paint);
+    }
+    window.addEventListener('scroll', queue, { passive: true });
+    window.addEventListener('resize', queue, { passive: true });
+    paint();
+  })();
+
+  /* ---------- 8c. Adaptive header ---------- */
+  // Matches xenea's chrome: phase 0 is a full-width square bar, phase 1 is an
+  // inset pill, and the pill inverts once the dark sheet reaches the header.
+  (function adaptiveHeader() {
+    var head = document.getElementById('siteHeader');
+    if (!head) return;
+    var sheet = document.querySelector('.contentSheet');
+    var toggle = head.querySelector('.headerToggle');
+    var overlay = document.getElementById('headerOverlay');
+    var mobileLinks = head.querySelectorAll('.headerMobile a');
+    var ticking = false;
+
+    function paint() {
+      ticking = false;
+      var phase = window.scrollY / (window.innerHeight * .4);
+      head.style.setProperty('--hdrPhase', Math.max(0, Math.min(1, phase)).toFixed(3));
+      var invert = sheet ? sheet.getBoundingClientRect().top <= window.innerHeight * .42 : false;
+      head.classList.toggle('is-invert', invert);
+    }
+    function queue() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(paint);
+    }
+    window.addEventListener('scroll', queue, { passive: true });
+    window.addEventListener('resize', queue, { passive: true });
+    paint();
+
+    function close() {
+      head.classList.remove('is-open');
+      if (toggle) toggle.setAttribute('aria-expanded', 'false');
+      if (overlay) overlay.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+    function open() {
+      head.classList.add('is-open');
+      if (toggle) toggle.setAttribute('aria-expanded', 'true');
+      if (overlay) overlay.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+    if (toggle) {
+      toggle.addEventListener('click', function () {
+        if (head.classList.contains('is-open')) close(); else open();
+      });
+    }
+    if (overlay) overlay.addEventListener('click', close);
+    for (var i = 0; i < mobileLinks.length; i++) mobileLinks[i].addEventListener('click', close);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+    window.addEventListener('resize', function () { if (window.innerWidth > 880) close(); });
+  })();
+
+  /* ---------- 9. Section rail ---------- */
+  // Mirrors xenea's side TOC: appear over the dark sheet, follow the scroll.
+  (function sectionRail() {
+    var rail = document.getElementById('sectionRail');
+    var sheet = document.querySelector('.contentSheet');
+    if (!rail || !sheet) return;
+    var links = rail.querySelectorAll('.railLink');
+    var ids = [];
+    for (var i = 0; i < links.length; i++) {
+      ids.push(links[i].getAttribute('href').slice(1));
+    }
+    var ticking = false;
+    function update() {
+      ticking = false;
+      var top = sheet.getBoundingClientRect().top;
+      var bottom = sheet.getBoundingClientRect().bottom;
+      var on = top < window.innerHeight * 0.5 && bottom > window.innerHeight * 0.4;
+      rail.classList.toggle('on', on);
+      if (!on) return;
+      var mark = window.innerHeight * 0.42;
+      var current = ids[0];
+      for (var j = 0; j < ids.length; j++) {
+        var el = document.getElementById(ids[j]);
+        if (el && el.getBoundingClientRect().top <= mark) current = ids[j];
+      }
+      for (var k = 0; k < links.length; k++) {
+        links[k].classList.toggle('is-on', links[k].getAttribute('href') === '#' + current);
+      }
+    }
+    function queue() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    }
+    window.addEventListener('scroll', queue, { passive: true });
+    window.addEventListener('resize', queue, { passive: true });
+    update();
   })();
 
   /* ---------- 10. Get started hand-off ---------- */

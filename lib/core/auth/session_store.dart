@@ -39,8 +39,8 @@ class SessionStore {
   /// Persist the profile from `GET /auth/me` and mark the session used.
   ///
   /// [me] is the raw `UserResource` body: `id`, `fullName`, `email`,
-  /// `shopId`, `role`. The token itself is passed separately and never
-  /// written here.
+  /// `shopId`, `role`, `membershipStatus`. The token itself is passed
+  /// separately and never written here.
   ///
   /// Marks the session used because reaching this means the launch decided
   /// the session is alive -- the idle clock is measuring opens, not logins.
@@ -51,6 +51,10 @@ class SessionStore {
       'email': (me['email'] ?? '').toString(),
       'shopId': (me['shopId'] ?? me['shop_id'] ?? '').toString(),
       'role': (me['role'] ?? '').toString(),
+      // Older servers omit this; `LoginResponse` reads an absent value as
+      // active so an upgrade cannot strand a cached session.
+      'membershipStatus':
+          (me['membershipStatus'] ?? me['status'] ?? 'active').toString(),
     };
 
     final prefs = await SharedPreferences.getInstance();
@@ -187,6 +191,8 @@ class SessionStore {
       tokenType: 'Bearer',
       shopId: profile['shopId']?.toString() ?? '',
       role: profile['role']?.toString() ?? '',
+      membershipStatus:
+          (profile['membershipStatus'] ?? 'active').toString(),
     );
   }
 }

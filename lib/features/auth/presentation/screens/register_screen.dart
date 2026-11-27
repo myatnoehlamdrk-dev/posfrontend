@@ -58,13 +58,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _phoneController = TextEditingController();
   final _socialController = TextEditingController();
-  final _roleController = TextEditingController();
   final _addressController = TextEditingController();
   final _billingController = TextEditingController();
   final _dobController = TextEditingController();
 
   late final RegisterViewModel _viewModel;
   bool _obscurePassword = true;
+
+  /// True when the account is being attached to a shop that already exists on
+  /// the server (the shop wizard's "Link Shop?" path). Those sign-ups wait for
+  /// approval, so the form says so before the user commits.
+  bool get _isLinkingExistingShop =>
+      (_viewModel.shop?.id ?? '').isNotEmpty;
 
   static const List<String> _genders = ['Male', 'Female', 'Other'];
 
@@ -98,7 +103,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _socialController.addListener(
       () => _viewModel.setSocial(_socialController.text),
     );
-    _roleController.addListener(() => _viewModel.setRole(_roleController.text));
     _addressController.addListener(
       () => _viewModel.setAddress(_addressController.text),
     );
@@ -116,7 +120,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _passwordController.dispose();
     _phoneController.dispose();
     _socialController.dispose();
-    _roleController.dispose();
     _addressController.dispose();
     _billingController.dispose();
     _dobController.dispose();
@@ -660,21 +663,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _buildShopInfoStep(Map<String, String?> errors) {
-    final role = [
-      _optionalLabel('User Role'),
-      TextFormField(
-        controller: _roleController,
-        textInputAction: TextInputAction.next,
-        decoration: appInputDecoration(
-          context,
-          icon: Icons.supervisor_account_outlined,
-          hint: context.l10n.t('Enter user role'),
-          errorText: errors['role'],
-        ),
-      ),
-      _helperText('e.g. Manager, Cashier, Accountant, Staff'),
-    ];
-
     final billing = [
       RequiredLabel('Service Fee Way'),
       TextFormField(
@@ -690,7 +678,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     ];
 
     // One field per row, matching the login-width form column.
-    final children = [...role, const SizedBox(height: 16), ...billing];
+    final children = [...billing];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -797,6 +785,41 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ],
             ),
           ),
+          if (_isLinkingExistingShop) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: p.chipBg,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: p.border),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    Icons.lock_clock_outlined,
+                    size: 18,
+                    color: AppColors.primary,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      context.l10n.t(
+                        'The shop owner must approve your request before you can sign in.',
+                      ),
+                      style: TextStyle(
+                        color: p.textSecondary,
+                        fontSize: AppTypography.labelMediumSize,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

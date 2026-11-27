@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
 import 'package:posfrontend/core/di/injection.dart';
 import 'package:posfrontend/core/auth/session_store.dart';
+import 'package:posfrontend/features/auth/domain/entities/login_result.dart';
 import 'package:posfrontend/features/auth/domain/usecases/login.dart';
 import 'package:posfrontend/features/auth/presentation/viewmodels/login_view_model.dart';
 import 'package:posfrontend/features/auth/presentation/screens/forgot_password_screen.dart';
+import 'package:posfrontend/features/auth/presentation/screens/pending_approval_screen.dart';
 import 'package:posfrontend/features/auth/presentation/screens/verify_account_screen.dart';
 import 'package:posfrontend/features/auth/data/models/login_response.dart';
 import 'package:posfrontend/features/shop/presentation/screens/shop_screen.dart';
@@ -116,8 +118,35 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _submit() async {
     final result = await _viewModel.login();
-    if (result == null || !mounted) return;
+    if (!mounted) return;
 
+    // The credentials were accepted but the shop has not approved the account.
+    // Push (do not replace) the approval screen so Back returns to the login
+    // form with the credentials still filled in. No session is cached here.
+    final pending = _viewModel.pendingRequest;
+    if (pending != null) {
+      await Navigator.push(
+        context,
+        AppPageTransitions.fadeSlide<void>(
+          PendingApprovalScreen(
+            viewModel: _viewModel,
+            request: pending,
+            onSignedIn: _finishLogin,
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (result == null) return;
+    await _finishLogin(result);
+  }
+
+  /// Session persistence + navigation after a successful sign-in. Shared by
+  /// the login form and the pending screen's "Try again", so an approval that
+  /// lands while the user is on the other screen starts exactly the same
+  /// session as an ordinary login.
+  Future<void> _finishLogin(LoginResult result) async {
     final loginResponse = LoginResponse(
       id: result.user.id,
       fullName: result.user.fullName,
@@ -126,6 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
       tokenType: 'Bearer',
       shopId: result.user.shopId,
       role: result.user.role,
+      membershipStatus: result.user.membershipStatus,
     );
 
     // Cache the five profile fields and start the idle clock, so the next
@@ -137,6 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
       'email': result.user.email,
       'shopId': result.user.shopId,
       'role': result.user.role,
+      'membershipStatus': result.user.membershipStatus,
     }, result.accessToken);
 
     if (!mounted) return;

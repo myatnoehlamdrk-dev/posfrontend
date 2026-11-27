@@ -31,7 +31,6 @@ class RegisterViewModel extends BaseViewModel with FormValidationMixin {
   String _password = '';
   String _phone = '';
   String _social = '';
-  String _role = '';
   String _address = '';
   String _nrc = '';
   String _billingWay = '';
@@ -43,7 +42,6 @@ class RegisterViewModel extends BaseViewModel with FormValidationMixin {
   String get password => _password;
   String get phone => _phone;
   String get social => _social;
-  String get role => _role;
   String get address => _address;
   String get nrc => _nrc;
   String get billingWay => _billingWay;
@@ -73,11 +71,6 @@ class RegisterViewModel extends BaseViewModel with FormValidationMixin {
   void setSocial(String value) {
     _social = value;
     clearFieldError('social');
-  }
-
-  void setRole(String value) {
-    _role = value;
-    clearFieldError('role');
   }
 
   void setAddress(String value) {
@@ -224,7 +217,6 @@ class RegisterViewModel extends BaseViewModel with FormValidationMixin {
           password: _password,
           phone: _phone.trim().isEmpty ? null : _phone.trim(),
           social: _social.trim().isEmpty ? null : _social.trim(),
-          role: _role.trim().isEmpty ? null : _role.trim(),
           address: _address.trim().isEmpty ? null : _address.trim(),
           nrc: _nrc.trim().isEmpty ? null : _nrc.trim().toUpperCase(),
           billingWay: _billingWay.trim(),

@@ -537,4 +537,48 @@ const Map<String, String> japaneseStrings = {
   'Download USB setup for this computer': 'このコンピューター用USBセットアップをダウンロード',
   'The download could not be started. Try again.':
       'ダウンロードを開始できませんでした。もう一度お試しください。',
+
+  // Shop membership approval
+  'The shop owner must approve your request before you can sign in.':
+      '店主が参加申請を承認するまで、ログインできません。',
+  'Waiting for Approval': '承認待ちです',
+  'Request Not Approved': '参加申請が承認されませんでした',
+  'The shop declined your request. You can withdraw it and register again with this email.':
+      'この店舗への参加申請が拒否されました。申請を取り下げて、同じメールアドレスで再度登録できます。',
+  'Your account is linked to this shop but is not active yet. You will be able to sign in once the owner or a manager approves it.':
+      'アカウントはこの店舗に紐付いていますが、まだ有効化されていません。店主またはマネージャーが承認するとログインできます。',
+  'Your shop': 'あなたの店舗',
+  'Try Again': '再試行',
+  'Cancel Request': '申請を取り下げる',
+  'Request cancelled. You can register again.':
+      '申請を取り下げました。再度登録できます。',
+  'Team & Access': 'チームとアクセス権',
+  'Only the shop owner or a manager can view this page.':
+      '店主またはマネージャーのみ閲覧できます。',
+  'No pending requests.': '保留中の申請はありません。',
+  'No members yet.': 'メンバーはまだいません。',
+  'Shop access is managed here.': '店舗へのアクセスをここで管理します。',
+  'Pending requests': '保留中の申請',
+  'Approve people joining this shop': 'この店舗への参加者を承認します',
+  'Pending': '保留中',
+  'Members': 'メンバー',
+  'Approve as': '権限',
+  'Cashier': 'レジ係',
+  'Manager': 'マネージャー',
+  'Viewer': '閲覧者',
+  'Approve': '承認',
+  'Decline': '拒否',
+  'Disabled': '無効',
+  'Disable': '無効にする',
+  'Enable': '有効にする',
+  'Joined': '参加日',
+  'Decline request?': '申請を拒否しますか？',
+  'Remove member?': 'メンバーを削除しますか？',
+  'Confirm': '確認',
+  'Role updated.': '権限を更新しました。',
+  'Request declined.': '申請を拒否しました。',
+  'Member enabled.': 'メンバーを有効にしました。',
+  'Member disabled.': 'メンバーを無効にしました。',
+  'Member removed.': 'メンバーを削除しました。',
+  'Back': '戻る',
 };

@@ -6,6 +6,7 @@ class LoginResponse {
   final String tokenType;
   final String shopId;
   final String role;
+  final String membershipStatus;
 
   const LoginResponse({
     required this.id,
@@ -15,9 +16,20 @@ class LoginResponse {
     required this.tokenType,
     this.shopId = '',
     this.role = '',
+    this.membershipStatus = 'active',
   });
 
   bool get isOwner => role.toLowerCase().trim() == 'owner';
+
+  /// Owner or manager: the two roles that may review join requests.
+  bool get canManageTeam {
+    final normalized = role.toLowerCase().trim();
+    return normalized == 'owner' || normalized == 'manager';
+  }
+
+  bool get isActiveMember =>
+      membershipStatus.isEmpty ||
+      membershipStatus.toLowerCase().trim() == 'active';
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
     return LoginResponse(
@@ -28,6 +40,8 @@ class LoginResponse {
       tokenType: json['token_type'] as String? ?? 'Bearer',
       shopId: (json['shopId'] ?? json['shop_id'] ?? '').toString(),
       role: json['role'] as String? ?? '',
+      membershipStatus:
+          (json['membershipStatus'] ?? json['status'] ?? 'active').toString(),
     );
   }
 }

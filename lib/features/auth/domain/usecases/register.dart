@@ -16,7 +16,6 @@ class RegisterUseCase extends UseCase<UserEntity, RegisterParams> {
       password: params.password,
       phone: params.phone,
       social: params.social,
-      role: params.role,
       address: params.address,
       nrc: params.nrc,
       billingWay: params.billingWay,
@@ -34,7 +33,6 @@ class RegisterParams {
   final String password;
   final String? phone;
   final String? social;
-  final String? role;
   final String? address;
   final String? nrc;
   final String? billingWay;
@@ -53,7 +51,6 @@ class RegisterParams {
     required this.password,
     this.phone,
     this.social,
-    this.role,
     this.address,
     this.nrc,
     this.billingWay,

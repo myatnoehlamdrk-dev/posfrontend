@@ -3,7 +3,10 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:posfrontend/core/auth/session_cleanup.dart';
+import 'package:posfrontend/core/di/injection.dart';
 import 'package:posfrontend/core/utils/image_compressor.dart';
+import 'package:posfrontend/features/team/domain/usecases/team_usecases.dart';
+import 'package:posfrontend/features/team/presentation/screens/team_screen.dart';
 import 'package:posfrontend/shared/l10n/app_strings.dart';
 import 'package:posfrontend/shared/l10n/app_language.dart';
 import 'package:posfrontend/shared/l10n/l10n_x.dart';
@@ -43,6 +46,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late final SettingsViewModel _viewModel;
   bool _isLoggingOut = false;
 
+  /// Number of join requests waiting for a decision. Null until loaded (or
+  /// when the signed-in role cannot manage the team), which is why the row can
+  /// show a badge only when there is something real to count.
+  int? _pendingCount;
+
   // Orange and red are mid-tone brand accents that read correctly on both
   // light and dark surfaces, so they stay const. The neutrals have to track
   // brightness and therefore resolve from the active theme.
@@ -75,6 +83,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.initState();
     _viewModel = SettingsViewModel();
     _viewModel.loadSettings();
+
+    // The Team row is owner/manager-only. Reading the cached session here is
+    // safe: it was restored before the app reached Settings. A failed count is
+    // swallowed on purpose -- the row still works, it just has no badge.
+    if (AuthScope.userOf(context)?.canManageTeam ?? false) {
+      _loadPendingCount();
+    }
+  }
+
+  Future<void> _loadPendingCount() async {
+    try {
+      final snapshot = await getIt<GetTeamMembersUseCase>()(
+        const TeamQueryParams(),
+      );
+      if (!mounted) return;
+      setState(() => _pendingCount = snapshot.pendingCount);
+    } catch (_) {
+      // A badge is a hint, not a gate; never let it fail the Settings load.
+    }
   }
 
   @override
@@ -150,6 +177,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             _buildShopImageCard(),
                             const SizedBox(height: 12),
                             _buildBusinessCard(),
+                            if (AuthScope.userOf(context)?.canManageTeam ??
+                                false) ...[
+                              const SizedBox(height: 12),
+                              _buildTeamCard(),
+                            ],
                             const SizedBox(height: 28),
                             _sectionHeader('PRINTER'),
                             const SizedBox(height: 10),
@@ -393,6 +425,51 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
         ),
         onTap: _showShopTypeModal,
+      ),
+    );
+  }
+
+  /// Entry point to member approval. Only the owner and managers can decide
+  /// who uses the shop, so the row is hidden from everyone else rather than
+  /// offering a page that would answer 403.
+  Widget _buildTeamCard() {
+    final count = _pendingCount ?? 0;
+    return _settingsCard(
+      child: _settingsRow(
+        icon: Icons.manage_accounts_outlined,
+        label: context.l10n.t('Team & Access'),
+        subtitle: count > 0
+            ? '${context.l10n.t('Pending requests')}: $count'
+            : context.l10n.t('Approve people joining this shop'),
+        tint: const Color(0xFF0EA5E9),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (count > 0)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.red,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$count',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            const SizedBox(width: 8),
+            Icon(Icons.chevron_right, color: gray, size: 24),
+          ],
+        ),
+        onTap: () {
+          Navigator.of(
+            context,
+          ).push(AppPageTransitions.fadeSlide<void>(const TeamScreen()));
+        },
       ),
     );
   }

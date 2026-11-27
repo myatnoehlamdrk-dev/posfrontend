@@ -49,6 +49,30 @@ class ValidationException extends AppException {
   });
 }
 
+/// The credentials are valid, but the account is not a member of the shop yet.
+///
+/// Kept separate from [ForbiddenException] because the app must route it to the
+/// approval screen instead of showing a red error banner: the login was not
+/// wrong, the shop simply has not said yes. It also must not clear the token --
+/// there is no session to clear.
+class MembershipPendingException extends AppException {
+  /// Shop the account asked to join, as named by the server.
+  final String shopName;
+
+  /// Owner named on the shop, for the "waiting for the owner" line.
+  final String ownerName;
+
+  /// True when the request was declined (or withdrawn) rather than still open.
+  final bool rejected;
+
+  const MembershipPendingException({
+    required super.message,
+    this.shopName = '',
+    this.ownerName = '',
+    this.rejected = false,
+  }) : super(statusCode: 403);
+}
+
 /// Server error (500, 502, 503, etc.).
 class ServerException extends AppException {
   const ServerException({
@@ -176,6 +200,26 @@ AppException _fromBadResponse(DioException e) {
     case 401:
       return AuthException(message: message);
     case 403:
+      if (data is Map<String, dynamic>) {
+        final code = data['code']?.toString();
+
+        // Membership is a decision about the account, not about one request,
+        // so the response carries its own code and the shop it concerns. The
+        // login screen uses it to open the approval screen; every other
+        // endpoint keeps the ordinary forbidden answer.
+        if (code == 'membership_pending' || code == 'membership_rejected') {
+          final shop = data['shop'];
+          final shopMap = shop is Map ? shop : const <String, dynamic>{};
+
+          return MembershipPendingException(
+            message: message,
+            shopName: shopMap['name']?.toString() ?? '',
+            ownerName: shopMap['ownerName']?.toString() ?? '',
+            rejected: code == 'membership_rejected',
+          );
+        }
+      }
+
       return ForbiddenException(message: message);
     case 429:
       return TooManyRequestsException(

@@ -34,6 +34,22 @@ class AuthRemoteDataSource {
     }
   }
 
+  /// Withdraw a pending join request. No bearer token: the endpoint verifies
+  /// the email/password pair instead, and is throttled like login.
+  Future<void> withdrawMembershipRequest({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      await _dio.post(
+        '/auth/membership-request/withdraw',
+        data: {'email': email, 'password': password},
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   Future<void> sendOtp(String email) async {
     try {
       await _dio.post('/auth/register/send-otp', data: {'email': email});

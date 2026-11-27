@@ -12,6 +12,11 @@ abstract class Failure extends Equatable {
     return switch (e) {
       AuthException() => AuthFailure(e.message),
       ForbiddenException() => ForbiddenFailure(e.message),
+      // The login flow consumes MembershipPendingException directly to route
+      // to the approval screen. Anywhere else that converts an exception to a
+      // generic Failure, it is still a permission decision rather than a
+      // broken session, so it maps the same way as any other 403.
+      MembershipPendingException() => ForbiddenFailure(e.message),
       TooManyRequestsException() => RateLimitFailure(
         e.message,
         retryAfterSeconds: e.retryAfterSeconds,

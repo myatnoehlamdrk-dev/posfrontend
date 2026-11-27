@@ -38,7 +38,6 @@ class AuthRepositoryImpl implements AuthRepository {
     required String password,
     String? phone,
     String? social,
-    String? role,
     String? address,
     String? nrc,
     String? billingWay,
@@ -54,7 +53,6 @@ class AuthRepositoryImpl implements AuthRepository {
         password: password,
         phone: phone,
         social: social,
-        role: role,
         address: address,
         nrc: nrc,
         billingWay: billingWay,
@@ -65,6 +63,17 @@ class AuthRepositoryImpl implements AuthRepository {
       ),
     );
     return response.toEntity();
+  }
+
+  @override
+  Future<void> withdrawMembershipRequest({
+    required String email,
+    required String password,
+  }) {
+    return _remoteDataSource.withdrawMembershipRequest(
+      email: email,
+      password: password,
+    );
   }
 
   /// The registration shape for a shop that does not exist server-side yet.

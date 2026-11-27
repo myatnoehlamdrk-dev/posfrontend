@@ -5,6 +5,7 @@ import 'package:posfrontend/core/auth/token_storage.dart';
 import 'package:posfrontend/core/base/base_view_model.dart';
 import 'package:posfrontend/core/base/form_validation_mixin.dart';
 import 'package:posfrontend/core/di/injection.dart';
+import 'package:posfrontend/core/network/app_exceptions.dart';
 import 'package:posfrontend/core/utils/error_handler.dart';
 import 'package:posfrontend/features/auth/domain/entities/login_result.dart';
 import 'package:posfrontend/features/auth/domain/entities/user.dart';
@@ -23,10 +24,17 @@ class LoginViewModel extends BaseViewModel with FormValidationMixin {
   UserEntity? _user;
   String _accessToken = '';
 
+  /// Set when login was refused because the shop has not decided on this
+  /// account yet. The screen routes to the approval screen instead of showing
+  /// an error banner; a rejected request is carried here too, with [rejected]
+  /// telling the screen which copy to use.
+  MembershipPendingException? _pendingRequest;
+
   String get email => _email;
   String get password => _password;
   UserEntity? get user => _user;
   String get accessToken => _accessToken;
+  MembershipPendingException? get pendingRequest => _pendingRequest;
 
   void setEmail(String value) {
     _email = value;
@@ -56,6 +64,10 @@ class LoginViewModel extends BaseViewModel with FormValidationMixin {
 
   Future<LoginResult?> login() async {
     resetError();
+    // A retry must not keep showing an older decision. The screen reuses this
+    // ViewModel for "Try again" on the approval screen, so a stale pending
+    // value here would bounce a now-approved account back to that screen.
+    _pendingRequest = null;
     if (!validate()) {
       setError('Please complete all required fields');
       return null;
@@ -87,6 +99,11 @@ class LoginViewModel extends BaseViewModel with FormValidationMixin {
       await syncServerPreferences();
 
       return result;
+    } on MembershipPendingException catch (e) {
+      // Not a failed login: the credentials were accepted, only membership is
+      // outstanding. No token was issued, so there is nothing to revoke.
+      _pendingRequest = e;
+      return null;
     } catch (e) {
       setError(formatApiError(e));
       return null;

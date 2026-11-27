@@ -4,7 +4,6 @@ class RegisterRequestModel {
   final String password;
   final String? phone;
   final String? social;
-  final String? role;
   final String? address;
   final String? nrc;
   final String? billingWay;
@@ -21,7 +20,6 @@ class RegisterRequestModel {
     required this.password,
     this.phone,
     this.social,
-    this.role,
     this.address,
     this.nrc,
     this.billingWay,
@@ -31,13 +29,16 @@ class RegisterRequestModel {
     this.shop,
   });
 
+  // `role` is deliberately absent. Roles are assigned by the server: the
+  // account that creates the shop becomes its owner, and a linked account
+  // stays a cashier until the owner or a manager chooses otherwise at
+  // approval. The backend ignores the field even if an older build sends it.
   Map<String, dynamic> toJson() => {
     'fullName': fullName,
     'email': email,
     'password': password,
     'phone': phone,
     'social': social,
-    'role': role,
     'address': address,
     'nrc': nrc,
     'billingWay': billingWay,

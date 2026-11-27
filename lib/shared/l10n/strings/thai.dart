@@ -552,4 +552,48 @@ const Map<String, String> thaiStrings = {
       'ดาวน์โหลดการตั้งค่า USB สำหรับคอมพิวเตอร์เครื่องนี้',
   'The download could not be started. Try again.':
       'ไม่สามารถเริ่มการดาวน์โหลดได้ โปรดลองอีกครั้ง',
+
+  // Shop membership approval
+  'The shop owner must approve your request before you can sign in.':
+      'เจ้าของร้านต้องอนุมัติคำขอของคุณก่อนจึงจะเข้าสู่ระบบได้',
+  'Waiting for Approval': 'กำลังรอการอนุมัติ',
+  'Request Not Approved': 'คำขอไม่ได้รับการอนุมัติ',
+  'The shop declined your request. You can withdraw it and register again with this email.':
+      'ร้านค้าปฏิเสธคำขอของคุณ คุณสามารถยกเลิกคำขอและสมัครใหม่ด้วยอีเมลเดิมได้',
+  'Your account is linked to this shop but is not active yet. You will be able to sign in once the owner or a manager approves it.':
+      'บัญชีของคุณเชื่อมกับร้านค้านี้แล้วแต่ยังใช้งานไม่ได้ คุณจะเข้าสู่ระบบได้หลังเจ้าของร้านหรือผู้จัดการอนุมัติ',
+  'Your shop': 'ร้านค้าของคุณ',
+  'Try Again': 'ลองอีกครั้ง',
+  'Cancel Request': 'ยกเลิกคำขอ',
+  'Request cancelled. You can register again.':
+      'ยกเลิกคำขอแล้ว คุณสามารถสมัครใหม่ได้',
+  'Team & Access': 'ทีมและการเข้าถึง',
+  'Only the shop owner or a manager can view this page.':
+      'เฉพาะเจ้าของร้านหรือผู้จัดการเท่านั้นที่ดูหน้านี้ได้',
+  'No pending requests.': 'ไม่มีคำขอที่รอดำเนินการ',
+  'No members yet.': 'ยังไม่มีสมาชิก',
+  'Shop access is managed here.': 'จัดการการเข้าถึงร้านค้าที่นี่',
+  'Pending requests': 'คำขอที่รอดำเนินการ',
+  'Approve people joining this shop': 'อนุมัติผู้ที่ต้องการเข้าร่วมร้านค้านี้',
+  'Pending': 'รอดำเนินการ',
+  'Members': 'สมาชิก',
+  'Approve as': 'อนุมัติเป็น',
+  'Cashier': 'พนักงานเก็บเงิน',
+  'Manager': 'ผู้จัดการ',
+  'Viewer': 'ผู้ดูข้อมูล',
+  'Approve': 'อนุมัติ',
+  'Decline': 'ปฏิเสธ',
+  'Disabled': 'ปิดการใช้งาน',
+  'Disable': 'ปิดการใช้งาน',
+  'Enable': 'เปิดการใช้งาน',
+  'Joined': 'วันเข้าร่วม',
+  'Decline request?': 'ปฏิเสธคำขอหรือไม่?',
+  'Remove member?': 'ลบสมาชิกหรือไม่?',
+  'Confirm': 'ยืนยัน',
+  'Role updated.': 'อัปเดตบทบาทแล้ว',
+  'Request declined.': 'ปฏิเสธคำขอแล้ว',
+  'Member enabled.': 'เปิดการใช้งานสมาชิกแล้ว',
+  'Member disabled.': 'ปิดการใช้งานสมาชิกแล้ว',
+  'Member removed.': 'ลบสมาชิกแล้ว',
+  'Back': 'ย้อนกลับ',
 };

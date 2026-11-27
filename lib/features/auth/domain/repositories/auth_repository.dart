@@ -15,7 +15,6 @@ abstract class AuthRepository {
     required String password,
     String? phone,
     String? social,
-    String? role,
     String? address,
     String? nrc,
     String? billingWay,
@@ -23,6 +22,13 @@ abstract class AuthRepository {
     String? gender,
     String? shopId,
     ShopEntity? shop,
+  });
+
+  /// Withdraw a pending join request. Unauthenticated on the server because a
+  /// pending account has no token; the credentials are the proof.
+  Future<void> withdrawMembershipRequest({
+    required String email,
+    required String password,
   });
 
   Future<void> sendOtp({required String email});
