@@ -541,6 +541,16 @@ class _GltfBuilder {
           'roughnessFactor': 0.6,
         },
       },
+      // 7 — camera flash
+      <String, Object?>{
+        'name': 'Flash',
+        'pbrMetallicRoughness': <String, Object?>{
+          'baseColorFactor': <double>[0.92, 0.88, 0.74, 1.0],
+          'metallicFactor': 0.0,
+          'roughnessFactor': 0.35,
+        },
+        'emissiveFactor': <double>[0.22, 0.20, 0.15],
+      },
     ];
 
     final nodes = <Map<String, Object?>>[
@@ -638,19 +648,19 @@ class _GltfBuilder {
 // ---------------------------------------------------------------------------
 
 List<_Mesh> _buildPhone() {
-  // Body: a 1.02 × 2.12 slab with the wide corners of a real handset. The
-  // corner radius (0.132) is 13% of the width, close to a modern phone; the
-  // 0.02 rim bevel is what a finger would feel around the frame.
+  // Body: an iPhone-style slab — wide, even corners and a nearly flat chamfer
+  // along the stainless band. The depth stays at 0.115 so the glass and screen
+  // planes keep their present fit.
   final body = _Mesh('Body', 0);
   _addRoundedPrism(
     body,
     1.020,
     2.120,
     0.115,
-    0.132,
-    bevel: 0.020,
-    cornerSegments: 28,
-    bevelSegments: 5,
+    0.165,
+    bevel: 0.012,
+    cornerSegments: 32,
+    bevelSegments: 4,
     zBack: -0.0575,
   );
 
@@ -664,7 +674,7 @@ List<_Mesh> _buildPhone() {
     0.972,
     2.072,
     0.012,
-    0.108,
+    0.140,
     bevel: 0.004,
     cornerSegments: 26,
     bevelSegments: 3,
@@ -672,7 +682,7 @@ List<_Mesh> _buildPhone() {
   );
 
   // Screen: the canvas texture, inset inside the glass so an even black bezel
-  // shows all the way around. Concentric corners: 0.132 - 0.024 - 0.012.
+  // shows all the way around. Concentric corners: 0.165 - 0.140 - 0.096.
   final screen = _Mesh('Screen', 1);
   _addRoundedPlane(screen, 0.940, 2.040, 0.096, 0.0692);
 
@@ -689,25 +699,32 @@ List<_Mesh> _buildPhone() {
     oz: 0.004,
   );
 
-  // Camera island on the back (-Z), with two lenses.
+  // Square camera plateau with three lenses in a triangle and a flash — the
+  // familiar iPhone-rear layout, kept low so the grip still reads clearly.
   final island = _Mesh('CameraIsland', 2);
   _addRoundedBox(
     island,
-    0.360,
-    0.440,
+    0.420,
+    0.420,
     0.030,
-    0.052,
+    0.045,
     segments: 8,
-    ox: -0.215,
-    oy: 0.660,
+    ox: -0.205,
+    oy: 0.665,
     oz: -0.0645,
   );
 
   final lensA = _Mesh('LensTop', 3);
-  _addCylinder(lensA, 0.062, 0.022, -0.215, 0.755, -0.089);
+  _addCylinder(lensA, 0.055, 0.022, -0.290, 0.775, -0.089);
 
   final lensB = _Mesh('LensBottom', 3);
-  _addCylinder(lensB, 0.062, 0.022, -0.215, 0.560, -0.089);
+  _addCylinder(lensB, 0.055, 0.022, -0.290, 0.585, -0.089);
+
+  final lensC = _Mesh('LensSide', 3);
+  _addCylinder(lensC, 0.055, 0.022, -0.120, 0.680, -0.089);
+
+  final flash = _Mesh('Flash', 7);
+  _addCylinder(flash, 0.020, 0.014, -0.120, 0.820, -0.086);
 
   // Side buttons: volume rocker and power on the right, mute on the left.
   // Thin and barely proud of the frame, the way real buttons sit.
@@ -755,6 +772,8 @@ List<_Mesh> _buildPhone() {
     island,
     lensA,
     lensB,
+    lensC,
+    flash,
     volume,
     power,
     mute,

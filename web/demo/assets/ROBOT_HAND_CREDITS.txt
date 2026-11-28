@@ -1,0 +1,11 @@
+Robot hand model attribution
+============================
+
+Title:    Rigged Hand
+Creator:  J-Toastie
+Source:   https://poly.pizza/m/BEy8jbxm6A
+License:  CC BY 3.0 (https://creativecommons.org/licenses/by/3.0/)
+File:     robot_hand.glb
+
+The model was recoloured as dark machined metal and given a procedural
+forearm for the Get Started hand-off animation.

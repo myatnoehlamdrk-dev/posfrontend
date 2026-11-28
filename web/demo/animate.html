@@ -377,6 +377,11 @@
   }
   .scene.has3d .phoneFallback{display:none}
 
+  /* While the hand carries the device off, the floating chips and the stage
+     shadow leave with it instead of hanging in the empty frame. */
+  .scene::before,.scene::after{transition:opacity .45s ease}
+  .scene.is-taking::before,.scene.is-taking::after{opacity:0}
+
   /* Receipt-style data chips floating beside the device, the way xenea hangs
      its chat card under the headline. Values are the shop's own numbers. */
   .floatCard{
@@ -387,7 +392,9 @@
     -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
     border:1px solid rgba(20,18,32,.07);
     box-shadow:0 10px 32px rgba(16,16,24,.10), inset 0 1px 0 rgba(255,255,255,.9);
+    transition:opacity .45s ease, transform .45s ease;
   }
+  .scene.is-taking .floatCard{opacity:0; transform:translateY(-10px)}
   .floatCard .fcLabel{font-size:.58rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#6B6478}
   .floatCard .fcValue{font-size:1.02rem; font-weight:800; letter-spacing:-.02em; color:var(--stage-ink); font-variant-numeric:tabular-nums}
   .floatCard .fcSub{font-size:.68rem; font-weight:600; color:#2E7D4F}
@@ -1204,6 +1211,7 @@
 </noscript>
   <script src="vendor/three.min.js"></script>
   <script src="vendor/GLTFLoader.js"></script>
+  <script src="assets/robot_hand.glb.js"></script>
 </head>
 <body id="top">
 <canvas id="fx" aria-hidden="true"></canvas>
@@ -2397,6 +2405,7 @@
   /* ---------- 11. 3D phone (GLB) ---------- */
   // Drives the hero phone:
   //   * desktop: the pinned hero turns it and moves it sale -> print -> analysis
+  //   * desktop hand-off: the robot hand carries it out while the foundation rises
   //   * phones: gentle auto-cycle, no pinning
   //   * reduced motion: one still frame on the sale screen
   // If three.js, WebGL or the model is unavailable the CSS fallback stays.
@@ -2438,9 +2447,305 @@
     var clamp01 = function (value) {
       return Math.min(1, Math.max(0, value));
     };
+    var smooth01 = function (value) {
+      var t = clamp01(value);
+      return t * t * (3 - 2 * t);
+    };
+    var easeInOut = function (value) {
+      var t = clamp01(value);
+      return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    };
+
+    /* ----- the hand: a compact rigged thumb-and-finger grip ----- */
+    // A soft radial alpha map used for contact darkening where the thumb pad
+    // meets the front-right edge. It is cheaper and steadier than
+    // relying on the shadow map alone, especially on the unlit screen material.
+    function makeContactShadowTexture() {
+      var c = document.createElement('canvas');
+      c.width = 128;
+      c.height = 128;
+      var ctx = c.getContext('2d');
+      var grad = ctx.createRadialGradient(64, 64, 4, 64, 64, 62);
+      grad.addColorStop(0, 'rgba(0,0,0,0.62)');
+      grad.addColorStop(0.42, 'rgba(0,0,0,0.34)');
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 128, 128);
+      var tex = new THREE.CanvasTexture(c);
+      tex.encoding = THREE.sRGBEncoding;
+      return tex;
+    }
+
+    // Shadows live on the phone, not in the hand group, so they follow the
+    // device's own turn and travel while the hand carries it away.
+    function addContactShadows() {
+      if (!phone || !THREE) return;
+      contactShadows = [];
+      var tex = makeContactShadowTexture();
+
+      function shadow(w, h, x, y, strength) {
+        var mat = new THREE.MeshBasicMaterial({
+          map: tex,
+          transparent: true,
+          opacity: 0,
+          depthWrite: false,
+          toneMapped: false,
+          polygonOffset: true,
+          polygonOffsetFactor: -2
+        });
+        var mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+        mesh.position.set(x, y, 0.068);
+        mesh.renderOrder = 4;
+        mesh.visible = false;
+        mesh.userData.strength = strength;
+        phone.add(mesh);
+        contactShadows.push(mesh);
+      }
+
+      // The thumb pad carries the visible contact. A second, very faint mark
+      // on the right rail hints at the fingers behind the shell, giving the
+      // held phone real front-to-back depth without showing extra fingers.
+      shadow(0.24, 0.11, 0.50, 0.01, 0.16);
+      shadow(0.09, 0.42, 0.505, -0.02, 0.05);
+    }
+
+    // The hand is a real rigged GLB, not a pile of primitives: Poly Pizza's
+    // CC-BY "Rigged Hand" by J-Toastie, recoloured as dark metal and given a
+    // machined forearm so it reads as a dangerous endo-hand rather than a toy.
+    function buildRobotHand(gltf) {
+      var group = new THREE.Group();
+      var model = gltf.scene;
+      var scale = 0.46;
+      var rootX = 0.312; // the model's finger roots: the group sits at the grip
+
+      model.scale.setScalar(scale);
+      // The model's fingers point down -X and fan out across Z. A negative
+      // quarter turn lays the palm face down instead of up: the back of the
+      // hand reads from the camera, the fingers sit behind the right edge,
+      // and the thumb bends around to the front rail.
+      model.rotation.x = -Math.PI / 2;
+      model.position.set(-rootX * scale, 0, 0);
+
+      model.traverse(function (object) {
+        if (!object.isMesh || !object.material) return;
+        // Keep the loader's skinning flags by cloning its material, then strip
+        // the original skin texture and make the whole hand machined metal.
+        var metal = object.material.clone();
+        metal.map = null;
+        metal.color.setHex(0x252b35);
+        if (metal.emissive) metal.emissive.setHex(0x05070b);
+        if ('roughness' in metal) metal.roughness = 0.27;
+        if ('metalness' in metal) metal.metalness = 0.96;
+        if ('envMapIntensity' in metal) metal.envMapIntensity = 1.35;
+        metal.opacity = 1;
+        metal.transparent = false;
+        metal.vertexColors = false;
+        metal.needsUpdate = true;
+        object.material = metal;
+        object.castShadow = true;
+        object.receiveShadow = true;
+      });
+      group.add(model);
+
+      var shell = new THREE.MeshStandardMaterial({
+        color: 0x11161d,
+        roughness: 0.38,
+        metalness: 0.94,
+        envMapIntensity: 1.1
+      });
+      var steel = new THREE.MeshStandardMaterial({
+        color: 0xb7c1cf,
+        roughness: 0.18,
+        metalness: 1.0,
+        envMapIntensity: 1.6
+      });
+      var hot = new THREE.MeshStandardMaterial({
+        color: 0xff2a2a,
+        emissive: 0xff1414,
+        emissiveIntensity: 2.2,
+        roughness: 0.28,
+        metalness: 0.1,
+        toneMapped: false
+      });
+
+      // The GLB stops at the wrist. The palm-down side grip rolls the group a
+      // little upward, so counter that roll to send the forearm out through
+      // the right edge instead of climbing off the top of the frame.
+      var wristX = (1.166 - rootX) * scale;
+      var forearm = new THREE.Group();
+      forearm.position.set(wristX, 0, 0);
+      forearm.rotation.z = -0.18;
+
+      var wrist = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.105, 0.105, 0.12, 20),
+        shell
+      );
+      wrist.rotation.z = -Math.PI / 2;
+      wrist.position.x = 0.02;
+      forearm.add(wrist);
+
+      var shaft = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.11, 0.15, 1.25, 24),
+        shell
+      );
+      shaft.rotation.z = -Math.PI / 2;
+      shaft.position.x = 0.66;
+      forearm.add(shaft);
+
+      var cuff = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.16, 0.16, 0.08, 24),
+        steel
+      );
+      cuff.rotation.z = -Math.PI / 2;
+      cuff.position.x = 0.16;
+      forearm.add(cuff);
+
+      var collar = new THREE.Mesh(
+        new THREE.TorusGeometry(0.135, 0.013, 8, 24),
+        hot
+      );
+      collar.rotation.y = Math.PI / 2;
+      collar.position.x = 0.11;
+      forearm.add(collar);
+
+      for (var side = -1; side <= 1; side += 2) {
+        var piston = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.012, 0.012, 0.94, 10),
+          steel
+        );
+        piston.rotation.z = -Math.PI / 2;
+        piston.position.set(0.70, side * 0.075, -0.085);
+        forearm.add(piston);
+      }
+      group.add(forearm);
+
+      handFingers = [];
+      handThumb = null;
+      // The clip gives the fingers a soft supporting curl; the thumb root and
+      // middle joint then bring the pad to the front-right edge without closing
+      // into a fist. The phone is touched, not clamped.
+      handThumbRoot = model.getObjectByName('ThumbRoot') || null;
+      handThumbMiddle = model.getObjectByName('ThumbMiddle') || null;
+      // The supplied thumb is too short to read from the side. Stretch its
+      // bones so the pad reaches visibly onto the front glass; the mixer only
+      // drives rotation, so these scales survive every grip pose.
+      if (handThumbRoot) handThumbRoot.scale.setScalar(1.20);
+      if (handThumbMiddle) handThumbMiddle.scale.setScalar(1.10);
+      var thumbTop = model.getObjectByName('ThumbTop') || null;
+      if (thumbTop) thumbTop.scale.setScalar(1.05);
+      handMixer = null;
+      handAction = null;
+      handClipDuration = 0;
+      if (gltf.animations && gltf.animations.length) {
+        var clip = gltf.animations[0];
+        handMixer = new THREE.AnimationMixer(model);
+        handAction = handMixer.clipAction(clip);
+        handAction.play();
+        handAction.paused = true;
+        handClipDuration = clip.duration;
+
+        // Sample the thumb's animated pose once. The mixer cannot be trusted
+        // to re-apply the same frame after we add our own rotations, which
+        // would make the thumb drift a little more on every tick. The range
+        // starts slightly closed so the arriving hand is not a flat claw; it
+        // still ends at the exact grip frame used before.
+        handThumbSamples = [];
+        handAction.paused = false;
+        for (var s = 0; s <= 20; s++) {
+          handMixer.setTime(clip.duration * (0.18 + 0.52 * (s / 20)));
+          handThumbSamples.push({
+            root: handThumbRoot ? handThumbRoot.quaternion.clone() : null,
+            mid: handThumbMiddle ? handThumbMiddle.quaternion.clone() : null
+          });
+        }
+        handAction.paused = true;
+        handMixer.setTime(clip.duration * 0.18);
+      }
+
+      group.traverse(function (object) {
+        if (!object.isMesh) return;
+        object.castShadow = true;
+        object.receiveShadow = true;
+      });
+
+      group.visible = false;
+      group.position.set(HAND_START_X, HAND_START_Y, HAND_GRIP_Z + 0.07);
+      return group;
+    }
+
+    function poseHand(approach, pull, time) {
+      if (!hand) return;
+      var enter = easeInOut(approach);
+      var exit = pull;
+      var grip = smooth01((approach - 0.35) / 0.65);
+      var x = HAND_START_X +
+        (HAND_GRAB_X - HAND_START_X) * enter +
+        (HAND_EXIT_X - HAND_GRAB_X) * exit;
+
+      hand.visible = enter > 0.0005 || exit > 0.0005;
+      hand.position.x = x;
+      // Slide in from the right beside the phone at roughly the same height.
+      // The group sits outside the right edge; the fingers reach around it.
+      hand.position.y = HAND_START_Y +
+        (HAND_GRAB_Y - HAND_START_Y) * enter +
+        Math.sin(time * 0.9) * 0.012 * enter;
+      // Start a little forward so the arriving hand reads clearly, then seat
+      // the palm beside the phone for the actual grip. Once gripped, x is the
+      // only thing that changes during the pull, so contact stays fixed.
+      hand.position.z = HAND_GRIP_Z + (1 - enter) * 0.07;
+      // Side-on support pose: palm down beside the right edge, four fingers
+      // behind the shell, thumb on the front rail. This keeps the hold gentle
+      // and readable instead of cradling the phone in an open palm.
+      hand.rotation.z = 0.10 + 0.05 * enter +
+        Math.sin(time * 1.4) * 0.003 * grip;
+      hand.rotation.x = 0.05 + 0.10 * enter +
+        Math.cos(time * 1.1) * 0.003 * grip;
+      hand.rotation.y = -0.02 + 0.02 * enter;
+
+      // The clip starts slightly curled now, so the hand never arrives as an
+      // open claw. It still finishes at the old grip frame, keeping the thumb
+      // exactly where it was when the phone is being carried away.
+      if (handAction && handMixer) {
+        handAction.paused = false;
+        handMixer.setTime(handClipDuration * (0.18 + 0.52 * grip));
+        handAction.paused = true;
+      }
+      // Start from the pre-sampled animated thumb pose, never from the bone's
+      // previous value. That keeps the gentle pinch fixed to the phone instead
+      // of curling further every time this function runs.
+      if (handThumbSamples.length && handThumbRoot) {
+        var f = clamp01(grip) * (handThumbSamples.length - 1);
+        var i0 = Math.floor(f);
+        var i1 = Math.min(i0 + 1, handThumbSamples.length - 1);
+        var t = f - i0;
+        var a = handThumbSamples[i0], b = handThumbSamples[i1];
+        if (a.root && b.root) {
+          handThumbRoot.quaternion.copy(a.root).slerp(b.root, t);
+          handThumbRoot.rotateY(0.90 * grip);
+          handThumbRoot.rotateZ(1.30 * grip);
+        }
+        if (handThumbMiddle && a.mid && b.mid) {
+          handThumbMiddle.quaternion.copy(a.mid).slerp(b.mid, t);
+          handThumbMiddle.rotateX(-1.00 * grip);
+          handThumbMiddle.rotateZ(0.10 * grip);
+        }
+      }
+
+      // Contact darkening grows with the grip and eases away as the phone
+      // leaves the frame, so no dark blobs are left behind.
+      var shadowFade = 1 - exit * 0.55;
+      for (var c = 0; c < contactShadows.length; c++) {
+        var shadow = contactShadows[c];
+        shadow.visible = grip > 0.01 && exit < 0.98;
+        shadow.material.opacity = shadow.userData.strength * grip * shadowFade;
+      }
+    }
 
     var mobile = window.innerWidth <= 880;
     var progress = 0;
+    // 0 while the foundation is still below the fold, 1 once it fills the
+    // viewport. Updated with the scroll so the tick loop does not read layout.
+    var foundation = 0;
     var mode = -1;
     var renderer = null;
     var scene = null;
@@ -2451,6 +2756,52 @@
     var dragStartX = 0, dragStartY = 0;
     var dragRotX = 0, dragRotY = 0;
     var dragRotXStart = 0, dragRotYStart = 0;
+
+    // The hand that lifts the phone away as the hero hands over to the
+    // foundation section. It lives in the same WebGL scene as the device and
+    // comes in from the right side: four fingers behind the right shell, thumb
+    // on the front rail, forearm leaving through the right edge.
+    var hand = null;
+    var handFingers = [];
+    var handThumb = null;
+    var handThumbRoot = null;
+    var handThumbMiddle = null;
+    var handThumbSamples = [];
+    var handMixer = null;
+    var handAction = null;
+    var handClipDuration = 0;
+    var contactShadows = [];
+
+    // During the hand-off the scene is drawn on a full-viewport canvas so the
+    // fingers can enter and leave at the real right edge of the browser
+    // window, instead of being clipped by the narrow phone canvas.
+    var handRenderer = null;
+    var handCanvas = null;
+    var handCamera = null;
+    var overlayState = '';
+
+    // Scroll fractions of the pinned hero: slide in and close the grip at the
+    // very end of the hero, then hand the pull over to the foundation section.
+    // The three story screens finish first, so the sequence stays
+    // sale -> receipt -> numbers -> hand-off, and the phone leaves the frame
+    // while the foundation is still rising instead of before it appears.
+    var HAND_IN = 0.86;
+    var HAND_CLOSED = 1.0;
+    // The arm enters from the right edge beside the phone, grips along the
+    // right rail, then carries it back out through the right edge as the
+    // foundation section rises.
+    var HAND_START_X = 2.50;
+    var HAND_START_Y = 0.08;
+    var HAND_GRAB_X = 0.80;
+    var HAND_GRAB_Y = 0.07;
+    // The pull distance is tuned so the device is still crossing the right
+    // edge as the foundation finishes rising; the overlay fade then covers the
+    // last sliver on wider windows.
+    var HAND_EXIT_X = 2.65;
+    // Group origin at the knuckles. The stretched thumb is the only visible
+    // contact; the fingers sit behind the phone body and disappear into depth.
+    var HAND_GRIP_Z = -0.24;
+    var handTaking = false;
 
     /* ----- the screen: a canvas texture applied to the model ----- */
     var screenCanvas = document.createElement('canvas');
@@ -2656,12 +3007,15 @@
 
     function drawPrint() {
       base('Print receipt', '80mm thermal · connected');
-      card(70, 352, 580, 838, '#F7F3FF', false);
-      text('SMARTPOS STORE', 360, 444, 34, '#241a38', '800', 'center');
-      text('12 Market Street · +95 123 456', 360, 488, 21, '#6a5f82', '400', 'center');
-      text('Receipt #1042 · Today, 09:42', 360, 524, 21, '#6a5f82', '400', 'center');
+      // The receipt follows the same dark palette as the other screens: a
+      // slightly lifted surface, light type and violet separators. Keeping it
+      // paper-white made this one screen read as light mode inside the phone.
+      card(70, 352, 580, 838, 'rgba(255,255,255,.055)');
+      text('SMARTPOS STORE', 360, 444, 34, '#F4F0FF', '800', 'center');
+      text('12 Market Street · +95 123 456', 360, 488, 21, '#A99DC4', '400', 'center');
+      text('Receipt #1042 · Today, 09:42', 360, 524, 21, '#A99DC4', '400', 'center');
 
-      sctx.strokeStyle = 'rgba(36,26,56,.18)';
+      sctx.strokeStyle = 'rgba(180,155,255,.28)';
       sctx.lineWidth = 2;
       sctx.setLineDash([8, 8]);
       sctx.beginPath();
@@ -2676,29 +3030,29 @@
         ['Extra fries ×1', '1,500']
       ];
       for (var i = 0; i < rows.length; i++) {
-        text(rows[i][0], 110, 624 + i * 62, 24, '#241a38', '500');
-        text(rows[i][1], 610, 624 + i * 62, 24, '#241a38', '600', 'right');
+        text(rows[i][0], 110, 624 + i * 62, 24, '#F4F0FF', '500');
+        text(rows[i][1], 610, 624 + i * 62, 24, '#F4F0FF', '600', 'right');
       }
 
-      sctx.strokeStyle = 'rgba(36,26,56,.18)';
+      sctx.strokeStyle = 'rgba(180,155,255,.18)';
       sctx.beginPath();
       sctx.moveTo(110, 824);
       sctx.lineTo(610, 824);
       sctx.stroke();
 
-      text('Subtotal', 110, 884, 24, '#6a5f82');
-      text('9,000', 610, 884, 24, '#241a38', '600', 'right');
-      text('Tax', 110, 930, 24, '#6a5f82');
-      text('500', 610, 930, 24, '#241a38', '600', 'right');
-      text('TOTAL', 110, 1006, 28, '#241a38', '800');
-      text('9,500', 610, 1006, 30, '#241a38', '800', 'right');
-      text('PAID · VISA •••• 4242', 360, 1150, 21, '#2E7D4F', '700', 'center');
+      text('Subtotal', 110, 884, 24, '#A99DC4');
+      text('9,000', 610, 884, 24, '#F4F0FF', '600', 'right');
+      text('Tax', 110, 930, 24, '#A99DC4');
+      text('500', 610, 930, 24, '#F4F0FF', '600', 'right');
+      text('TOTAL', 110, 1006, 28, '#F4F0FF', '800');
+      text('9,500', 610, 1006, 30, '#fff', '800', 'right');
+      text('PAID · VISA •••• 4242', 360, 1150, 21, '#6EE7B7', '700', 'center');
 
-      sctx.strokeStyle = '#2E7D4F';
+      sctx.strokeStyle = '#6EE7B7';
       sctx.lineWidth = 5;
       rounded(110, 1044, 162, 66, 12);
       sctx.stroke();
-      text('PAID', 191, 1089, 30, '#2E7D4F', '800', 'center');
+      text('PAID', 191, 1089, 30, '#6EE7B7', '800', 'center');
 
       button(40, 1210, 640, 104, 'Print receipt');
       text('Printed · 80mm · just now', 360, 1372, 22, '#6EE7B7', '600', 'center');
@@ -2825,7 +3179,13 @@
     function renderStill() {
       if (!renderer || !phone || !scene || !camera) return;
       phone.rotation.set(-0.04, -0.16, 0);
+      phone.position.x = 0;
       phone.position.y = 0;
+      if (hand) hand.visible = false;
+      for (var i = 0; i < contactShadows.length; i++) {
+        contactShadows[i].visible = false;
+        contactShadows[i].material.opacity = 0;
+      }
       renderer.render(scene, camera);
     }
 
@@ -2837,6 +3197,26 @@
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
+
+      if (!handRenderer || !handCamera) return;
+      var vw = Math.max(1, window.innerWidth);
+      var vh = Math.max(1, window.innerHeight);
+      handRenderer.setSize(vw, vh, false);
+      handCamera.aspect = vw / vh;
+
+      // Match the phone's on-screen scale and position from the narrow canvas
+      // so switching to the full-window canvas during the hand-off is seamless.
+      var halfFov = 15 * Math.PI / 180;
+      var scale = height / (2 * Math.tan(halfFov) * camera.position.z);
+      var distance = vh / (2 * Math.tan(halfFov) * scale);
+      var mainX = rect.left + rect.width / 2;
+      var mainY = rect.top + rect.height / 2;
+      handCamera.position.set(
+        (vw / 2 - mainX) / scale,
+        (vh / 2 - mainY) / scale,
+        distance
+      );
+      handCamera.updateProjectionMatrix();
     }
 
     function environmentMap() {
@@ -2909,6 +3289,41 @@
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.08;
       renderer.setClearColor(0x000000, 0);
+      // Shadows are only needed for the desktop hand-off; the full-window
+      // overlay renderer owns them while the hand is on stage.
+      renderer.shadowMap.enabled = !mobile && !reduceMotion;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+      // The hand-off canvas covers the whole window but only exists on
+      // desktop with motion enabled; it is inert until the hand is needed.
+      if (!mobile && !reduceMotion) {
+        try {
+          handCanvas = document.createElement('canvas');
+          handCanvas.setAttribute('aria-hidden', 'true');
+          handCanvas.style.cssText =
+            'position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:60;display:none';
+          document.body.appendChild(handCanvas);
+          handRenderer = new THREE.WebGLRenderer({
+            canvas: handCanvas,
+            alpha: true,
+            antialias: true,
+            powerPreference: 'high-performance'
+          });
+          handRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+          handRenderer.outputEncoding = THREE.sRGBEncoding;
+          handRenderer.toneMapping = THREE.ACESFilmicToneMapping;
+          handRenderer.toneMappingExposure = 1.08;
+          handRenderer.setClearColor(0x000000, 0);
+          handRenderer.shadowMap.enabled = true;
+          handRenderer.shadowMap.type = THREE.PCFSoftShadowMap;
+          handCamera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
+        } catch (error) {
+          if (handCanvas && handCanvas.parentNode) handCanvas.parentNode.removeChild(handCanvas);
+          handCanvas = null;
+          handRenderer = null;
+          handCamera = null;
+        }
+      }
 
       scene = new THREE.Scene();
       camera = new THREE.PerspectiveCamera(30, 0.62, 0.1, 100);
@@ -2919,6 +3334,17 @@
 
       var key = new THREE.DirectionalLight(0xffffff, 2.1);
       key.position.set(3.5, 4.5, 6);
+      key.castShadow = true;
+      key.shadow.mapSize.width = 1024;
+      key.shadow.mapSize.height = 1024;
+      key.shadow.camera.left = -3;
+      key.shadow.camera.right = 3;
+      key.shadow.camera.top = 3;
+      key.shadow.camera.bottom = -3;
+      key.shadow.camera.near = 0.1;
+      key.shadow.camera.far = 20;
+      key.shadow.bias = -0.0006;
+      key.shadow.radius = 4;
       scene.add(key);
 
       var fill = new THREE.DirectionalLight(0xb49bff, 1.5);
@@ -2943,6 +3369,8 @@
         phone = gltf.scene;
         phone.traverse(function (object) {
           if (!object.isMesh) return;
+          object.castShadow = true;
+          object.receiveShadow = true;
           if (object.name === 'Screen') {
             screenTex = new THREE.CanvasTexture(screenCanvas);
             screenTex.encoding = THREE.sRGBEncoding;
@@ -2959,9 +3387,30 @@
             if (glass) object.material.needsUpdate = true;
           }
         });
+        // These soft prints are parented to the device, so they stay locked to
+        // the bezel while the robot carries it out of frame.
+        addContactShadows();
         scene.add(phone);
         size();
         sceneEl.classList.add('has3d');
+
+        // The hand waits just outside the right edge of the frame until the
+        // hero starts handing over to the foundation section. Mobile and
+        // reduced-motion keep the original static phone, so no hand is built.
+        if (!mobile && !reduceMotion) {
+          loadHandModel()
+            .then(function (gltf) {
+              if (!scene) return;
+              hand = buildRobotHand(gltf);
+              scene.add(hand);
+            })
+            .catch(function (error) {
+              if (window.console && console.warn) {
+                console.warn('robot hand fallback', error);
+              }
+              hand = null;
+            });
+        }
 
         // 3D phone in the "Tap. Sell. Done." card (silver, sale screen).
         // 3D phones in the hscroll cards (each in its own canvas/renderer).
@@ -3213,6 +3662,22 @@
         });
       }
 
+      // The hand bytes are included as a parser-blocking script in the head,
+      // which keeps the desktop app's `file://` page working and avoids a
+      // second concurrent fetch while the phone model is still loading.
+      function loadHandModel() {
+        var handLoader = new THREE.GLTFLoader();
+        return new Promise(function (resolve, reject) {
+          if (!window.ROBOT_HAND_GLB_BASE64) {
+            reject(new Error('robot hand inline model unavailable'));
+            return;
+          }
+          handLoader.parse(
+            base64Buffer(window.ROBOT_HAND_GLB_BASE64), '', resolve, reject
+          );
+        });
+      }
+
       loadBuffer(0)
         .catch(loadInline)
         .then(function (buffer) {
@@ -3223,12 +3688,17 @@
 
     function updateScroll() {
       if (mobile) return;
+      var rect = stage.getBoundingClientRect();
       var span = stage.offsetHeight - window.innerHeight;
-      if (span <= 0) {
-        progress = 0;
-        return;
-      }
-      progress = clamp01(-stage.getBoundingClientRect().top / span);
+      progress = span <= 0 ? 0 : clamp01(-rect.top / span);
+
+      // How far the foundation has risen past the hero: 0 while the hero still
+      // fills the viewport, 1 once the foundation reaches the top. The hand-off
+      // pull is driven by this, so it starts as the foundation appears and
+      // finishes only when the section is fully up.
+      foundation = smooth01(
+        (window.innerHeight - rect.bottom) / Math.max(1, window.innerHeight)
+      );
     }
 
     var startedAt = 0;
@@ -3245,7 +3715,18 @@
         progress = 0.5 + 0.5 * Math.sin(time * 0.45);
       }
       var p = clamp01(progress);
-      paint(mobile ? cycle : (p < 0.36 ? 0 : p < 0.7 ? 1 : 2));
+      // 0 = ring up a sale, 1 = print the receipt, 2 = read the numbers.
+      // The hand enters at the end of the hero, after the third screen is up.
+      paint(mobile ? cycle : (p < 0.30 ? 0 : p < 0.54 ? 1 : 2));
+
+      // Hand-off factors are needed by the phone tilt as well as the hand.
+      var approach = 0;
+      var pull = 0;
+      if (hand && !mobile && !reduceMotion) {
+        approach = smooth01((p - HAND_IN) / (HAND_CLOSED - HAND_IN));
+        pull = foundation;
+      }
+      var takeBlend = Math.max(approach, smooth01(pull * 4));
 
       var targetY, targetX;
       if (dragging) {
@@ -3253,8 +3734,13 @@
         targetX = dragRotX;
       } else {
         var turn = mobile ? 0 : (p - 0.5);
-        targetY = turn * 0.62 - 0.06;
-        targetX = turn * -0.18 + 0.03;
+        var baseY = turn * 0.62 - 0.06;
+        var baseX = turn * -0.18 + 0.03;
+        // Turn the right edge toward the viewer during the hand-off, so the
+        // fingers can sit behind it and the thumb can settle on the front rail.
+        // This exposes the phone's real thickness instead of a flat silhouette.
+        targetY = baseY + (-0.28 - baseY) * takeBlend;
+        targetX = baseX + (0.02 - baseX) * takeBlend;
       }
 
       phone.rotation.y += (targetY - phone.rotation.y) * (dragging ? 0.18 : 0.08);
@@ -3263,7 +3749,43 @@
         phone.position.y += (Math.sin(time * 0.9) * 0.02 - phone.position.y) * 0.08;
       }
 
-      renderer.render(scene, camera);
+      // Hand-off to the foundation: the hand slides in and grips the phone at
+      // the end of the pinned hero, then carries it out of frame while the
+      // foundation section rises. The pull is scrubbed by the foundation's own
+      // scroll, so it lasts until that section is up and reverses on scroll up.
+      if (hand) poseHand(approach, pull, time);
+      phone.position.x = (HAND_EXIT_X - HAND_GRAB_X) * pull;
+
+      var taking = approach > 0.55 || pull > 0.01;
+      if (taking !== handTaking) {
+        handTaking = taking;
+        sceneEl.classList.toggle('is-taking', taking);
+      }
+
+      // Move the render to the window-wide canvas while the hand is on stage.
+      // Both cameras are calibrated to put the phone at the same screen spot,
+      // so the swap is invisible and the hand can reach the window's edge.
+      // The overlay is fixed, so it stays with the hand even after the hero
+      // scrolls away under it.
+      var handOnStage = !!hand && !!handRenderer && !mobile && !reduceMotion &&
+        (p > HAND_IN || pull > 0) && pull < 0.999;
+      var hideMain = !!hand && !!handRenderer &&
+        (p > HAND_IN || pull > 0);
+      var renderState = handOnStage ? 'overlay' : (hideMain ? 'hidden' : 'main');
+      if (renderState !== overlayState) {
+        overlayState = renderState;
+        if (handCanvas) {
+          handCanvas.style.display = renderState === 'overlay' ? 'block' : 'none';
+        }
+        canvas.style.visibility = renderState === 'main' ? 'visible' : 'hidden';
+      }
+      // Fade the last sliver of the pull so the device leaves cleanly even on
+      // very wide windows where the fixed exit distance is still on screen.
+      if (handCanvas) {
+        handCanvas.style.opacity = String(1 - smooth01((pull - 0.88) / 0.12));
+      }
+      if (renderState === 'overlay') handRenderer.render(scene, handCamera);
+      else if (renderState === 'main') renderer.render(scene, camera);
     }
 
     for (var i = 0; i < steps.length; i++) {
@@ -3278,7 +3800,9 @@
             paint(index);
             return;
           }
-          var stops = [0.02, 0.5, 0.96];
+          // Each stop lands inside its own screen band above, so the clicked
+          // step index survives the next scroll-driven paint.
+          var stops = [0.04, 0.42, 0.60];
           // Transition immediately, then ignore scroll-driven paints briefly
           // so the screen stays on the chosen step while scrolling settles.
           paint(index);
